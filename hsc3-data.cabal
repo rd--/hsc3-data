@@ -18,14 +18,18 @@ Data-files:        README
 Library
   Build-Depends:   base == 4.*,
                    bifunctors,
+                   hcg-minus == 0.15.*,
                    hmt == 0.15.*,
                    hsc3-lang == 0.15.*,
                    hsc3-plot == 0.15.*,
                    hsc3-sf-hsndfile == 0.15.*,
                    safe,
-                   split
+                   split,
+                   SVGPath >= 1.1.1,
+                   xml
   GHC-Options:     -Wall -fwarn-tabs
-  Exposed-modules: Sound.SC3.Data.Trace
+  Exposed-modules: Sound.SC3.Data.SVG
+                   Sound.SC3.Data.Trace
 
 Source-Repository  head
   Type:            darcs
