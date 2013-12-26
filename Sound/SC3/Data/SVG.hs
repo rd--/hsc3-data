@@ -8,7 +8,6 @@ import qualified Text.XML.Light as X {- xml -}
 import Graphics.SVG.ReadPath as P {- SVGPath -}
 
 import Data.CG.Minus {- hcg-minus -}
-import qualified Music.Theory.List as T {- hmt -}
 import Sound.SC3.Plot {- hsc3-plot -}
 
 -- | Make 'X.QName' with @svg@ 'X.qURI'.
@@ -47,11 +46,6 @@ svg_load_ls rs fn = do
   let d = svg_read_path_d s
       p = concatMap (subpaths_to_ls rs) d
   return p
-
-ls_with_distance :: (Eq t,Floating t) => Ls t -> [(t,Pt t)]
-ls_with_distance p =
-    let d = T.dx_d 0 (zipWith pt_distance p (tail p))
-    in zip d p
 
 plot_ls :: (Num t,Show t) => [Ls t] -> IO ()
 plot_ls = plotCoord . map (map pt_xy)
