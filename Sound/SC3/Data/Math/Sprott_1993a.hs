@@ -3,6 +3,8 @@ module Sound.SC3.Data.Math.Sprott_1993a where
 
 import Data.Maybe {- base -}
 
+import Sound.SC3.Plot {- hsc3-plot -}
+
 -- * Coding Table
 
 -- | Table 2-1. ASCII character set and associated coefficient values (p.28)
@@ -67,6 +69,16 @@ quintic_1l l =
       [a1,a2,a3,a4,a5,a6] -> quintic_1 a1 a2 a3 a4 a5 a6
       _ -> error "quintic_1l"
 
+-- | Generalised one-dimensional iterated map.
+general_1l :: Num a => [a] -> Maybe (a -> a)
+general_1l l =
+     case length l of
+       3 -> Just (quadratic_1l l)
+       4 -> Just (quintic_1l (l ++ [0,0]))
+       5 -> Just (quintic_1l (l ++ [0]))
+       6 -> Just (quintic_1l l)
+       _ -> Nothing
+
 -- | General two-dimensional iterated quadratic map (Equation 3B, p.53)
 quadratic_2 :: Num t => t->t->t->t->t->t->t->t->t->t->t->t->(t,t)->(t,t)
 quadratic_2 a1 a2 a3 a4 a5 a6 a7 a8 a9 aA aB aC (x,y) =
@@ -103,6 +115,14 @@ cubic_2l l =
       _ -> error "cubic_2l"
 
 
+-- | Generalised two-dimensional iterated map.
+general_2l :: Num t => [t] -> Maybe ((t,t) -> (t,t))
+general_2l l =
+    case length l of
+      12 -> Just (quadratic_2l l)
+      20 -> Just (cubic_2l l)
+      _ -> Nothing
+
 -- | General three-dimensional iterated quadratic map (Equation 4A, p.147)
 quadratic_3 :: Num t => t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> t -> (t, t, t) -> (t, t, t)
 quadratic_3 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10
@@ -129,6 +149,13 @@ quadratic_3l l =
                 a21 a22 a23 a24 a25 a26 a27 a28 a29 a30
       _ -> error "quadratic_3l"
 
+-- | Generalised three-dimensional iterated map.
+general_3l :: Num t => [t] -> Maybe ((t,t,t) -> (t,t,t))
+general_3l l =
+    case length l of
+      30 -> Just (quadratic_3l l)
+      _ -> Nothing
+
 -- * Projections
 
 -- | 'minimum' and 'maximum'.
@@ -151,94 +178,117 @@ sphere_proj l =
                        ,ya + 0.5 * (y1 - y0) * cos ph)
     in map prj l
 
+-- * Code Plotting
+
+-- | Plot one-dimensional code, /m/ is delay, /n/ is iteration degree, /i/ is initial value.
+plot_code_1 :: Int -> Int -> Double -> (Code,Annotation) -> IO ()
+plot_code_1 m n i (c,_) =
+    case c of
+      c0:c' -> if c0 `elem` "ABCD"
+               then case general_1l (map sprott_coef_err c') of
+                      Just f -> plot_p2_pt [with_delayed m (take n (iterate f i))]
+                      Nothing -> error "plot_code_1: ill-formed coef"
+               else error "plot_code_1: not type {A,B,C,D}"
+      _ -> error "plot_code_1: ill-formed code"
+
+-- | Plot two-dimensional code, /n/ is iteration degree, /i/ is initial value.
+plot_code_2 :: Bool -> Int -> (Double,Double) -> (Code,Annotation) -> IO ()
+plot_code_2 sph n i (c,_) =
+    case c of
+      c0:c' -> if c0 `elem` "EF"
+               then case general_2l (map sprott_coef_err c') of
+                      Just f -> let prj = if sph then sphere_proj else id
+                                in plot_p2_pt [prj (take n (iterate f i))]
+                      Nothing -> error "plot_code_2: ill-formed coef"
+               else error "plot_code_2: not type {E,F}"
+      _ -> error "plot_code_2: ill-formed code"
+
+-- | Plot three-dimensional code, /n/ is iteration degree, /i/ is initial value.
+plot_code_3 :: Int -> (Double,Double,Double) -> (Code,Annotation) -> IO ()
+plot_code_3 n i (c,_) =
+    case c of
+      c0:c' -> if c0 `elem` "I"
+               then case general_3l (map sprott_coef_err c') of
+                      Just f -> plot_p3_pt [take n (iterate f i)]
+                      Nothing -> error "plot_code_3: ill-formed coef"
+               else error "plot_code_3: not type {I}"
+      _ -> error "plot_code_3: ill-formed code"
+
 -- * Co-efficient CODES
 
 type Code = String
 type Annotation = String
 
-{-| One-dimensional codes, in /quintic/ form.
+-- | One-dimensional codes.
+--
+-- > plot_code_1 5 12500 0.1 (codes_1 !! 7)
+codes_1 :: [(Code,Annotation)]
+codes_1 =
+    [("AMu%","Fig 1-4")
+    ,("AXBH","Fig 2-1")
+    ,("ABDU","Fig 2-2")
+    ,("ACAV","Fig 2-3")
+    ,("AXDA","Fig 2-4")
+    ,("BZEZK","Fig 2-5")
+    ,("CBLCTX","Fig 2-6")
+    ,("CUTXJE","Fig 2-7")
+    ,("DBOGIZI","Fig 2-8")
+    ,("DFBIEVV","Fig 2-9")
+    ,("DOOYRIL","Fig 2-10")]
 
-> import Sound.SC3.Plot {- hsc3-plot -}
+-- | Two-dimensional codes.
+--
+-- > plot_code_2 False 25000 (0.1,0) (codes_2 !! 25)
+codes_2 :: [(Code,Annotation)]
+codes_2 =
+    [("EWM?MPMMWMMMM","Fig 3-1") -- 0
+    ,("EAGHNFODVNJCP","Fig 3-2")
+    ,("EBCQAFMFVPXKQ","Fig 3-3")
+    ,("EDSYUECINGQNV","Fig 3-4")
+    ,("EELXAPXMPQOBT","Fig 3-5")
+    ,("EEYYMKTUMXUVC","Fig 3-6")
+    ,("EJTTSMBOGLLQF","Fig 3-7")
+    ,("ENNMJRCTVVTYG","Fig 3-8")
+    ,("EOUGFJKDHSAJU","Fig 3-9")
+    ,("EQKOCSIDVTPGY","Fig 3-10")
+    ,("EQLOIARXYGHAJ","Fig 3-11") -- 10
+    ,("ETJUBWEDNRORR","Fig 3-12")
+    ,("ETSILUNDQSIFA","Fig 3-13")
+    ,("EUEBJLCDISIIQ","Fig 3-14")
+    ,("EVDUOTLRBKTJD","Fig 3-15")
+    ,("EWLKWPSMOGIGS","Fig 3-16")
+    ,("EZPMSGCNFRENG","Fig 3-17")
+    ,("FIRPGVTFIDGCSXMFPKIDJ","Fig 3-18")
+    ,("FISMHQCHPDFKFBKEALIFD","Fig 3-19")
+    ,("FJYCBMNFNYOEPYUGHHESU","Fig 3-20")
+    ,("FNUYLCURDUHQUQMRZQWQB","Fig 3-24") -- 20
+    ,("ECSRKVVQLGFFS","Fig 3-42")
+    ,("ECVQKGHQTPHTE","Fig 3-43")
+    ,("EKPNERVOTBYCM","Fig 3-44")
+    ,("EUWACXDQIGKHF","Fig 3-45")
+    ,("ECMMMEWHXRMMM","Fig 3-58")
+    ,("EMVWMGCMaMaRM","Fig 8-6 (Tinkerbell)")
+    ,("EAEUBNVIAHERQ","SELECTED.DIC #1 (p. 583)")
+    ,("EAHSVIGTJKOTB","SELECTED.DIC #1")
+    ]
 
-> let code = map sprott_coef_err (fst (quintic_1_codes !! 4))
-> in plot_p2_pt [with_delayed 5 (take 12500 (iterate (quintic_1l code) 0.1))]
-
--}
-quintic_1_codes :: [(Code,Annotation)]
-quintic_1_codes =
-    [("Mu%MMM","Fig 1-4")
-    ,("XBHMMM","Fig 2-1")
-    ,("BDUMMM","Fig 2-2")
-    ,("CAVMMM","Fig 2-3")
-    ,("XDAMMM","Fig 2-4")
-    ,("ZEZKMM","Fig 2-5")
-    ,("BLCTXM","Fig 2-6")
-    ,("UTXJEM","Fig 2-7")
-    ,("BOGIZI","Fig 2-8")
-    ,("FBIEVV","Fig 2-9")
-    ,("OOYRIL","Fig 2-10")]
-
-
-{-| Two-dimensional codes, in /quadratic/ form.
-
-> import Sound.SC3.Plot {- hsc3-plot -}
-
-> let code = map sprott_coef_err (fst (quadratic_2_codes !! 16))
-> in plot_p2_pt [take 25000 (iterate (quadratic_2l code) (0.1,0))]
-
--}
-quadratic_2_codes :: [(Code,Annotation)]
-quadratic_2_codes =
-    [("WM?MPMMWMMMM","Fig 3-1")
-    ,("AGHNFODVNJCP","Fig 3-2")
-    ,("BCQAFMFVPXKQ","Fig 3-3")
-    ,("DSYUECINGQNV","Fig 3-4")
-    ,("ELXAPXMPQOBT","Fig 3-5")
-    ,("EYYMKTUMXUVC","Fig 3-6")
-    ,("JTTSMBOGLLQF","Fig 3-7")
-    ,("NNMJRCTVVTYG","Fig 3-8")
-    ,("OUGFJKDHSAJU","Fig 3-9")
-    ,("QKOCSIDVTPGY","Fig 3-10")
-    ,("QLOIARXYGHAJ","Fig 3-11")
-    ,("TJUBWEDNRORR","Fig 3-12")
-    ,("TSILUNDQSIFA","Fig 3-13")
-    ,("UEBJLCDISIIQ","Fig 3-14")
-    ,("VDUOTLRBKTJD","Fig 3-15")
-    ,("WLKWPSMOGIGS","Fig 3-16")
-    ,("ZPMSGCNFRENG","Fig 3-17")
-    ,("MVWMGCMaMaRM","Fig 8-6 (Tinkerbell)")
-    ,("AEUBNVIAHERQ","SELECTED.DIC #1 (p. 583)")
-    ,("AHSVIGTJKOTB","SELECTED.DIC #1")]
-
--- > let cf = map sprott_coef_err "IRPGVTFIDGCSXMFPKIDJ"
--- > let cf = map sprott_coef_err "ISMHQCHPDFKFBKEALIFD"
--- > let cf = map sprott_coef_err "JYCBMNFNYOEPYUGHHESU"
--- > let cf = map sprott_coef_err "NUYLCURDUHQUQMRZQWQB"
--- > plot_p2_pt [take 25000 (iterate (cubic_2l cf) (0.1,0))]
+-- | Three-dimensional codes.
+--
+-- > plot_code_3 15000 (0.1,0,0) (codes_3 !! 2)
+codes_3 :: [(Code,Annotation)]
+codes_3 =
+    [("IJKRADSXGDBHIJTQJJDICEJKYSTXFNU","Fig 4-1")
+    ,("ILURCEGOHOIQFJKBSNYGSNRUKKIKIHW","Fig 4-2")
+    ,("INRRXLCEYLFHYAPFSTPHHJMYRYJFBNM","Fig 4-4")
+    ,("IWDWOGDGWGORJOBTUHFQBPRNTCBYQHP","Fig 4-8")]
 
 -- > let cf = map sprott_coef_err "FUXRRRUIRDYKDUBPHHHOMOBRIRBINCS"
 -- > plot_p2_pt [take 25000 (iterate (quartic_2l cf) (0.1,0))]
-
--- > let cf = map sprott_coef_err "CSRKVVQLGFFS"
--- > let cf = map sprott_coef_err "CVQKGHQTPHTE"
--- > let cf = map sprott_coef_err "KPNERVOTBYCM"
--- > let cf = map sprott_coef_err "UWACXDQIGKHF"
--- > plotPoints [sphere_proj (take 25000 (iterate (quadratic_2l cf) (0.1,0)))]
-
--- > let cf = map sprott_coef_err "CMMMEWHXRMMM"
--- > plotPoints [take 25000 (iterate (quadratic_2l cf) (0.1,0))]
-
--- > let cf = map sprott_coef_err "JKRADSXGDBHIJTQJJDICEJKYSTXFNU"
--- > let cf = map sprott_coef_err "LURCEGOHOIQFJKBSNYGSNRUKKIKIHW"
--- > let cf = map sprott_coef_err "NRRXLCEYLFHYAPFSTPHHJMYRYJFBNM"
--- > let cf = map sprott_coef_err "WDWOGDGWGORJOBTUHFQBPRNTCBYQHP"
--- > plot_p3_pt [take 15000 (iterate (quadratic_3l cf) (0.1,0,0))]
 
 -- * Specialised forms
 
 -- | Sprott p.9 (Equation 1C)
 --
--- > import Sound.SC3.Plot {- hsc3-plot -}
 -- > plot_p2_pt [with_delayed 1 (take 5000 (iterate (logistic 4) 0.05))]
 logistic :: Num a => a -> a -> a
 logistic r x = r * x * (1 - x)
