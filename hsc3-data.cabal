@@ -29,7 +29,9 @@ Library
                    SVGPath >= 1.1.1,
                    xml
   GHC-Options:     -Wall -fwarn-tabs
-  Exposed-modules: Sound.SC3.Data.SVG
+  Exposed-modules: Sound.SC3.Data.Math.Bourke
+                   Sound.SC3.Data.Math.Sprott_1993a
+                   Sound.SC3.Data.SVG
                    Sound.SC3.Data.Trace
 
 Source-Repository  head
