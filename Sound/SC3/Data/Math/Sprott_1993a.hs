@@ -158,10 +158,6 @@ general_3l l =
 
 -- * Projections
 
--- | 'minimum' and 'maximum'.
-minmax :: Ord t => [t] -> (t,t)
-minmax l = (minimum l,maximum l)
-
 -- | Projection onto sphere (Equation 3G, p.107)
 sphere_proj :: (Floating t,Ord t) => [(t,t)] -> [(t,t)]
 sphere_proj l =
@@ -214,8 +210,12 @@ plot_code_3 n i (c,_) =
                else error "plot_code_3: not type {I}"
       _ -> error "plot_code_3: ill-formed code"
 
--- * Co-efficient CODES
+-- * Co-efficient codes.
 
+-- | A code is a string.  The set of book codes are at:
+-- <http://sprott.physics.wisc.edu/fractals/bookdisk/BOOKFIGS.DIC> and
+-- there is a further set of codes at:
+-- <http://sprott.physics.wisc.edu/fractals/bookdisk/SELECTED.DIC>
 type Code = String
 type Annotation = String
 
@@ -274,7 +274,7 @@ codes_2 =
 
 -- | Three-dimensional codes.
 --
--- > plot_code_3 15000 (0.1,0,0) (codes_3 !! 2)
+-- > plot_code_3 15000 (0.1,0,0) (codes_3 !! 1)
 codes_3 :: [(Code,Annotation)]
 codes_3 =
     [("IJKRADSXGDBHIJTQJJDICEJKYSTXFNU","Fig 4-1")
