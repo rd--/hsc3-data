@@ -40,9 +40,13 @@ with_delayed n l =
                  [] -> []
                  e1:_ -> (e0,e1) : with_delayed n l'
 
+{- hsc3-plot...
+
 -- | /n/ '*' /n/.
 square :: Num a => a -> a
 square x = x * x
+
+-}
 
 -- | General one-dimensional quadratic iterated map (Equation 2A, p.25)
 quadratic_1 :: Num a => a -> a -> a -> a -> a
