@@ -47,5 +47,5 @@ svg_load_ls rs fn = do
       p = concatMap (subpaths_to_ls rs) d
   return p
 
-plot_ls :: (Num t,Show t) => [Ls t] -> IO ()
+plot_ls :: PNum t => [Ls t] -> IO ()
 plot_ls = plotCoord . map (map pt_xy)
