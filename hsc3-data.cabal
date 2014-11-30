@@ -1,5 +1,5 @@
 Name:              hsc3-data
-Version:           0.15
+Version:           0.16
 Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL
@@ -19,11 +19,11 @@ Library
   Build-Depends:   base == 4.*,
                    bifunctors,
                    Glob,
-                   hcg-minus == 0.15.*,
-                   hmt == 0.15.*,
-                   hsc3-lang == 0.15.*,
-                   hsc3-plot == 0.15.*,
-                   hsc3-sf-hsndfile == 0.15.*,
+                   hcg-minus == 0.16.*,
+                   hmt == 0.16.*,
+                   hsc3-lang == 0.16.*,
+                   hsc3-plot == 0.16.*,
+                   hsc3-sf-hsndfile == 0.16.*,
                    safe,
                    split,
                    SVGPath >= 1.1.1,
