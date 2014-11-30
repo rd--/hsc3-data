@@ -71,7 +71,7 @@ peter_de_jong a b c d (x,y) =
 {- | <http://paulbourke.net/fractals/clifford/>
 
 > let clf a b c d =
->   let vw x = plot_p2_pt [take 25000 x]
+>   let vw x = plot_p2_pt [take 12500 x]
 >   in vw (iterate (clifford a b c d) (-0.72,-0.64))
 
 > clf (-1.4) (1.6) (1.0) (0.7)

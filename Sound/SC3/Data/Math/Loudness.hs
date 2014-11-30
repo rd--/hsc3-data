@@ -3,18 +3,20 @@ module Sound.SC3.Data.Math.Loudness where
 
 -- * A Weighting
 
--- | A-weighting curve multiplier function, ie. for linear magnitude
+{- | A-weighting curve multiplier function, ie. for linear magnitude
 -- value.  See <http://en.wikipedia.org/wiki/A-weighting>
---
--- > import Sound.SC3.Plot
---
--- > let {f w = map w [20::Double,50 .. 20000]
--- >     ;r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]}
--- > in plotTable (map f r)
---
--- > let {f w = zip (map log [1..]) (map w [25,50 .. 20000])
--- >     ;r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]}
--- > in plot_p2_ln (map f r)
+
+> import Sound.SC3.Plot
+
+> let {f w = map w [20::Double,50 .. 20000]
+>     ;r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]}
+> in plotTable (map f r)
+
+> let {f w = zip (map log [1..]) (map w [25,50 .. 20000])
+>     ;r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]}
+> in plot_p2_ln (map f r)
+
+-}
 a_weighting_R :: Floating a => a -> a
 a_weighting_R f =
     let sq x = x * x
