@@ -9,6 +9,7 @@ import Data.Char {- base -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
+import Data.Word {- base -}
 
 -- * Bitmaps, Bitvectors and Bitindices
 
@@ -18,10 +19,14 @@ type Bit = Bool
 -- | List of 'Bit's, the first 'Bit' is the leftmost.
 type Bitseq = [Bit]
 
+-- | Word encoded 'Bit' sequence, the current parser only supports
+-- fonts with glyphs no wider than eight pixels.
+type Bitenc = Word8
+
 -- | A 'Bitmap' is a list of rows (lines), each line is a bit sequence
 -- encoded in an 'Int'. The most significant bit of each line
 -- represents the leftmost pixel.
-type Bitmap = [Int]
+type Bitmap = [Bitenc]
 
 -- | Unpacked 'Bitmap', each row is a 'Bitseq'.
 type Bitvector = [Bitseq]
@@ -29,11 +34,16 @@ type Bitvector = [Bitseq]
 -- | The (row,column) indices for 'True' bits of a 'Bitvector'.
 type Bitindices = [(Int,Int)]
 
--- | Unpack the first /n/ elements of a 'Bits' value.
+-- | Given 'Bits' value of size /sz/' test the /i/th most _most_
+-- significant bit.
+bitenc_test :: Bits a => Int -> a -> Int -> Bool
+bitenc_test sz x i = testBit x (sz - 1 - i)
+
+-- | Unpack the /n/ _most_ significant elements of a 'Bits' value.
 --
--- > bitseq_show (bitseq 8 75) == "@@.@..@.."
-bitseq :: (Bits a) => Int -> a -> Bitseq
-bitseq n x = map (testBit x) [0 .. n]
+-- > bitseq_show (bitseq 4 (0x90::Word8)) == "@..@"
+bitseq :: FiniteBits b => Int -> b -> Bitseq
+bitseq n x = let sz = finiteBitSize x in map (bitenc_test sz x) [0 .. n - 1]
 
 -- | Draw bit as @@@ for 'True' and @.@ for 'False'.
 bit_to_char :: Bit -> Char
@@ -48,13 +58,14 @@ bitvector_show :: Bitvector -> String
 bitvector_show = unlines . map bitseq_show
 
 bitmap_to_bitvector :: Int -> Bitmap -> Bitvector
-bitmap_to_bitvector n = map (reverse . bitseq n)
+bitmap_to_bitvector n = map (bitseq n)
 
 bitmap_show :: Int -> Bitmap -> String
 bitmap_show n = bitvector_show . bitmap_to_bitvector n
 
+-- | Index into bitmap at (row,column).
 bitmap_ix :: Bitmap -> (Int,Int) -> Bit
-bitmap_ix m (i,j) = testBit (m !! i) j
+bitmap_ix m (i,j) = bitenc_test 8 (m !! i) j
 
 bitvector_to_bitindices :: Bitvector -> Bitindices
 bitvector_to_bitindices v =
@@ -74,11 +85,15 @@ type Name = String
 -- | Encoding point (ASCII).
 type Encoding = Int
 
+-- | A property is a (key,value) pair.
+type Property = (String,String)
+
 -- | A glyph.
 data Glyph = Glyph {glyph_name :: Name
                    ,glyph_encoding :: Encoding
                    ,glyph_bbx :: Box
-                   ,glyph_bitmap :: Bitmap}
+                   ,glyph_bitmap :: Bitmap
+                   ,glyph_properties :: [Property]}
              deriving (Eq,Show)
 
 -- | The 'glyph_name' if it is a single character, else 'Nothing'.
@@ -94,33 +109,28 @@ glyph_char g =
 -- nh = normal height, bl = base-line, r = row, c = column
 glyph_ix :: Box -> Glyph -> (Int,Int) -> Bit
 glyph_ix fb g (r,c) =
-    let Box (_,nh,_,bl) = fb
-        Box (_,h,dx,dy) = glyph_bbx g
-        i = r + dy - (nh - h - 2) - bl
-        j = c + dx
-    in if i < 0 || i >= h
+    let Box (_,h,dx,dy) = fb
+        Box (g_w,g_h,g_dx,g_dy) = glyph_bbx g
+        i = r + g_dy - (h - g_h) - dy -- ?
+        j = c - g_dx + dx -- ?
+    in if i < 0 || i >= g_h || j < 0 || j >= g_w
        then False
        else bitmap_ix (glyph_bitmap g) (i,j)
 
 glyph_bitvector :: Box -> Glyph -> Bitvector
 glyph_bitvector fb g =
-    let Box (w,h,dx,dy) = fb
-        (c0,c1) = (0,w + dx)
-        (r0,r1) = (dy,h + dy)
+    let Box (w,h,_,_) = fb
         f i j = glyph_ix fb g (i,j)
-    in map (\n -> map (f n) [c1,c1-1 .. c0]) [r0..r1]
+    in map (\n -> map (f n) [0..w]) [0..h]
 
 glyph_show :: Glyph -> String
 glyph_show g =
-    let Box (w,_,dx,_) = glyph_bbx g
-    in bitmap_show (w + dx) (glyph_bitmap g)
+    let Box (w,_,_,_) = glyph_bbx g
+    in bitmap_show w (glyph_bitmap g)
 
 -- * BDF
 
 type Source = [String]
-
--- | A property is a (key,value) pair.
-type Property = (String,String)
 
 -- | The header is a list of 'Property's.
 type Header = [Property]
@@ -143,13 +153,25 @@ parse_bitmap =
     tail .
     dropWhile ((/=) "BITMAP")
 
+bdf_glyph_property_keys :: [String]
+bdf_glyph_property_keys =
+    ["ENCODING"
+    ,"SWIDTH","DWIDTH"
+    ,"SWIDTH1","DWIDTH1"
+    ,"VVECTOR"
+    ,"BBX"]
+
 parse_glyph :: Source -> Glyph
 parse_glyph s =
-    let pp = properties s
-        nm = property pp "STARTCHAR"
+    let pp' = properties s
+        pp = filter (flip elem bdf_glyph_property_keys . fst) pp'
+        nm = property pp' "STARTCHAR" -- not strictly a property...
         en = read (property pp "ENCODING")
         bb = t4 (map read (words (property pp "BBX")))
-    in Glyph nm en (Box bb) (parse_bitmap s)
+        (w,_,_,_) = bb
+    in if w > 8
+       then error "parse_glyph: width > 8"
+       else Glyph nm en (Box bb) (parse_bitmap s) pp
 
 -- splitWhen variant (keeps delimiters at left)
 sep_when :: (a -> Bool) -> [a] -> [[a]]
@@ -208,18 +230,37 @@ bdf_load_ei fn = do
       is = map (bitvector_to_bitindices . glyph_bitvector fb) cs
   return (zip (map glyph_encoding cs) is)
 
-{-
-f <- bdf_read "/home/rohan/uc/sp-muma/lib/font/Nouveau_IBM-15.bdf"
-let fb = bdf_fontboundingbox f
-fb == Box (8,16,0,-4)
-let cs = bdf_printing_ascii f
-let Just x = from_char f 'x'
-x
-putStrLn$ glyph_show x
-mapM_ (putStrLn . glyph_show) cs
-mapM_ (putStrLn . bitvector_show . glyph_bitvector fb) cs
-from_name f "A" >>= return . bitvector_to_bitindices . glyph_bitvector fb
+-- * PP
 
-ibm <- bdf_load_ei "/home/rohan/uc/sp-muma/lib/font/Nouveau_IBM-15.bdf"
-length ibm == 95
+-- | Variant of glyph_show that orients the locates the glyph in the 'bdf_fontboundingbox'.
+glyph_pp :: BDF -> Glyph -> String
+glyph_pp f = bitvector_show . glyph_bitvector (bdf_fontboundingbox f)
+
+bdf_ascii :: FilePath -> IO ()
+bdf_ascii nm = do
+  f <- bdf_read nm
+  mapM_ (putStrLn . glyph_pp f) (bdf_printing_ascii f)
+
+{-
+ibm <- bdf_read "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
+crp <- bdf_read "/home/rohan/sw/hsc3-data/data/font/creep.bdf"
+
+bdf_fontboundingbox ibm == Box (8,16,0,-4)
+bdf_fontboundingbox crp == Box (7,12,-1,-3)
+
+mapM_ (putStrLn . glyph_show) (snd ibm)
+mapM_ (putStrLn . glyph_show) (snd crp)
+
+let ibm_cs = bdf_printing_ascii ibm
+let crp_cs = bdf_printing_ascii crp
+
+mapM_ (putStrLn . glyph_pp ibm) ibm_cs
+mapM_ (putStrLn . glyph_pp crp) crp_cs
+
+ibm_ei <- bdf_load_ei "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
+length ibm_ei == 95
+
+bdf_ascii "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
+bdf_ascii "/home/rohan/sw/hsc3-data/data/font/creep.bdf"
+
 -}
