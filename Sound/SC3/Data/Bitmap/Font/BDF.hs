@@ -10,8 +10,15 @@ import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
+import System.FilePath {- filepath -}
 
--- * Bitmaps, Bitvectors and Bitindices
+-- * Bitmaps, Bitarrays and Bitindices
+
+type Width = Int
+
+type Height = Int
+
+type Dimensions = (Width,Height)
 
 -- | Bit as 0 = 'False' and 1 = 'True'.
 type Bit = Bool
@@ -19,23 +26,23 @@ type Bit = Bool
 -- | List of 'Bit's, the first 'Bit' is the leftmost.
 type Bitseq = [Bit]
 
+-- | List of rows, each a 'Bitseq', the first is the uppermost.
+type Bitarray = (Dimensions,[Bitseq])
+
 -- | Word encoded 'Bit' sequence, the current parser only supports
 -- fonts with glyphs no wider than eight pixels.
 type Bitenc = Word8
 
 -- | A 'Bitmap' is a list of rows (lines), each line is a bit sequence
--- encoded in an 'Int'. The most significant bit of each line
--- represents the leftmost pixel.
-type Bitmap = [Bitenc]
+-- of /width/ elements encoded in a 'Bitenc'. The most significant bit
+-- of each line represents the leftmost pixel.
+type Bitmap = (Dimensions,[Bitenc])
 
--- | Unpacked 'Bitmap', each row is a 'Bitseq'.
-type Bitvector = [Bitseq]
+-- | The (row,column) indices for 'True' bits of a 'Bitarray'.
+type Bitindices = (Dimensions,[(Int,Int)])
 
--- | The (row,column) indices for 'True' bits of a 'Bitvector'.
-type Bitindices = [(Int,Int)]
-
--- | Given 'Bits' value of size /sz/' test the /i/th most _most_
--- significant bit.
+-- | Given 'Bits' value of size /sz/ test the /i/th _most_ significant
+-- bit.
 bitenc_test :: Bits a => Int -> a -> Int -> Bool
 bitenc_test sz x i = testBit x (sz - 1 - i)
 
@@ -49,30 +56,43 @@ bitseq n x = let sz = finiteBitSize x in map (bitenc_test sz x) [0 .. n - 1]
 bit_to_char :: Bit -> Char
 bit_to_char x = if x then '@' else '.'
 
+bit_to_int :: Bit -> Char
+bit_to_int x = if x then '1' else '0'
+
 -- | Show 'Bitseq' using 'bit_to_char'.
 bitseq_show :: Bitseq -> String
 bitseq_show = map bit_to_char
 
--- | Show 'Bitvector' using 'bitseq_show'.
-bitvector_show :: Bitvector -> String
-bitvector_show = unlines . map bitseq_show
+-- | Show 'Bitarray' using 'bitseq_show'.
+bitarray_show :: Bitarray -> String
+bitarray_show = unlines . map bitseq_show . snd
 
-bitmap_to_bitvector :: Int -> Bitmap -> Bitvector
-bitmap_to_bitvector n = map (bitseq n)
+bitarray_pbm1 :: Bitarray -> String
+bitarray_pbm1 ((w,h),a) =
+    let ty = "P1"
+        dm = show w ++ " " ++ show h
+        f = intersperse ' ' . map bit_to_int
+    in unlines ([ty,dm] ++ map f a)
 
-bitmap_show :: Int -> Bitmap -> String
-bitmap_show n = bitvector_show . bitmap_to_bitvector n
+bitmap_to_bitarray :: Bitmap -> Bitarray
+bitmap_to_bitarray ((w,h),m) = ((w,h),map (bitseq w) m)
+
+bitmap_show :: Bitmap -> String
+bitmap_show = bitarray_show . bitmap_to_bitarray
+
+bitmap_pbm1 :: Bitmap -> String
+bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
 
 -- | Index into bitmap at (row,column).
 bitmap_ix :: Bitmap -> (Int,Int) -> Bit
-bitmap_ix m (i,j) = bitenc_test 8 (m !! i) j
+bitmap_ix (_,m) (i,j) = bitenc_test 8 (m !! i) j
 
-bitvector_to_bitindices :: Bitvector -> Bitindices
-bitvector_to_bitindices v =
+bitarray_to_bitindices :: Bitarray -> Bitindices
+bitarray_to_bitindices (dm,v) =
     let v' = zip [0..] (map (zip [0..]) v)
         f i (j,b) = if b then Just (i,j) else Nothing
         g (i,r) = mapMaybe (f i) r
-    in concatMap g v'
+    in (dm,concatMap g v')
 
 -- * Glyphs
 
@@ -117,16 +137,14 @@ glyph_ix fb g (r,c) =
        then False
        else bitmap_ix (glyph_bitmap g) (i,j)
 
-glyph_bitvector :: Box -> Glyph -> Bitvector
-glyph_bitvector fb g =
+glyph_bitarray :: Box -> Glyph -> Bitarray
+glyph_bitarray fb g =
     let Box (w,h,_,_) = fb
         f i j = glyph_ix fb g (i,j)
-    in map (\n -> map (f n) [0..w]) [0..h]
+    in ((w,h),map (\n -> map (f n) [0 .. w - 1]) [0 .. h - 1])
 
 glyph_show :: Glyph -> String
-glyph_show g =
-    let Box (w,_,_,_) = glyph_bbx g
-    in bitmap_show w (glyph_bitmap g)
+glyph_show = bitmap_show . glyph_bitmap
 
 -- * BDF
 
@@ -146,8 +164,9 @@ properties =
 property :: [Property] -> String -> String
 property p n = maybe "" snd (find ((==) n . fst) p)
 
-parse_bitmap :: Source -> Bitmap
-parse_bitmap =
+parse_bitmap :: Dimensions -> Source -> Bitmap
+parse_bitmap d =
+    (\m -> (d,m)) .
     map (read . ("0x" ++)) .
     takeWhile ((/=) "ENDCHAR") .
     tail .
@@ -168,10 +187,10 @@ parse_glyph s =
         nm = property pp' "STARTCHAR" -- not strictly a property...
         en = read (property pp "ENCODING")
         bb = t4 (map read (words (property pp "BBX")))
-        (w,_,_,_) = bb
+        (w,h,_,_) = bb
     in if w > 8
        then error "parse_glyph: width > 8"
-       else Glyph nm en (Box bb) (parse_bitmap s) pp
+       else Glyph nm en (Box bb) (parse_bitmap (w,h) s) pp
 
 -- splitWhen variant (keeps delimiters at left)
 sep_when :: (a -> Bool) -> [a] -> [[a]]
@@ -197,7 +216,7 @@ bdf_fontboundingbox (h,_) =
 
 bdf_printing_ascii :: BDF -> [Glyph]
 bdf_printing_ascii f =
-    let c = map fromEnum (filter isPrint (map toEnum [0..127]))
+    let c = map fromEnum (filter isPrint (map toEnum [0 .. 127]))
     in mapMaybe (from_encoding f) c
 
 -- * BDF lookup
@@ -227,19 +246,28 @@ bdf_load_ei fn = do
   f <- bdf_read fn
   let fb = bdf_fontboundingbox f
       cs = bdf_printing_ascii f
-      is = map (bitvector_to_bitindices . glyph_bitvector fb) cs
+      is = map (bitarray_to_bitindices . glyph_bitarray fb) cs
   return (zip (map glyph_encoding cs) is)
 
 -- * PP
 
 -- | Variant of glyph_show that orients the locates the glyph in the 'bdf_fontboundingbox'.
 glyph_pp :: BDF -> Glyph -> String
-glyph_pp f = bitvector_show . glyph_bitvector (bdf_fontboundingbox f)
+glyph_pp f = bitarray_show . glyph_bitarray (bdf_fontboundingbox f)
+
+glyph_pbm1 :: BDF -> Glyph -> String
+glyph_pbm1 f = bitarray_pbm1 . glyph_bitarray (bdf_fontboundingbox f)
 
 bdf_ascii :: FilePath -> IO ()
 bdf_ascii nm = do
   f <- bdf_read nm
   mapM_ (putStrLn . glyph_pp f) (bdf_printing_ascii f)
+
+bdf_pbm1 :: FilePath -> FilePath -> IO ()
+bdf_pbm1 nm dir = do
+  f <- bdf_read nm
+  let wr g = writeFile (dir </> glyph_name g <.> "pbm") (glyph_pbm1 f g)
+  mapM_ wr (snd f)
 
 {-
 ibm <- bdf_read "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
@@ -262,5 +290,8 @@ length ibm_ei == 95
 
 bdf_ascii "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
 bdf_ascii "/home/rohan/sw/hsc3-data/data/font/creep.bdf"
+
+bdf_pbm1 "/home/rohan/sw/hsc3-data/data/font/ibm.bdf" "/tmp"
+bdf_pbm1 "/home/rohan/sw/hsc3-data/data/font/creep.bdf" "/tmp"
 
 -}
