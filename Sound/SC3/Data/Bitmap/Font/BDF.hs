@@ -38,8 +38,13 @@ type Bitenc = Word8
 -- of each line represents the leftmost pixel.
 type Bitmap = (Dimensions,[Bitenc])
 
+type Row = Int
+type Column = Int
+type Ix = (Row,Column)
+type Indices = [Ix]
+
 -- | The (row,column) indices for 'True' bits of a 'Bitarray'.
-type Bitindices = (Dimensions,[(Int,Int)])
+type Bitindices = (Dimensions,Indices)
 
 -- | Given 'Bits' value of size /sz/ test the /i/th _most_ significant
 -- bit.
@@ -67,21 +72,11 @@ bitseq_show = map bit_to_char
 bitarray_show :: Bitarray -> String
 bitarray_show = unlines . map bitseq_show . snd
 
-bitarray_pbm1 :: Bitarray -> String
-bitarray_pbm1 ((w,h),a) =
-    let ty = "P1"
-        dm = show w ++ " " ++ show h
-        f = intersperse ' ' . map bit_to_int
-    in unlines ([ty,dm] ++ map f a)
-
 bitmap_to_bitarray :: Bitmap -> Bitarray
 bitmap_to_bitarray ((w,h),m) = ((w,h),map (bitseq w) m)
 
 bitmap_show :: Bitmap -> String
 bitmap_show = bitarray_show . bitmap_to_bitarray
-
-bitmap_pbm1 :: Bitmap -> String
-bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
 
 -- | Index into bitmap at (row,column).
 bitmap_ix :: Bitmap -> (Int,Int) -> Bit
@@ -93,6 +88,15 @@ bitarray_to_bitindices (dm,v) =
         f i (j,b) = if b then Just (i,j) else Nothing
         g (i,r) = mapMaybe (f i) r
     in (dm,concatMap g v')
+
+bitindices_to_bitarray :: Bitindices -> Bitarray
+bitindices_to_bitarray ((w,h),ix) =
+    let f r c = (r,c) `elem` ix
+        g r = map (f r) [0 .. w - 1]
+    in ((w,h),map g [0 .. h - 1])
+
+indices_displace :: (Int,Int) -> Indices -> Indices
+indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
 
 -- * Glyphs
 
@@ -142,6 +146,9 @@ glyph_bitarray fb g =
     let Box (w,h,_,_) = fb
         f i j = glyph_ix fb g (i,j)
     in ((w,h),map (\n -> map (f n) [0 .. w - 1]) [0 .. h - 1])
+
+glyph_bitindices :: Box -> Glyph -> Bitindices
+glyph_bitindices bx = bitarray_to_bitindices . glyph_bitarray bx
 
 glyph_show :: Glyph -> String
 glyph_show = bitmap_show . glyph_bitmap
@@ -235,6 +242,15 @@ from_char (_,g) e =
     let f = maybe False ((==) e) . glyph_char
     in find f g
 
+from_char_err :: BDF -> Char -> Glyph
+from_char_err f c = fromMaybe (error ("from_char: " ++ [c])) (from_char f c)
+
+from_ascii :: Enum a => BDF -> a -> Maybe Glyph
+from_ascii bdf ch = from_encoding bdf (fromEnum ch)
+
+from_ascii_err :: BDF -> Char -> Glyph
+from_ascii_err f c = fromMaybe (error ("from_ascii: " ++ [c])) (from_ascii f c)
+
 -- * E/I
 
 -- | ('Encoding','Bitindices') representation of a glyph.
@@ -255,23 +271,58 @@ bdf_load_ei fn = do
 glyph_pp :: BDF -> Glyph -> String
 glyph_pp f = bitarray_show . glyph_bitarray (bdf_fontboundingbox f)
 
-glyph_pbm1 :: BDF -> Glyph -> String
-glyph_pbm1 f = bitarray_pbm1 . glyph_bitarray (bdf_fontboundingbox f)
-
 bdf_ascii :: FilePath -> IO ()
 bdf_ascii nm = do
   f <- bdf_read nm
   mapM_ (putStrLn . glyph_pp f) (bdf_printing_ascii f)
 
-bdf_pbm1 :: FilePath -> FilePath -> IO ()
-bdf_pbm1 nm dir = do
-  f <- bdf_read nm
+-- * PBM
+
+bitarray_pbm1 :: Bitarray -> String
+bitarray_pbm1 ((w,h),a) =
+    let ty = "P1"
+        dm = show w ++ " " ++ show h
+        f = intersperse ' ' . map bit_to_int
+    in unlines ([ty,dm] ++ map f a)
+
+bitmap_pbm1 :: Bitmap -> String
+bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
+
+glyph_pbm1 :: BDF -> Glyph -> String
+glyph_pbm1 f = bitarray_pbm1 . glyph_bitarray (bdf_fontboundingbox f)
+
+bdf_pbm1 :: BDF -> FilePath -> IO ()
+bdf_pbm1 f dir = do
   let wr g = writeFile (dir </> glyph_name g <.> "pbm") (glyph_pbm1 f g)
   mapM_ wr (snd f)
+
+-- * Text
+
+text_bitindices :: BDF -> String -> Bitindices
+text_bitindices bdf t =
+    let bx = bdf_fontboundingbox bdf
+        Box (w,h,_,_) = bx
+        l = lines t
+        nr = length l
+        nc = maximum (map length l)
+        c = map (\(ln,i) -> map (\(ch,j) -> ((i * h,j * w),ch)) (zip ln [0..])) (zip l [0..])
+        f (sh,ch) = let (_,ix) = glyph_bitindices bx (from_ascii_err bdf ch)
+                    in indices_displace sh ix
+    in ((nc * w,nr * h),concatMap f (concat c))
+
+text_pbm1 :: BDF -> String -> String
+text_pbm1 bdf t =
+    let ix = text_bitindices bdf t
+    in bitarray_pbm1 (bitindices_to_bitarray ix)
 
 {-
 ibm <- bdf_read "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
 crp <- bdf_read "/home/rohan/sw/hsc3-data/data/font/creep.bdf"
+
+let t = unlines [['a' .. 'z'],['A' .. 'Z'],['0' .. '9']]
+
+writeFile "/tmp/ibm.pbm" (text_pbm1 ibm t)
+writeFile "/tmp/crp.pbm" (text_pbm1 crp t)
 
 bdf_fontboundingbox ibm == Box (8,16,0,-4)
 bdf_fontboundingbox crp == Box (7,12,-1,-3)
@@ -291,7 +342,7 @@ length ibm_ei == 95
 bdf_ascii "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
 bdf_ascii "/home/rohan/sw/hsc3-data/data/font/creep.bdf"
 
-bdf_pbm1 "/home/rohan/sw/hsc3-data/data/font/ibm.bdf" "/tmp"
-bdf_pbm1 "/home/rohan/sw/hsc3-data/data/font/creep.bdf" "/tmp"
+bdf_pbm1 ibm "/tmp"
+bdf_pbm1 crp "/tmp"
 
 -}
