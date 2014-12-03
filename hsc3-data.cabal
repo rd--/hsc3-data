@@ -18,6 +18,7 @@ Data-files:        README
 Library
   Build-Depends:   base == 4.*,
                    bifunctors,
+                   filepath,
                    Glob,
                    hcg-minus == 0.16.*,
                    hmt == 0.16.*,

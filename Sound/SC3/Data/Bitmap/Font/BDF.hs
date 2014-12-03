@@ -1,4 +1,4 @@
--- | Parser for the _Glyph Bitmap Distribution Format_ (BDF) by Adobe.
+-- | Parser for the /Glyph Bitmap Distribution Format/ (BDF) by Adobe.
 --
 -- Adobe Glyph Bitmap Distribution Format (BDF) Specification, version 2.2.
 -- <http://partners.adobe.com/public/developer/en/font/5005.BDF_Spec.pdf>
@@ -14,13 +14,16 @@ import System.FilePath {- filepath -}
 
 -- * Bitmaps, Bitarrays and Bitindices
 
+-- | Width (number of columns).
 type Width = Int
 
+-- | Height (number of rows).
 type Height = Int
 
+-- | 'Width' and 'Height'.
 type Dimensions = (Width,Height)
 
--- | Bit as 0 = 'False' and 1 = 'True'.
+-- | Bit, as 0 = 'False' and 1 = 'True'.
 type Bit = Bool
 
 -- | List of 'Bit's, the first 'Bit' is the leftmost.
@@ -38,9 +41,16 @@ type Bitenc = Word8
 -- of each line represents the leftmost pixel.
 type Bitmap = (Dimensions,[Bitenc])
 
+-- | Row index.
 type Row = Int
+
+-- | Column index.
 type Column = Int
+
+-- | ('Row','Column') index.
 type Ix = (Row,Column)
+
+-- | List of 'Ix'.
 type Indices = [Ix]
 
 -- | The (row,column) indices for 'True' bits of a 'Bitarray'.
@@ -57,26 +67,8 @@ bitenc_test sz x i = testBit x (sz - 1 - i)
 bitseq :: FiniteBits b => Int -> b -> Bitseq
 bitseq n x = let sz = finiteBitSize x in map (bitenc_test sz x) [0 .. n - 1]
 
--- | Draw bit as @@@ for 'True' and @.@ for 'False'.
-bit_to_char :: Bit -> Char
-bit_to_char x = if x then '@' else '.'
-
-bit_to_int :: Bit -> Char
-bit_to_int x = if x then '1' else '0'
-
--- | Show 'Bitseq' using 'bit_to_char'.
-bitseq_show :: Bitseq -> String
-bitseq_show = map bit_to_char
-
--- | Show 'Bitarray' using 'bitseq_show'.
-bitarray_show :: Bitarray -> String
-bitarray_show = unlines . map bitseq_show . snd
-
 bitmap_to_bitarray :: Bitmap -> Bitarray
 bitmap_to_bitarray ((w,h),m) = ((w,h),map (bitseq w) m)
-
-bitmap_show :: Bitmap -> String
-bitmap_show = bitarray_show . bitmap_to_bitarray
 
 -- | Index into bitmap at (row,column).
 bitmap_ix :: Bitmap -> (Int,Int) -> Bit
@@ -149,9 +141,6 @@ glyph_bitarray fb g =
 
 glyph_bitindices :: Box -> Glyph -> Bitindices
 glyph_bitindices bx = bitarray_to_bitindices . glyph_bitarray bx
-
-glyph_show :: Glyph -> String
-glyph_show = bitmap_show . glyph_bitmap
 
 -- * BDF
 
@@ -265,32 +254,60 @@ bdf_load_ei fn = do
       is = map (bitarray_to_bitindices . glyph_bitarray fb) cs
   return (zip (map glyph_encoding cs) is)
 
--- * PP
+-- * Show and PP
 
--- | Variant of glyph_show that orients the locates the glyph in the 'bdf_fontboundingbox'.
+-- | Function to draw bit given (true,false) or (one,zero) characters.
+bit_to_char :: (Char,Char) -> Bit -> Char
+bit_to_char (one,zero) x = if x then one else zero
+
+-- | Show 'Bitseq', using @\@@ for 'True' and @.@ for 'False'.
+bitseq_show :: Bitseq -> String
+bitseq_show = map (bit_to_char ('@','.'))
+
+-- | Show 'Bitarray' using 'bitseq_show'.
+bitarray_show :: Bitarray -> String
+bitarray_show = unlines . map bitseq_show . snd
+
+bitmap_show :: Bitmap -> String
+bitmap_show = bitarray_show . bitmap_to_bitarray
+
+glyph_show :: Glyph -> String
+glyph_show = bitmap_show . glyph_bitmap
+
+-- | Variant of glyph_show that locates the glyph in the
+-- 'bdf_fontboundingbox', ie. 'bitarray_show' of 'glyph_bitarray'.
 glyph_pp :: BDF -> Glyph -> String
 glyph_pp f = bitarray_show . glyph_bitarray (bdf_fontboundingbox f)
 
+-- | 'glyph_pp' of all 'bdf_printing_ascii' of font given by 'FilePath'..
 bdf_ascii :: FilePath -> IO ()
 bdf_ascii nm = do
   f <- bdf_read nm
   mapM_ (putStrLn . glyph_pp f) (bdf_printing_ascii f)
 
--- * PBM
+-- * PBM1
 
-bitarray_pbm1 :: Bitarray -> String
+-- | Portable Bit Map (format 1, netpbm standard)
+type PBM1 = String
+
+-- | 'PBM1' of 'Bitarray'.
+bitarray_pbm1 :: Bitarray -> PBM1
 bitarray_pbm1 ((w,h),a) =
     let ty = "P1"
         dm = show w ++ " " ++ show h
-        f = intersperse ' ' . map bit_to_int
+        f = intersperse ' ' . map (bit_to_char ('1','0'))
     in unlines ([ty,dm] ++ map f a)
 
-bitmap_pbm1 :: Bitmap -> String
+-- | 'PBM1' of 'Bitmap'.
+bitmap_pbm1 :: Bitmap -> PBM1
 bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
 
-glyph_pbm1 :: BDF -> Glyph -> String
+-- | 'PBM1' of 'Glyph'.
+glyph_pbm1 :: BDF -> Glyph -> PBM1
 glyph_pbm1 f = bitarray_pbm1 . glyph_bitarray (bdf_fontboundingbox f)
 
+-- | Given 'BDF' /font/ and directory name, write all glyphs as 'PBM1'
+-- files, the name of the file is given by 'glyph_name'.
 bdf_pbm1 :: BDF -> FilePath -> IO ()
 bdf_pbm1 f dir = do
   let wr g = writeFile (dir </> glyph_name g <.> "pbm") (glyph_pbm1 f g)
@@ -298,6 +315,9 @@ bdf_pbm1 f dir = do
 
 -- * Text
 
+-- | Given a 'BDF' /font/ and a 'String' /text/, generate a
+-- 'Bitindices' value.  All glyphs are equal size, given by
+-- 'bdf_fontboundingbox'.
 text_bitindices :: BDF -> String -> Bitindices
 text_bitindices bdf t =
     let bx = bdf_fontboundingbox bdf
@@ -310,7 +330,8 @@ text_bitindices bdf t =
                     in indices_displace sh ix
     in ((nc * w,nr * h),concatMap f (concat c))
 
-text_pbm1 :: BDF -> String -> String
+-- | 'PBM1' of 'text_bitindices'.
+text_pbm1 :: BDF -> String -> PBM1
 text_pbm1 bdf t =
     let ix = text_bitindices bdf t
     in bitarray_pbm1 (bitindices_to_bitarray ix)
@@ -336,13 +357,13 @@ let crp_cs = bdf_printing_ascii crp
 mapM_ (putStrLn . glyph_pp ibm) ibm_cs
 mapM_ (putStrLn . glyph_pp crp) crp_cs
 
-ibm_ei <- bdf_load_ei "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
-length ibm_ei == 95
-
 bdf_ascii "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
 bdf_ascii "/home/rohan/sw/hsc3-data/data/font/creep.bdf"
 
 bdf_pbm1 ibm "/tmp"
 bdf_pbm1 crp "/tmp"
 
+ibm_ei <- bdf_load_ei "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
+length ibm_ei == 95
+map (length . snd . snd) ibm_ei
 -}
