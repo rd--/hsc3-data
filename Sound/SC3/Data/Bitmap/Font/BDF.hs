@@ -74,6 +74,14 @@ bitmap_to_bitarray ((w,h),m) = ((w,h),map (bitseq w) m)
 bitmap_ix :: Bitmap -> (Int,Int) -> Bit
 bitmap_ix (_,m) (i,j) = bitenc_test 8 (m !! i) j
 
+-- | Magnify by (width,height) multipliers.
+bitindices_magnify :: (Int,Int) -> Bitindices -> Bitindices
+bitindices_magnify (mx,my) ((w,h),ix) =
+    let f (r,c) = let r' = r * my
+                      c' = c * mx
+                  in [(r + i,c + j) | i <- [r' .. r' + my - 1], j <- [c'.. c' + mx - 1]]
+    in ((w * mx,h * my),concatMap f ix)
+
 bitarray_to_bitindices :: Bitarray -> Bitindices
 bitarray_to_bitindices (dm,v) =
     let v' = zip [0..] (map (zip [0..]) v)
