@@ -20,8 +20,8 @@ type Width = Int
 -- | Height (number of rows).
 type Height = Int
 
--- | 'Width' and 'Height'.
-type Dimensions = (Width,Height)
+-- | 'Height' and 'Width', the ordering follows the indexing scheme (ie. rows then columns).
+type Dimensions = (Height,Width)
 
 -- | Bit, as 0 = 'False' and 1 = 'True'.
 type Bit = Bool
@@ -68,21 +68,21 @@ bitseq :: FiniteBits b => Int -> b -> Bitseq
 bitseq n x = let sz = finiteBitSize x in map (bitenc_test sz x) [0 .. n - 1]
 
 bitmap_to_bitarray :: Bitmap -> Bitarray
-bitmap_to_bitarray ((w,h),m) = ((w,h),map (bitseq w) m)
+bitmap_to_bitarray ((h,w),m) = ((h,w),map (bitseq w) m)
 
 -- | Index into bitmap at (row,column).
 bitmap_ix :: Bitmap -> (Int,Int) -> Bit
 bitmap_ix (_,m) (i,j) = bitenc_test 8 (m !! i) j
 
--- | Magnify by (width,height) multipliers.
+-- | Magnify by (height,width) multipliers.
 --
 -- > bitindices_magnify (8,2) ((2,2),[(0,0),(1,1)])
 bitindices_magnify :: (Int,Int) -> Bitindices -> Bitindices
-bitindices_magnify (mx,my) ((w,h),ix) =
+bitindices_magnify (mx,my) ((h,w),ix) =
     let f (r,c) = let r' = r * my
                       c' = c * mx
                   in [(i,j) | i <- [r' .. r' + my - 1], j <- [c' .. c' + mx - 1]]
-    in ((w * mx,h * my),concatMap f ix)
+    in ((h * mx,w * my),concatMap f ix)
 
 bitarray_to_bitindices :: Bitarray -> Bitindices
 bitarray_to_bitindices (dm,v) =
@@ -92,10 +92,10 @@ bitarray_to_bitindices (dm,v) =
     in (dm,concatMap g v')
 
 bitindices_to_bitarray :: Bitindices -> Bitarray
-bitindices_to_bitarray ((w,h),ix) =
+bitindices_to_bitarray ((h,w),ix) =
     let f r c = (r,c) `elem` ix
         g r = map (f r) [0 .. w - 1]
-    in ((w,h),map g [0 .. h - 1])
+    in ((h,w),map g [0 .. h - 1])
 
 indices_displace :: (Int,Int) -> Indices -> Indices
 indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
@@ -147,7 +147,7 @@ glyph_bitarray :: Box -> Glyph -> Bitarray
 glyph_bitarray fb g =
     let Box (w,h,_,_) = fb
         f i j = glyph_ix fb g (i,j)
-    in ((w,h),map (\n -> map (f n) [0 .. w - 1]) [0 .. h - 1])
+    in ((h,w),map (\n -> map (f n) [0 .. w - 1]) [0 .. h - 1])
 
 glyph_bitindices :: Box -> Glyph -> Bitindices
 glyph_bitindices bx = bitarray_to_bitindices . glyph_bitarray bx
@@ -196,7 +196,7 @@ parse_glyph s =
         (w,h,_,_) = bb
     in if w > 8
        then error "parse_glyph: width > 8"
-       else Glyph nm en (Box bb) (parse_bitmap (w,h) s) pp
+       else Glyph nm en (Box bb) (parse_bitmap (h,w) s) pp
 
 -- splitWhen variant (keeps delimiters at left)
 sep_when :: (a -> Bool) -> [a] -> [[a]]
@@ -302,7 +302,7 @@ type PBM1 = String
 
 -- | 'PBM1' of 'Bitarray'.
 bitarray_pbm1 :: Bitarray -> PBM1
-bitarray_pbm1 ((w,h),a) =
+bitarray_pbm1 ((h,w),a) =
     let ty = "P1"
         dm = show w ++ " " ++ show h
         f = intersperse ' ' . map (bit_to_char ('1','0'))
@@ -338,7 +338,7 @@ text_bitindices bdf t =
         c = map (\(ln,i) -> map (\(ch,j) -> ((i * h,j * w),ch)) (zip ln [0..])) (zip l [0..])
         f (sh,ch) = let (_,ix) = glyph_bitindices bx (from_ascii_err bdf ch)
                     in indices_displace sh ix
-    in ((nc * w,nr * h),concatMap f (concat c))
+    in ((nr * h,nc * w),concatMap f (concat c))
 
 -- | 'PBM1' of 'text_bitindices'.
 text_pbm1 :: BDF -> String -> PBM1
