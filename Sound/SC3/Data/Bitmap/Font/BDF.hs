@@ -74,6 +74,24 @@ bitmap_to_bitarray ((h,w),m) = ((h,w),map (bitseq w) m)
 bitmap_ix :: Bitmap -> (Int,Int) -> Bit
 bitmap_ix (_,m) (i,j) = bitenc_test 8 (m !! i) j
 
+bitindices_height :: Bitindices -> Height
+bitindices_height = fst . fst
+
+bitindices_row :: Bitindices -> Row -> [Column]
+bitindices_row b r = map snd (filter ((== r) . fst) (snd b))
+
+bitindices_rows :: Bitindices -> [[Column]]
+bitindices_rows b = map (bitindices_row b) [0 .. bitindices_height b - 1]
+
+bitindices_width :: Bitindices -> Width
+bitindices_width = snd . fst
+
+bitindices_column :: Bitindices -> Column -> [Row]
+bitindices_column b c = map fst (filter ((== c) . snd) (snd b))
+
+bitindices_columns :: Bitindices -> [[Row]]
+bitindices_columns b = map (bitindices_column b) [0 .. bitindices_width b - 1]
+
 -- | Magnify by (height,width) multipliers.
 --
 -- > bitindices_magnify (8,2) ((2,2),[(0,0),(1,1)])
