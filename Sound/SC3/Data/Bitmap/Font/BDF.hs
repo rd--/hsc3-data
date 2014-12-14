@@ -299,6 +299,9 @@ bitarray_show = unlines . map bitseq_show . snd
 bitmap_show :: Bitmap -> String
 bitmap_show = bitarray_show . bitmap_to_bitarray
 
+bitindices_show :: Bitindices -> String
+bitindices_show = bitarray_show . bitindices_to_bitarray
+
 glyph_show :: Glyph -> String
 glyph_show = bitmap_show . glyph_bitmap
 
@@ -358,11 +361,12 @@ text_bitindices bdf t =
                     in indices_displace sh ix
     in ((nr * h,nc * w),concatMap f (concat c))
 
+bitindices_pbm1 :: Bitindices -> PBM1
+bitindices_pbm1 = bitarray_pbm1 . bitindices_to_bitarray
+
 -- | 'PBM1' of 'text_bitindices'.
 text_pbm1 :: BDF -> String -> PBM1
-text_pbm1 bdf t =
-    let ix = text_bitindices bdf t
-    in bitarray_pbm1 (bitindices_to_bitarray ix)
+text_pbm1 bdf = bitindices_pbm1 . text_bitindices bdf
 
 {-
 ibm <- bdf_read "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
