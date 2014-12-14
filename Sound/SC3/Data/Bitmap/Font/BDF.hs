@@ -92,6 +92,9 @@ bitindices_column b c = map fst (filter ((== c) . snd) (snd b))
 bitindices_columns :: Bitindices -> [[Row]]
 bitindices_columns b = map (bitindices_column b) [0 .. bitindices_width b - 1]
 
+bitindices_swap :: Bitindices -> Bitindices
+bitindices_swap (dm,ix) = let f (i,j) = (j,i) in (f dm,map f ix)
+
 -- | Magnify by (height,width) multipliers.
 --
 -- > bitindices_magnify (8,2) ((2,2),[(0,0),(1,1)])
