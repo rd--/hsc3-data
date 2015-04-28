@@ -4,19 +4,19 @@ Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL
 Category:          Sound
-Copyright:         (c) Rohan Drape, 2013-2014
+Copyright:         (c) Rohan Drape, 2013-2015
 Author:            Rohan Drape
 Maintainer:        rd@slavepianos.org
 Stability:         Experimental
 Homepage:          http://rd.slavepianos.org/t/hsc3-data
-Tested-With:       GHC == 7.8.2
+Tested-With:       GHC == 7.10.1
 Build-Type:        Simple
 Cabal-Version:     >= 1.8
 
 Data-files:        README
 
 Library
-  Build-Depends:   base == 4.*,
+  Build-Depends:   base >= 4.8,
                    bifunctors,
                    filepath,
                    Glob,
