@@ -3,10 +3,10 @@ module Sound.SC3.Data.SVG where
 
 import Data.List {- base -}
 import Data.Maybe {- base -}
-import System.IO.Unsafe {- base -}
+import qualified System.IO.Unsafe as U {- base -}
 import qualified Text.XML.Light as X {- xml -}
 
-import Graphics.SVG.ReadPath as P {- SVGPath -}
+import qualified Graphics.SVG.ReadPath as P {- SVGPath -}
 
 import Data.CG.Minus {- hcg-minus -}
 import Sound.SC3.Plot {- hsc3-plot -}
@@ -18,8 +18,8 @@ svg_name nm =
          {X.qName = nm
          ,X.qURI = Just "http://www.w3.org/2000/svg"}
 
-pathFromString' :: String -> Either String [PathCommand]
-pathFromString' = Right . unsafePerformIO . P.pathFromString
+pathFromString' :: String -> Either String [P.PathCommand]
+pathFromString' = Right . U.unsafePerformIO . P.pathFromString
 
 parse_path :: String -> [P.PathCommand]
 parse_path str =
@@ -81,3 +81,27 @@ pathcommand_to_abs (x,y) cmd =
 -- starting point.
 path_to_abs :: (R,R) -> [P.PathCommand] -> ((R,R),[P.PathCommand])
 path_to_abs = mapAccumL pathcommand_to_abs
+
+-- | Extend bounds considering /only/ endpoints.
+pathcommand_extend_ep_bounds :: ((R,R),(R,R)) -> P.PathCommand -> ((R,R),(R,R))
+pathcommand_extend_ep_bounds b cmd =
+    let ((x0,y0),(x1,y1)) = b
+        ext (x,y) = ((min x x0,min y y0),(max x x1,max y y1))
+    in case cmd of
+      P.M_abs p -> ext p
+      P.Z -> b
+      P.L_abs p -> ext p
+      P.H_abs x -> ext (x,y0)
+      P.V_abs y -> ext (x0,y)
+      P.C_abs (_,_,_,_,x,y) -> ext (x,y)
+      P.S_abs (_,_,x,y) -> ext (x,y)
+      P.Q_abs (_,_,x,y) -> ext (x,y)
+      P.T_abs p -> ext p
+      P.A_abs -> b
+      _ -> error "pathcommand_extend_bounds: relative cmd"
+
+path_ep_bounds :: ((R,R),(R,R)) -> [P.PathCommand] -> ((R,R),(R,R))
+path_ep_bounds = foldl pathcommand_extend_ep_bounds
+
+path_ep_bounds_o :: [P.PathCommand] -> ((R,R),(R,R))
+path_ep_bounds_o = path_ep_bounds ((0,0),(0,0))
