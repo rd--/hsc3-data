@@ -18,6 +18,7 @@ Data-files:        README
 Library
   Build-Depends:   base >= 4.8,
                    bifunctors,
+                   bitwise,
                    filepath,
                    Glob,
                    hcg-minus == 0.16.*,
@@ -32,6 +33,7 @@ Library
                    xml
   GHC-Options:     -Wall -fwarn-tabs
   Exposed-modules: Sound.SC3.Data.Bitmap.Font.BDF
+                   Sound.SC3.Data.Bitmap.Type
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
