@@ -1,8 +1,11 @@
--- | Write Type-0 midi files for plain midi note data.
+-- | Write Type-0 (single track) midi files for plain RQ midi note data.
+-- Voices are encoded as channels (Finale can extract these).
+-- Simpler than MusicXML transfer for cases where durations are straightforward.
 module Sound.SC3.Data.Midi.Plain where
 
 import Data.Function {- base -}
 import Data.List {- base -}
+import Data.Maybe {- base -}
 
 import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
@@ -51,10 +54,36 @@ write_midi fn sq =
         t = M.fromRealTime tf . M.fromAbsTime . add_track_end . sortBy t_cmp $ m
     in M.exportFile fn (M.Midi ft tf [t])
 
+track_to_wseq :: [(Time,M.Message)] -> SEQ
+track_to_wseq =
+    let f (tm,msg) = case msg of
+                       M.NoteOn ch mnn vel ->
+                           let ty = if vel == 0 then T.Off else T.On
+                           in Just (tm,ty (mnn,ch))
+                       M.NoteOff ch mnn _ ->
+                           Just (tm,T.Off (mnn,ch))
+                       _ -> Nothing
+    in T.tseq_on_off_to_wseq (==) . mapMaybe f
+
+-- | Load MIDI file as 'SEQ' data.
+read_midi :: FilePath -> IO [SEQ]
+read_midi fn = do
+  r <- M.importFile fn
+  case r of
+    Left err -> error err
+    Right m -> let dv = M.timeDiv m
+                   f = track_to_wseq . M.toRealTime dv . M.toAbsTime
+                   sq = filter (not . null) (map f (M.tracks m))
+               in return sq
+
 -- | Write MND type CSV file.
 write_csv :: FilePath -> [SEQ] -> IO ()
 write_csv fn =
     T.midi_tseq_write fn .
     T.midi_wseq_to_midi_tseq .
     T.tseq_map (\(mn,ch) -> (mn,127,ch)) .
-    foldl1 T.wseq_merge
+    seq_merge
+
+seq_merge :: [SEQ] -> SEQ
+seq_merge = foldr T.wseq_merge []
+
