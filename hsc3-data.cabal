@@ -21,6 +21,7 @@ Library
                    filepath,
                    Glob,
                    hcg-minus == 0.16.*,
+                   HCodecs,
                    hmt == 0.16.*,
                    hsc3-lang == 0.16.*,
                    hsc3-plot == 0.16.*,
@@ -34,6 +35,7 @@ Library
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
+                   Sound.SC3.Data.Midi.Plain
                    Sound.SC3.Data.SVG
                    Sound.SC3.Data.Trace
 
