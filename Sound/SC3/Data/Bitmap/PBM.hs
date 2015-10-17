@@ -4,6 +4,7 @@ module Sound.SC3.Data.Bitmap.PBM where
 import Data.Bits {- base -}
 import qualified Data.ByteString as B {- bytestring -}
 import Data.List {- base -}
+import Data.Word {- base -}
 
 import qualified Codec.Image.PBM as I {- bitwise -}
 import qualified Data.Array.BitArray as A {- bitwise -}
@@ -31,29 +32,45 @@ bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
 bitindices_pbm1 :: Bitindices -> PBM1
 bitindices_pbm1 = bitarray_pbm1 . bitindices_to_bitarray
 
--- * PBM4
+-- * PBM
 
-type PBM4 = I.PBM
+type PBM = I.PBM
 
--- | Load one image from a PBM(4) file.
-read_pbm4_1 :: FilePath -> IO PBM4
-read_pbm4_1 nm = do
+w8_char :: Word8 -> Char
+w8_char = toEnum . fromIntegral
+
+bs_string :: B.ByteString -> String
+bs_string = map w8_char . B.unpack
+
+decode_pbm1 :: B.ByteString -> Either String I.PBM
+decode_pbm1 = either (Left . show) (Right . fst) . I.decodePlainPBM . bs_string
+
+decode_pbm4 :: B.ByteString -> Either String I.PBM
+decode_pbm4 = either (Left . show) (Right . fst) . I.decodePBM
+
+-- | Load one image from a PBM(1) or PBM(4) file.
+read_pbm :: FilePath -> IO PBM
+read_pbm nm = do
   b <- B.readFile nm
-  case I.decodePBM b of
-    Left _ -> error "read_pbm1"
-    Right (i,_) -> return i
+  let df = case B.index b 1 of
+             49 -> decode_pbm1
+             52 -> decode_pbm4
+             _ -> error "read_pbm: not P1 or P4?"
+  case df b of
+    Left err -> error (show ("read_pbm",err))
+    Right i -> return i
 
-pbm4_ascii :: PBM4 -> String
-pbm4_ascii = bitindices_show . pbm4_to_bitindices
+pbm_ascii :: PBM -> String
+pbm_ascii = bitindices_show . pbm_to_bitindices
 
--- | 'pbm4_ascii' of 'read_pbm4_1'
-pbm4_print_ascii :: FilePath -> IO ()
-pbm4_print_ascii nm = do
-  pbm <- read_pbm4_1 nm
-  putStrLn ("\n" ++ pbm4_ascii pbm)
+-- | 'pbm_ascii' of 'read_pbm'
+pbm_print_ascii :: FilePath -> IO ()
+pbm_print_ascii nm = do
+  pbm <- read_pbm nm
+  putStrLn ("\n" ++ pbm_ascii pbm)
 
-pbm4_to_bitindices :: PBM4 -> Bitindices
-pbm4_to_bitindices i =
+pbm_to_bitindices :: PBM -> Bitindices
+pbm_to_bitindices i =
     let a = I.pbmPixels i
         w = I.pbmWidth i
         b = case A.bounds a of
