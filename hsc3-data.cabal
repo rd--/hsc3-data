@@ -19,6 +19,7 @@ Library
   Build-Depends:   base >= 4.8,
                    bifunctors,
                    bitwise,
+                   bytestring,
                    filepath,
                    Glob,
                    hcg-minus == 0.16.*,

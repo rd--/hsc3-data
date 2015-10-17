@@ -1,7 +1,6 @@
 module Sound.SC3.Data.Bitmap.Type where
 
 import Data.Bits {- base -}
-import Data.List {- base -}
 import Data.Maybe {- base -}
 
 -- * Bitmaps, Bitarrays and Bitindices
@@ -133,25 +132,3 @@ bitmap_show = bitarray_show . bitmap_to_bitarray
 
 bitindices_show :: Bitindices -> String
 bitindices_show = bitarray_show . bitindices_to_bitarray
-
--- * PBM1
-
--- | Portable Bit Map (format 1, netpbm standard)
-type PBM1 = String
-
--- | 'PBM1' of 'Bitarray'.
-bitarray_pbm1 :: Bitarray -> PBM1
-bitarray_pbm1 ((h,w),a) =
-    let ty = "P1"
-        dm = show w ++ " " ++ show h
-        f = intersperse ' ' . map (bit_to_char ('1','0'))
-    in unlines ([ty,dm] ++ map f a)
-
--- | 'PBM1' of 'Bitmap'.
-bitmap_pbm1 :: FiniteBits b => Bitmap b -> PBM1
-bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
-
--- * Text
-
-bitindices_pbm1 :: Bitindices -> PBM1
-bitindices_pbm1 = bitarray_pbm1 . bitindices_to_bitarray

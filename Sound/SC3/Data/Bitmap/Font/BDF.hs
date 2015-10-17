@@ -11,6 +11,7 @@ import Data.Maybe {- base -}
 import Data.Word {- base -}
 import System.FilePath {- filepath -}
 
+import Sound.SC3.Data.Bitmap.PBM {- hsc3-data -}
 import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
 
 -- * Glyphs
