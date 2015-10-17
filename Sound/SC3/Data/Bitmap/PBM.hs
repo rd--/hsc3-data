@@ -32,7 +32,7 @@ bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
 bitindices_pbm1 :: Bitindices -> PBM1
 bitindices_pbm1 = bitarray_pbm1 . bitindices_to_bitarray
 
--- * PBM
+-- * PBM 1 & 4
 
 type PBM = I.PBM
 
@@ -57,7 +57,7 @@ read_pbm nm = do
              52 -> decode_pbm4
              _ -> error "read_pbm: not P1 or P4?"
   case df b of
-    Left err -> error (show ("read_pbm",err))
+    Left err -> error ("read_pbm: " ++ err)
     Right i -> return i
 
 pbm_ascii :: PBM -> String

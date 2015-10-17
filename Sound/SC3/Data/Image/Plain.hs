@@ -150,6 +150,20 @@ img_bw_to_bitarray i =
 img_bw_write_pbm :: FilePath -> IMAGE -> IO ()
 img_bw_write_pbm fn = writeFile fn . D.bitarray_pbm1 . img_bw_to_bitarray
 
+rgb8_bw_inverse :: RGB8 -> RGB8
+rgb8_bw_inverse (I.PixelRGB8 r g b) =
+    case (r,g,b) of
+      (255,255,255) -> I.PixelRGB8 0 0 0
+      (0,0,0) -> I.PixelRGB8 255 255 255
+      _ -> error "rgb8_bw_inverse: not B or W"
+
+img_bw_inverse :: IMAGE -> IMAGE
+img_bw_inverse = I.pixelMap rgb8_bw_inverse
+
+img_bw_write_sf :: FilePath -> IMAGE -> IO ()
+img_bw_write_sf fn = img_gs_write_sf fn . img_bw_inverse
+
+
 -- * Miscellaneous
 
 either_err :: Show e => String -> Either e c -> c
@@ -157,7 +171,7 @@ either_err nm = either (\err -> error (show (nm,err))) id
 
 {-
 
-let fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2014-12-13/06.le.png"
+let fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2014-12-13/02.le.png"
 let fn = "/home/rohan/uc/sp-id/jpeg/eliminator.jpeg"
 
 i <- img_load fn
@@ -169,7 +183,7 @@ let gs = map (map rgb8_to_gs_eq') ro
 
 img_bw_write_pbm "/tmp/t.pbm" i
 
-img_gs_write_sf "/tmp/t.au" i
+img_gs_write_sf "/tmp/t.au" (img_bw_inverse i)
 
 i' <- img_gs_read_sf "/tmp/t.au"
 img_dimensions i'
