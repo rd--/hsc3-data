@@ -1,3 +1,4 @@
+-- | PBM image files.
 module Sound.SC3.Data.Bitmap.PBM where
 
 import Data.Bits {- base -}
@@ -14,7 +15,7 @@ import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
 -- | Portable Bit Map (format 1, netpbm standard)
 type PBM1 = String
 
--- | 'PBM1' of 'Bitarray'.
+-- | 'PBM1' of 'Bitarray', note that black is written @1@ and white @0@.
 bitarray_pbm1 :: Bitarray -> PBM1
 bitarray_pbm1 ((h,w),a) =
     let ty = "P1"

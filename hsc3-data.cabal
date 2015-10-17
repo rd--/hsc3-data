@@ -27,7 +27,9 @@ Library
                    hmt == 0.16.*,
                    hsc3-lang == 0.16.*,
                    hsc3-plot == 0.16.*,
+                   hsc3-sf == 0.16.*,
                    hsc3-sf-hsndfile == 0.16.*,
+                   JuicyPixels,
                    safe,
                    split,
                    SVGPath >= 1.1.1,
@@ -35,6 +37,7 @@ Library
   GHC-Options:     -Wall -fwarn-tabs
   Exposed-modules: Sound.SC3.Data.Bitmap.Font.BDF
                    Sound.SC3.Data.Bitmap.Type
+                   Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
