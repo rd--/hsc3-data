@@ -16,3 +16,11 @@ main = do
   case a of
     [fn] -> sf_to_img fn
     _ -> putStrLn "sf-to-img file-name"
+
+{-
+
+let fn = "/home/rohan/desert/01.bw.extract.png.au"
+(hdr,Just vec) <- SF.read_vec fn
+ERROR: out of memory (requested 17783848960 bytes)
+
+-}

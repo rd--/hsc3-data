@@ -63,14 +63,14 @@ type RGB = T3 Double
 w8_to_fractional :: Fractional n => I.Pixel8 -> n
 w8_to_fractional = (/ 255) . fromIntegral
 
-w8_to_float :: I.Pixel8 -> Float
-w8_to_float = w8_to_fractional
+w8_to_f32 :: I.Pixel8 -> Float
+w8_to_f32 = w8_to_fractional
 
-w8_to_double :: I.Pixel8 -> Double
-w8_to_double = w8_to_fractional
+w8_to_f64 :: I.Pixel8 -> Double
+w8_to_f64 = w8_to_fractional
 
 rgb8_to_rgb :: RGB8 -> RGB
-rgb8_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_double in (f r,f g,f b)
+rgb8_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_f64 in (f r,f g,f b)
 
 img_row_rgb :: IMAGE -> Int -> [RGB]
 img_row_rgb i = map rgb8_to_rgb . img_row i
@@ -110,7 +110,7 @@ rgb_to_gs_rec_709 = C.rgb_to_gs_luminosity C.luminosity_coef_rec_709 . rgb8_to_r
 rgb8_to_gs_eq :: RGB8 -> Either RGB8 GREY
 rgb8_to_gs_eq px =
     let (I.PixelRGB8 r g b) = px
-    in if r == g && r == b then Right (w8_to_double r) else Left px
+    in if r == g && r == b then Right (w8_to_f64 r) else Left px
 
 -- | 'error' variant.
 rgb8_to_gs_eq' :: RGB8 -> GREY
@@ -168,7 +168,7 @@ img_gs_read_sf :: FilePath -> IO IMAGE
 img_gs_read_sf fn = do
   (hdr,ro) <- SF.read fn
   let SF.Header nc nf _ = hdr
-  return (img_from_gs (nf,nc) ro)
+  return (img_from_gs (nf,nc) (map (map realToFrac) ro))
 
 -- | Read NeXT audio file as image, channels are rows.
 img_gs_read_au :: FilePath -> IO IMAGE
@@ -241,9 +241,9 @@ img_bw_write_pbm "/tmp/t.pbm" i
 let v = img_gs_vec_co (rgb8_to_gs RED) i
 V.length v
 
-img_gs_write_sf (rgb8_to_gs RED) "/tmp/t.au" i
+img_gs_write_sf (rgb8_to_gs_ch RED) "/tmp/t.au" i
 
-img_gs_write_au (rgb8_to_gs RED) "/tmp/t.au" i
+img_gs_write_au (rgb8_to_gs_ch RED) "/tmp/t.au" i
 
 (img_bw_inverse i)
 
