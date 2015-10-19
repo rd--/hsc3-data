@@ -33,6 +33,7 @@ Library
                    safe,
                    split,
                    SVGPath >= 1.1.1,
+                   vector,
                    xml
   GHC-Options:     -Wall -fwarn-tabs
   Exposed-modules: Sound.SC3.Data.Bitmap.Font.BDF

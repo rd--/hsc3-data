@@ -8,7 +8,10 @@ import qualified Codec.Picture.Types as I {- JuicyPixels -}
 import qualified Sound.SC3.Data.Bitmap.PBM as D {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as D {- hsc3-data -}
 
-import qualified Sound.File.NeXT as SF {- hsc3-sf -}
+import qualified Sound.File.NeXT as AU {- hsc3-sf -}
+import qualified Sound.File.HSndFile as SF {- hsc3-sf -}
+
+import qualified Data.Vector.Storable as V {- vector -}
 
 -- * IMAGE
 
@@ -55,11 +58,17 @@ img_row_order i = map (img_row i) [0 .. I.imageHeight i - 1]
 type T3 a = (a,a,a)
 type RGB = T3 Double
 
-w8_to_f :: I.Pixel8 -> Double
-w8_to_f = (/ 255) . fromIntegral
+w8_to_fractional :: Fractional n => I.Pixel8 -> n
+w8_to_fractional = (/ 255) . fromIntegral
+
+w8_to_float :: I.Pixel8 -> Float
+w8_to_float = w8_to_fractional
+
+w8_to_double :: I.Pixel8 -> Double
+w8_to_double = w8_to_fractional
 
 rgb8_to_rgb :: RGB8 -> RGB
-rgb8_to_rgb (I.PixelRGB8 r g b) = (w8_to_f r,w8_to_f g,w8_to_f b)
+rgb8_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_double in (f r,f g,f b)
 
 img_row_rgb :: IMAGE -> Int -> [RGB]
 img_row_rgb i = map rgb8_to_rgb . img_row i
@@ -78,11 +87,14 @@ img_row_order_rgb i = map (img_row_rgb i) [0 .. I.imageHeight i - 1]
 -- | Grey value, 0.0 is black & 1.0 is white.
 type GREY = Double
 
+rgb8_to_gs_red :: Fractional n => I.PixelRGB8 -> n
+rgb8_to_gs_red (I.PixelRGB8 r _ _) = w8_to_fractional r
+
 -- | Require R G and B values to be equal.
 rgb8_to_gs_eq :: RGB8 -> Either RGB8 GREY
 rgb8_to_gs_eq px =
     let (I.PixelRGB8 r g b) = px
-    in if r == g && r == b then Right (w8_to_f r) else Left px
+    in if r == g && r == b then Right (w8_to_double r) else Left px
 
 -- | 'error' variant.
 rgb8_to_gs_eq' :: RGB8 -> GREY
@@ -94,14 +106,29 @@ rgb8_to_gs_eq' = either_err "rgb8_to_gs_eq" . rgb8_to_gs_eq
 gs_to_rgb8 :: GREY -> RGB8
 gs_to_rgb8 x = let x' = floor (x * 255) in I.PixelRGB8 x' x' x'
 
+-- | Column order vector.
+img_gs_vec_co :: (RGB8 -> Double) -> IMAGE -> V.Vector Double
+img_gs_vec_co to_gs i =
+    let (w,h) = img_dimensions i
+        f n = let (x,y) = n `divMod` h in to_gs (I.pixelAt i x y)
+    in V.generate (w * h) f
+
+-- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
+img_gs_write_sf :: (RGB8 -> Double) -> FilePath -> IMAGE -> IO ()
+img_gs_write_sf to_gs fn i =
+    let (w,h) = img_dimensions i
+        v = img_gs_vec_co to_gs i
+        hdr = SF.Header h w 44100
+    in SF.write_vec fn hdr v
+
 -- | Write greyscale image as audio file.  Each row is stored as a channel.
-img_gs_write_sf :: FilePath -> IMAGE -> IO ()
-img_gs_write_sf fn i =
+img_gs_write_au :: (RGB8 -> Double) -> FilePath -> IMAGE -> IO ()
+img_gs_write_au to_gs fn i =
     let (w,h) = img_dimensions i
         ro = img_row_order i
-        ro' = map (map rgb8_to_gs_eq') ro
-        hdr = SF.Header w SF.Float 44100 h
-    in SF.write fn hdr ro'
+        ro' = map (map to_gs) ro
+        hdr = AU.Header w AU.Float 44100 h
+    in AU.write fn hdr ro'
 
 img_from_gs :: (Int,Int) -> [[GREY]] -> IMAGE
 img_from_gs (w,h) ro =
@@ -119,7 +146,14 @@ ro_derive_dimensions ro =
 img_gs_read_sf :: FilePath -> IO IMAGE
 img_gs_read_sf fn = do
   (hdr,ro) <- SF.read fn
-  let SF.Header nf _ _ nc = hdr
+  let SF.Header nc nf _ = hdr
+  return (img_from_gs (nf,nc) ro)
+
+-- | Read NeXT audio file as image, channels are rows.
+img_gs_read_au :: FilePath -> IO IMAGE
+img_gs_read_au fn = do
+  (hdr,ro) <- AU.read fn
+  let AU.Header nf _ _ nc = hdr
   return (img_from_gs (nf,nc) ro)
 
 img_write_png :: FilePath -> IMAGE -> IO ()
@@ -161,8 +195,7 @@ img_bw_inverse :: IMAGE -> IMAGE
 img_bw_inverse = I.pixelMap rgb8_bw_inverse
 
 img_bw_write_sf :: FilePath -> IMAGE -> IO ()
-img_bw_write_sf fn = img_gs_write_sf fn . img_bw_inverse
-
+img_bw_write_sf fn = img_gs_write_sf rgb8_to_gs_red fn . img_bw_inverse
 
 -- * Miscellaneous
 
@@ -171,8 +204,9 @@ either_err nm = either (\err -> error (show (nm,err))) id
 
 {-
 
-let fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2014-12-13/02.le.png"
+let fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2014-12-13/06.le.png"
 let fn = "/home/rohan/uc/sp-id/jpeg/eliminator.jpeg"
+let fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2015-10-15.png"
 
 i <- img_load fn
 img_dimensions i == (120,36)
@@ -183,15 +217,32 @@ let gs = map (map rgb8_to_gs_eq') ro
 
 img_bw_write_pbm "/tmp/t.pbm" i
 
-img_gs_write_sf "/tmp/t.au" (img_bw_inverse i)
+let v = img_gs_vec_co rgb8_to_gs_red i
+V.length v
+
+img_gs_write_sf rgb8_to_gs_red "/tmp/t.au" i
+
+img_gs_write_au rgb8_to_gs_red "/tmp/t.au" i
+
+(img_bw_inverse i)
 
 i' <- img_gs_read_sf "/tmp/t.au"
 img_dimensions i'
 
 import Sound.SC3
 withSC3 (async (b_allocRead 0 "/tmp/t.au" 0 0))
+withSC3 (async (b_allocReadChannel 0 "/tmp/t.au" 0 0 [1900 .. 1920]))
+withSC3 (b_query1_unpack 0)
 
 import Sound.SC3.Plot
 withSC3 (plot_buffer_displace 0)
+plot_sf "/tmp/t_00.au"
+plot_sf "/tmp/m.au"
+
+import Data.Bits
+let gen n = map (fromIntegral . fromEnum . testBit n) [0..11]
+let dat = map gen [0 .. 1999]
+let hdr = AU.Header 12 AU.Float 44100 2000
+AU.write "/tmp/t.au" hdr dat
 
 -}
