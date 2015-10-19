@@ -13,6 +13,8 @@ import qualified Sound.File.HSndFile as SF {- hsc3-sf -}
 
 import qualified Data.Vector.Storable as V {- vector -}
 
+import qualified Data.CG.Minus.Colour.Grey as C {- hcg-minus -}
+
 -- * IMAGE
 
 type RGB8 = I.PixelRGB8
@@ -87,8 +89,22 @@ img_row_order_rgb i = map (img_row_rgb i) [0 .. I.imageHeight i - 1]
 -- | Grey value, 0.0 is black & 1.0 is white.
 type GREY = Double
 
-rgb8_to_gs_red :: Fractional n => I.PixelRGB8 -> n
-rgb8_to_gs_red (I.PixelRGB8 r _ _) = w8_to_fractional r
+-- | Channel selector
+data CHANNEL = RED | GREEN | BLUE
+
+-- | Extract channel.
+rgb8_ch :: CHANNEL -> RGB8 -> I.Pixel8
+rgb8_ch ch (I.PixelRGB8 r g b) =
+    case ch of
+      RED -> r
+      GREEN -> g
+      BLUE -> b
+
+rgb8_to_gs_ch :: Fractional n => CHANNEL -> RGB8 -> n
+rgb8_to_gs_ch ch = w8_to_fractional . rgb8_ch ch
+
+rgb_to_gs_rec_709 :: RGB8 -> GREY
+rgb_to_gs_rec_709 = C.rgb_to_gs_luminosity C.luminosity_coef_rec_709 . rgb8_to_rgb
 
 -- | Require R G and B values to be equal.
 rgb8_to_gs_eq :: RGB8 -> Either RGB8 GREY
@@ -112,6 +128,11 @@ img_gs_vec_co to_gs i =
     let (w,h) = img_dimensions i
         f n = let (x,y) = n `divMod` h in to_gs (I.pixelAt i x y)
     in V.generate (w * h) f
+
+img_from_vec_co :: (Int,Int) -> V.Vector Double -> IMAGE
+img_from_vec_co (w,h) v =
+    let f x y = gs_to_rgb8 (v V.! (x * h + y))
+    in I.generateImage f w h
 
 -- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
 img_gs_write_sf :: (RGB8 -> Double) -> FilePath -> IMAGE -> IO ()
@@ -195,7 +216,7 @@ img_bw_inverse :: IMAGE -> IMAGE
 img_bw_inverse = I.pixelMap rgb8_bw_inverse
 
 img_bw_write_sf :: FilePath -> IMAGE -> IO ()
-img_bw_write_sf fn = img_gs_write_sf rgb8_to_gs_red fn . img_bw_inverse
+img_bw_write_sf fn = img_gs_write_sf (rgb8_to_gs_ch RED) fn . img_bw_inverse
 
 -- * Miscellaneous
 
@@ -217,12 +238,12 @@ let gs = map (map rgb8_to_gs_eq') ro
 
 img_bw_write_pbm "/tmp/t.pbm" i
 
-let v = img_gs_vec_co rgb8_to_gs_red i
+let v = img_gs_vec_co (rgb8_to_gs RED) i
 V.length v
 
-img_gs_write_sf rgb8_to_gs_red "/tmp/t.au" i
+img_gs_write_sf (rgb8_to_gs RED) "/tmp/t.au" i
 
-img_gs_write_au rgb8_to_gs_red "/tmp/t.au" i
+img_gs_write_au (rgb8_to_gs RED) "/tmp/t.au" i
 
 (img_bw_inverse i)
 
@@ -231,7 +252,7 @@ img_dimensions i'
 
 import Sound.SC3
 withSC3 (async (b_allocRead 0 "/tmp/t.au" 0 0))
-withSC3 (async (b_allocReadChannel 0 "/tmp/t.au" 0 0 [1900 .. 1920]))
+withSC3 (async (b_allocReadChannel 0 "/tmp/t.au" 0 0 [200 .. 220]))
 withSC3 (b_query1_unpack 0)
 
 import Sound.SC3.Plot
