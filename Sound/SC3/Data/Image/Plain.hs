@@ -189,14 +189,16 @@ gs_to_bw_eq err x = if x == 0 then Right True else if x == 1 then Right False el
 
 -- | gs < 0.5 = True, gs > 0.5 = False.
 --
--- > map gs_to_bw_mp [0,0.25,0.5,0.75,1]
+-- > map gs_to_bw_mp [0,0.25,0.5,0.75,1] == [True,True,False,False,False]
 gs_to_bw_mp :: (Fractional n,Ord n) => n -> Bool
 gs_to_bw_mp = (< 0.5)
 
--- | Translates (0,0,0) to Black/True and (1,1,1) to White/False.
+-- | Translates (0,0,0) to Black/True and (1,1,1) to White/False, any
+-- other inputs are errors.
 rgb8_to_bw_eq :: RGB8 -> Either RGB8 BW
 rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c)
 
+-- | Error variant.
 rgb8_to_bw_eq' :: I.PixelRGB8 -> BW
 rgb8_to_bw_eq' = either_err "rgb8_to_bw_eq" . rgb8_to_bw_eq
 
@@ -228,48 +230,3 @@ img_bw_write_sf fn = img_gs_write_sf (rgb8_to_gs_ch RED) fn . img_bw_inverse
 
 either_err :: Show e => String -> Either e c -> c
 either_err nm = either (\err -> error (show (nm,err))) id
-
-{-
-
-let fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2014-12-13/06.le.png"
-let fn = "/home/rohan/uc/sp-id/jpeg/eliminator.jpeg"
-let fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2015-10-15.png"
-
-i <- img_load fn
-img_dimensions i == (120,36)
-
-img_row i 0
-let ro = img_row_order i
-let gs = map (map rgb8_to_gs_eq') ro
-
-img_bw_write_pbm "/tmp/t.pbm" i
-
-let v = img_gs_vec_co (rgb8_to_gs RED) i
-V.length v
-
-img_gs_write_sf (rgb8_to_gs_ch RED) "/tmp/t.au" i
-
-img_gs_write_au (rgb8_to_gs_ch RED) "/tmp/t.au" i
-
-(img_bw_inverse i)
-
-i' <- img_gs_read_sf "/tmp/t.au"
-img_dimensions i'
-
-import Sound.SC3
-withSC3 (async (b_allocRead 0 "/tmp/t.au" 0 0))
-withSC3 (async (b_allocReadChannel 0 "/tmp/t.au" 0 0 [200 .. 220]))
-withSC3 (b_query1_unpack 0)
-
-import Sound.SC3.Plot
-withSC3 (plot_buffer_displace 0)
-plot_sf "/tmp/t_00.au"
-plot_sf "/tmp/m.au"
-
-import Data.Bits
-let gen n = map (fromIntegral . fromEnum . testBit n) [0..11]
-let dat = map gen [0 .. 1999]
-let hdr = AU.Header 12 AU.Float 44100 2000
-AU.write "/tmp/t.au" hdr dat
-
--}
