@@ -6,10 +6,10 @@ import qualified Sound.File.NeXT as AU {- hsc3-sf -}
 import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
 import Sound.SC3.Data.Image.Plain {- hsc3-data -}
 
--- > au_to_img (1 -) "/home/rohan/sw/hsc3-sf/au/mc-12-2000.au"
+-- > au_to_img (1 -) "/home/rohan/sw/hsc3-sf/au/mc-4-16.au"
 au_to_img :: (Float -> Float) -> FilePath -> IO ()
 au_to_img op fn = do
-  (hdr,vec) <- AU.read_vec_f32 fn
+  (hdr,vec) <- AU.read_f32_vec fn
   let img = img_from_vec_co (AU.frameCount hdr,AU.channelCount hdr) (V.map op vec)
   img_write_png (fn <.> "png") img
 
