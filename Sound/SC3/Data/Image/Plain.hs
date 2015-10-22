@@ -9,7 +9,8 @@ import qualified Sound.SC3.Data.Bitmap.PBM as D {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as D {- hsc3-data -}
 
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
-import qualified Sound.File.HSndFile as SF {- hsc3-sf -}
+import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
+import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 
 import qualified Data.Vector.Storable as V {- vector -}
 
@@ -57,8 +58,7 @@ img_row_order i = map (img_row i) [0 .. I.imageHeight i - 1]
 
 -- * RGB
 
-type T3 a = (a,a,a)
-type RGB = T3 Double
+type RGB n = (n,n,n)
 
 w8_to_fractional :: Fractional n => I.Pixel8 -> n
 w8_to_fractional = (/ 255) . fromIntegral
@@ -69,19 +69,19 @@ w8_to_f32 = w8_to_fractional
 w8_to_f64 :: I.Pixel8 -> Double
 w8_to_f64 = w8_to_fractional
 
-rgb8_to_rgb :: RGB8 -> RGB
-rgb8_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_f64 in (f r,f g,f b)
+rgb8_to_rgb :: Fractional n => RGB8 -> RGB n
+rgb8_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_fractional in (f r,f g,f b)
 
-img_row_rgb :: IMAGE -> Int -> [RGB]
+img_row_rgb :: Fractional n => IMAGE -> Int -> [RGB n]
 img_row_rgb i = map rgb8_to_rgb . img_row i
 
-img_column_rgb :: IMAGE -> Int -> [RGB]
+img_column_rgb :: Fractional n => IMAGE -> Int -> [RGB n]
 img_column_rgb i = map rgb8_to_rgb . img_column i
 
-img_column_order_rgb :: IMAGE -> [[RGB]]
+img_column_order_rgb :: Fractional n => IMAGE -> [[RGB n]]
 img_column_order_rgb i = map (img_column_rgb i) [0 .. I.imageWidth i - 1]
 
-img_row_order_rgb :: IMAGE -> [[RGB]]
+img_row_order_rgb :: Fractional n => IMAGE -> [[RGB n]]
 img_row_order_rgb i = map (img_row_rgb i) [0 .. I.imageHeight i - 1]
 
 -- * Greyscale
@@ -103,17 +103,17 @@ rgb8_ch ch (I.PixelRGB8 r g b) =
 rgb8_to_gs_ch :: Fractional n => CHANNEL -> RGB8 -> n
 rgb8_to_gs_ch ch = w8_to_fractional . rgb8_ch ch
 
-rgb_to_gs_rec_709 :: RGB8 -> GREY
+rgb_to_gs_rec_709 ::  Fractional n => RGB8 -> n
 rgb_to_gs_rec_709 = C.rgb_to_gs_luminosity C.luminosity_coef_rec_709 . rgb8_to_rgb
 
 -- | Require R G and B values to be equal.
-rgb8_to_gs_eq :: RGB8 -> Either RGB8 GREY
+rgb8_to_gs_eq :: Fractional n => RGB8 -> Either RGB8 n
 rgb8_to_gs_eq px =
     let (I.PixelRGB8 r g b) = px
-    in if r == g && r == b then Right (w8_to_f64 r) else Left px
+    in if r == g && r == b then Right (w8_to_fractional r) else Left px
 
 -- | 'error' variant.
-rgb8_to_gs_eq' :: RGB8 -> GREY
+rgb8_to_gs_eq' :: Fractional n => RGB8 -> n
 rgb8_to_gs_eq' = either_err "rgb8_to_gs_eq" . rgb8_to_gs_eq
 
 -- | 'GREY' to 'RGB8'.
@@ -140,16 +140,15 @@ img_gs_write_sf to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
         hdr = SF.Header h w 44100
-    in SF.write_vec fn hdr v
+    in SF.write_au_f32_vec fn hdr v
 
 -- | Write greyscale image as audio file.  Each row is stored as a channel.
-img_gs_write_au :: (RGB8 -> Double) -> FilePath -> IMAGE -> IO ()
+img_gs_write_au :: (RGB8 -> Float) -> FilePath -> IMAGE -> IO ()
 img_gs_write_au to_gs fn i =
     let (w,h) = img_dimensions i
-        ro = img_row_order i
-        ro' = map (map to_gs) ro
+        v = img_gs_vec_co to_gs i
         hdr = AU.Header w AU.Float 44100 h
-    in AU.write fn hdr ro'
+    in AU.write_f32_vec fn (hdr,v)
 
 img_from_gs :: (Int,Int) -> [[GREY]] -> IMAGE
 img_from_gs (w,h) ro =
@@ -185,11 +184,18 @@ img_write_png = I.writePng
 -- | Black & white (black is 'True', white is 'False').
 type BW = Bool
 
+gs_to_bw_eq :: (Eq n, Num n) => e -> n -> Either e Bool
+gs_to_bw_eq err x = if x == 0 then Right True else if x == 1 then Right False else Left err
+
+-- | gs < 0.5 = True, gs > 0.5 = False.
+--
+-- > map gs_to_bw_mp [0,0.25,0.5,0.75,1]
+gs_to_bw_mp :: (Fractional n,Ord n) => n -> Bool
+gs_to_bw_mp = (< 0.5)
+
 -- | Translates (0,0,0) to Black/True and (1,1,1) to White/False.
 rgb8_to_bw_eq :: RGB8 -> Either RGB8 BW
-rgb8_to_bw_eq c =
-    let f x = if x == 0 then Right True else if x == 1 then Right False else Left c
-    in either Left f (rgb8_to_gs_eq c)
+rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c)
 
 rgb8_to_bw_eq' :: I.PixelRGB8 -> BW
 rgb8_to_bw_eq' = either_err "rgb8_to_bw_eq" . rgb8_to_bw_eq
