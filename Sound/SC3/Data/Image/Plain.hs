@@ -119,17 +119,17 @@ rgb8_to_gs_eq' = either_err "rgb8_to_gs_eq" . rgb8_to_gs_eq
 -- | 'GREY' to 'RGB8'.
 --
 -- > map gs_to_rgb8 [0.0,1.0] == [I.PixelRGB8 0 0 0,I.PixelRGB8 255 255 255]
-gs_to_rgb8 :: GREY -> RGB8
+gs_to_rgb8 :: RealFrac n => n -> RGB8
 gs_to_rgb8 x = let x' = floor (x * 255) in I.PixelRGB8 x' x' x'
 
 -- | Column order vector.
-img_gs_vec_co :: (RGB8 -> Double) -> IMAGE -> V.Vector Double
+img_gs_vec_co :: (V.Storable n,RealFrac n) => (RGB8 -> n) -> IMAGE -> V.Vector n
 img_gs_vec_co to_gs i =
     let (w,h) = img_dimensions i
         f n = let (x,y) = n `divMod` h in to_gs (I.pixelAt i x y)
     in V.generate (w * h) f
 
-img_from_vec_co :: (Int,Int) -> V.Vector Double -> IMAGE
+img_from_vec_co :: (V.Storable n,RealFrac n) => (Int,Int) -> V.Vector n -> IMAGE
 img_from_vec_co (w,h) v =
     let f x y = gs_to_rgb8 (v V.! (x * h + y))
     in I.generateImage f w h

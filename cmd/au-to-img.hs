@@ -1,19 +1,22 @@
+import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 import System.FilePath {- filepath -}
 
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
+import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
 import Sound.SC3.Data.Image.Plain {- hsc3-data -}
 
-au_to_img :: (Double -> Double) -> FilePath -> IO ()
+-- > au_to_img (1 -) "/home/rohan/sw/hsc3-sf/au/mc-12-2000.au"
+au_to_img :: (Float -> Float) -> FilePath -> IO ()
 au_to_img op fn = do
-  (hdr,ch) <- AU.read fn
-  let img = img_from_gs (AU.frameCount hdr,AU.channelCount hdr) (map (map op) ch)
+  (hdr,vec) <- AU.read_vec_f32 fn
+  let img = img_from_vec_co (AU.frameCount hdr,AU.channelCount hdr) (V.map op vec)
   img_write_png (fn <.> "png") img
 
 help :: IO ()
 help = putStrLn "au-to-img {bw|gs} file-name"
 
-md_to_fn :: String -> (Double -> Double)
+md_to_fn :: String -> (Float -> Float)
 md_to_fn md =
     case md of
       "bw" -> (1 -)

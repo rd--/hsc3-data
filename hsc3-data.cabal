@@ -25,6 +25,7 @@ Library
                    hcg-minus == 0.16.*,
                    HCodecs,
                    hmt == 0.16.*,
+                   hosc == 0.16.*,
                    hsc3-lang == 0.16.*,
                    hsc3-plot == 0.16.*,
                    hsc3-sf == 0.16.*,
@@ -46,6 +47,7 @@ Library
                    Sound.SC3.Data.Midi.Plain
                    Sound.SC3.Data.SVG
                    Sound.SC3.Data.Trace
+                   Sound.File.NeXT.Vector
 
 Source-Repository  head
   Type:            darcs
