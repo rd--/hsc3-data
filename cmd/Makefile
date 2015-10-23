@@ -1,5 +1,5 @@
 prefix = ~/.cabal
-cmd = au-to-img img-to-sf midi-to-mnd sf-to-img
+cmd = au-to-img img-to-sf midi-to-csv-mnd sf-to-img
 cmd_i = $(addprefix hsc3-, $(cmd))
 
 % : %.hs

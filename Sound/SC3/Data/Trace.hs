@@ -9,6 +9,7 @@ import Safe {- safe -}
 import System.FilePath.Glob {- glob -}
 
 import Data.CG.Minus {- hcg-minus -}
+import qualified Music.Theory.Array.CSV as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Tuple as T {- hmt -}
 import qualified Sound.File.HSndFile as F {- hsc3-sf-hsndfile -}
@@ -23,9 +24,12 @@ However /t/ may be, for instance, distance traversed so that line
 segments (sequences of cartesian points) can be transformed into
 Traces by associating each point with the distance along the line.
 
-If there is an interpolation function (linear or otherwise) for the type /a/ we can lookup a value for any index /t/ in the window of the trace.
+If there is an interpolation function (linear or otherwise) for the
+type /a/ we can lookup a value for any index /t/ in the window of the
+trace.
 
-Traces can be both more accurate and more compact than sampled data streams.
+Traces can be both more accurate and more compact than sampled data
+streams.
 
 Break-point envelopes are Traces where /a/ is a scalar
 @(interpolation-type,value)@.
@@ -61,24 +65,29 @@ type Time = R
 
 -- * IO
 
--- | Load real valued trace stored as a sound file.
---
--- The temporal data is in the first channel, subsequent channels are
--- associated data points.  If set /nc/ is set it requires the file
--- have precisely the indicated number of _data_ channels, ie. /nc/
--- does not include the _temporal_ channel.
+trace_assert_nc :: Eq a => Maybe a -> a -> IO ()
+trace_assert_nc nc n = when (maybe False (/= n) nc) (error "trace_load_sf: incorrect nc")
+
+{- | Load real valued trace stored as a sound file.
+
+The temporal data is in the first channel, subsequent channels are
+associated data points.  If /nc/ is set it requires the file have
+precisely the indicated number of _data_ channels, ie. /nc/ does not
+include the _temporal_ channel.
+
+-}
 trace_load_sf :: Maybe Int -> FilePath -> IO (Trace Time [R])
 trace_load_sf nc fn = do
   (h,t:d) <- F.read fn
-  let nc' = F.channelCount h
-  when (maybe False (/= (nc' - 1)) nc) (error "trace_load_sf: incorrect nc")
+  trace_assert_nc nc (F.channelCount h - 1)
   return (zip t (transpose d))
+
+trace_to_t2 :: Trace t [n] -> Trace t (n,n)
+trace_to_t2 = map (bimap id T.t2)
 
 -- | Variant for loading two-channel trace file.
 trace_load_sf2 :: FilePath -> IO (Trace Time (R,R))
-trace_load_sf2 =
-    let f = map (bimap id T.t2)
-    in fmap f . trace_load_sf (Just 2)
+trace_load_sf2 = fmap trace_to_t2 . trace_load_sf (Just 2)
 
 -- | Variant for set of traces given by 'glob' pattern'.
 trace_load_sf_dir :: Maybe Int -> String -> IO [Trace Time [R]]
@@ -90,6 +99,18 @@ trace_load_sf2_dir :: String -> IO [Trace Time (R,R)]
 trace_load_sf2_dir p = do
   nm <- glob p
   mapM trace_load_sf2 nm
+
+trace_load_csv :: Maybe Int -> FilePath -> IO (Trace Time [R])
+trace_load_csv nc fn = do
+  (_,tbl) <- T.csv_table_read (True,',',False,T.CSV_No_Align) read fn
+  when (null tbl) (error "trace_load_csv: empty tbl")
+  let t:d = transpose tbl
+  trace_assert_nc nc (length (head tbl) - 1)
+  return (zip t d)
+
+-- > trace_load_csv2 "/home/rohan/sw/hsc3-data/csv/trace/a.csv"
+trace_load_csv2 :: FilePath -> IO (Trace Time (R,R))
+trace_load_csv2 = fmap trace_to_t2 . trace_load_csv (Just 2)
 
 -- * Functor
 

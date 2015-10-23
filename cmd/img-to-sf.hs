@@ -1,6 +1,6 @@
 import System.Environment {- base -}
 
-import Sound.SC3.Data.Image.Plain
+import Sound.SC3.Data.Image.Plain {- hsc3-data -}
 
 img_to_sf :: (RGB8 -> Float) -> FilePath -> IO ()
 img_to_sf to_gs fn = do
