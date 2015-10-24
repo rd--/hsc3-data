@@ -2,29 +2,34 @@
 module Sound.SC3.Data.X11.Ptr where
 
 import qualified Graphics.X11.Xlib as X
-import qualified Graphics.X11.Xlib.Extras as X
+import qualified Graphics.X11.Xlib.Extras as E
 
 -- | X11 connection state.
-type X n = (X.Display,X.Window,n,n)
+type X11 n = (X.Display,X.Window,n,n)
 
 -- | Initialize X11 connection.
-x_init :: Fractional n => String -> IO (X n)
-x_init n = do
+x11_init :: Fractional n => String -> IO (X11 n)
+x11_init n = do
   d <- X.openDisplay n
   let r = X.defaultRootWindow d
-  a <- X.getWindowAttributes d r
-  let rw = 1.0 / fromIntegral (X.wa_width a)
-      rh = 1.0 / fromIntegral (X.wa_height a)
+  a <- E.getWindowAttributes d r
+  let rw = 1.0 / fromIntegral (E.wa_width a)
+      rh = 1.0 / fromIntegral (E.wa_height a)
   return (d, r, rw, rh)
 
 -- | Close X11 connection.
-x_close :: X n -> IO ()
-x_close (d, _, _, _) = X.closeDisplay d
+x11_close :: X11 n -> IO ()
+x11_close (d, _, _, _) = X.closeDisplay d
+
+x11_ptr_raw :: Fractional n => X11 n -> IO (Int,Int,n,n,X.Modifier)
+x11_ptr_raw (d, r, rw, rh) = do
+  (_, _, _, _, _, x, y, m) <- X.queryPointer d r
+  return (fromIntegral x,fromIntegral y
+         ,fromIntegral x * rw,1.0 - (fromIntegral y * rh)
+         ,fromIntegral m)
 
 -- | Read pointer location relative to root window.
-x_ptr :: Fractional n => X n -> IO (n,n)
-x_ptr (d, r, rw, rh) = do
-  (_, _, _, _, _, dx, dy, _) <- X.queryPointer d r
-  let x' = fromIntegral dx * rw
-      y' = 1.0 - (fromIntegral dy * rh)
-  return (x', y')
+x11_ptr :: Fractional n => X11 n -> IO (n,n)
+x11_ptr x11 = do
+  (_,_,x,y,_) <- x11_ptr_raw x11
+  return (x, y)
