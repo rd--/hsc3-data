@@ -1,19 +1,3 @@
-prefix = ~/.cabal
 cmd = au-to-img img-to-sf midi-to-csv-mnd sf-to-img trace-rec-x11
-cmd_i = $(addprefix hsc3-, $(cmd))
 
-% : %.hs
-	ghc -Wall -fwarn-tabs -O2 --make $<
-
-hsc3-% : %
-	cp $< hsc3-$<
-
-all: $(cmd)
-
-install: $(cmd_i)
-	cp hsc3-* $(prefix)/bin
-
-clean:
-	rm -f *.hi *.o
-	rm -f $(cmd)
-	rm -f $(cmd_i)
+include ~/sw/hsc3/mk/cmd.mk
