@@ -139,7 +139,7 @@ img_gs_write_sf :: (RGB8 -> Double) -> FilePath -> IMAGE -> IO ()
 img_gs_write_sf to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
-        hdr = SF.Header h w 44100
+        hdr = SF.Header h w 44100 Nothing
     in SF.write_au_f32_vec fn hdr v
 
 -- | Write greyscale image as audio file.  Each row is stored as a channel.
@@ -166,7 +166,7 @@ ro_derive_dimensions ro =
 img_gs_read_sf :: FilePath -> IO IMAGE
 img_gs_read_sf fn = do
   (hdr,ro) <- SF.read fn
-  let SF.Header nc nf _ = hdr
+  let SF.Header nc nf _ _ = hdr
   return (img_from_gs (nf,nc) (map (map realToFrac) ro))
 
 -- | Read NeXT audio file as image, channels are rows.
