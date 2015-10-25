@@ -34,7 +34,7 @@ bitindices_pbm1 = bitarray_pbm1 . bitindices_to_bitarray
 
 -- * PBM 1 & 4
 
-type PBM = I.PBM
+--type PBM = I.PBM
 
 w8_char :: Word8 -> Char
 w8_char = toEnum . fromIntegral
@@ -49,7 +49,11 @@ decode_pbm4 :: B.ByteString -> Either String I.PBM
 decode_pbm4 = either (Left . show) (Right . fst) . I.decodePBM
 
 -- | Load one image from a PBM(1) or PBM(4) file.
-read_pbm :: FilePath -> IO PBM
+--
+-- > I.PBM nc a <- read_pbm "/home/rohan/sw/hsc3-data/pbm/fh.pbm"
+-- > nc == 526
+-- > A.bounds a == ((0,0),(127,527))
+read_pbm :: FilePath -> IO I.PBM
 read_pbm nm = do
   b <- B.readFile nm
   let df = case B.index b 1 of
@@ -60,7 +64,7 @@ read_pbm nm = do
     Left err -> error ("read_pbm: " ++ err)
     Right i -> return i
 
-pbm_ascii :: PBM -> String
+pbm_ascii :: I.PBM -> String
 pbm_ascii = bitindices_show . pbm_to_bitindices
 
 -- | 'pbm_ascii' of 'read_pbm'
@@ -69,7 +73,7 @@ pbm_print_ascii nm = do
   pbm <- read_pbm nm
   putStrLn ("\n" ++ pbm_ascii pbm)
 
-pbm_to_bitindices :: PBM -> Bitindices
+pbm_to_bitindices :: I.PBM -> Bitindices
 pbm_to_bitindices i =
     let a = I.pbmPixels i
         w = I.pbmWidth i
@@ -78,3 +82,11 @@ pbm_to_bitindices i =
               _ -> error "pbm_to_bitindices: non zero indices?"
     in (b,map fst (filter snd (A.assocs a)))
 
+bitindices_to_pbm :: Bitindices -> I.PBM
+bitindices_to_pbm ((nr,nc),ix) =
+    let b = ((0,0),(nr-1,nc-1))
+        a = A.array b (zip ix (repeat True))
+    in I.PBM nc a
+
+pbm_write :: FilePath -> I.PBM -> IO ()
+pbm_write fn (I.PBM _ a) = B.writeFile fn (I.encodePBM a)

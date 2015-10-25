@@ -11,7 +11,8 @@ type Width = Int
 -- | Height (number of rows).
 type Height = Int
 
--- | 'Height' and 'Width', the ordering follows the indexing scheme (ie. rows then columns).
+-- | 'Height' (number of rows) and 'Width' (number of columns).
+-- The ordering follows the indexing scheme (ie. (row,column) or (y,x)).
 type Dimensions = (Height,Width)
 
 -- | Bit, as 0 = 'False' and 1 = 'True'.
