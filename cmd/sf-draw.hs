@@ -15,7 +15,7 @@ vec_normalise v =
 vec_ix :: Double -> Int -> Int -> V.Vector Double -> Int -> (Int,Int)
 vec_ix h ch nc vec i =
     let x = vec V.! ((i * nc) + ch)
-    in (round (((negate x + 1) / 2) * (h - 1)),i)
+    in (round (((x + 1) / 2) * (h - 1)),i)
 
 sf_draw :: Bool -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw nrm h ch sf_fn pbm_fn = do
