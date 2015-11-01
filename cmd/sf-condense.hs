@@ -3,8 +3,6 @@ import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
-import qualified Sound.SC3 as S {- hsc3 -}
-import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
 
 vec_segment :: V.Storable a => V.Vector a -> (Int,Int) -> V.Vector a
 vec_segment v (l,r) = V.take (r - l) (V.drop l v)
@@ -45,10 +43,13 @@ sf_condense :: Int -> FilePath -> FilePath -> IO ()
 sf_condense out_nf in_fn out_fn = do
   (hdr,vec) <- read_vec_f32 in_fn
   let nc = SF.channelCount hdr
-      nf = SF.frameCount hdr
-  when (nf < out_nf) (error "nf < out_nf")
+      in_nf = SF.frameCount hdr
+      hdr' = hdr {SF.frameCount = out_nf}
+      sz = fromIntegral (win_sz out_nf in_nf)
+      x = map (maybe 0 (vec_summary sz vec)) (gen_win out_nf in_nf)
+  when (in_nf < out_nf) (error "in_nf < out_nf")
   when (nc /= 1) (error "nc /= 1")
-  SF.write_au_f32_vec out_fn hdr vec
+  SF.write_au_f32_vec out_fn hdr' (V.fromList x)
   return ()
 
 help :: IO ()
@@ -63,8 +64,8 @@ main = do
 
 {-
 
-let sf_fn = "/home/rohan/uc/sp-id/eof/au/tbl/gs/01.tbl.au"
-let pbm_fn = "/tmp/t.pbm"
-sf_draw True 32 0 sf_fn pbm_fn
+let in_fn = "/home/rohan/data/audio/pf-c5.snd"
+let out_fn = "/home/rohan/data/audio/pf-c5.1024.snd"
+sf_condense 1024 in_fn out_fn
 
 -}
