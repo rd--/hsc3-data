@@ -65,7 +65,7 @@ track_to_wseq =
                        _ -> Nothing
     in T.tseq_on_off_to_wseq (==) . mapMaybe f
 
--- | Load MIDI file as 'SEQ' data.
+-- | Load MIDI file as 'SEQ' data.  Ignores everything except note on and off messages.
 read_midi :: FilePath -> IO [SEQ]
 read_midi fn = do
   r <- M.importFile fn
