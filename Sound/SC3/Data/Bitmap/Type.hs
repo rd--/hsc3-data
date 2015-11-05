@@ -36,7 +36,13 @@ bm_indices (nr,nc) = [(r,c) | r <- [0 .. nr - 1], c <- [0 .. nc - 1]]
 --
 -- > map (ix_to_linear (3,4)) (bm_indices (3,4)) == [0..11]
 ix_to_linear :: Dimensions -> Ix -> Int
-ix_to_linear (_,nr) (r,c) = r * nr + c
+ix_to_linear (_,nc) (r,c) = r * nc + c
+
+-- | Inverse of 'ix_to_linear'.
+--
+-- > map (linear_to_ix (2,3)) [0 .. 5] == bm_indices (2,3)
+linear_to_ix :: Dimensions -> Int -> Ix
+linear_to_ix (_,nc) i = i `divMod` nc
 
 -- | Bit, as 0 = 'False' and 1 = 'True'.
 type Bit = Bool

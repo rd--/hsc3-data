@@ -27,3 +27,9 @@ img_indices (w,h) = [(x,y) | y <- [0 .. h - 1], x <- [0 .. w - 1]]
 -- > map (ix_to_linear (4,3)) (img_indices (4,3)) == [0 .. 11]
 ix_to_linear :: Dimensions -> Ix -> Int
 ix_to_linear (w,_) (x,y) = y * w + x
+
+-- | Inverse of 'ix_to_linear'.
+--
+-- > map (linear_to_ix (3,2)) [0 .. 5] == img_indices (3,2)
+linear_to_ix :: Dimensions -> Int -> Ix
+linear_to_ix (w,_) i = let (y,x) = i `divMod` w in (x,y)
