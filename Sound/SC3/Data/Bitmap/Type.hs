@@ -1,3 +1,5 @@
+-- | Bitmap functions.  Indexes are in (row,column) or (y,x) form.  True/1
+-- indicates presence (black) and False/0 absence (white).
 module Sound.SC3.Data.Bitmap.Type where
 
 import Data.Bits {- base -}
@@ -5,15 +7,36 @@ import Data.Maybe {- base -}
 
 -- * Bitmaps, Bitarrays and Bitindices
 
--- | Width (number of columns).
-type Width = Int
-
 -- | Height (number of rows).
 type Height = Int
+
+-- | Width (number of columns).
+type Width = Int
 
 -- | 'Height' (number of rows) and 'Width' (number of columns).
 -- The ordering follows the indexing scheme (ie. (row,column) or (y,x)).
 type Dimensions = (Height,Width)
+
+-- | Row index.
+type Row = Int
+
+-- | Column index.
+type Column = Int
+
+-- | ('Row','Column') index.
+type Ix = (Row,Column)
+
+-- | Row-order indices for given 'Dimensions'.
+--
+-- > bm_indices (2,3) == [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2)]
+bm_indices :: Dimensions -> [Ix]
+bm_indices (nr,nc) = [(r,c) | r <- [0 .. nr - 1], c <- [0 .. nc - 1]]
+
+-- | Translate 'Ix' to linear (row-order) index.
+--
+-- > map (ix_to_linear (3,4)) (bm_indices (3,4)) == [0..11]
+ix_to_linear :: Dimensions -> Ix -> Int
+ix_to_linear (_,nr) (r,c) = r * nr + c
 
 -- | Bit, as 0 = 'False' and 1 = 'True'.
 type Bit = Bool
@@ -25,18 +48,9 @@ type Bitseq = [Bit]
 type Bitarray = (Dimensions,[Bitseq])
 
 -- | A 'Bitmap' is a list of rows (lines), each line is a bit sequence
--- of /width/ elements encoded using the type paramteter. The most
+-- of /width/ elements encoded using the type parameter. The most
 -- significant bit of each line represents the leftmost pixel.
 type Bitmap b = (Dimensions,[b])
-
--- | Row index.
-type Row = Int
-
--- | Column index.
-type Column = Int
-
--- | ('Row','Column') index.
-type Ix = (Row,Column)
 
 -- | List of 'Ix'.
 type Indices = [Ix]

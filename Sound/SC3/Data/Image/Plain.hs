@@ -9,12 +9,15 @@ import qualified Sound.SC3.Data.Bitmap.PBM as D {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as D {- hsc3-data -}
 
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
-import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 
 import qualified Data.Vector.Storable as V {- vector -}
 
 import qualified Data.CG.Minus.Colour.Grey as C {- hcg-minus -}
+
+import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
+
+import Sound.SC3.Data.Image.Type {- hsc3-data -}
 
 -- * IMAGE
 
@@ -33,7 +36,7 @@ img_load fn = do
     Right _ -> error "img_load: not Y8|RGB8|CMYK8|YCbCr8 image"
 
 -- | Dimensions as (width,height) pair.
-img_dimensions :: IMAGE -> (Int,Int)
+img_dimensions :: IMAGE -> Dimensions
 img_dimensions i = (I.imageWidth i,I.imageHeight i)
 
 img_row :: IMAGE -> Int -> [RGB8]
@@ -129,9 +132,9 @@ img_gs_vec_co to_gs i =
         f n = let (x,y) = n `divMod` h in to_gs (I.pixelAt i x y)
     in V.generate (w * h) f
 
-img_from_vec_co :: (V.Storable n,RealFrac n) => (Int,Int) -> V.Vector n -> IMAGE
+img_from_vec_co :: (V.Storable n,RealFrac n) => Dimensions -> V.Vector n -> IMAGE
 img_from_vec_co (w,h) v =
-    let f x y = gs_to_rgb8 (v V.! (x * h + y))
+    let f x y = gs_to_rgb8 (v V.! ix_to_linear (w,h) (x,y))
     in I.generateImage f w h
 
 -- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
@@ -150,13 +153,14 @@ img_gs_write_au to_gs fn i =
         hdr = AU.Header w AU.Float 44100 h
     in AU.write_f32_vec fn (hdr,v)
 
-img_from_gs :: (Int,Int) -> [[GREY]] -> IMAGE
+img_from_gs :: Dimensions -> [[GREY]] -> IMAGE
 img_from_gs (w,h) ro =
     let ro' = map (map gs_to_rgb8) ro
         f x y = (ro' !! y) !! x
     in I.generateImage f w h
 
-ro_derive_dimensions :: [[a]] -> (Int,Int)
+-- | Derive dimesions from row-order regular list array.
+ro_derive_dimensions :: [[a]] -> Dimensions
 ro_derive_dimensions ro =
     let w = length (head ro)
         h = length ro
