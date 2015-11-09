@@ -142,8 +142,8 @@ img_gs_write_sf :: (RGB8 -> Double) -> FilePath -> IMAGE -> IO ()
 img_gs_write_sf to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
-        hdr = SF.Header h w 44100 Nothing
-    in SF.write_au_f32_vec fn hdr v
+        hdr = SF.Header h w 44100 SF.fmt_au_f32_le
+    in SF.write_vec fn hdr v
 
 -- | Write greyscale image as audio file.  Each row is stored as a channel.
 img_gs_write_au :: (RGB8 -> Float) -> FilePath -> IMAGE -> IO ()
