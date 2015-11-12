@@ -1,11 +1,12 @@
 import System.Environment {- base -}
+import System.FilePath {- filepath -}
 
 import Sound.SC3.Data.Image.Plain {- hsc3-data -}
 
 img_to_sf :: (RGB8 -> Float) -> FilePath -> IO ()
 img_to_sf to_gs fn = do
   i <- img_load fn
-  img_gs_write_au to_gs (fn ++ ".au") i
+  img_gs_write_au to_gs (fn <.> "au") i
 
 help :: IO ()
 help =

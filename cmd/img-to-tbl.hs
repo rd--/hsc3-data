@@ -29,7 +29,8 @@ img_tbl_bw_avg avg_f nrm img_fn au_fn = do
 help :: String
 help = unlines
        ["img-to-tbl bw md nrm? image-file au-file"
-       ," md = median | mean"]
+       ," md = median | mean"
+       ," nrm? = normalise signal (t|f)"]
 
 main :: IO ()
 main = do

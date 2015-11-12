@@ -34,8 +34,6 @@ bitindices_pbm1 = bitarray_pbm1 . bitindices_to_bitarray
 
 -- * PBM 1 & 4
 
---type PBM = I.PBM
-
 w8_char :: Word8 -> Char
 w8_char = toEnum . fromIntegral
 
@@ -88,5 +86,5 @@ bitindices_to_pbm ((nr,nc),ix) =
         a = A.array b (zip ix (repeat True))
     in I.PBM nc a
 
-pbm_write :: FilePath -> I.PBM -> IO ()
-pbm_write fn (I.PBM _ a) = B.writeFile fn (I.encodePBM a)
+pbm4_write :: FilePath -> I.PBM -> IO ()
+pbm4_write fn (I.PBM _ a) = B.writeFile fn (I.encodePBM a)

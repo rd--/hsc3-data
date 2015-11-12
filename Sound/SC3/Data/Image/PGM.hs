@@ -37,55 +37,49 @@ pgm_save_0 fn a = I.arrayToFile fn (pgm_to_word16 a)
 pgm_to_word16 :: PGM -> A.UArray Ix Word16
 pgm_to_word16 = A.amap fromIntegral
 
+-- | Scan 'PGM' for maximum value.
 pgm_max :: PGM -> Int
 pgm_max = maximum . A.elems
 
-pgm_depth :: PGM -> Int
-pgm_depth a =
-    let n = pgm_max a
-    in if n < 0
-       then error "pgm_depth: n < 0?"
-       else if n <= 255
-            then 8
-            else if n <= 65535
-                 then 16
-                 else error "pgm_depth: n > 65535"
+-- | Given maximum value (ie. 'pgm_max') calculate depth (ie. 8 or 16).
+pgm_depth :: Int -> Int
+pgm_depth n =
+    if n < 0
+    then error "pgm_depth: n < 0?"
+    else if n <= 255
+         then 8
+         else if n <= 65535
+              then 16
+              else error "pgm_depth: n > 65535"
 
+-- | Type specialised 'fromIntegral'.
 int_to_float :: Int -> Float
 int_to_float = fromIntegral
 
 pgm_to_pgmf :: PGM -> PGMF
 pgm_to_pgmf a =
-    let d = pgm_depth a
+    let d = pgm_depth (pgm_max a)
         n = int_to_float ((2 ^ d) - 1)
     in A.amap ((/ n) . int_to_float) a
 
+-- | Type specialised 'round'.
 float_to_int :: Float -> Int
 float_to_int = round
 
+-- | Given bit /depth/ (typically either 8 or 16) convert 'PGMF' to 'PGM'.
 pgmf_to_pgm :: Int -> PGMF -> PGM
 pgmf_to_pgm d a =
     let n = int_to_float ((2 ^ d) - 1)
     in A.amap (float_to_int . (* n)) a
 
+-- | Given 'Dimensions' and linear (row-order) index, calculate 'Ix'.
 linear_to_ix :: Dimensions -> Int -> Ix
 linear_to_ix (_,nc) i = i `divMod` nc
 
+-- | Convert 'PGMF' to row order 'V.Vector'.
 pgmf_to_vec :: Dimensions -> PGMF -> V.Vector Float
 pgmf_to_vec dm img =
     let (nr,nc) = dm
         n = nr * nc
         f i = img A.! (linear_to_ix dm i)
     in V.generate n f
-
-{-
-
-i <- pgm_load_0 "/home/rohan/hecker.pgm"
-pgm_dimensions i == (256,2048)
-pgm_max i == 253
-pgm_depth i == 8
-let i' = pgm_to_pgmf i
-let i'' = pgmf_to_pgm 8 i'
-i == i''
-
--}

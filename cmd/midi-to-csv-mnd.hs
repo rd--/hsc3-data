@@ -5,13 +5,13 @@ import qualified Sound.SC3.Data.Midi.Plain as M {- hsc3-data -}
 -- > let c_fn = "/home/rohan/sw/hmt/csv/mnd/1080-C01.csv"
 -- > midi_to_csv_mnd m_fn c_fn
 midi_to_csv_mnd :: FilePath -> FilePath -> IO ()
-midi_to_csv_mnd ifn ofn = do
-  sq <- M.read_midi ifn
-  M.write_csv ofn sq
+midi_to_csv_mnd midi_fn csv_fn = do
+  sq <- M.read_midi midi_fn
+  M.write_csv csv_fn sq
 
 main :: IO ()
 main = do
   a <- getArgs
   case a of
-    [ifn,ofn] -> midi_to_csv_mnd ifn ofn
-    _ -> putStrLn "hsc3-midi-to-csv-mnd input-file output-file"
+    [midi_fn,csv_fn] -> midi_to_csv_mnd midi_fn csv_fn
+    _ -> putStrLn "hsc3-midi-to-csv-mnd midi-file csv-file"

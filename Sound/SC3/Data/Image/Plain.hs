@@ -5,7 +5,7 @@ import qualified Data.ByteString as B {- bytestring -}
 import qualified Codec.Picture as I {- JuicyPixels -}
 import qualified Codec.Picture.Types as I {- JuicyPixels -}
 
-import qualified Sound.SC3.Data.Bitmap.PBM as D {- hsc3-data -}
+import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as D {- hsc3-data -}
 
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
@@ -206,16 +206,27 @@ rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c :: Either RGB8 Do
 rgb8_to_bw_eq' :: I.PixelRGB8 -> BW
 rgb8_to_bw_eq' = either_err "rgb8_to_bw_eq" . rgb8_to_bw_eq
 
--- | Black & white image to 'D.Bitarray'.
-img_bw_to_bitarray :: IMAGE -> D.Bitarray
-img_bw_to_bitarray i =
+-- | Black & white image to 'D.Bitarray' using given reduction function.
+img_bw_to_bitarray' :: (RGB8 -> BW) -> IMAGE -> D.Bitarray
+img_bw_to_bitarray' f i =
     let (w,h) = img_dimensions i
         ro = img_row_order i
-        ro' = map (map rgb8_to_bw_eq') ro
+        ro' = map (map f) ro
     in ((h,w),ro')
 
-img_bw_write_pbm :: FilePath -> IMAGE -> IO ()
-img_bw_write_pbm fn = writeFile fn . D.bitarray_pbm1 . img_bw_to_bitarray
+-- | 'img_bw_to_bitarray'' of 'rgb8_to_bw_eq''.
+img_bw_to_bitarray :: IMAGE -> D.Bitarray
+img_bw_to_bitarray = img_bw_to_bitarray' rgb8_to_bw_eq'
+
+img_bw_write_pbm1 :: FilePath -> IMAGE -> IO ()
+img_bw_write_pbm1 fn = writeFile fn . P.bitarray_pbm1 . img_bw_to_bitarray
+
+img_bw_write_pbm4 :: (RGB8 -> BW) -> FilePath -> IMAGE -> IO ()
+img_bw_write_pbm4 f pbm_fn =
+    P.pbm4_write pbm_fn .
+    P.bitindices_to_pbm .
+    D.bitarray_to_bitindices .
+    img_bw_to_bitarray' f
 
 rgb8_bw_inverse :: RGB8 -> RGB8
 rgb8_bw_inverse (I.PixelRGB8 r g b) =

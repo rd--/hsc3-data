@@ -38,7 +38,7 @@ sf_draw (nrm,hlf,inv,sym) h ch sf_fn pbm_fn = do
       ix = vec_ix sym (fromIntegral h) ch nc vec
   when (ch >= nc) (error "ch >= nc")
   let b = ((h,nf),concatMap ix [0 .. nf - 1])
-  P.pbm_write pbm_fn (P.bitindices_to_pbm b)
+  P.pbm4_write pbm_fn (P.bitindices_to_pbm b)
 
 help :: [String]
 help =
