@@ -23,7 +23,7 @@ img_tbl_bw_avg avg_f nrm img_fn au_fn = do
             snd .
             B.bitarray_to_bitindices .
             I.img_bw_to_bitarray $ i
-  SF.write_au_f32 au_fn (SF.Header 1 nc 1 Nothing) [tbl]
+  SF.write au_fn (SF.Header 1 nc 1 SF.fmt_au_f32_le) [tbl]
   return ()
 
 help :: String

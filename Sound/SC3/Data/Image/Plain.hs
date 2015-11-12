@@ -200,7 +200,7 @@ gs_to_bw_mp = (< 0.5)
 -- | Translates (0,0,0) to Black/True and (1,1,1) to White/False, any
 -- other inputs are errors.
 rgb8_to_bw_eq :: RGB8 -> Either RGB8 BW
-rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c)
+rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c :: Either RGB8 Double)
 
 -- | Error variant.
 rgb8_to_bw_eq' :: I.PixelRGB8 -> BW

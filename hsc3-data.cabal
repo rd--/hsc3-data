@@ -16,7 +16,8 @@ Cabal-Version:     >= 1.8
 Data-files:        README
 
 Library
-  Build-Depends:   base >= 4.8,
+  Build-Depends:   array,
+                   base >= 4.8,
                    bifunctors,
                    bitwise,
                    bytestring,
@@ -31,6 +32,7 @@ Library
                    hsc3-sf == 0.16.*,
                    hsc3-sf-hsndfile == 0.16.*,
                    JuicyPixels,
+                   pgm,
                    safe,
                    split,
                    SVGPath >= 1.1.1,
@@ -41,6 +43,7 @@ Library
   Exposed-modules: Sound.SC3.Data.Bitmap.Font.BDF
                    Sound.SC3.Data.Bitmap.PBM
                    Sound.SC3.Data.Bitmap.Type
+                   Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Loudness

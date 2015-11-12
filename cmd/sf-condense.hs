@@ -49,7 +49,7 @@ sf_condense out_nf in_fn out_fn = do
       x = map (maybe 0 (vec_summary sz vec)) (gen_win out_nf in_nf)
   when (in_nf < out_nf) (error "in_nf < out_nf")
   when (nc /= 1) (error "nc /= 1")
-  SF.write_au_f32_vec out_fn hdr' (V.fromList x)
+  SF.write_vec out_fn hdr' (V.fromList x)
   return ()
 
 help :: IO ()

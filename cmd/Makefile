@@ -1,5 +1,6 @@
 cmd =	au-to-img \
 	img-edit img-to-sf img-to-tbl \
+	pgm-to-au \
 	midi-to-csv-mnd \
 	sf-condense sf-draw sf-to-img \
 	trace-rec-x11
