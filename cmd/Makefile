@@ -1,5 +1,5 @@
 cmd =	au-to-png \
-	img-edit img-to-pbm img-to-sf img-to-tbl \
+	img-edit img-to-pbm img-to-pgm img-to-sf img-to-tbl \
 	pgm-to-au \
 	midi-to-csv-mnd \
 	sf-condense sf-draw sf-to-img \

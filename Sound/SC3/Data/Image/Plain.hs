@@ -1,23 +1,22 @@
 module Sound.SC3.Data.Image.Plain where
 
+import qualified Data.Array.Unboxed as A {- array -}
 import qualified Data.ByteString as B {- bytestring -}
+import qualified Data.Vector.Storable as V {- vector -}
 
 import qualified Codec.Picture as I {- JuicyPixels -}
 import qualified Codec.Picture.Types as I {- JuicyPixels -}
 
-import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
-import qualified Sound.SC3.Data.Bitmap.Type as D {- hsc3-data -}
-
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
-
-import qualified Data.Vector.Storable as V {- vector -}
 
 import qualified Data.CG.Minus.Colour.Grey as C {- hcg-minus -}
 
 import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
-
-import Sound.SC3.Data.Image.Type {- hsc3-data -}
+import qualified Sound.SC3.Data.Bitmap.PBM as PBM {- hsc3-data -}
+import qualified Sound.SC3.Data.Bitmap.Type as BM {- hsc3-data -}
+import qualified Sound.SC3.Data.Image.PGM as PGM {- hsc3-data -}
+import qualified Sound.SC3.Data.Image.Type as T {- hsc3-data -}
 
 -- * IMAGE
 
@@ -35,8 +34,11 @@ img_load fn = do
     Right (I.ImageYCbCr8 img) -> return (I.convertImage img)
     Right _ -> error "img_load: not Y8|RGB8|CMYK8|YCbCr8 image"
 
+img_write_png :: FilePath -> IMAGE -> IO ()
+img_write_png = I.writePng
+
 -- | Dimensions as (width,height) pair.
-img_dimensions :: IMAGE -> Dimensions
+img_dimensions :: IMAGE -> T.Dimensions
 img_dimensions i = (I.imageWidth i,I.imageHeight i)
 
 img_row :: IMAGE -> Int -> [RGB8]
@@ -132,9 +134,10 @@ img_gs_vec_co to_gs i =
         f n = let (x,y) = n `divMod` h in to_gs (I.pixelAt i x y)
     in V.generate (w * h) f
 
-img_from_vec_co :: (V.Storable n,RealFrac n) => Dimensions -> V.Vector n -> IMAGE
+-- | Construct GS 'IMAGE' from column order 'V.Vector'.
+img_from_vec_co :: (V.Storable n,RealFrac n) => T.Dimensions -> V.Vector n -> IMAGE
 img_from_vec_co (w,h) v =
-    let f x y = gs_to_rgb8 (v V.! ix_to_linear (w,h) (x,y))
+    let f x y = gs_to_rgb8 (v V.! T.ix_to_linear (w,h) (x,y))
     in I.generateImage f w h
 
 -- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
@@ -153,14 +156,14 @@ img_gs_write_au to_gs fn i =
         hdr = AU.Header w AU.Float 44100 h
     in AU.write_f32_vec fn (hdr,v)
 
-img_from_gs :: Dimensions -> [[GREY]] -> IMAGE
+img_from_gs :: T.Dimensions -> [[GREY]] -> IMAGE
 img_from_gs (w,h) ro =
     let ro' = map (map gs_to_rgb8) ro
         f x y = (ro' !! y) !! x
     in I.generateImage f w h
 
 -- | Derive dimesions from row-order regular list array.
-ro_derive_dimensions :: [[a]] -> Dimensions
+ro_derive_dimensions :: [[a]] -> T.Dimensions
 ro_derive_dimensions ro =
     let w = length (head ro)
         h = length ro
@@ -180,8 +183,18 @@ img_gs_read_au fn = do
   let AU.Header nf _ _ nc = hdr
   return (img_from_gs (nf,nc) ro)
 
-img_write_png :: FilePath -> IMAGE -> IO ()
-img_write_png = I.writePng
+-- | Write 8-bit or 16-bit PGM5 file.
+img_write_pgm5 :: Int -> (RGB8 -> GREY) -> FilePath -> IMAGE -> IO ()
+img_write_pgm5 d to_gs fn i =
+    let (w,h) = img_dimensions i
+        z = case d of
+              8 -> 255
+              16 -> 65535
+              _ -> error "img_write_pgm5: depth not 8 or 16"
+        f = round . (* z) . to_gs
+        l = [((r,c),f (I.pixelAt i c r)) | r <- [0 .. h - 1], c <- [0 .. w - 1]]
+        a = A.array ((0,0),(h - 1,w - 1)) l
+    in PGM.pgm5_save_0 fn a
 
 -- * Black & white
 
@@ -206,8 +219,8 @@ rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c :: Either RGB8 Do
 rgb8_to_bw_eq' :: I.PixelRGB8 -> BW
 rgb8_to_bw_eq' = either_err "rgb8_to_bw_eq" . rgb8_to_bw_eq
 
--- | Black & white image to 'D.Bitarray' using given reduction function.
-img_bw_to_bitarray' :: (RGB8 -> BW) -> IMAGE -> D.Bitarray
+-- | Black & white image to 'BM.Bitarray' using given reduction function.
+img_bw_to_bitarray' :: (RGB8 -> BW) -> IMAGE -> BM.Bitarray
 img_bw_to_bitarray' f i =
     let (w,h) = img_dimensions i
         ro = img_row_order i
@@ -215,17 +228,17 @@ img_bw_to_bitarray' f i =
     in ((h,w),ro')
 
 -- | 'img_bw_to_bitarray'' of 'rgb8_to_bw_eq''.
-img_bw_to_bitarray :: IMAGE -> D.Bitarray
+img_bw_to_bitarray :: IMAGE -> BM.Bitarray
 img_bw_to_bitarray = img_bw_to_bitarray' rgb8_to_bw_eq'
 
 img_bw_write_pbm1 :: FilePath -> IMAGE -> IO ()
-img_bw_write_pbm1 fn = writeFile fn . P.bitarray_pbm1 . img_bw_to_bitarray
+img_bw_write_pbm1 fn = writeFile fn . PBM.bitarray_pbm1 . img_bw_to_bitarray
 
 img_bw_write_pbm4 :: (RGB8 -> BW) -> FilePath -> IMAGE -> IO ()
 img_bw_write_pbm4 f pbm_fn =
-    P.pbm4_write pbm_fn .
-    P.bitindices_to_pbm .
-    D.bitarray_to_bitindices .
+    PBM.pbm4_write pbm_fn .
+    PBM.bitindices_to_pbm .
+    BM.bitarray_to_bitindices .
     img_bw_to_bitarray' f
 
 rgb8_bw_inverse :: RGB8 -> RGB8

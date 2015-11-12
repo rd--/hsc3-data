@@ -30,8 +30,8 @@ pgm_load_0 fn = do
     _ -> error (show ("pgm_load_0",r))
 
 -- | Will use 8-bits if values are in (0,255) and 16-bits if in (0,65535).
-pgm_save_0 ::  FilePath -> PGM -> IO ()
-pgm_save_0 fn a = I.arrayToFile fn (pgm_to_word16 a)
+pgm5_save_0 ::  FilePath -> PGM -> IO ()
+pgm5_save_0 fn a = I.arrayToFile fn (pgm_to_word16 a)
 
 -- | Simple cast.
 pgm_to_word16 :: PGM -> A.UArray Ix Word16
