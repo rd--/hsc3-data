@@ -3,6 +3,7 @@
 module Sound.SC3.Data.Bitmap.Type where
 
 import Data.Bits {- base -}
+import Data.Char {- base -}
 import Data.Maybe {- base -}
 
 -- * Bitmaps, Bitarrays and Bitindices
@@ -126,11 +127,6 @@ bitindices_to_bitarray ((h,w),ix) =
         g r = map (f r) [0 .. w - 1]
     in ((h,w),map g [0 .. h - 1])
 
-bitindices_leading_edges :: Bitindices -> Bitindices
-bitindices_leading_edges (dm,ix) =
-    let f (r,c) = c == 0 || (r,c - 1) `notElem` ix
-    in (dm,filter f ix)
-
 indices_displace :: (Int,Int) -> Indices -> Indices
 indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
 
@@ -153,3 +149,33 @@ bitmap_show = bitarray_show . bitmap_to_bitarray
 
 bitindices_show :: Bitindices -> String
 bitindices_show = bitarray_show . bitindices_to_bitarray
+
+-- * Leading edge
+
+data DIRECTION = RIGHT | LEFT | DOWN | UP deriving (Eq,Show)
+
+direction_pp :: DIRECTION -> String
+direction_pp = map toLower . show
+
+-- > mapMaybe parse_dir_char "rldu"
+parse_dir_char :: Char -> Maybe DIRECTION
+parse_dir_char c = lookup c (zip "rldu" [RIGHT,LEFT,DOWN,UP])
+
+parse_dir_char' :: Char -> DIRECTION
+parse_dir_char' =
+    fromMaybe (error "parse_dir_char: not 'r','l','d' or 'u'") .
+    parse_dir_char
+
+bitindices_leading_edges :: DIRECTION -> Bitindices -> Bitindices
+bitindices_leading_edges dir ((h,w),ix) =
+    let f_right (r,c) = c == 0 || (r,c - 1) `notElem` ix
+        f_left (r,c) = c == w - 1 || (r,c + 1) `notElem` ix
+        f_down (r,c) = r == 0 || (r - 1,c) `notElem` ix
+        f_up (r,c) = r == h - 1 || (r + 1,c) `notElem` ix
+        f = case dir of
+              UP -> f_up
+              DOWN -> f_down
+              LEFT -> f_left
+              RIGHT -> f_right
+    in ((h,w),filter f ix)
+
