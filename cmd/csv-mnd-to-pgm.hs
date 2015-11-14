@@ -1,6 +1,7 @@
 import System.Environment {- base -}
 
 import qualified Music.Theory.Array.CSV.Midi.MND as C {- hmt -}
+import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 import qualified Sound.SC3 as S {- hsc3 -}
 import qualified Sound.SC3.Data.Image.PGM as I {- hmt-diagrams -}
@@ -12,12 +13,12 @@ wseq_to_pgm :: (Int,Int) -> T.Wseq Double (Double,Double) -> I.PGM
 wseq_to_pgm (w,h) sq =
   let (_,et) = T.wseq_tspan sq
       tm_incr = et / fromIntegral w
-      tm_seq = take w [0,tm_incr ..]
+      tm_seq = take w (T.adj2 1 [0,tm_incr ..])
+      nd = zip [0..] (map (T.wseq_at_window sq) tm_seq)
       to_y mnn = h - 1 - floor (S.linlin' mnn 21 108 0 (fromIntegral h))
       to_grey = floor . (* 255) . (/ 127)
       to_entry (x,(_,(mnn,vel))) = ((to_y mnn,x),to_grey vel)
       uncollate (k,v) = zip (repeat k) v
-      nd = zip [0..] (map (T.wseq_at sq) tm_seq)
       pgm = I.pgm_from_list (h,w) (concatMap (map to_entry . uncollate) nd)
   in I.pgm_invert pgm
 
