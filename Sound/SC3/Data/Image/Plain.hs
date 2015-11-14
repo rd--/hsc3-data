@@ -184,7 +184,7 @@ img_gs_read_au fn = do
   return (img_from_gs (nf,nc) ro)
 
 -- | Write 8-bit or 16-bit PGM5 file.
-img_write_pgm5 :: Int -> (RGB8 -> GREY) -> FilePath -> IMAGE -> IO ()
+img_write_pgm5 :: PGM.Depth -> (RGB8 -> GREY) -> FilePath -> IMAGE -> IO ()
 img_write_pgm5 d to_gs fn i =
     let (w,h) = img_dimensions i
         z = case d of
@@ -194,7 +194,7 @@ img_write_pgm5 d to_gs fn i =
         f = round . (* z) . to_gs
         l = [((r,c),f (I.pixelAt i c r)) | r <- [0 .. h - 1], c <- [0 .. w - 1]]
         a = A.array ((0,0),(h - 1,w - 1)) l
-    in PGM.pgm5_save_0 fn a
+    in PGM.pgm5_save_0 fn (d,a)
 
 -- * Black & white
 
