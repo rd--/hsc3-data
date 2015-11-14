@@ -2,6 +2,8 @@ module Sound.SC3.Data.Image.PGM where
 
 import qualified Data.Array.Unboxed as A {- array -}
 import qualified Data.Vector.Storable as V {- vector -}
+import qualified Data.Map as M {- containers -}
+import Data.Maybe {- base -}
 import Data.Word {- base -}
 import qualified Graphics.Pgm as I {- pgm -}
 
@@ -11,16 +13,24 @@ type Ix = (Int,Int)
 -- | Dimensions are (rows,columns), or (height,width).
 type Dimensions = (Int,Int)
 
+type Greyarray n = A.UArray Ix n
+
 -- | PGM is an unboxed array of 'Int'.
-type PGM = A.UArray Ix Int
+type PGM = Greyarray Int
 
 -- | PGMF is an unboxed array of 'Float'.
-type PGMF = A.UArray Ix Float
+type PGMF = Greyarray Float
+
+a_dimensions :: (Num t,A.Ix t,A.IArray a e) => a (t,t) e -> (t,t)
+a_dimensions a =
+    let (_,(r,c)) = A.bounds a
+    in (r + 1,c + 1)
 
 pgm_dimensions :: PGM -> Dimensions
-pgm_dimensions i =
-    let (_,(r,c)) = A.bounds i
-    in (r + 1,c + 1)
+pgm_dimensions = a_dimensions
+
+pgmf_dimensions :: PGMF -> Dimensions
+pgmf_dimensions = a_dimensions
 
 pgm_load_0 :: FilePath -> IO PGM
 pgm_load_0 fn = do
@@ -83,3 +93,27 @@ pgmf_to_vec dm img =
         n = nr * nc
         f i = img A.! (linear_to_ix dm i)
     in V.generate n f
+
+-- * Greymap
+
+-- | A 'Greymap' is an 'M.Map' from 'Ix' to value.
+type Greymap n = (Dimensions,M.Map Ix n)
+
+-- | Lookup value, default is zero.
+greymap_ix :: Num n => Greymap n -> Ix -> n
+greymap_ix (_,m) i = fromMaybe 0 (M.lookup i m)
+
+greymap_set :: Greymap n -> Ix -> n -> Greymap n
+greymap_set (d,m) i n = let m' = M.insert i n m in (d,m')
+
+a_to_greymap :: (Num t,Num e,Ord e,A.Ix t,A.IArray a e) => a (t,t) e -> ((t,t),M.Map (t,t) e)
+a_to_greymap a =
+    let d = a_dimensions a
+        m = M.fromList (filter ((> 0) . snd) (A.assocs a))
+    in (d,m)
+
+pgm_to_greymap :: PGM -> Greymap Int
+pgm_to_greymap = a_to_greymap
+
+pgmf_to_greymap :: PGMF -> Greymap Float
+pgmf_to_greymap = a_to_greymap

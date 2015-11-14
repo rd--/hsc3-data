@@ -21,6 +21,7 @@ Library
                    bifunctors,
                    bitwise,
                    bytestring,
+                   containers,
                    filepath,
                    Glob,
                    hcg-minus == 0.16.*,

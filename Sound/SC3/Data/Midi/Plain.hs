@@ -42,8 +42,8 @@ mk_tempo bpm =
     in microseconds_per_minute `div` bpm
 
 -- | Write Type-0 midi file, tempo is 60, time signature is 4/4.
-write_midi :: FilePath -> [SEQ] -> IO ()
-write_midi fn sq =
+write_midi0 :: FilePath -> [SEQ] -> IO ()
+write_midi0 fn sq =
     let ft = M.SingleTrack
         tf = M.TicksPerBeat 1024
         ts = M.TimeSignature 4 2 24 8
@@ -65,20 +65,24 @@ track_to_wseq =
                        _ -> Nothing
     in T.tseq_on_off_to_wseq (==) . mapMaybe f
 
--- | Load MIDI file as 'SEQ' data.  Ignores everything except note on and off messages.
+-- | Load Type-0 or Type-1 MIDI file as 'SEQ' data.  Ignores
+-- everything except note on and off messages.
 read_midi :: FilePath -> IO [SEQ]
 read_midi fn = do
   r <- M.importFile fn
   case r of
     Left err -> error err
-    Right m -> let dv = M.timeDiv m
+    Right m -> let ty = M.fileType m
+                   dv = M.timeDiv m
                    f = track_to_wseq . M.toRealTime dv . M.toAbsTime
                    sq = filter (not . null) (map f (M.tracks m))
-               in return sq
+               in if ty /= M.MultiPattern
+                  then return sq
+                  else error (show ("read_midi: not type-0 or type-1",ty))
 
 -- | Write MND type CSV file.
-write_csv :: FilePath -> [SEQ] -> IO ()
-write_csv fn =
+write_csv_mnd :: FilePath -> [SEQ] -> IO ()
+write_csv_mnd fn =
     T.midi_tseq_write fn .
     T.midi_wseq_to_midi_tseq .
     T.tseq_map (\(mn,ch) -> (mn,127,ch)) .
@@ -86,4 +90,3 @@ write_csv fn =
 
 seq_merge :: [SEQ] -> SEQ
 seq_merge = foldr T.wseq_merge []
-
