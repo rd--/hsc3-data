@@ -6,6 +6,16 @@ hsc3-data - data functions for SC3 related work
 [hsc3]: http://rd.slavepianos.org/?t=hsc3
 [hsc3-data]: http://rd.slavepianos.org/?t=hsc3-data
 
+# pbm-indices
+
+Write (row,column) indices for `PBM` in text form, as `CSV` or `JSON`.
+
+~~~~
+$ hsc3-pbm-indices csv ~/sw/hsc3-data/data/pbm/fh.pbm /dev/stdout | wc -lc
+   4515   31524
+$
+~~~~
+
 © [rohan drape][rd], 2013-2015, [gpl]
 
 [rd]: http://rd.slavepianos.org/
