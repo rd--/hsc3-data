@@ -9,7 +9,7 @@ import Sound.SC3.Data.Image.Plain {- hsc3-data -}
 -- > au_to_img (1 -) fn (fn ++ ".png")
 au_to_img :: (Float -> Float) -> FilePath -> FilePath -> IO ()
 au_to_img op au_fn png_fn = do
-  (hdr,vec) <- AU.read_f32_vec au_fn
+  (hdr,vec) <- AU.au_read_f32_vec au_fn
   let img = img_from_vec_co (AU.frameCount hdr,AU.channelCount hdr) (V.map op vec)
   img_write_png png_fn img
 

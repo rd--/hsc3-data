@@ -154,7 +154,7 @@ img_gs_write_au to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
         hdr = AU.Header w AU.Float 44100 h
-    in AU.write_f32_vec fn (hdr,v)
+    in AU.au_write_f32_vec fn (hdr,v)
 
 img_from_gs :: T.Dimensions -> [[GREY]] -> IMAGE
 img_from_gs (w,h) ro =
@@ -179,7 +179,7 @@ img_gs_read_sf fn = do
 -- | Read NeXT audio file as image, channels are rows.
 img_gs_read_au :: FilePath -> IO IMAGE
 img_gs_read_au fn = do
-  (hdr,ro) <- AU.read fn
+  (hdr,ro) <- AU.au_read fn
   let AU.Header nf _ _ nc = hdr
   return (img_from_gs (nf,nc) ro)
 
