@@ -8,6 +8,7 @@ import Data.Word {- base -}
 
 import qualified Codec.Image.PBM as I {- bitwise -}
 import qualified Data.Array.BitArray as A {- bitwise -}
+import qualified Data.Map as M {- containers -}
 
 import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
 
@@ -25,8 +26,8 @@ bitarray_pbm1 ((h,w),a) =
     in unlines ([ty,dm] ++ map f a)
 
 -- | 'PBM1' of 'Bitmap'.
-bitmap_pbm1 :: FiniteBits b => Bitmap b -> PBM1
-bitmap_pbm1 = bitarray_pbm1 . bitmap_to_bitarray
+bitmap_pbm1 :: FiniteBits b => BitPattern b -> PBM1
+bitmap_pbm1 = bitarray_pbm1 . bitpattern_to_bitarray
 
 -- | 'PBM1' of 'Bitindices'.
 bitindices_pbm1 :: Bitindices -> PBM1
@@ -85,6 +86,14 @@ bitindices_to_pbm ((nr,nc),ix) =
     let b = ((0,0),(nr-1,nc-1))
         a = A.array b (zip ix (repeat True))
     in I.PBM nc a
+
+pbm_to_bitmap :: I.PBM -> BitMap
+pbm_to_bitmap pbm =
+    let (dm,ix) = pbm_to_bitindices pbm
+    in (dm,M.fromList (zip ix (repeat True)))
+
+bitmap_to_pbm :: BitMap -> I.PBM
+bitmap_to_pbm = bitindices_to_pbm . bitmap_to_bitindices
 
 pbm4_write :: FilePath -> I.PBM -> IO ()
 pbm4_write fn (I.PBM _ a) = B.writeFile fn (I.encodePBM a)

@@ -4,9 +4,12 @@ module Sound.SC3.Data.Bitmap.Type where
 
 import Data.Bits {- base -}
 import Data.Char {- base -}
+import Data.List.Split {- split -}
+import Data.List.Split.Internals {- split -}
+import qualified Data.Map as M {- containers -}
 import Data.Maybe {- base -}
 
--- * Bitmaps, Bitarrays and Bitindices
+-- * Dimensions and Indices
 
 -- | Height (number of rows).
 type Height = Int
@@ -45,25 +48,80 @@ ix_to_linear (_,nc) (r,c) = r * nc + c
 linear_to_ix :: Dimensions -> Int -> Ix
 linear_to_ix (_,nc) i = i `divMod` nc
 
+indices_displace :: (Int,Int) -> Indices -> Indices
+indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
+
+on_elem :: Eq a => a -> Splitter a
+on_elem e = defaultSplitter { delimiter = Delimiter [(==) e] }
+
+-- > split_at 'a' "abcde"
+split_at :: Eq a => a -> [a] -> [[a]]
+split_at = split . keepDelimsL . on_elem
+
+-- | Rotate list so that is starts at indicated element.
+--
+-- > starting_from 'c' "abcde" == Just "cdeab"
+starting_from :: Eq a => a -> [a] -> Maybe [a]
+starting_from x l =
+    case split_at x l of
+      [lhs,rhs] -> Just (rhs ++ lhs)
+      _ -> Nothing
+
+starting_from_err :: Eq a => a -> [a] -> [a]
+starting_from_err x =
+    fromMaybe (error "starting_from: non-element") .
+    starting_from x
+
+-- | The eight vectors (ie. (dy,dx)) to move to a neighbouring cell,
+-- clockwise.
+--
+-- > length neighbour_vectors_at_1_cw == 8
+neighbour_vectors_at_1_cw :: Num n => [(n,n)]
+neighbour_vectors_at_1_cw =
+    [(0, 1),( 1, 1),( 1,0),( 1,-1)
+    ,(0,-1),(-1,-1),(-1,0),(-1, 1)]
+
+-- > length neighbour_vectors_at_2_cw == 16
+neighbour_vectors_at_2_cw :: Num n => [(n,n)]
+neighbour_vectors_at_2_cw =
+    [(0, 2),( 1, 2),( 2, 2),( 2, 1),( 2,0),( 2,-1),( 2,-2),( 1,-2)
+    ,(0,-2),(-1,-2),(-2,-2),(-2,-1),(-2,0),(-2, 1),(-2, 2),(-1, 2)]
+
+-- | Given 'Dimensions' and an 'Ix' derive the set of neighbouring indices.
+--
+-- > map (length . neighbour_indices (3,3)) (bm_indices (3,3)) == [3,5,3,5,8,5,3,5,3]
+neighbour_indices :: [(Int,Int)] -> Dimensions -> Ix -> [Ix]
+neighbour_indices n_fn (nr,nc) (r,c) =
+    let f (dr,dc) =
+            let r' = r + dr
+                c' = c + dc
+            in if r' >= 0 && r' < nr && c' >= 0 && c' < nc
+               then Just (r',c')
+               else Nothing
+    in mapMaybe f n_fn
+
+-- | Predicate to decide if indices neighbours by at most /distance/ moves.
+--
+-- > map (ix_are_neighbours 1 (0,0)) neighbour_vectors_at_1 == replicate 8 True
+-- > map (ix_are_neighbours 2 (0,0)) neighbour_vectors_at_2 == replicate 16 True
+ix_are_neighbours :: (Num t,Ord t) => t -> (t,t) -> (t,t) -> Bool
+ix_are_neighbours d (r,c) (r',c') = abs (r - r') <= d && abs (c - c') <= d && (r,c) /= (r',c')
+
+-- * Bitarray
+
 -- | Bit, as 0 = 'False' and 1 = 'True'.
 type Bit = Bool
+
+-- | Function to draw bit given (true,false) or (one,zero) characters.
+bit_to_char :: (Char,Char) -> Bit -> Char
+bit_to_char (one,zero) x = if x then one else zero
 
 -- | List of 'Bit's, the first 'Bit' is the leftmost.
 type Bitseq = [Bit]
 
--- | List of rows, each a 'Bitseq', the first is the uppermost.
-type Bitarray = (Dimensions,[Bitseq])
-
--- | A 'Bitmap' is a list of rows (lines), each line is a bit sequence
--- of /width/ elements encoded using the type parameter. The most
--- significant bit of each line represents the leftmost pixel.
-type Bitmap b = (Dimensions,[b])
-
--- | List of 'Ix'.
-type Indices = [Ix]
-
--- | The (row,column) indices for 'True' bits of a 'Bitarray'.
-type Bitindices = (Dimensions,Indices)
+-- | Show 'Bitseq', using @\@@ for 'True' and @.@ for 'False'.
+bitseq_show :: Bitseq -> String
+bitseq_show = map (bit_to_char ('@','.'))
 
 -- | Given 'Bits' value of size /sz/ test the /i/th _most_ significant
 -- bit.
@@ -76,12 +134,27 @@ bitenc_test sz x i = testBit x (sz - 1 - i)
 bitseq :: FiniteBits b => Int -> b -> Bitseq
 bitseq n x = let sz = finiteBitSize x in map (bitenc_test sz x) [0 .. n - 1]
 
-bitmap_to_bitarray :: FiniteBits b => Bitmap b -> Bitarray
-bitmap_to_bitarray ((h,w),m) = ((h,w),map (bitseq w) m)
+-- | List of rows, each a 'Bitseq', the first is the uppermost.
+type Bitarray = (Dimensions,[Bitseq])
 
--- | Index into bitmap at (row,column).
-bitmap_ix :: Bits b => Bitmap b -> (Int,Int) -> Bit
-bitmap_ix (_,m) (i,j) = bitenc_test 8 (m !! i) j
+bitarray_to_bitindices :: Bitarray -> Bitindices
+bitarray_to_bitindices (dm,v) =
+    let v' = zip [0..] (map (zip [0..]) v)
+        f i (j,b) = if b then Just (i,j) else Nothing
+        g (i,r) = mapMaybe (f i) r
+    in (dm,concatMap g v')
+
+-- | Show 'Bitarray' using 'bitseq_show'.
+bitarray_show :: Bitarray -> String
+bitarray_show = unlines . map bitseq_show . snd
+
+-- * Bitindices
+
+-- | List of 'Ix'.
+type Indices = [Ix]
+
+-- | The (row,column) indices for 'True' bits of a 'Bitarray'.
+type Bitindices = (Dimensions,Indices)
 
 bitindices_height :: Bitindices -> Height
 bitindices_height = fst . fst
@@ -114,41 +187,60 @@ bitindices_magnify (mx,my) ((h,w),ix) =
                   in [(i,j) | i <- [r' .. r' + my - 1], j <- [c' .. c' + mx - 1]]
     in ((h * mx,w * my),concatMap f ix)
 
-bitarray_to_bitindices :: Bitarray -> Bitindices
-bitarray_to_bitindices (dm,v) =
-    let v' = zip [0..] (map (zip [0..]) v)
-        f i (j,b) = if b then Just (i,j) else Nothing
-        g (i,r) = mapMaybe (f i) r
-    in (dm,concatMap g v')
-
 bitindices_to_bitarray :: Bitindices -> Bitarray
 bitindices_to_bitarray ((h,w),ix) =
     let f r c = (r,c) `elem` ix
         g r = map (f r) [0 .. w - 1]
     in ((h,w),map g [0 .. h - 1])
 
-indices_displace :: (Int,Int) -> Indices -> Indices
-indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
-
--- * Show and PP
-
--- | Function to draw bit given (true,false) or (one,zero) characters.
-bit_to_char :: (Char,Char) -> Bit -> Char
-bit_to_char (one,zero) x = if x then one else zero
-
--- | Show 'Bitseq', using @\@@ for 'True' and @.@ for 'False'.
-bitseq_show :: Bitseq -> String
-bitseq_show = map (bit_to_char ('@','.'))
-
--- | Show 'Bitarray' using 'bitseq_show'.
-bitarray_show :: Bitarray -> String
-bitarray_show = unlines . map bitseq_show . snd
-
-bitmap_show :: FiniteBits b => Bitmap b -> String
-bitmap_show = bitarray_show . bitmap_to_bitarray
-
 bitindices_show :: Bitindices -> String
 bitindices_show = bitarray_show . bitindices_to_bitarray
+
+-- * BitPattern
+
+-- | A 'BitPattern' is a list of rows (lines), each line is a bit sequence
+-- of /width/ elements encoded using the type parameter. The most
+-- significant bit of each line represents the leftmost pixel.
+type BitPattern b = (Dimensions,[b])
+
+bitpattern_to_bitarray :: FiniteBits b => BitPattern b -> Bitarray
+bitpattern_to_bitarray ((h,w),m) = ((h,w),map (bitseq w) m)
+
+-- | Index into 'BitPattern' at (row,column).
+bitpattern_ix :: Bits b => BitPattern b -> (Int,Int) -> Bit
+bitpattern_ix (_,m) (i,j) = bitenc_test 8 (m !! i) j
+
+bitpattern_show :: FiniteBits b => BitPattern b -> String
+bitpattern_show = bitarray_show . bitpattern_to_bitarray
+
+-- | * BitMap
+
+-- | By convention is sparse, with only 'True' entries.
+type BitMap = (Dimensions,M.Map Ix Bool)
+
+bitmap_get :: BitMap -> Ix -> Bool
+bitmap_get (_,m) ix = M.findWithDefault False ix m
+
+-- | Lookup a sequence of keys in a map, halting when one is present.
+--
+-- > map_lookup_set (M.fromList (zip [1..9] ['a'..])) [0,1] == Just (1,'a')
+map_lookup_set :: Ord k => M.Map k a -> [k] -> Maybe (k,a)
+map_lookup_set m set =
+    case set of
+      [] -> Nothing
+      k:set' -> case M.lookup k m of
+                  Nothing -> map_lookup_set m set'
+                  Just r -> Just (k,r)
+
+-- | Find a neighbour of 'Ix' in 'BitMap'.
+bitmap_neighbour_1 :: [(Int,Int)] -> BitMap -> Ix -> Maybe (Ix,Bool)
+bitmap_neighbour_1 n_fn (d,m) ix = map_lookup_set m (neighbour_indices n_fn d ix)
+
+bitmap_to_bitindices :: BitMap -> Bitindices
+bitmap_to_bitindices (d,m) = (d,map fst (filter snd (M.toList m)))
+
+bitindices_to_bitmap :: Bitindices -> BitMap
+bitindices_to_bitmap (dm,ix) = (dm,M.fromList (zip ix (repeat True)))
 
 -- * Leading edge
 
@@ -178,4 +270,3 @@ bitindices_leading_edges dir ((h,w),ix) =
               LEFT -> f_left
               RIGHT -> f_right
     in ((h,w),filter f ix)
-

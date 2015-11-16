@@ -28,12 +28,12 @@ type Encoding = Int
 -- | A property is a (key,value) pair.
 type Property = (String,String)
 
--- | A glyph, encoded as a 'Word8' 'Bitmap' (the current BDF parser only supports
+-- | A glyph, encoded as a 'Word8' 'BitPattern' (the current BDF parser only supports
 -- fonts with glyphs no wider than eight pixels).
 data Glyph = Glyph {glyph_name :: Name
                    ,glyph_encoding :: Encoding
                    ,glyph_bbox :: Box
-                   ,glyph_bitmap :: Bitmap Word8
+                   ,glyph_bitpattern :: BitPattern Word8
                    ,glyph_properties :: [Property]}
              deriving (Eq,Show)
 
@@ -56,7 +56,7 @@ glyph_ix fb g (r,c) =
         j = c - g_dx + dx -- ?
     in if i < 0 || i >= g_h || j < 0 || j >= g_w
        then False
-       else bitmap_ix (glyph_bitmap g) (i,j)
+       else bitpattern_ix (glyph_bitpattern g) (i,j)
 
 glyph_bitarray :: Box -> Glyph -> Bitarray
 glyph_bitarray fb g =
@@ -85,8 +85,8 @@ properties =
 property :: [Property] -> String -> String
 property p n = maybe "" snd (find ((==) n . fst) p)
 
-parse_bitmap :: Read b => Dimensions -> Source -> Bitmap b
-parse_bitmap d =
+parse_bitpattern :: Read b => Dimensions -> Source -> BitPattern b
+parse_bitpattern d =
     (\m -> (d,m)) .
     map (read . ("0x" ++)) .
     takeWhile ((/=) "ENDCHAR") .
@@ -111,7 +111,7 @@ parse_glyph s =
         (w,h,_,_) = bb
     in if w > 8
        then error "parse_glyph: width > 8"
-       else Glyph nm en (Box bb) (parse_bitmap (h,w) s) pp
+       else Glyph nm en (Box bb) (parse_bitpattern (h,w) s) pp
 
 -- splitWhen variant (keeps delimiters at left)
 sep_when :: (a -> Bool) -> [a] -> [[a]]
