@@ -84,7 +84,13 @@ trace_join_all tr =
                  Just (c',tr'') -> trace_join_all (c' : tr'')
 
 help :: String
-help = unlines ["pbm-trace csv pbm-file csv-file","pbm-indices json pbm-file json-file"]
+help =
+    unlines
+    ["pbm-trace join:bool limit:int layers:bool pbm-file"
+    ,""
+    ,"  join = run join post-processor (slow)"
+    ,"  limit = discard traces that have fewer elements"
+               ,"  layers = write each trace as a separate PBM file"]
 
 pbm_trace :: (Bool,Int,Bool) -> FilePath -> IO ()
 pbm_trace (jn,lm,ly) pbm_fn = do

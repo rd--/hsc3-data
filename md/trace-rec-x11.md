@@ -1,0 +1,26 @@
+# trace-rec-x11
+
+Record trace of X mouse cursor as a three column `CSV` file.  The time
+is in seconds, and the `x` and `y` values are normalised in (0,1).
+The normalisation is _not_ per dimension, so the maximum value will
+not be (1,1) unless the screen is square.
+
+~~~~
+$ hsc3-trace-rec-x11
+tm,x,y
+0.000,0.398,0.601
+0.007,0.394,0.594
+0.016,0.389,0.580
+0.023,0.385,0.569
+0.031,0.384,0.556
+0.040,0.382,0.545
+0.047,0.382,0.534
+0.055,0.382,0.521
+0.064,0.384,0.512
+0.071,0.388,0.490
+0.079,0.391,0.476
+0.088,0.397,0.462
+0.095,0.406,0.442
+^C
+$
+~~~~
