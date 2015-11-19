@@ -1,29 +1,37 @@
 import System.Environment {- base -}
+import System.FilePath {- filepath -}
 
 import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
-import qualified Sound.SC3.Data.Image.Plain as I {- hsc3-data -}
 
--- > let fn = "/home/rohan/uc/sp-id/eof/png/gs/03.png"
--- > let dir = B.DOWN
--- > img_bw_le dir fn (fn ++ "." ++ B.direction_pp dir ++ ".pbm")
-img_bw_le :: B.DIRECTION -> FilePath -> FilePath -> IO ()
-img_bw_le dir img_fn pbm_fn = do
-  i <- I.img_load img_fn
-  print ("(w/nc,h/nr)",I.img_dimensions i)
-  let b = B.bitindices_leading_edges dir . B.bitarray_to_bitindices . I.img_bw_to_bitarray $ i
-  P.pbm4_write pbm_fn (P.bitindices_to_pbm b)
+edit_pbm_le :: B.DIRECTION -> FilePath -> FilePath -> IO ()
+edit_pbm_le dir in_fn out_fn = do
+  i <- P.read_pbm in_fn
+  print ("(w/nc,h/nr)",P.pbm_dimensions i)
+  let b = B.bitmap_leading_edges dir (P.pbm_to_bitmap i)
+  P.pbm4_write out_fn (P.bitmap_to_pbm b)
+
+-- > let fn = "/home/rohan/uc/sp-id/eof/png/gs/03.pbm"
+-- > edit_pbm_le_all fn
+edit_pbm_le_all :: FilePath -> IO ()
+edit_pbm_le_all pbm_fn = do
+  let gen_nm dir = replaceExtension (concat [".le.",[B.direction_char dir],".pbm"]) pbm_fn
+      mk dir = edit_pbm_le dir pbm_fn (gen_nm dir)
+  mapM_ mk [B.RIGHT,B.LEFT,B.DOWN,B.UP]
 
 help :: String
 help =
     unlines
-    ["img-edit bw/le {r|l|d|u} img-file pbm-file"
-    ," bw/le = black & white, leading edges transform"
+    ["img-edit pbm le {r|l|d|u} input-file output-file"
+    ,"img-edit pbm le/all pbm-file"
+    ," pbm = portable bitmap (black & white)"
+    ," le = leading edges transform"
     ," r = right, l = left, d = down, u = up"]
 
 main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["bw/le",[dir],img_fn,pbm_fn] -> img_bw_le (B.parse_dir_char' dir) img_fn pbm_fn
+    ["pbm","le",[dir],in_fn,out_fn] -> edit_pbm_le (B.parse_dir_char' dir) in_fn out_fn
+    ["pbm","le/all",pbm_fn] -> edit_pbm_le_all pbm_fn
     _ -> putStrLn help

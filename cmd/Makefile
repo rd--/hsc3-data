@@ -1,4 +1,4 @@
-cmd =	au-to-png \
+cmd =	au-to-pbm au-to-pgm \
 	csv-mnd-to-pgm \
 	img-edit img-to-pbm img-to-pgm img-to-sf img-to-tbl \
 	pbm-indices pbm-trace \

@@ -42,11 +42,21 @@ bm_indices (nr,nc) = [(r,c) | r <- [0 .. nr - 1], c <- [0 .. nc - 1]]
 ix_to_linear :: Dimensions -> Ix -> Int
 ix_to_linear (_,nc) (r,c) = r * nc + c
 
+-- | Column-order variant.
+--
+-- > map (ix_to_linear_co (3,4)) (bm_indices (3,4)) == [0,3,6,9,1,4,7,10,2,5,8,11]
+ix_to_linear_co :: Dimensions -> Ix -> Int
+ix_to_linear_co (nr,_) (r,c) = c * nr + r
+
 -- | Inverse of 'ix_to_linear'.
 --
 -- > map (linear_to_ix (2,3)) [0 .. 5] == bm_indices (2,3)
 linear_to_ix :: Dimensions -> Int -> Ix
 linear_to_ix (_,nc) i = i `divMod` nc
+
+-- > map (linear_to_ix_co (3,4)) [0,3,6,9,1,4,7,10,2,5,8,11]
+linear_to_ix_co :: Dimensions -> Int -> Ix
+linear_to_ix_co (nr,_) i = i `divMod` nr
 
 indices_displace :: (Int,Int) -> Indices -> Indices
 indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
@@ -249,6 +259,10 @@ data DIRECTION = RIGHT | LEFT | DOWN | UP deriving (Eq,Show)
 direction_pp :: DIRECTION -> String
 direction_pp = map toLower . show
 
+-- > map direction_char [RIGHT,LEFT,DOWN,UP] == "rldu"
+direction_char :: DIRECTION -> Char
+direction_char = head . direction_pp
+
 -- > mapMaybe parse_dir_char "rldu"
 parse_dir_char :: Char -> Maybe DIRECTION
 parse_dir_char c = lookup c (zip "rldu" [RIGHT,LEFT,DOWN,UP])
@@ -258,15 +272,24 @@ parse_dir_char' =
     fromMaybe (error "parse_dir_char: not 'r','l','d' or 'u'") .
     parse_dir_char
 
+leading_edge_f :: DIRECTION -> Dimensions -> (Ix -> Bool) -> Ix -> Bool
+leading_edge_f dir (h,w) not_elem_f =
+    let f_right (r,c) = c == 0 || not_elem_f (r,c - 1)
+        f_left (r,c) = c == w - 1 || not_elem_f (r,c + 1)
+        f_down (r,c) = r == 0 || not_elem_f (r - 1,c)
+        f_up (r,c) = r == h - 1 || not_elem_f (r + 1,c)
+    in case dir of
+         UP -> f_up
+         DOWN -> f_down
+         LEFT -> f_left
+         RIGHT -> f_right
+
 bitindices_leading_edges :: DIRECTION -> Bitindices -> Bitindices
-bitindices_leading_edges dir ((h,w),ix) =
-    let f_right (r,c) = c == 0 || (r,c - 1) `notElem` ix
-        f_left (r,c) = c == w - 1 || (r,c + 1) `notElem` ix
-        f_down (r,c) = r == 0 || (r - 1,c) `notElem` ix
-        f_up (r,c) = r == h - 1 || (r + 1,c) `notElem` ix
-        f = case dir of
-              UP -> f_up
-              DOWN -> f_down
-              LEFT -> f_left
-              RIGHT -> f_right
-    in ((h,w),filter f ix)
+bitindices_leading_edges dir (dm,ix) =
+    let le_f = leading_edge_f dir dm (`notElem` ix)
+    in (dm,filter le_f ix)
+
+bitmap_leading_edges :: DIRECTION -> BitMap -> BitMap
+bitmap_leading_edges dir (d,m) =
+    let le_f ix' _ = leading_edge_f dir d (\ix -> not (M.findWithDefault False ix m)) ix'
+    in (d,M.filterWithKey le_f m)

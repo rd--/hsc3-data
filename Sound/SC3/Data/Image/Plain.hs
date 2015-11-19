@@ -137,7 +137,7 @@ img_gs_vec_co to_gs i =
 -- | Construct GS 'IMAGE' from column order 'V.Vector'.
 img_from_vec_co :: (V.Storable n,RealFrac n) => T.Dimensions -> V.Vector n -> IMAGE
 img_from_vec_co (w,h) v =
-    let f x y = gs_to_rgb8 (v V.! T.ix_to_linear (w,h) (x,y))
+    let f x y = gs_to_rgb8 (v V.! T.ix_to_linear_co (w,h) (x,y))
     in I.generateImage f w h
 
 -- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
@@ -219,6 +219,22 @@ rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c :: Either RGB8 Do
 rgb8_to_bw_eq' :: I.PixelRGB8 -> BW
 rgb8_to_bw_eq' = either_err "rgb8_to_bw_eq" . rgb8_to_bw_eq
 
+-- | Black & white image to 'BM.Bitindices' using given reduction function.
+img_bw_to_bitindices' :: (RGB8 -> Bool) -> IMAGE -> BM.Bitindices
+img_bw_to_bitindices' to_bw i =
+    let (w,h) = img_dimensions i
+        f ix (x,y) = if y >= h
+                     then ix
+                     else if x >= w
+                          then f ix (0,y + 1)
+                          else let ix' = if to_bw (I.pixelAt i x y) then (y,x) : ix else ix
+                               in f ix' (x + 1,y)
+    in ((h,w),f [] (0,0))
+
+-- | 'img_bw_to_bitindices'' of 'rgb8_to_bw_eq''.
+img_bw_to_bitindices :: IMAGE -> BM.Bitindices
+img_bw_to_bitindices = img_bw_to_bitindices' rgb8_to_bw_eq'
+
 -- | Black & white image to 'BM.Bitarray' using given reduction function.
 img_bw_to_bitarray' :: (RGB8 -> BW) -> IMAGE -> BM.Bitarray
 img_bw_to_bitarray' f i =
@@ -238,8 +254,7 @@ img_bw_write_pbm4 :: (RGB8 -> BW) -> FilePath -> IMAGE -> IO ()
 img_bw_write_pbm4 f pbm_fn =
     PBM.pbm4_write pbm_fn .
     PBM.bitindices_to_pbm .
-    BM.bitarray_to_bitindices .
-    img_bw_to_bitarray' f
+    img_bw_to_bitindices' f
 
 rgb8_bw_inverse :: RGB8 -> RGB8
 rgb8_bw_inverse (I.PixelRGB8 r g b) =

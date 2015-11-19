@@ -49,9 +49,8 @@ decode_pbm4 = either (Left . show) (Right . fst) . I.decodePBM
 
 -- | Load one image from a PBM(1) or PBM(4) file.
 --
--- > I.PBM nc a <- read_pbm "/home/rohan/sw/hsc3-data/pbm/fh.pbm"
--- > nc == 526
--- > A.bounds a == ((0,0),(127,527))
+-- > i <- read_pbm "/home/rohan/sw/hsc3-data/data/pbm/fh.pbm"
+-- > pbm_dimensions i == (526,128)
 read_pbm :: FilePath -> IO I.PBM
 read_pbm nm = do
   b <- B.readFile nm
@@ -62,6 +61,13 @@ read_pbm nm = do
   case df b of
     Left err -> error ("read_pbm: " ++ err)
     Right i -> return i
+
+-- | Dimensions of 'I.PBM'.
+pbm_dimensions :: I.PBM -> Dimensions
+pbm_dimensions (I.PBM w a) =
+    case A.bounds a of
+      ((0,0),(r,_)) -> (w,r + 1)
+      _ -> error "pbm_dimensions"
 
 pbm_ascii :: I.PBM -> String
 pbm_ascii = bitindices_show . pbm_to_bitindices
