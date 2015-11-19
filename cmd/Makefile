@@ -4,7 +4,7 @@ cmd =	au-to-pbm au-to-pgm \
 	pbm-indices pbm-to-tbl pbm-trace \
 	pgm-to-au \
 	midi-to-csv-mnd midi-to-text \
-	sf-condense sf-draw sf-to-img \
+	sf-condense sf-draw sf-to-png \
 	trace-rec-x11
 
 include ~/sw/hsc3/mk/cmd.mk
