@@ -28,6 +28,7 @@ Library
                    HCodecs,
                    hmt == 0.16.*,
                    hosc == 0.16.*,
+                   hsc3 == 0.16.*,
                    hsc3-lang == 0.16.*,
                    hsc3-plot == 0.16.*,
                    hsc3-sf == 0.16.*,
