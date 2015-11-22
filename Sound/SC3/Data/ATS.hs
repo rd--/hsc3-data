@@ -1,4 +1,7 @@
 -- | Reader for ATS analyis data files.
+--
+-- Juan Pampin. /ATS: A LISP Environment for Spectral Modeling/.
+-- In Proc. ICMC, 1999.
 module Sound.SC3.Data.ATS where
 
 import qualified Data.ByteString.Lazy as B {- bytestring -}
@@ -13,6 +16,9 @@ type ATS_Frame = [Double]
 
 -- | ATS file type.
 type ATS_File_Type = Int
+
+-- | ATS parameter types, the residual is 25-band.
+data ATS_Param = ATS_Time | ATS_Amplitude | ATS_Frequency | ATS_Phase | ATS_Residual
 
 -- | ATS analysis meta-data.
 data ATS_Header = ATS_Header
@@ -32,9 +38,9 @@ data ATS = ATS {ats_header :: ATS_Header
                ,ats_frames :: [ATS_Frame]}
            deriving (Eq, Show)
 
--- | Very simple minded generic PP for records.
-record_fields_pp :: Show r => r -> [(String,String)]
-record_fields_pp =
+-- | Very simple minded generic fields viewer for records.
+record_fields :: Show r => r -> [(String,String)]
+record_fields =
     map ((\[p,q] -> (dropWhile (== ' ') p,q)) . splitOn " = ") .
     splitOn "," .
     takeWhile (/= '}') .
@@ -42,18 +48,42 @@ record_fields_pp =
     dropWhile (/= '{') .
     show
 
-ats_header_pp :: ATS_Header -> [(String,String)]
+-- | Pretty printer for 'record_fields'.
+record_fields_pp :: Show r => r -> String
+record_fields_pp = unlines . map (\(k,v) -> k ++ " = " ++ v) . record_fields
+
+-- | Type specialised 'record_fields'.
+ats_header_fields :: ATS_Header -> [(String,String)]
+ats_header_fields = record_fields
+
+-- | Type specialised 'record_fields_pp'.
+ats_header_pp :: ATS_Header -> String
 ats_header_pp = record_fields_pp
 
+-- | Split 'B.ByteString' into /i/ parts each of /n/ bytes.
+--
+-- > bs_sep 3 4 (B.pack [1..12]) == map B.pack [[1..4],[5..8],[9..12]]
 bs_sep :: Int64 -> Int64 -> B.ByteString -> [B.ByteString]
-bs_sep n i d = if i == 1 then [d] else let (p,q) = B.splitAt n d in p : bs_sep n (i - 1) q
+bs_sep i n d =
+    if i == 1
+    then if B.length d == n then [d] else error "bs_sep"
+    else let (p,q) = B.splitAt n d in p : bs_sep (i - 1) n q
 
+-- | The first eight bytes of the file determine endianess, and hence the decoder.
+ats_get_decoder :: B.ByteString -> B.ByteString -> Double
+ats_get_decoder v =
+    let f_be = O.decode_f64
+        f_le = f_be . B.reverse
+        err = error "ats_get_decoder: not ATS file?"
+    in if f_be v == 123.0 then f_be else if f_le v == 123.0 then f_le else err
+
+-- | ATS files are sequences of 64-bit IEEE doubles.
 ats_read_f64 :: FilePath -> IO [Double]
 ats_read_f64 fn = do
   d <- B.readFile fn
   let n = B.length d `div` 8
       f = ats_get_decoder (B.take 8 d)
-  return (map f (bs_sep 8 n d))
+  return (map f (bs_sep n 8 d))
 
 -- | Parse ATS header.
 ats_parse_header :: [Double] -> ATS_Header
@@ -80,7 +110,7 @@ ats_parse_header d =
 --
 -- > ats <- ats_read "/home/rohan/data/audio/pf-c5.1.ats"
 -- > let ATS hdr frm = ats
--- > ats_header_pp hdr
+-- > putStrLn $ ats_header_pp hdr
 -- > map length frm == replicate (ats_n_frames hdr) (ats_frame_length hdr)
 --
 -- > import Sound.SC3.Plot {- hcs3-plot -}
@@ -88,21 +118,12 @@ ats_parse_header d =
 -- > plotTable (ats_freq ats)
 -- > plotTable (ats_ampl ats)
 -- > plotTable (ats_phase ats)
+-- > plot_p3_ln (map (map (\(t,f,a) -> (f,t,a))) (ats_tm_fr_am ats))
 ats_read :: FilePath -> IO ATS
 ats_read fn = do
   d <- ats_read_f64 fn
   let hdr = ats_parse_header d
   return (ATS hdr (chunksOf (ats_frame_length hdr) (drop 10 d)))
-
--- | The first eight bytes of the file determine endianess, and hence the decoder.
-ats_get_decoder :: B.ByteString -> B.ByteString -> Double
-ats_get_decoder v =
-    let f_be = O.decode_f64
-        f_le = f_be . B.reverse
-        err = error "ats_get_decoder: not ATS file?"
-    in if f_be v == 123.0 then f_be else if f_le v == 123.0 then f_le else err
-
-data ATS_Param = ATS_Time | ATS_Amplitude | ATS_Frequency | ATS_Phase | ATS_Residual
 
 -- | Calculate partial depth and frame constant from filetype.
 --
@@ -117,6 +138,7 @@ ats_ftype_n n =
       4 -> ([ATS_Time,ATS_Amplitude,ATS_Frequency,ATS_Phase,ATS_Residual],3,26)
       _ -> error "ats_ftype_n"
 
+-- | Calculate indices for 'ATS_Param' given 'ATS_Header'.
 ats_param_ix :: ATS_Param -> ATS_Header -> Maybe [Int]
 ats_param_ix p hdr =
     let ft = ats_file_type hdr
@@ -131,20 +153,28 @@ ats_param_ix p hdr =
                          then let x = np * (pw + 1) in Just [x .. x + 25]
                          else Nothing
 
-ats_param_ch :: ATS_Param -> ATS -> [[Double]]
+-- | Get channels associated with 'ATS_Param' at 'ATS'.
+ats_param_ch :: ATS_Param -> ATS -> (Int,[[Double]])
 ats_param_ch sel (ATS hdr frm) =
     case ats_param_ix sel hdr of
       Nothing -> error "ats_param_ch"
-      Just ix -> let ch = transpose frm in map (ch !!) ix
+      Just ix -> let ch = transpose frm in (length ix,map (ch !!) ix)
 
 ats_time :: ATS -> [Double]
 ats_time (ATS _ frm) = let ch = transpose frm in ch !! 0
 
 ats_freq :: ATS -> [[Double]]
-ats_freq = ats_param_ch ATS_Frequency
+ats_freq = snd . ats_param_ch ATS_Frequency
 
 ats_ampl :: ATS -> [[Double]]
-ats_ampl = ats_param_ch ATS_Amplitude
+ats_ampl = snd . ats_param_ch ATS_Amplitude
 
 ats_phase :: ATS -> [[Double]]
-ats_phase = ats_param_ch ATS_Phase
+ats_phase = snd . ats_param_ch ATS_Phase
+
+ats_tm_fr_am :: ATS -> [[(Double,Double,Double)]]
+ats_tm_fr_am ats =
+    let tm = ats_time ats
+        fr = ats_freq ats
+        am = ats_ampl ats
+    in zipWith (\f a -> zip3 tm f a) fr am
