@@ -9,7 +9,9 @@ import Data.Int {- base -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
 
-import qualified Sound.OSC.Coding.Byte as O {- hosc -}
+import qualified Sound.File.NeXT as AU {- hsc3-sf -}
+import qualified Sound.OSC.Coding.Byte as OSC {- hosc -}
+import qualified Sound.SC3 as SC3 {- hsc3 -}
 
 -- | ATS analysis frame data.
 type ATS_Frame = [Double]
@@ -72,7 +74,7 @@ bs_sep i n d =
 -- | The first eight bytes of the file determine endianess, and hence the decoder.
 ats_get_decoder :: B.ByteString -> B.ByteString -> Double
 ats_get_decoder v =
-    let f_be = O.decode_f64
+    let f_be = OSC.decode_f64
         f_le = f_be . B.reverse
         err = error "ats_get_decoder: not ATS file?"
     in if f_be v == 123.0 then f_be else if f_le v == 123.0 then f_le else err
@@ -178,3 +180,25 @@ ats_tm_fr_am ats =
         fr = ats_freq ats
         am = ats_ampl ats
     in zipWith (\f a -> zip3 tm f a) fr am
+
+-- * SC3
+
+-- | Write data given by 'ats_read_f64' as 32-bit floating point NeXT/AU file.
+ats_write_au :: FilePath -> FilePath -> IO ()
+ats_write_au ats_fn au_fn = do
+  d <- ats_read_f64 ats_fn
+  let ats_hdr = ats_parse_header d
+      sr = round (ats_sample_rate ats_hdr)
+      au_hdr = AU.Header (length d) AU.Float sr 1
+  AU.au_write au_fn au_hdr [d]
+
+-- | Run 'ats_write_au' and then 'SC3.b_allocRead.
+--
+-- > ats_load_sc3 0 "/home/rohan/data/audio/pf-c5.4.ats"
+-- > SC3.withSC3 (SC3.b_query1_unpack 0)
+ats_load_sc3 :: Int -> FilePath -> IO ()
+ats_load_sc3 b ats_fn = do
+  let au_fn = ats_fn ++ ".au"
+  ats_write_au ats_fn au_fn
+  _ <- SC3.withSC3 (SC3.async (SC3.b_allocRead b au_fn 0 0))
+  return ()
