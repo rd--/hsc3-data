@@ -22,8 +22,10 @@ Library
                    bitwise,
                    bytestring,
                    containers,
+                   directory,
                    filepath,
                    Glob,
+                   hashable,
                    hcg-minus == 0.16.*,
                    HCodecs,
                    hmt == 0.16.*,
@@ -46,6 +48,7 @@ Library
                    Sound.SC3.Data.Bitmap.Font.BDF
                    Sound.SC3.Data.Bitmap.PBM
                    Sound.SC3.Data.Bitmap.Type
+                   Sound.SC3.Data.Buffer
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Math.Bourke
