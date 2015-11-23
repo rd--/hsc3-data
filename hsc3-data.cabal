@@ -25,7 +25,6 @@ Library
                    directory,
                    filepath,
                    Glob,
-                   hashable,
                    hcg-minus == 0.16.*,
                    HCodecs,
                    hmt == 0.16.*,
