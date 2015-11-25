@@ -5,6 +5,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 	pgm-to-au \
 	midi-to-csv-mnd midi-to-text \
 	sf-condense sf-draw sf-to-png \
-	trace-rec-x11
+	text-monitor trace-rec-x11 \
+	x11-ptr-to-midi-osc
 
 include ~/sw/hsc3/mk/cmd.mk

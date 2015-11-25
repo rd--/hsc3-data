@@ -22,7 +22,9 @@ Data functions for [SC3][sc3] related work in [hsc3][hsc3] ([haskell][hs] superc
 [sf-condense](?t=hsc3-data&e=md/sf-condense.md),
 [sf-draw](?t=hsc3-data&e=md/sf-draw.md),
 [sf-to-png](?t=hsc3-data&e=md/sf-to-png.md),
-[trace-rec-x11](?t=hsc3-data&e=md/trace-rec-x11.md)
+[text-monitor](?t=hsc3-data&e=md/text-monitor.md),
+[trace-rec-x11](?t=hsc3-data&e=md/trace-rec-x11.md),
+[x11-ptr-to-midi-osc](?t=hsc3-data&e=md/x11-ptr-to-midi-osc.md)
 
 [hs]: http://haskell.org/
 [sc3]: http://audiosynth.com/
