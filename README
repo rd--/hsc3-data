@@ -2,10 +2,27 @@
 
 Data functions for [SC3][sc3] related work in [hsc3][hsc3] ([haskell][hs] supercollider).
 
-# cli
+## cli
 
+[ats](?t=hsc3-data&e=md/ats.md),
+[au-to-pbm](?t=hsc3-data&e=md/au-to-pbm.md),
+[au-to-pgm](?t=hsc3-data&e=md/au-to-pgm.md),
+[csv-mnd-to-pgm](?t=hsc3-data&e=md/csv-mnd-to-pgm.md),
+[img-edit](?t=hsc3-data&e=md/img-edit.md),
+[img-to-pbm](?t=hsc3-data&e=md/img-to-pbm.md),
+[img-to-pgm](?t=hsc3-data&e=md/img-to-pgm.md),
+[img-to-sf](?t=hsc3-data&e=md/img-to-sf.md),
+[midi-to-csv-mnd](?t=hsc3-data&e=md/midi-to-csv-mnd.md),
+[midi-to-text](?t=hsc3-data&e=md/midi-to-text.md),
 [pbm-indices](?t=hsc3-data&e=md/pbm-indices.md),
-[pbm-to-csv-mnd](?t=hsc3-data&e=md/pbm-to-csv-mnd.md).
+[pbm-to-csv-mnd](?t=hsc3-data&e=md/pbm-to-csv-mnd.md),
+[pbm-to-tbl](?t=hsc3-data&e=md/pbm-to-tbl.md),
+[pbm-trace](?t=hsc3-data&e=md/pbm-trace.md),
+[pgm-to-au](?t=hsc3-data&e=md/pgm-to-au.md),
+[sf-condense](?t=hsc3-data&e=md/sf-condense.md),
+[sf-draw](?t=hsc3-data&e=md/sf-draw.md),
+[sf-to-png](?t=hsc3-data&e=md/sf-to-png.md),
+[trace-rec-x11](?t=hsc3-data&e=md/trace-rec-x11.md)
 
 [hs]: http://haskell.org/
 [sc3]: http://audiosynth.com/
