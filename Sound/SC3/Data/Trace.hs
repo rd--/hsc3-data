@@ -106,9 +106,9 @@ trace_load_csv nc fn = do
   when (null tbl) (error "trace_load_csv: empty tbl")
   let t:d = transpose tbl
   trace_assert_nc nc (length (head tbl) - 1)
-  return (zip t d)
+  return (zip t (transpose d))
 
--- > trace_load_csv2 "/home/rohan/sw/hsc3-data/csv/trace/a.csv"
+-- > t <- trace_load_csv2 "/home/rohan/sw/hsc3-data/data/csv/trace/b.csv"
 trace_load_csv2 :: FilePath -> IO (Trace Time (R,R))
 trace_load_csv2 = fmap trace_to_t2 . trace_load_csv (Just 2)
 
@@ -315,13 +315,19 @@ deinterleave2 = T.t2 . transpose . chunksOf 2
 -- * Plotting
 
 -- | Three-dimensional plot of two-dimensional traces (/time/ on @x@ axis), ie. 'plotPath'.
+--
+-- > t <- trace_load_csv2 "/home/rohan/sw/hsc3-data/data/csv/trace/b.csv"
+-- > trace2_plot_3d [t]
 trace2_plot_3d :: [Trace R (R,R)] -> IO ()
 trace2_plot_3d = plotPath . map (map (\(t,(p,q)) -> (t,p,q)))
 
 -- | Two-dimensional plot of two-dimensional traces (/time/ not drawn), ie. 'plotCoord'.
+--
+-- > trace2_plot_2d [t]
 trace2_plot_2d :: [Trace R (R,R)] -> IO ()
 trace2_plot_2d = plotCoord . map (map snd)
 
+-- > trace2_plot_tbl [t]
 trace2_plot_tbl :: [Trace R (R,R)] -> IO ()
 trace2_plot_tbl =
     let f t = [trace_map fst t,trace_map snd t]

@@ -4,7 +4,8 @@ Data functions for [SC3][sc3] related work in [hsc3][hsc3] ([haskell][hs] superc
 
 # cli
 
-[pbm-indices](?t=hsc3-data&e=md/pbm-indices.md).
+[pbm-indices](?t=hsc3-data&e=md/pbm-indices.md),
+[pbm-to-csv-mnd](?t=hsc3-data&e=md/pbm-to-csv-mnd.md).
 
 [hs]: http://haskell.org/
 [sc3]: http://audiosynth.com/
