@@ -4,10 +4,11 @@ module Sound.SC3.Data.Bitmap.Type where
 
 import Data.Bits {- base -}
 import Data.Char {- base -}
-import Data.List.Split {- split -}
-import Data.List.Split.Internals {- split -}
+import Data.List {- base -}
 import qualified Data.Map as M {- containers -}
 import Data.Maybe {- base -}
+
+import qualified Music.Theory.List as T {- hmt -}
 
 -- * Dimensions and Indices
 
@@ -29,6 +30,14 @@ type Column = Int
 
 -- | ('Row','Column') index.
 type Ix = (Row,Column)
+
+-- | Type specialised 'fst'.
+ix_row :: Ix -> Row
+ix_row = fst
+
+-- | Type specialised 'snd'.
+ix_column :: Ix -> Column
+ix_column = snd
 
 -- | Row-order indices for given 'Dimensions'.
 --
@@ -60,27 +69,6 @@ linear_to_ix_co (nr,_) i = i `divMod` nr
 
 indices_displace :: (Int,Int) -> Indices -> Indices
 indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
-
-on_elem :: Eq a => a -> Splitter a
-on_elem e = defaultSplitter { delimiter = Delimiter [(==) e] }
-
--- > split_at 'a' "abcde"
-split_at :: Eq a => a -> [a] -> [[a]]
-split_at = split . keepDelimsL . on_elem
-
--- | Rotate list so that is starts at indicated element.
---
--- > starting_from 'c' "abcde" == Just "cdeab"
-starting_from :: Eq a => a -> [a] -> Maybe [a]
-starting_from x l =
-    case split_at x l of
-      [lhs,rhs] -> Just (rhs ++ lhs)
-      _ -> Nothing
-
-starting_from_err :: Eq a => a -> [a] -> [a]
-starting_from_err x =
-    fromMaybe (error "starting_from: non-element") .
-    starting_from x
 
 -- | The eight vectors (ie. (dy,dx)) to move to a neighbouring cell,
 -- clockwise.
@@ -170,10 +158,17 @@ bitindices_height :: Bitindices -> Height
 bitindices_height = fst . fst
 
 bitindices_row :: Bitindices -> Row -> [Column]
-bitindices_row b r = map snd (filter ((== r) . fst) (snd b))
+bitindices_row (_,d) r = map ix_column (filter ((== r) . ix_row) d)
+
+indices_by_row :: [Ix] -> [(Row,[Column])]
+indices_by_row =
+    let f x = (ix_row (head x),map ix_column x)
+    in map f . T.group_on ix_row . sortOn ix_row
 
 bitindices_rows :: Bitindices -> [[Column]]
-bitindices_rows b = map (bitindices_row b) [0 .. bitindices_height b - 1]
+bitindices_rows ((nr,_),ix) =
+    let f = map snd . T.fill_gaps_ascending [] (0,nr - 1)
+    in f (indices_by_row ix)
 
 bitindices_width :: Bitindices -> Width
 bitindices_width = snd . fst
@@ -181,8 +176,15 @@ bitindices_width = snd . fst
 bitindices_column :: Bitindices -> Column -> [Row]
 bitindices_column b c = map fst (filter ((== c) . snd) (snd b))
 
+indices_by_column :: [Ix] -> [(Column,[Row])]
+indices_by_column =
+    let f x = (ix_column (head x),map ix_row x)
+    in map f . T.group_on ix_column . sortOn ix_column
+
 bitindices_columns :: Bitindices -> [[Row]]
-bitindices_columns b = map (bitindices_column b) [0 .. bitindices_width b - 1]
+bitindices_columns ((_,nc),ix) =
+    let f = map snd . T.fill_gaps_ascending [] (0,nc - 1)
+    in f (indices_by_column ix)
 
 bitindices_swap :: Bitindices -> Bitindices
 bitindices_swap (dm,ix) = let f (i,j) = (j,i) in (f dm,map f ix)

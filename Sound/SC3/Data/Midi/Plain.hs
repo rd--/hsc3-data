@@ -3,7 +3,6 @@
 -- Simpler than MusicXML transfer for cases where durations are straightforward.
 module Sound.SC3.Data.Midi.Plain where
 
-import Data.Function {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
@@ -48,10 +47,9 @@ write_midi0 fn sq =
         tf = M.TicksPerBeat 1024
         ts = M.TimeSignature 4 2 24 8
         tc = M.TempoChange (mk_tempo 60)
-        t_cmp = compare `on` fst
         ev = map (concat . map T.t2_list . map note_to_midi) sq
         m = (0,ts) : (0,tc) : concat ev
-        t = M.fromRealTime tf . M.fromAbsTime . add_track_end . sortBy t_cmp $ m
+        t = M.fromRealTime tf . M.fromAbsTime . add_track_end . sortOn fst $ m
     in M.exportFile fn (M.Midi ft tf [t])
 
 track_to_wseq :: [(Time,M.Message)] -> SEQ
