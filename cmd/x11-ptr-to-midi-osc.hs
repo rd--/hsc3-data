@@ -4,8 +4,8 @@ import System.Environment {- base -}
 
 import Sound.OSC.FD {- hosc -}
 import Sound.SC3.Data.X11.Ptr {- hsc3-data -}
-import qualified Sound.SC3.Lang.Control.Midi as M {- hsc3-lang -}
-import qualified Sound.SC3.Lang.Control.Midi.OSC as M {- hsc3-lang -}
+import qualified Sound.Midi.Type as M {- midi-osc -}
+import qualified Sound.Midi.OSC as M {- midi-osc -}
 
 type R = Double
 

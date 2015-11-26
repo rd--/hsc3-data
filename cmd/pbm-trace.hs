@@ -5,6 +5,7 @@ import qualified Data.Map as M {- containers -}
 import System.Environment {- base -}
 import Text.Printf {- base -}
 
+import qualified Music.Theory.List as T {- hmt -}
 import qualified Sound.SC3.Data.Bitmap.PBM as I {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
 
@@ -24,7 +25,7 @@ type TRACE = [B.Ix]
 gen_neighbour_seq :: (Eq n,Num n) => (n,n) -> [(n,n)]
 gen_neighbour_seq e =
     let vec = B.neighbour_vectors_at_1_cw ++ B.neighbour_vectors_at_2_cw
-    in B.starting_from_err e vec
+    in T.rotate_starting_from_err e vec
 
 -- ix is already removed from the map, if there is a neighbour it is removed in the result map.
 trace_step :: B.BitMap -> B.Ix -> Maybe (B.BitMap,B.Ix)

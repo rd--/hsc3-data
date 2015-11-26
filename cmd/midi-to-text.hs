@@ -3,7 +3,7 @@ import System.Environment {- base -}
 import qualified Codec.Midi as C {- HCodecs -}
 
 import qualified Music.Theory.Array.CSV as T {- hmt -}
-import qualified Sound.SC3.Lang.Control.Midi as M {- hsc3-lang -}
+import qualified Sound.Midi.Type as M {- midi-osc -}
 
 filetype :: C.FileType -> Int
 filetype ty =
