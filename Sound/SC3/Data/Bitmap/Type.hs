@@ -1,5 +1,5 @@
--- | Bitmap functions.  Indexes are in (row,column) or (y,x) form.  True/1
--- indicates presence (black) and False/0 absence (white).
+-- | Bitmap functions.  Indexes are in (row,column) or (y-descending,x) form.
+-- True/1 indicates presence (black) and False/0 absence (white).
 module Sound.SC3.Data.Bitmap.Type where
 
 import Data.Bits {- base -}

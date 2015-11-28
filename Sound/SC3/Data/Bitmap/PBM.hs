@@ -103,3 +103,13 @@ bitmap_to_pbm = bitindices_to_pbm . bitmap_to_bitindices
 
 pbm4_write :: FilePath -> I.PBM -> IO ()
 pbm4_write fn (I.PBM _ a) = B.writeFile fn (I.encodePBM a)
+
+read_pbm_bitmap :: FilePath -> IO BitMap
+read_pbm_bitmap = fmap pbm_to_bitmap . read_pbm
+
+write_pbm_bitmap :: FilePath -> BitMap -> IO ()
+write_pbm_bitmap fn = pbm4_write fn . bitmap_to_pbm
+
+write_pbm_bitindices :: FilePath -> Bitindices -> IO ()
+write_pbm_bitindices fn = pbm4_write fn . bitindices_to_pbm
+

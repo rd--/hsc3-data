@@ -332,3 +332,20 @@ trace2_plot_tbl :: [Trace R (R,R)] -> IO ()
 trace2_plot_tbl =
     let f t = [trace_map fst t,trace_map snd t]
     in plotCoord . concatMap f
+
+-- * CSV
+
+trace_write_csv :: Show n => (n -> String,a -> [String]) -> FilePath -> [(n,a)] -> IO ()
+trace_write_csv (n_pp,a_pp) fn =
+    let f (n,a) = intercalate "," (n_pp n : a_pp a)
+    in writeFile fn . unlines . map f
+
+trace_read_csv :: Read n => (String -> n,[String] -> a) -> FilePath -> IO [(n,a)]
+trace_read_csv (n_read,a_read) fn = do
+  let opt = (False,',',False,undefined)
+  (Nothing,tbl) <- T.csv_table_read opt id fn
+  let f row =
+          case row of
+            [] -> error "trace_read_csv"
+            n:a -> (n_read n,a_read a)
+  return (map f tbl)

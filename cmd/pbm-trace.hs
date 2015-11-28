@@ -6,19 +6,11 @@ import System.Environment {- base -}
 import Text.Printf {- base -}
 
 import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Read as T {- hmt -}
+
 import qualified Sound.SC3.Data.Bitmap.PBM as I {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
-
-read_pbm_bitmap :: FilePath -> IO B.BitMap
-read_pbm_bitmap = fmap I.pbm_to_bitmap . I.read_pbm
-
-{-
-write_pbm_bitmap :: FilePath -> B.BitMap -> IO ()
-write_pbm_bitmap fn = I.pbm4_write fn . I.bitmap_to_pbm
--}
-
-write_pbm_bitindices :: FilePath -> B.Bitindices -> IO ()
-write_pbm_bitindices fn = I.pbm4_write fn . I.bitindices_to_pbm
+import qualified Sound.SC3.Data.Trace as TR {- hsc3-data -}
 
 type TRACE = [B.Ix]
 
@@ -84,6 +76,31 @@ trace_join_all tr =
                  Nothing -> c : trace_join_all tr'
                  Just (c',tr'') -> trace_join_all (c' : tr'')
 
+trace2_set_to_trace :: [[a]] -> [(Int,a)]
+trace2_set_to_trace = let f (n,l) = zip (repeat n) l in concatMap f . zip [0..]
+
+trace2_set_write_csv :: Show n => FilePath -> [[(n,n)]] -> IO ()
+trace2_set_write_csv fn =
+    let f (p,q) = [show p,show q]
+    in TR.trace_write_csv (show,f) fn . trace2_set_to_trace
+
+trace_set_read_csv :: Read n => FilePath -> IO [[[n]]]
+trace_set_read_csv fn = do
+  tr <- TR.trace_read_csv (T.read_int,map read) fn
+  return (map (map snd) (T.group_on fst tr))
+
+pbm_trace :: (Bool,Int,Bool) -> FilePath -> IO ()
+pbm_trace (jn,lm,ly) pbm_fn = do
+  bm <- I.read_pbm_bitmap pbm_fn
+  let (dm,_) = bm
+      tr = bm_trace bm
+      tr' = if jn then trace_join_all tr else tr
+      tr'' = reverse (sortBy (compare `on` length) (filter ((> lm) . length) tr'))
+      wr (n,t) = I.write_pbm_bitindices (printf "%s.trace.%03d.pbm" pbm_fn n) (dm,t)
+  when ly (mapM_ wr (zip [0::Int ..] tr''))
+  I.write_pbm_bitindices (pbm_fn ++ ".trace.pbm") (dm,concat tr'')
+  trace2_set_write_csv (pbm_fn ++ ".csv") tr''
+
 help :: String
 help =
     unlines
@@ -91,18 +108,7 @@ help =
     ,""
     ,"  join = run join post-processor (slow)"
     ,"  limit = discard traces that have fewer elements"
-               ,"  layers = write each trace as a separate PBM file"]
-
-pbm_trace :: (Bool,Int,Bool) -> FilePath -> IO ()
-pbm_trace (jn,lm,ly) pbm_fn = do
-  bm <- read_pbm_bitmap pbm_fn
-  let (dm,_) = bm
-      tr = bm_trace bm
-      tr' = if jn then trace_join_all tr else tr
-      tr'' = reverse (sortBy (compare `on` length) (filter ((> lm) . length) tr'))
-      wr (n,t) = write_pbm_bitindices (printf "%s.trace.%03d.pbm" pbm_fn n) (dm,t)
-  when ly (mapM_ wr (zip [0::Int ..] tr''))
-  write_pbm_bitindices (pbm_fn ++ ".trace.pbm") (dm,concat tr'')
+    ,"  layers = write each trace as a separate PBM file"]
 
 main :: IO ()
 main = do
@@ -114,4 +120,5 @@ main = do
 {-
 let fn = "/home/rohan/sw/hsc3-data/data/pbm/fh.pbm"
 pbm_trace (False,20,True) fn
+trace_set_read_csv (fn ++ ".csv") :: IO [[[Int]]]
 -}
