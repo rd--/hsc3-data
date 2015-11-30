@@ -3,6 +3,7 @@ import Data.Function {- base -}
 import Data.List {- base -}
 import qualified Data.Map as M {- containers -}
 import System.Environment {- base -}
+import System.FilePath {- base -}
 import Text.Printf {- base -}
 
 import qualified Music.Theory.List as T {- hmt -}
@@ -89,22 +90,25 @@ trace_set_read_csv fn = do
   tr <- TR.trace_read_csv (T.read_int,map read) fn
   return (map (map snd) (T.group_on fst tr))
 
-pbm_trace :: (Bool,Int,Bool) -> FilePath -> IO ()
-pbm_trace (jn,lm,ly) pbm_fn = do
+pbm_trace :: (Bool,Int,Bool) -> FilePath -> FilePath -> IO ()
+pbm_trace (jn,lm,ly) pbm_fn out_dir = do
   bm <- I.read_pbm_bitmap pbm_fn
-  let (dm,_) = bm
+  let nm = dropExtension (takeFileName pbm_fn)
+      (dm,_) = bm
       tr = bm_trace bm
       tr' = if jn then trace_join_all tr else tr
       tr'' = reverse (sortBy (compare `on` length) (filter ((> lm) . length) tr'))
-      wr (n,t) = I.write_pbm_bitindices (printf "%s.trace.%03d.pbm" pbm_fn n) (dm,t)
+      out_fn ext = out_dir </> nm <.> ext
+      wr (n,t) = I.write_pbm_bitindices (out_fn (printf "trace.%03d.pbm" n)) (dm,t)
+  print out_dir
   when ly (mapM_ wr (zip [0::Int ..] tr''))
-  I.write_pbm_bitindices (pbm_fn ++ ".trace.pbm") (dm,concat tr'')
-  trace2_set_write_csv (pbm_fn ++ ".csv") tr''
+  I.write_pbm_bitindices (out_fn "trace.pbm") (dm,concat tr'')
+  trace2_set_write_csv (out_fn "trace.csv") tr''
 
 help :: String
 help =
     unlines
-    ["pbm-trace join:bool limit:int layers:bool pbm-file"
+    ["pbm-trace join:bool limit:int layers:bool pbm-file directory"
     ,""
     ,"  join = run join post-processor (slow)"
     ,"  limit = discard traces that have fewer elements"
@@ -114,11 +118,11 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
-    [jn,lm,ly,fn] -> pbm_trace (jn == "t",read lm,ly == "t") fn
+    [jn,lm,ly,fn,dir] -> pbm_trace (jn == "t",read lm,ly == "t") fn dir
     _ -> putStrLn help
 
 {-
 let fn = "/home/rohan/sw/hsc3-data/data/pbm/fh.pbm"
-pbm_trace (False,20,True) fn
+pbm_trace (False,20,True) fn "/tmp"
 trace_set_read_csv (fn ++ ".csv") :: IO [[[Int]]]
 -}
