@@ -50,6 +50,7 @@ Library
                    Sound.SC3.Data.Buffer
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
+                   Sound.SC3.Data.LPC
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
