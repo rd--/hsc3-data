@@ -12,6 +12,8 @@ import Data.CG.Minus {- hcg-minus -}
 import Sound.SC3.Plot {- hsc3-plot -}
 
 -- | Make 'X.QName' with @svg@ 'X.qURI'.
+--
+-- > svg_name "path"
 svg_name :: String -> X.QName
 svg_name nm =
     X.blank_name
