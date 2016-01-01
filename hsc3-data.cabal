@@ -19,6 +19,7 @@ Library
   Build-Depends:   array,
                    base >= 4.8,
                    bifunctors,
+                   binary,
                    bitwise,
                    bytestring,
                    containers,
@@ -50,12 +51,13 @@ Library
                    Sound.SC3.Data.Buffer
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
+                   Sound.SC3.Data.Image.Type
                    Sound.SC3.Data.LPC
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
                    Sound.SC3.Data.Midi.Plain
-                   Sound.SC3.Data.Image.Type
+                   Sound.SC3.Data.PVOC
                    Sound.SC3.Data.SVG
                    Sound.SC3.Data.Trace
                    Sound.SC3.Data.X11.Ptr
