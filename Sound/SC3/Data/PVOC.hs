@@ -4,6 +4,8 @@ import Control.Monad {- base -}
 import qualified Data.Binary as B {- binary -}
 import qualified Data.ByteString.Lazy as L {- bytestring -}
 import Data.Int {- base -}
+import Data.List {- base -}
+import qualified Data.Vector.Unboxed as V {- vector -}
 import Data.Word {- base -}
 import System.IO {- base -}
 
@@ -87,6 +89,9 @@ wave_read h = do
 section :: Int64 -> Int64 -> L.ByteString -> L.ByteString
 section n m = L.take m . L.drop n
 
+section_int :: Int -> Int -> L.ByteString -> L.ByteString
+section_int n m = L.take (fromIntegral m) . L.drop (fromIntegral n)
+
 data WAVE_FMT_PCM_16 =
     WAVE_FMT_PCM_16
     {audioFormat :: Word16
@@ -118,15 +123,23 @@ decode_guid = L.unpack
 
 data PVOC_WORDFORMAT =
     PVOC_IEEE_FLOAT | PVOC_IEEE_DOUBLE
-    deriving (Enum,Show)
+    deriving (Eq,Enum,Show)
 
 data PVOC_FRAMETYPE =
     PVOC_AMP_FREQ | PVOC_AMP_PHASE | PVOC_COMPLEX
-    deriving (Enum,Show)
+    deriving (Eq,Enum,Show)
 
 data PVOC_WINDOWTYPE =
-    PVOC_HAMMING | PVOC_HANN | PVOC_KAISER | PVOC_RECT | PVOC_CUSTOM
-    deriving (Enum,Show)
+    PVOC_HAMMING | PVOC_UNUSED | PVOC_HANN | PVOC_KAISER | PVOC_RECT | PVOC_CUSTOM
+    deriving (Eq,Enum,Show)
+
+data PVOC_SAMPLETYPE =
+    STYPE_16 | STYPE_24 | STYPE_32 | STYPE_IEEE_FLOAT
+    deriving (Eq,Enum,Show)
+
+data WAVE_FORMAT =
+    WAVE_FORMAT_0 | WAVE_FORMAT_PCM | WAVE_FORMAT_2 | WAVE_FORMAT_IEEE_FLOAT
+    deriving (Eq,Enum,Show)
 
 data WAVE_FMT_PVOC_80 =
     WAVE_FMT_PVOC_80
@@ -138,7 +151,7 @@ data WAVE_FMT_PVOC_80 =
     ,dwDataSize :: Word32
     ,wWordFormat :: PVOC_WORDFORMAT
     ,wAnalFormat :: PVOC_FRAMETYPE
-    ,wSourceFormat :: Word16 -- WAVE_FORMAT_PCM or WAVE_FORMAT_IEEE_FLOAT
+    ,wSourceFormat :: WAVE_FORMAT
     ,wWindowType :: PVOC_WINDOWTYPE
     ,nAnalysisBins :: Word32
     ,dwWinlen :: Word32
@@ -162,7 +175,7 @@ fmt_pvoc_80_parse_dat dat =
     (decode_u32_le (section 44 4 dat))
     (generic_to_enum (decode_u16_le (section 48 2 dat)))
     (generic_to_enum (decode_u16_le (section 50 2 dat)))
-    (decode_u16_le (section 52 2 dat))
+    (generic_to_enum (decode_u16_le (section 52 2 dat)))
     (generic_to_enum (decode_u16_le (section 54 2 dat)))
     (decode_u32_le (section 56 4 dat))
     (decode_u32_le (section 60 4 dat))
@@ -174,7 +187,9 @@ fmt_pvoc_80_parse_dat dat =
 fmt_pvoc_80_check_guid :: WAVE_FMT_PVOC_80 -> Bool
 fmt_pvoc_80_check_guid f = subFormat f /= pvx_guid_u8
 
-fmt_pvoc_80_parse :: CHUNK -> (WAVE_FMT_PCM_16,WAVE_FMT_PVOC_80)
+type PVOC_HDR = (WAVE_FMT_PCM_16,WAVE_FMT_PVOC_80)
+
+fmt_pvoc_80_parse :: CHUNK -> PVOC_HDR
 fmt_pvoc_80_parse (ty,sz,dat) =
     case (ty,sz) of
       ("fmt ",80) -> (fmt_pcm_16_parse_dat dat,fmt_pvoc_80_parse_dat dat)
@@ -182,6 +197,47 @@ fmt_pvoc_80_parse (ty,sz,dat) =
 
 wave_load :: FilePath -> IO [CHUNK]
 wave_load fn = withFile fn ReadMode wave_read
+
+type PVOC_RAW = (PVOC_HDR,CHUNK)
+
+pvoc_nc :: PVOC_HDR -> Int
+pvoc_nc = fromIntegral . numChannels . fst
+
+pvoc_nb :: PVOC_HDR -> Int
+pvoc_nb = fromIntegral . nAnalysisBins . snd
+
+-- | Data is stored in frame order, channel interleaved.
+pvoc_data_parse_f32 :: PVOC_RAW -> (Int,Int,V.Vector Float)
+pvoc_data_parse_f32 ((wv,pv),(ty,sz,dat)) =
+    let n = sz `div` 4
+        nc = fromIntegral (numChannels wv)
+        nb = fromIntegral (nAnalysisBins pv)
+        nf = n `div` (nc * nb * 2)
+    in if ty /= "data" || wWordFormat pv /= PVOC_IEEE_FLOAT || dwDataSize pv /= 32
+       then error "pvoc_data_parse_f32"
+       else (n,nf,V.generate n (\i -> decode_f32_le (section_int (i * 4) 4 dat)))
+
+find_chunk :: String -> [CHUNK] -> Maybe CHUNK
+find_chunk nm = find (\(ty,_,_) -> ty == nm)
+
+type PVOC_VEC_F32 = (PVOC_HDR,(Int,Int,V.Vector Float))
+
+pvoc_load_vec_f32 :: FilePath -> IO PVOC_VEC_F32
+pvoc_load_vec_f32 fn = do
+  c <- wave_load fn
+  case (find_chunk "fmt " c,find_chunk "data" c) of
+    (Just fmt,Just dat) -> let hdr = fmt_pvoc_80_parse fmt
+                               vec = pvoc_data_parse_f32 (hdr,dat)
+                           in return (hdr,vec)
+    _ -> error "pvoc_load"
+
+pvoc_vec_f32_bin :: PVOC_VEC_F32 -> (Int,Int) -> V.Vector (Float,Float)
+pvoc_vec_f32_bin (hdr,(_,nf,vec)) (ch,bin) =
+    let nc = pvoc_nc hdr
+        nb = pvoc_nb hdr
+        f i = let j = i * nb * 2 * nc + ch * nb * 2 + bin * 2
+              in (vec V.! j,vec V.! (j + 1))
+    in V.generate nf f
 
 {-
 
@@ -191,8 +247,15 @@ length c == 2
 fmt_pcm_16_parse (c !! 0)
 
 let fn = "/home/rohan/data/audio/pf-c5.pvx"
-c <- wave_load fn
-length c == 2
-fmt_pvoc_80_parse (c !! 0)
+pv <- pvoc_load_vec_f32 fn
+let (hdr,(n,nf,dat)) = pv
+n == 2020 * 513 * 2
+V.length dat == n
+
+import Sound.SC3.Plot
+
+let f b = let p = V.toList (pvoc_vec_f32_bin pv (0,b))
+          in map (\((a,f),i) -> (f,fromIntegral i,a)) (zip p [0..])
+plot_p3_ln (map f [12 .. 36])
 
 -}
