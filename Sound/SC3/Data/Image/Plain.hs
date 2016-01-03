@@ -12,7 +12,6 @@ import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 
 import qualified Data.CG.Minus.Colour.Grey as C {- hcg-minus -}
 
-import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.PBM as PBM {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as BM {- hsc3-data -}
 import qualified Sound.SC3.Data.Image.PGM as PGM {- hsc3-data -}
