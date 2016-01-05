@@ -1,25 +1,38 @@
 module Sound.SC3.Data.PVOC where
 
---import Control.Monad {- base -}
---import qualified Data.Binary as B {- binary -}
 import qualified Data.ByteString.Lazy as L {- bytestring -}
---import Data.Int {- base -}
---import Data.List {- base -}
+import Data.Char {- base -}
+import Data.List {- base -}
+import Data.List.Split {- split -}
+import Numeric
 import qualified Data.Vector.Unboxed as V {- vector -}
 import Data.Word {- base -}
---import System.IO {- base -}
 
 import qualified Sound.File.WAVE as W
 import qualified Sound.OSC.Coding.Byte as O
 
-pvx_guid_text :: [Char]
-pvx_guid_text = "8312B9C2-2E6E-11d4-A824-DE5B96C3AB21"
+show_hex_uc :: (Show n,Integral n) => n -> String
+show_hex_uc = map toUpper . flip showHex ""
+
+riff_guid_segment :: [Word8] -> [[Word8]]
+riff_guid_segment = splitPlaces [4,2,2,2,8]
+
+-- > riff_guid_pp pvx_guid_u8 == pvx_guid_text
+riff_guid_pp :: [Word8] -> [Char]
+riff_guid_pp w =
+    let f op = concatMap show_hex_uc . op
+        w' = riff_guid_segment w
+        w'' = zipWith f (replicate 3 reverse ++ replicate 2 id) w'
+    in intercalate "-" w''
+
+pvx_guid_text :: String
+pvx_guid_text = "8312B9C2-2E6E-11D4-A824-DE5B96C3AB21"
 
 pvx_guid_u8 :: [Word8]
 pvx_guid_u8 = [194,185,18,131,110,46,212,17,168,36,222,91,150,195,171,33]
 
-decode_guid :: L.ByteString -> [Word8]
-decode_guid = L.unpack
+decode_guid :: L.ByteString -> String
+decode_guid = riff_guid_pp . L.unpack
 
 data PVOC_WORDFORMAT =
     PVOC_IEEE_FLOAT | PVOC_IEEE_DOUBLE
@@ -42,7 +55,7 @@ data WAVE_FMT_PVOC_80 =
     {cbSize :: Int -- Word16
     ,wValidBitsPerSample :: Int -- Word16
     ,dwChannelMask :: Int -- Word32
-    ,subFormat :: [Word8]
+    ,subFormat :: String
     ,dwVersion :: Int -- Word32
     ,dwDataSize :: Int -- Word32
     ,wWordFormat :: PVOC_WORDFORMAT
@@ -57,13 +70,22 @@ data WAVE_FMT_PVOC_80 =
     ,fWindowParam :: Float}
     deriving (Show)
 
+plain_record_pp :: String -> String
+plain_record_pp =
+    let f c = if c `elem` ",}" then ['\n',c] else [c]
+        g s = if s == "{" then "\n{ " else s
+    in concatMap (g . f)
+
+fmt_pvoc_80_pp :: WAVE_FMT_PVOC_80 -> String
+fmt_pvoc_80_pp = plain_record_pp . show
+
 fmt_pvoc_80_parse_dat :: L.ByteString -> WAVE_FMT_PVOC_80
 fmt_pvoc_80_parse_dat dat =
     WAVE_FMT_PVOC_80
     (O.decode_u16_le (W.section 16 2 dat))
     (O.decode_u16_le (W.section 18 2 dat))
     (O.decode_u32_le (W.section 20 4 dat))
-    (L.unpack (W.section 24 16 dat))
+    (decode_guid (W.section 24 16 dat))
     (O.decode_u32_le (W.section 40 4 dat))
     (O.decode_u32_le (W.section 44 4 dat))
     (toEnum (O.decode_u16_le (W.section 48 2 dat)))
@@ -78,7 +100,7 @@ fmt_pvoc_80_parse_dat dat =
     (O.decode_f32_le (W.section 76 4 dat))
 
 fmt_pvoc_80_check_guid :: WAVE_FMT_PVOC_80 -> Bool
-fmt_pvoc_80_check_guid f = subFormat f /= pvx_guid_u8
+fmt_pvoc_80_check_guid f = subFormat f /= pvx_guid_text
 
 type PVOC_HDR = (W.WAVE_FMT_16,WAVE_FMT_PVOC_80)
 
@@ -128,16 +150,15 @@ pvoc_vec_f32_bin (hdr,(_,nf,vec)) (ch,bin) =
 
 {-
 
-let fn = "/home/rohan/data/audio/pf-c5.pvx"
-pv <- pvoc_load_vec_f32 fn
-let (hdr,(n,nf,dat)) = pv
-n == 2020 * 513 * 2
-V.length dat == n
-
 import Sound.SC3.Plot
+
+let fn = "/home/rohan/data/audio/pf-c5.pvx"
+
+pv <- pvoc_load_vec_f32 fn
 
 let f b = let p = V.toList (pvoc_vec_f32_bin pv (0,b))
           in map (\((a,f),i) -> (f,fromIntegral i,a)) (zip p [0..])
+
 plot_p3_ln (map f [12 .. 36])
 
 -}
