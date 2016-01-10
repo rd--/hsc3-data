@@ -11,6 +11,8 @@ import Data.Word {- base -}
 import qualified Sound.File.WAVE as W
 import qualified Sound.OSC.Coding.Byte as O
 
+-- | PVOC-EX files
+
 show_hex_uc :: (Show n,Integral n) => n -> String
 show_hex_uc = map toUpper . flip showHex ""
 
@@ -162,3 +164,37 @@ let f b = let p = V.toList (pvoc_vec_f32_bin pv (0,b))
 plot_p3_ln (map f [12 .. 36])
 
 -}
+
+-- * PV files
+
+-- | <https://www.ee.columbia.edu/~dpwe/resources/pvanal.html>.
+-- All fields are stored as 32bit values.
+data PV_Header =
+    PV_Header {pv_magic :: Int -- 517730
+              ,pv_headerSize :: Int -- 56 BYTES
+              ,pv_fileSize :: Int
+              ,pv_fileFormat :: Int -- 36 (FLOAT)
+              ,pv_sr :: Double
+              ,pv_numChannels :: Int -- 1
+              ,pv_windowSize :: Int
+              ,pv_hopSize :: Int
+              ,pv_frameBSize :: Int
+              ,pv_pvpvoc :: Int -- 7 (POLAR, PHI-DOT)
+              ,pv_minFreq :: Double -- 0.0
+              ,pv_maxFreq :: Double
+              ,pv_freqFormat :: Int -- 1 (LINEAR)
+              ,pv_Info :: [Word8] -- 4 BYTES
+              }
+
+-- | Endianess is determined by reading the magic number.
+pv_magic_n :: Int
+pv_magic_n = 517730
+
+pv_nFrames :: PV_Header -> Int
+pv_nFrames h = pv_fileSize h `div` pv_frameBSize h
+
+pv_nBins :: PV_Header -> Int
+pv_nBins h = pv_frameBSize h `div` 8
+
+pv_sndDur :: PV_Header -> Double
+pv_sndDur h = fromIntegral (pv_nFrames h * pv_hopSize h) / pv_sr h
