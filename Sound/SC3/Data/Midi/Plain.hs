@@ -7,6 +7,7 @@ import Data.List {- base -}
 import Data.Maybe {- base -}
 
 import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
+import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 import qualified Music.Theory.Tuple as T {- hmt -}
 
@@ -83,7 +84,7 @@ write_csv_mnd :: FilePath -> [SEQ] -> IO ()
 write_csv_mnd fn =
     T.midi_tseq_write fn .
     T.midi_wseq_to_midi_tseq .
-    T.tseq_map (\(mn,ch) -> (mn,127,ch)) .
+    T.tseq_map (\(mn,ch) -> (mn,127,T.int_to_word8 ch)) .
     seq_merge
 
 seq_merge :: [SEQ] -> SEQ
