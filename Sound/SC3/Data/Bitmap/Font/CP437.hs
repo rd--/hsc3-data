@@ -2,8 +2,10 @@
 module Sound.SC3.Data.Bitmap.Font.CP437 where
 
 import Data.Bits {- base -}
-import Data.List {- base -}
+import Data.Maybe {- base -}
 import Data.Word {- base -}
+
+import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
 
 type T8 a = (a,a,a,a,a,a,a,a)
 
@@ -13,15 +15,22 @@ t8_list (p,q,r,s,t,u,v,w) = [p,q,r,s,t,u,v,w]
 -- | Glyphs are stored as 8-tuples of 'Word8' values in column order.
 type CP437_GLYPH = T8 Word8
 
--- | Row order ASCII form of 'CP437_GLYPH'.
+-- | Translate 'CP437_GLYPH' to 'Bitindices'.
 --
--- > let f = putStrLn . unlines . ("" :) . cp437_glyph_ascii
--- > f (cp437_font !! fromEnum 'B')
+-- > let b = cp437_glyph_to_bitindices (cp437_font !! fromEnum 'O')
+-- > putStrLn $ bitindices_show b
+cp437_glyph_to_bitindices :: CP437_GLYPH -> Bitindices
+cp437_glyph_to_bitindices =
+    let col c x = mapMaybe (\r -> if testBit x r then Just (r,c) else Nothing) [0 .. 7]
+    in (,) (8,8) . concat . zipWith col [0 .. 7] . t8_list
+
+-- | 'bitindices_show' of 'cp437_glyph_to_bitindices'.
+--
+-- > let f = putStrLn . ('\n' :) . cp437_glyph_show
+-- > f (cp437_font !! fromEnum 'A')
 -- > mapM_ f cp437_font
-cp437_glyph_ascii :: CP437_GLYPH -> [String]
-cp437_glyph_ascii =
-    let col x = map (\i -> if testBit x i then '@' else '.') [0 .. 7]
-    in transpose . map col . t8_list
+cp437_glyph_show :: CP437_GLYPH -> String
+cp437_glyph_show = bitindices_show . cp437_glyph_to_bitindices
 
 -- | 8x8 CP437 font data, courtesy <http://www.gammon.com.au/forum/?id=11516>
 --
