@@ -9,7 +9,7 @@ Author:            Rohan Drape
 Maintainer:        rd@slavepianos.org
 Stability:         Experimental
 Homepage:          http://rd.slavepianos.org/t/hsc3-data
-Tested-With:       GHC == 7.10.1
+Tested-With:       GHC == 7.10.3
 Build-Type:        Simple
 Cabal-Version:     >= 1.8
 
@@ -46,6 +46,7 @@ Library
   GHC-Options:     -Wall -fwarn-tabs
   Exposed-modules: Sound.SC3.Data.ATS
                    Sound.SC3.Data.Bitmap.Font.BDF
+                   Sound.SC3.Data.Bitmap.Font.CP437
                    Sound.SC3.Data.Bitmap.PBM
                    Sound.SC3.Data.Bitmap.Type
                    Sound.SC3.Data.Buffer
