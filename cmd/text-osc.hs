@@ -2,6 +2,7 @@ import Control.Monad {- base -}
 import Control.Exception {- base -}
 import Data.Maybe {- base -}
 import System.Environment {- base -}
+import System.Exit {- base -}
 
 import UI.HSCurses.Curses {- hscurses -}
 
@@ -22,9 +23,13 @@ proc_msg w m =
           set_str w (fromIntegral x,fromIntegral y) (ascii_to_string str)
       _ -> return ()
 
+usage :: IO ()
+usage = putStrLn "text-osc [-p port-number]" >> exitSuccess
+
 main :: IO ()
 main = do
   a <- getArgs
+  when (has_opt "-h" a) usage
   let p' = fromMaybe 57350 (get_opt_arg_read "-p" a)
   initCurses
   w <- initScr
@@ -34,9 +39,13 @@ main = do
 
 -- ...
 
+has_opt :: Eq a => a -> [a] -> Bool
+has_opt nm a = nm `elem` a
+
 get_opt_arg :: Eq a => a -> [a] -> Maybe a
 get_opt_arg nm a =
     case a of
+      [p] -> if p == nm then error "get_opt_arg: no arg" else Nothing
       p:q:a' -> if p == nm then Just q else get_opt_arg nm (q:a')
       _ -> Nothing
 
