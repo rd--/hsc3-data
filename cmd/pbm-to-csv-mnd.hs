@@ -44,7 +44,7 @@ pbm_to_csv_mnd opt pbm_fn csv_fn = do
       du_sq = map (* du) (L.resamp1 nc du_mod)
       f (y,x) = ((tm_sq !! x,du_sq !! y),(mnn_sq !! y,vel_sq !! x,0))
   putStrLn (unwords . map (T.double_pp 3) $ mnn_sq)
-  T.midi_tseq_write csv_fn (T.midi_wseq_to_midi_tseq (map f bi))
+  T.csv_mnd_write_tseq 4 csv_fn (T.midi_wseq_to_midi_tseq (map f bi))
 
 help :: [String]
 help =

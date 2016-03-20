@@ -1,7 +1,6 @@
 import System.Environment {- base -}
 
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
-import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
 import qualified Sound.SC3.Data.Image.PGM as I {- hsc3-data -}
 
 pgm_to_au :: FilePath -> FilePath -> IO ()

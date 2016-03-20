@@ -1,5 +1,6 @@
 import Control.Exception {- base -}
 import Control.Monad {- base -}
+import Data.Word {- base -}
 import System.Environment {- base -}
 
 import Sound.OSC.FD {- hosc -}
@@ -9,11 +10,11 @@ import qualified Sound.Midi.OSC as M {- midi-osc -}
 
 type R = Double
 
-to_cc_msg :: Int -> Int -> Double -> Message
+to_cc_msg :: Word8 -> Word8 -> Double -> Message
 to_cc_msg ch cc r = M.m_message (-1) (M.Control_Change ch cc (floor (r * 127)))
 
 -- > x11_ptr_to_midi_osc (0.01,0,1,0,2)
-x11_ptr_to_midi_osc :: (R, Int, Int, Int, Int) -> IO ()
+x11_ptr_to_midi_osc :: (R, Word8, Word8, Word8, Word8) -> IO ()
 x11_ptr_to_midi_osc (dt,x_ch,x_cc,y_ch,y_cc) = do
   x11 <- x11_init ":0"
   fd <- openUDP "127.0.0.1" 57150 -- midi-osc

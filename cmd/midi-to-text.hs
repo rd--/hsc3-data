@@ -3,6 +3,7 @@ import System.Environment {- base -}
 import qualified Codec.Midi as C {- HCodecs -}
 
 import qualified Music.Theory.Array.CSV as T {- hmt -}
+
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
 filetype :: C.FileType -> Int
@@ -20,23 +21,25 @@ timediv td =
 
 parse_c_message :: C.Message -> Either [String] (M.Midi_Message Int)
 parse_c_message c =
-    case c of
-      C.NoteOn ch mnn vel -> Right (M.Note_On ch mnn vel)
-      C.NoteOff ch mnn vel -> Right (M.Note_Off ch mnn vel)
-      C.ProgramChange ch pc -> Right (M.Program_Change ch pc)
-      C.ControlChange ch i j -> Right (M.Control_Change ch i j)
-      C.TrackName nm -> Left ["track-name",nm]
-      C.TempoChange tm -> Left ["tempo-change",show tm]
-      C.TrackEnd -> Left ["track-end"]
-      C.TimeSignature b0 b1 b2 b3 -> Left ("time-signature" : map show [b0,b1,b2,b3])
-      C.KeySignature b0 b1 -> Left ("key-signature" : map show [b0,b1])
-      C.SMPTEOffset b0 b1 b2 b3 b4 -> Left ("smpte-offset" : map show [b0,b1,b2,b3,b4])
-      _ -> Left ["unrecognised"]
+    let to_w8 = fromIntegral
+    in case c of
+         C.NoteOn ch mnn vel -> Right (M.Note_On (to_w8 ch) mnn vel)
+         C.NoteOff ch mnn vel -> Right (M.Note_Off (to_w8 ch) mnn vel)
+         C.ProgramChange ch pc -> Right (M.Program_Change (to_w8 ch) pc)
+         C.ControlChange ch i j -> Right (M.Control_Change (to_w8 ch) i j)
+         C.TrackName nm -> Left ["track-name",nm]
+         C.TempoChange tm -> Left ["tempo-change",show tm]
+         C.TrackEnd -> Left ["track-end"]
+         C.TimeSignature b0 b1 b2 b3 -> Left ("time-signature" : map show [b0,b1,b2,b3])
+         C.KeySignature b0 b1 -> Left ("key-signature" : map show [b0,b1])
+         C.SMPTEOffset b0 b1 b2 b3 b4 -> Left ("smpte-offset" : map show [b0,b1,b2,b3,b4])
+         _ -> Left ["unrecognised"]
 
 node_to_text :: Int -> (Int,C.Message) -> [String]
 node_to_text n (t,m) =
-    let l_f = (["T","","",""] ++)
-        r_f = ("M" :) . map show . M.m_encode
+    let to_w8 = fromIntegral
+        l_f = (["T","","",""] ++)
+        r_f = ("M" :) . map show . (\(p,q,r) -> [p,to_w8 q,to_w8 r]) . M.m_encode_cvm3
     in show n : show t : either l_f r_f (parse_c_message m)
 
 track_to_text :: (Int, [(Int, C.Message)]) -> [[String]]

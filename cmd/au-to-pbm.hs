@@ -2,7 +2,6 @@ import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
-import qualified Sound.File.NeXT.Vector as AU {- hsc3-data -}
 
 import Sound.SC3.Data.Bitmap.PBM {- hsc3-data -}
 import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
