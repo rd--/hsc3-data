@@ -82,7 +82,7 @@ read_midi fn = do
 -- | Write MND type CSV file.
 write_csv_mnd :: FilePath -> [SEQ] -> IO ()
 write_csv_mnd fn =
-    T.midi_tseq_write fn .
+    T.csv_mnd_write_tseq 4 fn .
     T.midi_wseq_to_midi_tseq .
     T.tseq_map (\(mn,ch) -> (mn,127,T.int_to_word8 ch)) .
     seq_merge

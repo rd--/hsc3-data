@@ -17,7 +17,7 @@ show_hex_uc :: (Show n,Integral n) => n -> String
 show_hex_uc = map toUpper . flip showHex ""
 
 riff_guid_segment :: [Word8] -> [[Word8]]
-riff_guid_segment = splitPlaces [4,2,2,2,8]
+riff_guid_segment = splitPlaces [4::Int,2,2,2,8]
 
 -- > riff_guid_pp pvx_guid_u8 == pvx_guid_text
 riff_guid_pp :: [Word8] -> [Char]
