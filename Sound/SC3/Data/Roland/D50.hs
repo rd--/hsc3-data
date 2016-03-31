@@ -1,8 +1,13 @@
--- | Roland Corporation. Roland MIDI Linear Synthesiser Programmer PG-1000 Owner's Manual. Hamamatsu, JP, 1987.
+-- | Roland Corporation.
+-- /Roland MIDI Linear Synthesiser Programmer PG-1000 Owner's Manual/.
+-- Hamamatsu, JP, 1987.
 -- <http://cdn.roland.com/assets/media/pdf/PG-1000_OM.pdf>
 module Sound.SC3.Data.Roland.D50 where
 
 import Data.Bits {- base -}
+import Data.Char {- base -}
+import Data.List {- base -}
+import Numeric {- base -}
 
 bits_pp :: [Bool] -> String
 bits_pp = map (\b -> if b then '1' else '0')
@@ -12,6 +17,16 @@ gen_bitseq n x = if finiteBitSize x < n then error "gen_bitseq" else map (testBi
 
 gen_bitseq_pp :: FiniteBits b => Int -> b -> String
 gen_bitseq_pp n = bits_pp . gen_bitseq n
+
+byte_hex_pp :: (Integral i, Show i) => i -> String
+byte_hex_pp n =
+    case showHex n "" of
+      [c] -> ['0',toUpper c]
+      [c,d] -> map toUpper [c,d]
+      _ -> error "byte_hex_pp"
+
+byte_seq_hex_pp :: (Integral i, Show i) => [i] -> String
+byte_seq_hex_pp = unwords . map byte_hex_pp
 
 -- > gen_bitseq_pp 8 sysex_status == "11110000"
 sysex_status :: Int
@@ -33,6 +48,9 @@ d50_id = 0x14
 dti_cmd_id :: Int
 dti_cmd_id = 0x12
 
+rqi_cmd_id :: Int
+rqi_cmd_id = 0x11
+
 -- | The checksum is a derived from the address (three bytes) and the data bytes (for the D-50 always one byte).
 -- <ftp://ftp.monash.edu.au/pub/midi/DOC/Roland-checksum>
 --
@@ -45,28 +63,86 @@ roland_checksum =
               x:w' -> let n' = n + x in f (if n' > 0x80 then n' - 0x80 else n') w'
     in f 0
 
+t3_to_list :: (t, t, t) -> [t]
+t3_to_list (p,q,r) = [p,q,r]
+
+t3_from_list :: [t] -> (t, t, t)
+t3_from_list l =
+    case l of
+      [p,q,r] -> (p,q,r)
+      _ -> error "t3_from_list"
+
 -- | MSB -> LSB
 --
--- > address_to_bytes 128 == (0x00,0x01,0x00)
--- > address_to_bytes 192 == (0x00,0x01,0x40)
--- > address_to_bytes 320 == (0x00,0x02,0x40)
-address_to_bytes :: (Num t, Bits t) => t -> (t,t,t)
-address_to_bytes a = (shiftR a 14 .&. 0x7F,shiftR a 7 .&. 0x7F,a .&. 0x7F)
+-- > bits_21_sep 128 == (0x00,0x01,0x00)
+-- > bits_21_sep 192 == (0x00,0x01,0x40)
+-- > bits_21_sep 320 == (0x00,0x02,0x40)
+-- > bits_21_sep 421 == (0x00,0x03,0x25)
+bits_21_sep :: (Num t, Bits t) => t -> (t,t,t)
+bits_21_sep a = (shiftR a 14 .&. 0x7F,shiftR a 7 .&. 0x7F,a .&. 0x7F)
 
--- > address_from_bytes (0x00,0x01,0x00) == 128
--- > address_from_bytes (0x00,0x01,0x40) == 192
--- > address_from_bytes (0x00,0x02,0x40) == 320
-address_from_bytes :: (Num t, Bits t) => (t,t,t) -> t
-address_from_bytes (p,q,r) = shiftL p 14 .|. shiftL q 7 .|. r
+bits_21_sep_l :: (Num t, Bits t) => t -> [t]
+bits_21_sep_l = t3_to_list . bits_21_sep
 
--- > gen_d50_data_set_sysex 0 1 50 == [240,65,0,20,18,0,0,1,50,77,247]
-gen_d50_data_set_sysex :: Int -> Int -> Int -> [Int]
+-- > bits_21_join (0x00,0x01,0x00) == 128
+-- > bits_21_join (0x00,0x01,0x40) == 192
+-- > bits_21_join (0x00,0x02,0x40) == 320
+-- > bits_21_join (0x00,0x03,0x25) == 421
+bits_21_join :: (Num t, Bits t) => (t,t,t) -> t
+bits_21_join (p,q,r) = shiftL p 14 .|. shiftL q 7 .|. r
+
+-- > byte_seq_hex_pp (gen_d50_data_request_sysex 0 0 421) == "F0 41 00 14 11 00 00 00 00 03 25 58 F7"
+gen_d50_data_request_sysex :: Int -> Int -> Int -> [Int]
+gen_d50_data_request_sysex ch a sz =
+    let a' = bits_21_sep_l a
+        sz' = bits_21_sep_l sz
+        chk = roland_checksum (a' ++ sz')
+    in concat [[sysex_status,roland_id,ch,d50_id,rqi_cmd_id]
+              ,a',sz'
+              ,[chk,sysex_end]]
+
+-- > byte_seq_hex_pp (gen_d50_data_set_sysex 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
+gen_d50_data_set_sysex :: Int -> Int -> [Int] -> [Int]
 gen_d50_data_set_sysex ch a d =
-    let (p,q,r) = address_to_bytes a
-        chk = roland_checksum [p,q,r,d]
-    in [sysex_status,roland_id,ch,d50_id,dti_cmd_id,p,q,r,d,chk,sysex_end]
+    let a' = bits_21_sep_l a
+        chk = roland_checksum (a' ++ d)
+    in concat [[sysex_status,roland_id,ch,d50_id,dti_cmd_id]
+              ,a',d
+              ,[chk,sysex_end]]
 
 {-
+
+3. EXCLUSIVE COMMUNICATION
+
+3.1 Request (One way) RQ1 11H
+( Transmitted only )
+
+Byte Description
+
+a 1111 0000 Exclusive status
+b 0100 0001 Roland—ID #
+c 0000 nnnn Device—ID # = MIDI basic channel. (0 - 15) where nnnn + 1 = channel #
+d 0001 0100 Model—ID # (D-50)
+e 0001 0001 Command-ID # (RQI)
+f 0aaa aaaa Address MSB          *3—l
+g 0bbb bbb  Address
+h 0ccc cccc Address LSB
+i 0ddd dddd Size MSB             *3-1
+j 0eee ecee Size
+k 0fff ffff Size LSB
+l 0ggg gggg Checksum
+m 1111 0111 End of System Exclusive (EOX)
+
+Summed value of the all bytes between Command-ID and EOX
+must he 00H (7 bits). It doesn't include Command-ID and
+EOX.
+
+*3—1 PG-1OOO transmits this command only when the Parameter Request
+button is pushed.  The following values of Address and Size are
+transmitted.
+
+Address : [ 00-00-00 ]
+Size : [ 00-03-25 ] ( 421bytes )
 
 3.2 Data set (One way) DT1 12H *3—2
 ( Transmitted and Recognized )
@@ -114,17 +190,86 @@ transmitted.
 
 -}
 
+data Tone = Upper | Lower deriving (Eq,Show)
+data Partial_Ix = One | Two deriving (Eq,Show)
+data Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
+
+parameter_type_seq :: [Parameter_Type]
+parameter_type_seq =
+    [Partial Upper One,Partial Upper Two,Common Upper
+    ,Partial Lower One,Partial Lower Two,Common Lower
+    ,Patch]
+
+partial_ix_pp :: Partial_Ix -> String
+partial_ix_pp ix =
+    case ix of
+      One -> "1"
+      Two -> "2"
+
+parameter_type_pp :: Parameter_Type -> String
+parameter_type_pp ty =
+    case ty of
+      Partial tn ix -> unwords [show tn,"Partial",partial_ix_pp ix]
+      Common tn -> unwords [show tn,"Common"]
+      Patch -> "Patch"
+
+parameter_type_base_address_t3 :: Num t => Parameter_Type -> (t,t,t)
+parameter_type_base_address_t3 ty =
+    case ty of
+      Partial Upper One -> (0x00,0x00,0x00)
+      Partial Upper Two -> (0x00,0x00,0x40)
+      Common Upper -> (0x00,0x01,0x00)
+      Partial Lower One -> (0x00,0x01,0x40)
+      Partial Lower Two -> (0x00,0x02,0x00)
+      Common Lower -> (0x00,0x02,0x40)
+      Patch -> (0x00,0x03,0x00)
+
+parameter_type_base_address :: (Bits t,Num t) => Parameter_Type -> t
+parameter_type_base_address = bits_21_join . parameter_type_base_address_t3
+
+-- | Base address, initial offset, number of parameters.
+--
+-- > sum (map (\ty -> let (_,_,n) = parameter_type_extent ty in n) parameter_type_seq) == 309
+-- > let (b,o,n) = parameter_type_extent (last parameter_type_seq) in b + o + n == 421
+parameter_type_extent :: (Bits t,Num t) => Parameter_Type -> (t,t,t)
+parameter_type_extent ty =
+    case ty of
+      Partial _ _ -> (parameter_type_base_address ty,0,54)
+      Common _ -> (parameter_type_base_address ty,10,38)
+      Patch -> (parameter_type_base_address ty,20,17)
+
+range_pp :: Show a => (a,a) -> String
+range_pp (p,q) = show p ++ " - " ++ show q
+
 -- | 4.1 Parameter base address (Top address)
-d50_parameter_base_address :: Num i => [((i,i,i),String,String)]
-d50_parameter_base_address =
-    [((0x00,0x00,0x00),"Upper Partial 1","0 - 53")
-    ,((0x00,0x00,0x40),"Upper Partial 2","64 - 117")
-    ,((0x00,0x01,0x00),"Upper Common","128 - 175")
-    ,((0x00,0x01,0x40),"Lower Partial 1","192 - 245")
-    ,((0x00,0x02,0x00),"Lower Partial 2","256 - 309")
-    ,((0x00,0x02,0x40),"Lower Common","320 - 367")
-    ,((0x00,0x03,0x00),"Patch","384 - 420")
-    ]
+d50_parameter_base_address_tbl :: (Bits i,Num i,Show i) => [(i,String,Parameter_Type,String)]
+d50_parameter_base_address_tbl =
+    let f ty = let (b,o,n) = parameter_type_extent ty
+               in (b,parameter_type_pp ty,ty,range_pp (b,b + o + n - 1))
+    in map f parameter_type_seq
+
+-- > import Data.Maybe
+-- > mapMaybe (\n -> fmap parameter_type_pp (address_to_parameter_type n)) [0 .. 420]
+address_to_parameter_type :: (Num a, Ord a, Bits a) => a -> Maybe Parameter_Type
+address_to_parameter_type a =
+    let f ty = let (b,o,n) = parameter_type_extent ty in a >= b && a < b + o + n
+    in find f parameter_type_seq
+
+parameter_type_parameters :: Num i => Parameter_Type -> [Parameter i]
+parameter_type_parameters ty =
+    case ty of
+      Partial _ _ -> d50_partial_parameters
+      Common _ -> d50_common_parameters
+      Patch -> d50_patch_factors
+
+-- > let ix = [0 .. 420] in zip ix (map address_to_parameter ix)
+address_to_parameter :: (Num a, Ord a, Bits a) => a -> Maybe (Parameter_Type,Parameter a)
+address_to_parameter a =
+    case address_to_parameter_type a of
+      Just ty -> let (b,_,_) = parameter_type_extent ty
+                     f (i,_,_,_) = i == a - b
+                 in fmap (\p -> (ty,p)) (find f (parameter_type_parameters ty))
+      Nothing -> Nothing
 
 {-
 
@@ -141,8 +286,12 @@ Address Description
 
 -}
 
+type Parameter i = (i,String,(i,i),String)
+
 -- | 4.3 Partial parameters
-d50_partial_parameters :: Num i => [(i,String,(i,i),String)]
+--
+-- > length d50_partial_parameters == 54
+d50_partial_parameters :: Num i => [Parameter i]
 d50_partial_parameters =
     [(0,"WG Pitch Coarse",(0,72),"C1 - C7")
     ,(1,"WG Pitch Fine",(0,100),"-50 - +50")
@@ -201,7 +350,9 @@ d50_partial_parameters =
     ]
 
 -- | 4.4 Common parameters
-d50_common_parameters :: Num i => [(i,String,(i,i),String)]
+--
+-- > length d50_common_parameters == 38
+d50_common_parameters :: Num i => [Parameter i]
 d50_common_parameters =
     [(10,"Structure No.",(0,6),"1 - 7")
     ,(11,"P-ENV Velocity Range",(0,2),"0 - 2")
@@ -244,7 +395,9 @@ d50_common_parameters =
      ]
 
 -- | 4.5 Patch Factors
-d50_patch_factors :: Num i => [(i,String,(i,i),String)]
+--
+-- > length d50_patch_factors == 17
+d50_patch_factors :: Num i => [Parameter i]
 d50_patch_factors =
     [(20,"Portamento Mode",(0,2),"U, L, UL")
     ,(21,"Hold Mode",(0,2),"U, L, UL")
