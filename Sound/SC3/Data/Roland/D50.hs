@@ -369,6 +369,25 @@ d50_partial_parameters =
     ,(53,"TVA Mod Aftertouch Range",(0,14),"-7 - +7")
     ]
 
+-- | Group structure of partial parameters, as in D-50 menu system.
+d50_partial_groups :: [(String,String,[Int])]
+d50_partial_groups =
+    [("WG Pitch","Cors Fine KF",[0..2])
+    ,("WG Mod","LFO ENV Bend",[3..5])
+    ,("WG Form","Wave PCM",[6..7])
+    ,("WG PW","PW Velo Aftr LFO LFOD",[8,9,12,10,11])
+    ,("TVF","Freq Reso KF BP Blvl",[13..17])
+    ,("TVF ENV 1","Dpth Velo DKF TKF",[18..21])
+    ,("TVF ENV 2","T1 T2 T3 T4 T5",[22..26])
+    ,("TVF ENV 3","L1 L2 L3 SusL EndL",[27..31])
+    ,("TVF MOD","LFO LFOD Aftr",[32..34])
+    ,("TVA","Levl Velo BP Blvl",[35..38]
+    ,("TVA ENV 1","T1 T2 T3 T4 T5",[39..43])
+    ,("TVA ENV 2","L1 L2 L3 SusL EndL",[44..48])
+    ,("TVA ENV 3","Velo TKF",[49..50])
+    ,("TVA MOD","LFO LFOD Aftr",[51..53])
+    ]
+
 -- | 4.4 Common parameters.
 --
 -- > length d50_common_pactors == 38
@@ -413,6 +432,21 @@ d50_common_factors =
     ,(46,"Partial Mute",(0,3),"MM;SM;MS;SS")
     ,(47,"Partial Balance",(0,100),"0 - 100")
      ]
+
+-- | Group structure of common parameters, as in D-50 menu system.
+d50_common_groups :: [(String,String,[Int])]
+d50_common_groups =
+    [("Structure","Str",[10])
+    ,("P-ENV Edit 1","Velo TKF",[11..12])
+    ,("P-ENV Edit 2","T1 T2 T3 T4",[13..16])
+    ,("P-ENV Edit 3","LO L1 L2 SusL EndL",[17..21])
+    ,("Pitch Mod Edit","LFOD Levr Aftr",[22..24])
+    ,("LFO-1 Edit","Wave Rate Dely Sync",[25..28])
+    ,("LFO-2 Edit","Wave Rate Dely Sync",[29..32])
+    ,("LFO-3 Edit","Wave Rate Dely Sync",[33..36])
+    ,("EQ Edit","Lf Lg Hf HQ Hg",[37..41])
+    ,("Chorus Edit","Type Rate Dpth Bal",[42..45])
+    ]
 
 d50_char_code_usr :: String
 d50_char_code_usr = "' ';'A' - 'Z';'a' - 'z';'1' - '9';'0';'-'"
