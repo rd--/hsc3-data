@@ -1,8 +1,11 @@
 -- | Yamaha DX7
+--
+-- <http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt>
+-- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
 module Sound.SC3.Data.Yamaha.DX7 where
 
--- http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt
--- https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp
+yamaha_id :: Num n => n
+yamaha_id = 0x43
 
 usr_str :: [(String,String)]
 usr_str =
@@ -38,7 +41,6 @@ operator_parameter_template =
     ,(20,"OSC DETUNE",(0,14),"-7 - +7")
     ]
 
--- > gen_operator_parameter_tbl 5
 gen_operator_parameter_tbl :: Int -> [Parameter]
 gen_operator_parameter_tbl n =
     let n' = 6 - n
@@ -81,3 +83,23 @@ parameter_tbl_rem =
     ,(154,"VOICE NAME CHAR 10",(0,127),"ASCII")
     ,(155,"OPERATOR ON/OFF",(0,1),"BIT5=OP1 - BIT0=OP6")
     ]
+
+dx7_parameter_tbl :: [Parameter]
+dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
+
+function_parameters_tbl :: [Parameter]
+function_parameters_tbl =
+    [(64,"MODE CHANGE",(0,1),"POLY;MONO")
+    ,(65,"PITCH BEND RANGE",(0,12),"")
+    ,(66,"PITCH BEND STEP",(0,12),"")
+    ,(67,"PORTAMENTO MODE ",(0,1),"RETAIN;FOLLOW")
+    ,(68,"PORTAMENTO GLISS",(0,1),"")
+    ,(69,"PORTAMENTO TIME ",(0,99),"")
+    ,(70,"MOD WHEEL RANGE ",(0,99),"")
+    ,(71,"MOD WHEEL ASSIGN",(0,7),"PITCH;AMP;EG-BIAS")
+    ,(72,"FOOT CONTROL RANGE",(0,99),"")
+    ,(73,"FOOT CONTROL ASSIGN",(0,7),"")
+    ,(74,"BREATH CONT RANGE",(0,99),"")
+    ,(75,"BREATH CONT ASSIGN",(0,7),"")
+    ,(76,"AFTERTOUCH RANGE",(0,99),"")
+    ,(77,"AFTERTOUCH ASSIGN",(0,7),"")]
