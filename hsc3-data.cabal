@@ -65,6 +65,7 @@ Library
                    Sound.SC3.Data.Trace
                    Sound.SC3.Data.X11.Ptr
                    Sound.SC3.Data.XML.KML
+                   Sound.SC3.Data.Yamaha.DX7
 
 Source-Repository  head
   Type:            darcs

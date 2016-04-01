@@ -113,9 +113,9 @@ gen_d50_data_set_sysex ch a d =
               ,a',d
               ,[chk,sysex_end]]
 
-
 -- > let nm = (Patch,"Lower Tone Fine Tune")
 -- > in fmap byte_seq_hex_pp (gen_d50_data_set_sysex_nm 0 nm [0x10]) == Just "F0 41 00 14 12 00 03 19 10 54 F7"
+gen_d50_data_set_sysex_nm :: Int -> (Parameter_Type, String) -> [Int] -> Maybe [Int]
 gen_d50_data_set_sysex_nm ch nm d =
     let f a = gen_d50_data_set_sysex ch a d
     in fmap f (named_parameter_to_address nm)
@@ -381,7 +381,7 @@ d50_partial_groups =
     ,("TVF ENV 2","T1 T2 T3 T4 T5",[22..26])
     ,("TVF ENV 3","L1 L2 L3 SusL EndL",[27..31])
     ,("TVF MOD","LFO LFOD Aftr",[32..34])
-    ,("TVA","Levl Velo BP Blvl",[35..38]
+    ,("TVA","Levl Velo BP Blvl",[35..38])
     ,("TVA ENV 1","T1 T2 T3 T4 T5",[39..43])
     ,("TVA ENV 2","L1 L2 L3 SusL EndL",[44..48])
     ,("TVA ENV 3","Velo TKF",[49..50])
