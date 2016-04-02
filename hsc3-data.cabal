@@ -36,6 +36,7 @@ Library
                    hsc3-sf == 0.16.*,
                    hsc3-sf-hsndfile == 0.16.*,
                    JuicyPixels,
+                   midi-osc == 0.16.*,
                    pgm,
                    safe,
                    split,

@@ -5,54 +5,51 @@
 module Sound.SC3.Data.Roland.D50 where
 
 import Data.Bits {- base -}
-import Data.Char {- base -}
 import Data.List {- base -}
-import Data.Maybe {- base -}
-import Numeric {- base -}
 
-bits_pp :: [Bool] -> String
-bits_pp = map (\b -> if b then '1' else '0')
+import qualified Music.Theory.Read as T {- hmt -}
+import qualified Music.Theory.Tuple as T {- hmt -}
 
-gen_bitseq :: FiniteBits b => Int -> b -> [Bool]
-gen_bitseq n x = if finiteBitSize x < n then error "gen_bitseq" else map (testBit x) (reverse [0 .. n - 1])
+import qualified Sound.Midi.Type as M {- midi-osc -}
 
-gen_bitseq_pp :: FiniteBits b => Int -> b -> String
-gen_bitseq_pp n = bits_pp . gen_bitseq n
-
-byte_hex_pp :: (Integral i, Show i) => i -> String
-byte_hex_pp n =
-    case showHex n "" of
-      [c] -> ['0',toUpper c]
-      [c,d] -> map toUpper [c,d]
-      _ -> error "byte_hex_pp"
-
-byte_seq_hex_pp :: (Integral i, Show i) => [i] -> String
-byte_seq_hex_pp = unwords . map byte_hex_pp
-
--- > gen_bitseq_pp 8 sysex_status == "11110000"
+-- | Byte indicating start of SYSEX message.
+--
+-- > (sysex_status == 0xF0,sysex_status == 0b11110000)
 sysex_status :: Int
 sysex_status = 0xF0
 
--- > gen_bitseq_pp 8 sysex_end == "11110111"
+-- | Byte indicating end of SYSEX message.
+--
+-- > (sysex_end == 0xF7,sysex_end == 0b11110111)
 sysex_end :: Int
 sysex_end = 0xF7
 
--- > gen_bitseq_pp 8 roland_id == "01000001"
+-- | Roland manufacturers ID.
+--
+-- > (roland_id == 0x41,roland_id == 0b01000001)
 roland_id :: Int
 roland_id = 0x41
 
--- > gen_bitseq_pp 8 d50_id == "00010100"
+-- | D50 device ID.
+--
+-- > (d50_id == 0x14,d50_id == 0B00010100)
 d50_id :: Int
 d50_id = 0x14
 
--- > gen_bitseq_pp 8 dti_cmd_id
+-- | D50 DTI command ID.
+--
+-- > (dti_cmd_id == 0x12,dti_cmd_id == 0b00010010)
 dti_cmd_id :: Int
 dti_cmd_id = 0x12
 
+-- | D50 RQI command ID.
+--
+-- > (rqi_cmd_id == 0x11,rqi_cmd_id == 0b00010001)
 rqi_cmd_id :: Int
 rqi_cmd_id = 0x11
 
--- | The checksum is a derived from the address (three bytes) and the data bytes (for the D-50 always one byte).
+-- | The checksum is a derived from the address (three bytes)
+-- and the data bytes (for the D-50 always one byte).
 -- <ftp://ftp.monash.edu.au/pub/midi/DOC/Roland-checksum>
 --
 -- > roland_checksum [0x40,0x00,0x04,0x64] == 0x58
@@ -64,36 +61,13 @@ roland_checksum =
               x:w' -> let n' = n + x in f (if n' > 0x80 then n' - 0x80 else n') w'
     in f 0
 
-t3_to_list :: (t, t, t) -> [t]
-t3_to_list (p,q,r) = [p,q,r]
-
-t3_from_list :: [t] -> (t, t, t)
-t3_from_list l =
-    case l of
-      [p,q,r] -> (p,q,r)
-      _ -> error "t3_from_list"
-
--- | MSB -> LSB
---
--- > bits_21_sep 128 == (0x00,0x01,0x00)
--- > bits_21_sep 192 == (0x00,0x01,0x40)
--- > bits_21_sep 320 == (0x00,0x02,0x40)
--- > bits_21_sep 421 == (0x00,0x03,0x25)
-bits_21_sep :: (Num t, Bits t) => t -> (t,t,t)
-bits_21_sep a = (shiftR a 14 .&. 0x7F,shiftR a 7 .&. 0x7F,a .&. 0x7F)
-
 bits_21_sep_l :: (Num t, Bits t) => t -> [t]
-bits_21_sep_l = t3_to_list . bits_21_sep
+bits_21_sep_l = T.t3_list . M.bits_21_sep
 
--- > bits_21_join (0x00,0x01,0x00) == 128
--- > bits_21_join (0x00,0x01,0x40) == 192
--- > bits_21_join (0x00,0x02,0x40) == 320
--- > bits_21_join (0x00,0x03,0x19) == 409
--- > bits_21_join (0x00,0x03,0x25) == 421
-bits_21_join :: (Num t, Bits t) => (t,t,t) -> t
-bits_21_join (p,q,r) = shiftL p 14 .|. shiftL q 7 .|. r
-
--- > byte_seq_hex_pp (gen_d50_data_request_sysex 0 0 421) == "F0 41 00 14 11 00 00 00 00 03 25 58 F7"
+-- | Generate RTI command SYSEX.
+--
+-- > let r = map T.read_hex_byte (words "F0 41 00 14 11 00 00 00 00 03 25 58 F7")
+-- > in gen_d50_data_request_sysex 0 0 421 == r
 gen_d50_data_request_sysex :: Int -> Int -> Int -> [Int]
 gen_d50_data_request_sysex ch a sz =
     let a' = bits_21_sep_l a
@@ -103,8 +77,9 @@ gen_d50_data_request_sysex ch a sz =
               ,a',sz'
               ,[chk,sysex_end]]
 
--- > byte_seq_hex_pp (gen_d50_data_set_sysex 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
--- > byte_seq_hex_pp (gen_d50_data_set_sysex 0 409 [0x10]) == "F0 41 00 14 12 00 03 19 10 54 F7"
+-- > import qualified Music.Theory.Show as T {- hmt -}
+-- > T.byte_seq_hex_pp (gen_d50_data_set_sysex 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
+-- > T.byte_seq_hex_pp (gen_d50_data_set_sysex 0 409 [0x10]) == "F0 41 00 14 12 00 03 19 10 54 F7"
 gen_d50_data_set_sysex :: Int -> Int -> [Int] -> [Int]
 gen_d50_data_set_sysex ch a d =
     let a' = bits_21_sep_l a
@@ -113,8 +88,9 @@ gen_d50_data_set_sysex ch a d =
               ,a',d
               ,[chk,sysex_end]]
 
--- > let nm = (Patch,"Lower Tone Fine Tune")
--- > in fmap byte_seq_hex_pp (gen_d50_data_set_sysex_nm 0 nm [0x10]) == Just "F0 41 00 14 12 00 03 19 10 54 F7"
+-- > let {nm = (Patch,"Lower Tone Fine Tune")
+-- >     ;r = "F0 41 00 14 12 00 03 19 10 54 F7"}
+-- > in fmap T.byte_seq_hex_pp (gen_d50_data_set_sysex_nm 0 nm [0x10]) == Just r
 gen_d50_data_set_sysex_nm :: Int -> (Parameter_Type, String) -> [Int] -> Maybe [Int]
 gen_d50_data_set_sysex_nm ch nm d =
     let f a = gen_d50_data_set_sysex ch a d
@@ -235,7 +211,7 @@ parameter_type_base_address_t3 ty =
       Patch -> (0x00,0x03,0x00)
 
 parameter_type_base_address :: (Bits t,Num t) => Parameter_Type -> t
-parameter_type_base_address = bits_21_join . parameter_type_base_address_t3
+parameter_type_base_address = M.bits_21_join . parameter_type_base_address_t3
 
 -- | Base address, initial offset, number of parameters.
 --
@@ -258,6 +234,7 @@ d50_parameter_base_address_tbl =
                in (b,parameter_type_pp ty,ty,range_pp (b,b + o + n - 1))
     in map f parameter_type_seq
 
+-- > import Data.Maybe
 -- > mapMaybe (\n -> fmap parameter_type_pp (address_to_parameter_type n)) [0 .. 420]
 address_to_parameter_type :: (Num a, Ord a, Bits a) => a -> Maybe Parameter_Type
 address_to_parameter_type a =
@@ -390,7 +367,7 @@ d50_partial_groups =
 
 -- | 4.4 Common parameters.
 --
--- > length d50_common_pactors == 38
+-- > length d50_common_factors == 38
 d50_common_factors :: Num i => [Parameter i]
 d50_common_factors =
     [(10,"Structure No.",(0,6),"1 - 7")
@@ -459,7 +436,7 @@ d50_common_parameters =
 
 -- | 4.5 Patch Factors.
 --
--- > length d50_patch_factors == 17
+-- > length d50_patch_factors == 19
 d50_patch_factors :: Num i => [Parameter i]
 d50_patch_factors =
     [(18,"Key Mode",(0,8),"WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPARATE-S")
@@ -489,40 +466,32 @@ d50_patch_parameters =
     let ch n = (n,"Patch Name " ++ show (n + 1),(0,60),d50_char_code_usr)
     in map ch [0 .. 17] ++ d50_patch_factors
 
-reads_to_read_precise :: ReadS t -> String -> Maybe t
-reads_to_read_precise f s =
-    case f s of
-      [(r,[])] -> Just r
-      _ -> Nothing
-
-reads_to_read_precise_err :: ReadS t -> String -> t
-reads_to_read_precise_err f = fromMaybe (error "reads_to_read_precise_err") . reads_to_read_precise f
-
-read_hex_byte :: (Eq t,Num t) => String -> t
-read_hex_byte s =
-    case s of
-      [_,_] -> reads_to_read_precise_err readHex s
-      _ -> error "read_hex_byte"
+paramter_pp :: (Ord i,Show i) => (i,i) -> (Parameter_Type, Parameter i) -> String
+paramter_pp (a,v) (ty,(ix,nm,(l,r),usr)) =
+    if v < l || v > r
+    then "ERROR: VALUE OUT OF RANGE:" ++ show (a,v,l,r)
+    else intercalate "," [show a,parameter_type_pp ty,show ix,nm,show v,range_pp (l,r),usr]
 
 d50_patch_pp :: (Bits i,Num i,Ord i,Show i,Enum i) => [i] -> [String]
 d50_patch_pp =
-    let hdr = "ADDRESS,PARAMETER TYPE,INDEX,NAME,VALUE,RANGE,USER"
+    let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,USER"
         f (a,v) = case address_to_parameter a of
-                    Just (ty,(ix,nm,(l,r),usr)) ->
-                        if v < l || v > r
-                        then "ERROR: VALUE OUT OF RANGE:" ++ show (a,v,l,r)
-                        else intercalate "," [show a,parameter_type_pp ty,show ix,nm,show v,range_pp (l,r),usr]
-                    _ -> if v == 0 then "" else "ERROR: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v)
+                    Just p -> paramter_pp (a,v) p
+                    _ -> if v == 0
+                         then ""
+                         else "ERROR: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v)
     in (hdr :) . map f . zip [0 ..]
 
--- | Load text file consisting of at least 421 white-space separated two-character hexidecimal byte values.
+-- | Load text file consisting of at least 421 white-space separated
+-- two-character hexidecimal byte values.
 --
 -- > p <- load_d50_text "/home/rohan/uc/invisible/day/d50/d50.hex.text"
--- > writeFile "/home/rohan/uc/invisible/day/d50/d50.csv" (unlines (filter (not . null) (d50_patch_pp p)))
+-- > let p' = unlines (filter (not . null) (d50_patch_pp p))
+-- > writeFile "/home/rohan/uc/invisible/day/d50/d50.csv" p'
 load_d50_text :: (Eq t,Num t) => FilePath -> IO [t]
 load_d50_text fn = do
   s <- readFile fn
-  return (map (\x -> read_hex_byte x) (take 421 (words s)))
+  return (map (\x -> T.read_hex_byte x) (take 421 (words s)))
 
 -- | Tone structure number diagram in plain text.
 structure_no_text :: (Eq a, Num a) => a -> String

@@ -81,7 +81,7 @@ parameter_tbl_rem =
     ,(152,"VOICE NAME CHAR 8",(0,127),"ASCII")
     ,(153,"VOICE NAME CHAR 9",(0,127),"ASCII")
     ,(154,"VOICE NAME CHAR 10",(0,127),"ASCII")
-    ,(155,"OPERATOR ON/OFF",(0,1),"BIT5=OP1 - BIT0=OP6")
+    ,(155,"OPERATOR ON/OFF",(0,1),"BIT5=OP1 - BIT0=OP6") -- NOT STORED IN VOICE DATA
     ]
 
 dx7_parameter_tbl :: [Parameter]
