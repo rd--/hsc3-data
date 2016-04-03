@@ -1,7 +1,16 @@
--- | Roland Corporation.
--- /Roland MIDI Linear Synthesiser Programmer PG-1000 Owner's Manual/.
--- Hamamatsu, JP, 1987.
--- <http://cdn.roland.com/assets/media/pdf/PG-1000_OM.pdf>
+{- | ROLAND D-50
+
+Roland Corporation.
+/Roland MIDI Linear Synthesiser Programmer PG-1000 Owner's Manual/.
+Hamamatsu, JP, 1987.
+<http://cdn.roland.com/assets/media/pdf/PG-1000_OM.pdf>
+
+Roland Corporation.
+/D-50 Service Notes/.
+Hamamatsu, JP, 1987.
+<http://www.synfo.nl/servicemanuals/Roland/D-50_SERVICE_NOTES.pdf>
+
+-}
 module Sound.SC3.Data.Roland.D50 where
 
 import Data.Bits {- base -}
@@ -14,6 +23,7 @@ import qualified Sound.Midi.Type as M {- midi-osc -}
 
 -- | Byte indicating start of SYSEX message.
 --
+-- > :set -XBinaryLiterals
 -- > (sysex_status == 0xF0,sysex_status == 0b11110000)
 sysex_status :: Int
 sysex_status = 0xF0
@@ -36,20 +46,33 @@ roland_id = 0x41
 d50_id :: Int
 d50_id = 0x14
 
--- | D50 DTI command ID.
---
--- > (dti_cmd_id == 0x12,dti_cmd_id == 0b00010010)
-dti_cmd_id :: Int
-dti_cmd_id = 0x12
+-- | D50 SYSEX command ID.
+data D50_SYSEX_CMD = RQI_CMD -- ^ REQUEST DATA - ONE WAY
+                   | DTI_CMD -- ^ DATA SET - ONE WAY
+                   | RQD_CMD -- ^ REQUEST DATA
+                   | DAT_CMD -- ^ DATA SET
+                   | ACK_CMD -- ^ ACKNOWLEDGE
+                   | EOD_CMD -- ^ END OF DATA
+                   | ERR_CMD -- ^ COMMUNICATION ERROR
 
--- | D50 RQI command ID.
+-- | SYSEX_CMD to 8-Bit identifier.
 --
--- > (rqi_cmd_id == 0x11,rqi_cmd_id == 0b00010001)
-rqi_cmd_id :: Int
-rqi_cmd_id = 0x11
+-- > let k = d50_sysex_cmd_id DTI_CMD in (k == 0x12,k == 0b00010010)
+-- > let k = d50_sysex_cmd_id RQI_CMD in (k == 0x11,k == 0b00010001)
+d50_sysex_cmd_id :: Num a => D50_SYSEX_CMD -> a
+d50_sysex_cmd_id cmd =
+    case cmd of
+      RQD_CMD -> 0x41
+      DAT_CMD -> 0x41
+      ACK_CMD -> 0x43
+      EOD_CMD -> 0x43
+      ERR_CMD -> 0x43
+      RQI_CMD -> 0x11
+      DTI_CMD -> 0x12
 
 -- | The checksum is a derived from the address (three bytes)
--- and the data bytes (for the D-50 always one byte).
+-- and the data bytes.
+--
 -- <ftp://ftp.monash.edu.au/pub/midi/DOC/Roland-checksum>
 --
 -- > roland_checksum [0x40,0x00,0x04,0x64] == 0x58
@@ -61,6 +84,7 @@ roland_checksum =
               x:w' -> let n' = n + x in f (if n' > 0x80 then n' - 0x80 else n') w'
     in f 0
 
+-- | 'T.t3_list' of 'M.bits_21_sep'.
 bits_21_sep_l :: (Num t, Bits t) => t -> [t]
 bits_21_sep_l = T.t3_list . M.bits_21_sep
 
@@ -73,9 +97,11 @@ gen_d50_data_request_sysex ch a sz =
     let a' = bits_21_sep_l a
         sz' = bits_21_sep_l sz
         chk = roland_checksum (a' ++ sz')
-    in concat [[sysex_status,roland_id,ch,d50_id,rqi_cmd_id]
+    in concat [[sysex_status,roland_id,ch,d50_id,d50_sysex_cmd_id RQI_CMD]
               ,a',sz'
               ,[chk,sysex_end]]
+
+-- d50_parse_dti b =
 
 -- > import qualified Music.Theory.Show as T {- hmt -}
 -- > T.byte_seq_hex_pp (gen_d50_data_set_sysex 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
@@ -84,7 +110,7 @@ gen_d50_data_set_sysex :: Int -> Int -> [Int] -> [Int]
 gen_d50_data_set_sysex ch a d =
     let a' = bits_21_sep_l a
         chk = roland_checksum (a' ++ d)
-    in concat [[sysex_status,roland_id,ch,d50_id,dti_cmd_id]
+    in concat [[sysex_status,roland_id,ch,d50_id,d50_sysex_cmd_id DTI_CMD]
               ,a',d
               ,[chk,sysex_end]]
 
@@ -285,7 +311,7 @@ Address Description
 
 type Parameter i = (i,String,(i,i),String)
 
--- | 4.3 Partial parameters
+-- | Partial parameters (4.3)
 --
 -- > length d50_partial_parameters == 54
 d50_partial_parameters :: Num i => [Parameter i]
@@ -365,7 +391,7 @@ d50_partial_groups =
     ,("TVA MOD","LFO LFOD Aftr",[51..53])
     ]
 
--- | 4.4 Common parameters.
+-- | Common parameters (4.4).
 --
 -- > length d50_common_factors == 38
 d50_common_factors :: Num i => [Parameter i]
@@ -485,9 +511,9 @@ d50_patch_pp =
 -- | Load text file consisting of at least 421 white-space separated
 -- two-character hexidecimal byte values.
 --
--- > p <- load_d50_text "/home/rohan/uc/invisible/day/d50/d50.hex.text"
+-- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 -- > let p' = unlines (filter (not . null) (d50_patch_pp p))
--- > writeFile "/home/rohan/uc/invisible/day/d50/d50.csv" p'
+-- > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
 load_d50_text :: (Eq t,Num t) => FilePath -> IO [t]
 load_d50_text fn = do
   s <- readFile fn
@@ -506,12 +532,51 @@ structure_no_text n =
       7 -> "P1 + RMOD (P1 + P2)"
       _ -> error "structure_text"
 
+-- | Table mapping byte to ASCII character.
 d50_char_table :: (Enum i,Num i) => [(i,Char)]
 d50_char_table =
     let ch = [[' '],['A'..'Z'],['a'..'z'],['1'..'9'],['0','-']]
     in zip [0..] (concat ch)
 
+-- | Lookup in 'd50_char_table'.
+--
 -- > mapMaybe d50_byte_to_char [9,40,38,27,40,30] == "Inland"
 d50_byte_to_char :: (Enum i, Eq i, Num i) => i -> Maybe Char
 d50_byte_to_char n = lookup n d50_char_table
 
+{-
+
+4.2 Memory Area
+
+[02-00-00] Patch Memory 1-1
+[02-03-40] Patch Memory 1-2
+...
+[03-5C-40] Patch Memory 8-8
+[03-60-00] Reverb Data 17
+[03-62-78] Reverb Data 18
+...
+[04-0C-08] Reverb Data 32
+
+M.bits_21_join (0x02,0x00,0x00) == 32768
+M.bits_21_join (0x02,0x03,0x40) == 33216
+M.bits_21_join (0x03,0x60,0x00) == 61440
+M.bits_21_join (0x03,0x62,0x78) == 61816
+M.bits_21_join (0x04,0x0C,0x08) == 67080
+
+33216 - 32768 == 448
+32768 + (448 * 64) == 61440
+61440 - 448 == 60992
+M.bits_21_sep 60992 == (0x03,0x5C,0x40)
+
+61816 - 61440 == 376
+61440 + (376 * (32 - 17)) == 67080
+
+-}
+
+-- | Base address for patch memory /n/ (0,63)
+patch_memory_base :: Num a => a -> a
+patch_memory_base n = 32768 + (448 * n)
+
+-- | Base address for reverb memory /n/ (0,15)
+reverb_memory_base :: Num a => a -> a
+reverb_memory_base n = 61440 + (376 * n)
