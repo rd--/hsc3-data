@@ -11,3 +11,9 @@ cmd =	ats au-to-pbm au-to-pgm \
 	x11-ptr-to-midi-osc
 
 include ~/sw/hsc3/mk/cmd.mk
+
+VST_SDK = $(HOME)/opt/src/vstsdk2.4
+
+lxvst-stat: lxvst-stat.cpp
+	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
+
