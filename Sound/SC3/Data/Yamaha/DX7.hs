@@ -16,6 +16,7 @@ usr_str =
 
 type Parameter = (Int,String,(Int,Int),String)
 
+-- > length operator_parameter_template == 21
 operator_parameter_template :: [Parameter]
 operator_parameter_template =
     [(00,"EG RATE 1",(0,99),"")
@@ -47,9 +48,11 @@ gen_operator_parameter_tbl n =
         f (ix,nm,rng,usr) = (ix + (21 * n'),"OP " ++ show n ++ " " ++ nm,rng,usr)
     in map f operator_parameter_template
 
+-- > length operator_parameter_tbl == 126
 operator_parameter_tbl :: [Parameter]
 operator_parameter_tbl = concatMap gen_operator_parameter_tbl [6,5 .. 1]
 
+-- > length parameter_tbl_rem == 30
 parameter_tbl_rem :: [Parameter]
 parameter_tbl_rem =
     [(126,"PITCH EG RATE 1",(0,99),"")
@@ -84,6 +87,7 @@ parameter_tbl_rem =
     ,(155,"OPERATOR ON/OFF",(0,1),"BIT5=OP1 - BIT0=OP6") -- NOT STORED IN VOICE DATA
     ]
 
+-- > length dx7_parameter_tbl == 156
 dx7_parameter_tbl :: [Parameter]
 dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
 
