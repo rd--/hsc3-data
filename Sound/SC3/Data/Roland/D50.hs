@@ -16,6 +16,7 @@ module Sound.SC3.Data.Roland.D50 where
 import Data.Bits {- base -}
 import Data.List {- base -}
 
+import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Read as T {- hmt -}
 import qualified Music.Theory.Tuple as T {- hmt -}
 
@@ -202,8 +203,14 @@ transmitted.
 
 -}
 
+-- | A patch has two tones, 'Upper' and 'Lower'.
 data Tone = Upper | Lower deriving (Eq,Show)
+
+-- | A 'Tone' has two partials, 'One' and 'Two'.
 data Partial_Ix = One | Two deriving (Eq,Show)
+
+-- | Parameters are of one of seven types, four 'Partial's
+-- (U1,U2,L1,L2), two 'Common' (U,L), or 'Patch'.
 data Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
 
 parameter_type_seq :: [Parameter_Type]
@@ -253,12 +260,24 @@ parameter_type_extent ty =
 range_pp :: Show a => (a,a) -> String
 range_pp (p,q) = show p ++ " - " ++ show q
 
+-- | Parameter base address (Top address) (4.1)
+parameter_type_address_segments :: (Num i,Bits i) => [(Parameter_Type,(i,i))]
+parameter_type_address_segments =
+    let f ty = let (b,o,n) = parameter_type_extent ty
+               in (ty,(b,b + o + n - 1))
+    in map f parameter_type_seq
+
+parameter_segment :: [i] -> [(Parameter_Type, [i])]
+parameter_segment p =
+    let f (ty,(b,x)) = (ty,map (p!!) [b .. x])
+    in map f parameter_type_address_segments
+
+
 -- | 4.1 Parameter base address (Top address)
 d50_parameter_base_address_tbl :: (Bits i,Num i,Show i) => [(i,String,Parameter_Type,String)]
 d50_parameter_base_address_tbl =
-    let f ty = let (b,o,n) = parameter_type_extent ty
-               in (b,parameter_type_pp ty,ty,range_pp (b,b + o + n - 1))
-    in map f parameter_type_seq
+    let f (ty,(b,x)) = (b,parameter_type_pp ty,ty,range_pp (b,x))
+    in map f parameter_type_address_segments
 
 -- > import Data.Maybe
 -- > mapMaybe (\n -> fmap parameter_type_pp (address_to_parameter_type n)) [0 .. 420]
@@ -311,6 +330,12 @@ Address Description
 
 type Parameter i = (i,String,(i,i),String)
 
+wg_pitch_kf_usr :: String
+wg_pitch_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
+
+tvf_kf_usr :: String
+tvf_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
+
 -- | Partial parameters (4.3)
 --
 -- > length d50_partial_parameters == 54
@@ -318,7 +343,7 @@ d50_partial_parameters :: Num i => [Parameter i]
 d50_partial_parameters =
     [(0,"WG Pitch Coarse",(0,72),"C1 - C7")
     ,(1,"WG Pitch Fine",(0,100),"-50 - +50")
-    ,(2,"WG Pitch Keyfollow",(0,16),"-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2")
+    ,(2,"WG Pitch Keyfollow",(0,16),wg_pitch_kf_usr)
     ,(3,"WG Mod LFO Mode",(0,3),"OFF;(+);(~);A&L")
     ,(4,"WG Mod P-ENV Mode",(0,2),"OFF;(+);(-)")
     ,(5,"WG Mod Bender Mode",(0,2),"OFF;KF;NORMAL")
@@ -331,7 +356,7 @@ d50_partial_parameters =
     ,(12,"WG PW Aftertouch Range",(0,14),"-7 - +7")
     ,(13,"TVF Cutoff Frequency",(0,100),"0 - 100")
     ,(14,"TVF Resonance",(0,30),"0 - 30")
-    ,(15,"TVF Keyfollow",(0,14),"-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2")
+    ,(15,"TVF Keyfollow",(0,14),tvf_kf_usr)
     ,(16,"TVF Bias Point/Direction",(0,127),"<A1 - <C7;>A1 - >C7")
     ,(17,"TVF Bias Level",(0,14),"-7 - +7")
     ,(18,"TVF ENV Depth",(0,100),"0 - 100")
@@ -372,8 +397,10 @@ d50_partial_parameters =
     ,(53,"TVA Mod Aftertouch Range",(0,14),"-7 - +7")
     ]
 
+type PARAM_GROUP = (String,String,[Int])
+
 -- | Group structure of partial parameters, as in D-50 menu system.
-d50_partial_groups :: [(String,String,[Int])]
+d50_partial_groups :: [PARAM_GROUP]
 d50_partial_groups =
     [("WG Pitch","Cors Fine KF",[0..2])
     ,("WG Mod","LFO ENV Bend",[3..5])
@@ -390,6 +417,12 @@ d50_partial_groups =
     ,("TVA ENV 3","Velo TKF",[49..50])
     ,("TVA MOD","LFO LFOD Aftr",[51..53])
     ]
+
+eq_lf_usr :: String
+eq_lf_usr = "63;75;88;105;125;150;175;210;250;300;350;420;500;600;700;840"
+
+eq_hf_usr :: String
+eq_hf_usr = "250;300;350;420;500;600;700;840;1.0;1.2;1.4;1.7;2.0;2.4;2.8;3.4;4.0;4.8;5.7;6.7;8.0;9.5"
 
 -- | Common parameters (4.4).
 --
@@ -423,9 +456,9 @@ d50_common_factors =
     ,(34,"LFO-3 Rate",(0,100),"0 - 100")
     ,(35,"LFO-3 Delay Time",(0,100),"0 - 100")
     ,(36,"LFO-S Sync",(0,1),"OFF;ON")
-    ,(37,"Low EQ Frequency",(0,15),"63;75;88;105;125;150;175;210;250;300;350;420;500;600;700;840")
+    ,(37,"Low EQ Frequency",(0,15),eq_lf_usr)
     ,(38,"Low EQ Gain",(0,24),"-12 - +12")
-    ,(39,"High EQ Frequency",(0,21),"250;300;350;420;500;600;700;840;1.0;1.2;1.4;1.7;2.0;2.4;2.8;3.4;4.0;4.8;5.7;6.7;8.0;9.5")
+    ,(39,"High EQ Frequency",(0,21),eq_hf_usr)
     ,(40,"High EQ Q",(0,8),"0.3;0.5;0.7;1.0;1.4;2.0;3.0;4.2;6.0")
     ,(41,"High EQ Gain",(0,24),"-12 - +12")
     ,(42,"Chorus Type",(0,7),"1 - 8")
@@ -436,10 +469,23 @@ d50_common_factors =
     ,(47,"Partial Balance",(0,100),"0 - 100")
      ]
 
+-- | /USR/ string indicating 'Char' enumeration sequence.
+d50_char_code_usr :: String
+d50_char_code_usr = "' ';'A' - 'Z';'a' - 'z';'1' - '9';'0';'-'"
+
+-- | 'd50_common_factors' preceded by tone name.
+--
+-- > length d50_common_parameters == 48
+d50_common_parameters :: (Enum i,Num i,Show i) => [Parameter i]
+d50_common_parameters =
+    let ch n = (n,"Tone Name " ++ show (n + 1),(0,60),d50_char_code_usr)
+    in map ch [0 .. 9] ++ d50_common_factors
+
 -- | Group structure of common parameters, as in D-50 menu system.
-d50_common_groups :: [(String,String,[Int])]
+d50_common_groups :: [PARAM_GROUP]
 d50_common_groups =
-    [("Structure","Str",[10])
+    [("Tone Name Edit","C1 C2 C3 C4 C5 C6 C7 C8 C9 C10",[0..9])
+    ,("Structure","Str",[10])
     ,("P-ENV Edit 1","Velo TKF",[11..12])
     ,("P-ENV Edit 2","T1 T2 T3 T4",[13..16])
     ,("P-ENV Edit 3","LO L1 L2 SusL EndL",[17..21])
@@ -451,21 +497,15 @@ d50_common_groups =
     ,("Chorus Edit","Type Rate Dpth Bal",[42..45])
     ]
 
-d50_char_code_usr :: String
-d50_char_code_usr = "' ';'A' - 'Z';'a' - 'z';'1' - '9';'0';'-'"
-
--- | 'd50_common_factors' preceded by tone name.
-d50_common_parameters :: (Enum i,Num i,Show i) => [Parameter i]
-d50_common_parameters =
-    let ch n = (n,"Tone Name " ++ show (n + 1),(0,60),d50_char_code_usr)
-    in map ch [0 .. 9] ++ d50_common_factors
+key_mode_usr :: String
+key_mode_usr = "WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPARATE-S"
 
 -- | 4.5 Patch Factors.
 --
 -- > length d50_patch_factors == 19
 d50_patch_factors :: Num i => [Parameter i]
 d50_patch_factors =
-    [(18,"Key Mode",(0,8),"WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPARATE-S")
+    [(18,"Key Mode",(0,8),key_mode_usr)
     ,(19,"Split Point",(0,60),"C2 - C7")
     ,(20,"Portamento Mode",(0,2),"U;L;UL")
     ,(21,"Hold Mode",(0,2),"U;L;UL")
@@ -486,42 +526,72 @@ d50_patch_factors =
     ,(36,"Chase Time",(0,100),"0 - 100")
     ]
 
+d50_patch_groups :: [PARAM_GROUP]
+d50_patch_groups =
+    [("Patch Name Edit","C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15 C16 C17 C18",[0..17])
+    ,("MAIN","KEY-MODE SPLIT-POINT TONE-BALANCE",[18,19,33])
+    ,("Tone Tune","LKey UKey LTune UTune",[23,22,25,24])
+    ,("Control Edit","Bend AfPB Port Port Hold",[26,27,28,20,21])
+    ,("Output Mode Edit","Mode Rev Rbal Vol",[29..32])
+    ,("Chase Edit","Mode Levl Time",[34..36])
+    ]
+
 -- | 'd50_patch_factors' preceded by patch name.
+--
+-- > length d50_patch_parameters == 37
 d50_patch_parameters :: (Enum i,Num i,Show i) => [Parameter i]
 d50_patch_parameters =
     let ch n = (n,"Patch Name " ++ show (n + 1),(0,60),d50_char_code_usr)
     in map ch [0 .. 17] ++ d50_patch_factors
 
-paramter_pp :: (Ord i,Show i) => (i,i) -> (Parameter_Type, Parameter i) -> String
-paramter_pp (a,v) (ty,(ix,nm,(l,r),usr)) =
+parameter_pp :: (Ord i,Show i) => (i,i) -> (Parameter_Type, Parameter i) -> String
+parameter_pp (a,v) (ty,(ix,nm,(l,r),usr)) =
     if v < l || v > r
     then "ERROR: VALUE OUT OF RANGE:" ++ show (a,v,l,r)
     else intercalate "," [show a,parameter_type_pp ty,show ix,nm,show v,range_pp (l,r),usr]
 
-d50_patch_pp :: (Bits i,Num i,Ord i,Show i,Enum i) => [i] -> [String]
-d50_patch_pp =
+d50_patch_csv :: (Bits i,Num i,Ord i,Show i,Enum i) => [i] -> [String]
+d50_patch_csv =
     let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,USER"
         f (a,v) = case address_to_parameter a of
-                    Just p -> paramter_pp (a,v) p
+                    Just p -> parameter_pp (a,v) p
                     _ -> if v == 0
                          then ""
                          else "ERROR: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v)
     in (hdr :) . map f . zip [0 ..]
 
+-- > maximum (map (\(nm,_,_) -> length nm) (concat d50_group_seq))
+d50_group_seq :: [[PARAM_GROUP]]
+d50_group_seq =
+    let tn = [d50_partial_groups,d50_partial_groups,d50_common_groups]
+    in concat [tn,tn,[d50_patch_groups]]
+
+group_pp :: Show t => [t] -> PARAM_GROUP -> String
+group_pp p (g_nm,p_nm_seq,ix) =
+    let f p_nm v = concat [p_nm,"=",show v]
+    in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords (zipWith f (words p_nm_seq) (map (p !!) ix))
+
+d50_patch_group_pp :: Show t => [t] -> [String]
+d50_patch_group_pp =
+    let f gr pr = "" : parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
+    in concat . zipWith f d50_group_seq . parameter_segment
+
 -- | Load text file consisting of at least 421 white-space separated
 -- two-character hexidecimal byte values.
 --
 -- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
--- > let p' = unlines (filter (not . null) (d50_patch_pp p))
+-- > let p' = unlines (filter (not . null) (d50_patch_csv p))
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
+--
+-- > mapM_ putStrLn $ d50_patch_group_pp p
 load_d50_text :: (Eq t,Num t) => FilePath -> IO [t]
 load_d50_text fn = do
   s <- readFile fn
   return (map (\x -> T.read_hex_byte x) (take 421 (words s)))
 
 -- | Tone structure number diagram in plain text.
-structure_no_text :: (Eq a, Num a) => a -> String
-structure_no_text n =
+structure_pp :: (Eq a, Num a) => a -> String
+structure_pp n =
     case n + 1 of
       1 -> "S1 + S2"
       2 -> "S1 + RMOD (S1 + S2)"
@@ -543,6 +613,10 @@ d50_char_table =
 -- > mapMaybe d50_byte_to_char [9,40,38,27,40,30] == "Inland"
 d50_byte_to_char :: (Enum i, Eq i, Num i) => i -> Maybe Char
 d50_byte_to_char n = lookup n d50_char_table
+
+-- > mapMaybe d50_char_to_byte "Inland" == [9,40,38,27,40,30]
+d50_char_to_byte :: (Enum i, Num i) => Char -> Maybe i
+d50_char_to_byte c = T.reverse_lookup c d50_char_table
 
 {-
 
