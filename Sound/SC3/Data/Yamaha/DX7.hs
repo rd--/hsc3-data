@@ -25,6 +25,11 @@ type Parameter = (Int,String,Int,Int,String)
 parameter_range :: Parameter -> (Int,Int)
 parameter_range (_,_,n,_,_) = (0,n - 1)
 
+-- > let p = operator_parameter_template !! 20
+-- > map (parameter_value_normalise p) [0 .. 14]
+parameter_value_normalise :: Parameter -> Int -> Float
+parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
+
 parameter_range_usr :: Parameter -> (Int,Int)
 parameter_range_usr (_,_,n,d,_) = (d,d + n - 1)
 

@@ -164,9 +164,20 @@ dexed_param =
     ]
 
 -- | This is the DEXED parameter list in the form (DX7-IX,DEXED-IX,
+--
 -- > import qualified Sound.SC3.Data.Yamaha.DX7 as DX7
 -- > mapM_ print $ zip dexed_param_dx7 DX7.dx7_parameter_tbl
 dexed_param_dx7 :: [(Int, String, Int)]
 dexed_param_dx7 =
     let p = map (\(i,c) -> (offset c,name c,i)) (zip [0..] dexed_param)
     in sortOn (\(i,_,_) -> i) p
+
+{-
+import Sound.OSC.FD
+fd <- openUDP "127.0.0.1" 57210
+let p_set ix val = sendMessage fd (Message "/p_set" [Int32 (ix + 3),Float val])
+p_set 29 1 -- OP 1 OSC FREQ COARSE / 123
+p_set 31 1 -- OP 1 OSC DETUNE / 125
+p_set 0 0.5 -- ALGORITHM # / 134
+p_set 9 1 -- TRANSPOSE / 144
+-}
