@@ -17,3 +17,5 @@ VST_SDK = $(HOME)/opt/src/vstsdk2.4
 lxvst-stat: lxvst-stat.cpp
 	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
 
+dx7-unpack: dx7-unpack.c
+	gcc -Wall -std=c99 -O3 -o dx7-unpack dx7-unpack.c

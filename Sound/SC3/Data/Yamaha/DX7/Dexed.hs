@@ -163,6 +163,7 @@ dexed_param =
     ,CtrlDX {name="OP6 KEY VELOCITY", steps=8, offset=15, display_value=0}
     ]
 
+-- | This is the DEXED parameter list in the form (DX7-IX,DEXED-IX,
 -- > import qualified Sound.SC3.Data.Yamaha.DX7 as DX7
 -- > mapM_ print $ zip dexed_param_dx7 DX7.dx7_parameter_tbl
 dexed_param_dx7 :: [(Int, String, Int)]
