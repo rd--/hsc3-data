@@ -576,18 +576,21 @@ d50_patch_group_pp =
     let f gr pr = "" : parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
     in concat . zipWith f d50_group_seq . parameter_segment
 
--- | Load text file consisting of at least 421 white-space separated
+-- | Load text file consisting of 421 white-space separated
 -- two-character hexidecimal byte values.
 --
 -- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 -- > let p' = unlines (filter (not . null) (d50_patch_csv p))
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
 --
--- > mapM_ putStrLn $ d50_patch_group_pp p
+-- > let g = d50_patch_group_pp p
+-- > writeFile "/home/rohan/uc/invisible/light/d50/d50.group.text" (unlines g)
 load_d50_text :: (Eq t,Num t) => FilePath -> IO [t]
 load_d50_text fn = do
   s <- readFile fn
-  return (map (\x -> T.read_hex_byte x) (take 421 (words s)))
+  case splitAt 421 (words s) of
+    (h,[]) -> return (map (\x -> T.read_hex_byte x) h)
+    _ -> error "load_d50_text"
 
 -- | Tone structure number diagram in plain text.
 structure_pp :: (Eq a, Num a) => a -> String

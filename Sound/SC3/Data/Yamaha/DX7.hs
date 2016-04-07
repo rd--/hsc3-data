@@ -5,6 +5,9 @@
 module Sound.SC3.Data.Yamaha.DX7 where
 
 import Data.List.Split {- base -}
+import Text.Printf {- base -}
+
+import qualified Music.Theory.Read as T {- hmt -}
 
 yamaha_id :: Num n => n
 yamaha_id = 0x43
@@ -106,7 +109,7 @@ dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
 dx7_parameter_pp :: [Int] -> [String]
 dx7_parameter_pp =
     let f (p,x) =
-            let (_,nm,stp,d,u) = p
+            let (ix,nm,stp,d,u) = p
                 x' = if u == "ASCII"
                      then ['\'',toEnum x,'\'']
                      else case splitOn ";" u of
@@ -114,7 +117,7 @@ dx7_parameter_pp =
                             e -> e !! x
             in if x >= stp
                then error (show ("dx7_parameter_pp",x,p))
-               else concat [nm," = ",x']
+               else printf "%03d: %s = %s" ix nm x'
     in map f . zip dx7_parameter_tbl
 
 function_parameters_tbl :: [Parameter]
@@ -133,3 +136,16 @@ function_parameters_tbl =
     ,(75,"BREATH CONT ASSIGN",8,0,"")
     ,(76,"AFTERTOUCH RANGE",100,0,"")
     ,(77,"AFTERTOUCH ASSIGN",8,0,"")]
+
+load_dx7_sysex_hex :: (Eq t,Num t) => FilePath -> IO [t]
+load_dx7_sysex_hex fn = do
+  s <- readFile fn
+  case splitAt 4960 (words s) of
+    (h,[]) -> return (map (\x -> T.read_hex_byte x) h)
+    _ -> error "load_dx7_sysex_hex"
+
+{-
+h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/Dexed_01.syx.hex" :: IO [Int]
+let p = chunksOf 155 h
+mapM_ (putStrLn . unlines . dx7_parameter_pp) p
+-}
