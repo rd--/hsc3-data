@@ -32,20 +32,20 @@ struct operator_packed
 struct voice_packed
 {
     struct operator_packed op[6];
-    u8 v_126_133[8];
-    u8 v_134 : 5; u8 : 3;
-    u8 v_135 : 3; u8 v_136 : 1; u8 : 4;
-    u8 v_137_140[4];
-    u8 v_141 : 1; u8 v_142 : 3; u8 v_143 : 4;
-    u8 v_144;
-    u8 v_145_154[10];
+    u8 vc_126_133[8];
+    u8 vc_134 : 5; u8 : 3;
+    u8 vc_135 : 3; u8 vc_136 : 1; u8 : 4;
+    u8 vc_137_140[4];
+    u8 vc_141 : 1; u8 vc_142 : 3; u8 vc_143 : 4;
+    u8 vc_144;
+    u8 vc_145_154[10];
 };
 
 struct dx7_sysex
 {
-    u8 y_begin[6];
-    struct voice_packed voices[32];
-    u8 y_end[2];
+    u8 sy_begin[6];
+    struct voice_packed vc[32];
+    u8 sy_end[2];
 };
 
 u8 d7x_checksum(u8 *p)
@@ -71,14 +71,14 @@ void verify_eq(char *err,u64 p,u64 q)
 
 void dx7_verify(struct dx7_sysex *sysex)
 {
-    verify_eq_u8("F0",sysex->y_begin[0],0xF0);
-    verify_eq_u8("43",sysex->y_begin[1],0x43);
-    verify_eq_u8("00",sysex->y_begin[2],0);
-    verify_eq_u8("09",sysex->y_begin[3],0x09);
-    verify_eq_u8("20",sysex->y_begin[4],0x20);
-    verify_eq_u8("00",sysex->y_begin[5],0);
-    verify_eq_u8("CS",d7x_checksum((u8 *)sysex->voices),sysex->y_end[0]);
-    verify_eq_u8("F7",sysex->y_end[1],0xF7);
+    verify_eq_u8("F0",sysex->sy_begin[0],0xF0);
+    verify_eq_u8("43",sysex->sy_begin[1],0x43);
+    verify_eq_u8("00",sysex->sy_begin[2],0);
+    verify_eq_u8("09",sysex->sy_begin[3],0x09);
+    verify_eq_u8("20",sysex->sy_begin[4],0x20);
+    verify_eq_u8("00",sysex->sy_begin[5],0);
+    verify_eq_u8("CS",d7x_checksum((u8 *)sysex->vc),sysex->sy_end[0]);
+    verify_eq_u8("F7",sysex->sy_end[1],0xF7);
 }
 
 void unpack_operator(struct operator_packed o,u8 *b)
@@ -102,23 +102,23 @@ void unpack_voice(struct voice_packed v,u8 *b)
     for (int i = 0;i < 6;i ++) {
 	unpack_operator(v.op[i],b + (i*21));
     }
-    memcpy(b + 126,v.v_126_133,8);
-    b[134] = v.v_134;
-    b[135] = v.v_135;
-    b[136] = v.v_136;
-    memcpy(b + 137,v.v_137_140,4);
-    b[141] = v.v_141;
-    b[142] = v.v_142;
-    b[143] = v.v_143;
-    b[144] = v.v_144;
-    memcpy(b + 145,v.v_145_154,10);
+    memcpy(b + 126,v.vc_126_133,8);
+    b[134] = v.vc_134;
+    b[135] = v.vc_135;
+    b[136] = v.vc_136;
+    memcpy(b + 137,v.vc_137_140,4);
+    b[141] = v.vc_141;
+    b[142] = v.vc_142;
+    b[143] = v.vc_143;
+    b[144] = v.vc_144;
+    memcpy(b + 145,v.vc_145_154,10);
 }
 
 /* 4960 = 32 * 155 */
 void unpack_dx7_sysex(struct dx7_sysex s,u8 *b)
 {
     for (int i = 0;i < 32;i ++) {
-	unpack_voice(s.voices[i],b + (i * 155));
+	unpack_voice(s.vc[i],b + (i * 155));
     }
 }
 
