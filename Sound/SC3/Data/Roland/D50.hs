@@ -15,6 +15,7 @@ module Sound.SC3.Data.Roland.D50 where
 
 import Data.Bits {- base -}
 import Data.List {- base -}
+import Data.List.Split {- split -}
 
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Read as T {- hmt -}
@@ -243,6 +244,7 @@ parameter_type_base_address_t3 ty =
       Common Lower -> (0x00,0x02,0x40)
       Patch -> (0x00,0x03,0x00)
 
+-- > map parameter_type_base_address parameter_type_seq
 parameter_type_base_address :: (Bits t,Num t) => Parameter_Type -> t
 parameter_type_base_address = M.bits_21_join . parameter_type_base_address_t3
 
@@ -298,19 +300,19 @@ address_to_parameter :: (Enum i,Num i,Ord i, Bits i,Show i) => i -> Maybe (Param
 address_to_parameter a =
     case address_to_parameter_type a of
       Just ty -> let (b,_,_) = parameter_type_extent ty
-                     f (i,_,_,_) = i == a - b
+                     f (i,_,_,_,_) = i == a - b
                  in fmap (\p -> (ty,p)) (find f (parameter_type_parameters ty))
       Nothing -> Nothing
 
 parameter_lookup :: (Enum i,Num i,Show i) => (Parameter_Type,String) -> Maybe (Parameter_Type,Parameter i)
 parameter_lookup (ty,nm) =
-    let f (_,nm',_,_) = nm == nm'
+    let f (_,nm',_,_,_) = nm == nm'
     in fmap (\p -> (ty,p)) (find f (parameter_type_parameters ty))
 
 -- > named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
 named_parameter_to_address :: (Bits i,Enum i,Num i,Show i) => (Parameter_Type,String) -> Maybe i
 named_parameter_to_address =
-    let f (ty,(n,_,_,_)) = let (b,_,_) = parameter_type_extent ty in b + n
+    let f (ty,(n,_,_,_,_)) = let (b,_,_) = parameter_type_extent ty in b + n
     in fmap f . parameter_lookup
 
 {-
@@ -328,7 +330,20 @@ Address Description
 
 -}
 
-type Parameter i = (i,String,(i,i),String)
+type Parameter i = (i,String,i,i,String)
+
+parameter_ix :: Parameter i -> i
+parameter_ix (ix,_,_,_,_) = ix
+
+pitch_class_seq :: [String]
+pitch_class_seq = words "C C# D D# E F F# G G# A A# B"
+
+pitch_seq :: [String]
+pitch_seq = [p ++ show o | o <- [1..7],p <- pitch_class_seq]
+
+-- "C1 - C7"
+wg_pitch_coarse_usr :: String
+wg_pitch_coarse_usr = intercalate ";" (take 73 pitch_seq)
 
 wg_pitch_kf_usr :: String
 wg_pitch_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
@@ -336,65 +351,71 @@ wg_pitch_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
 tvf_kf_usr :: String
 tvf_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
 
+-- "<A1 - <C7;>A1 - >C7"
+bias_point_direction_usr :: String
+bias_point_direction_usr =
+    let p = take 64 (drop 9 pitch_seq)
+    in intercalate ";" (map ('<' :) p ++ map ('>' :) p)
+
 -- | Partial parameters (4.3)
 --
 -- > length d50_partial_parameters == 54
 d50_partial_parameters :: Num i => [Parameter i]
 d50_partial_parameters =
-    [(0,"WG Pitch Coarse",(0,72),"C1 - C7")
-    ,(1,"WG Pitch Fine",(0,100),"-50 - +50")
-    ,(2,"WG Pitch Keyfollow",(0,16),wg_pitch_kf_usr)
-    ,(3,"WG Mod LFO Mode",(0,3),"OFF;(+);(~);A&L")
-    ,(4,"WG Mod P-ENV Mode",(0,2),"OFF;(+);(-)")
-    ,(5,"WG Mod Bender Mode",(0,2),"OFF;KF;NORMAL")
-    ,(6,"WG Waveform",(0,1),"SQU;SAW")
-    ,(7,"WG PCM Wave No.",(0,99),"1 - 100")
-    ,(8,"WG Pulse Width",(0,100),"0 - 100")
-    ,(9,"WG PW Velocity Range",(0,14),"-7 - +7")
-    ,(10,"WG PW LFO Select",(0,5),"+1;-1;+2;-2;+3;-3")
-    ,(11,"WG PW LFO Depth",(0,100),"0 - 100")
-    ,(12,"WG PW Aftertouch Range",(0,14),"-7 - +7")
-    ,(13,"TVF Cutoff Frequency",(0,100),"0 - 100")
-    ,(14,"TVF Resonance",(0,30),"0 - 30")
-    ,(15,"TVF Keyfollow",(0,14),tvf_kf_usr)
-    ,(16,"TVF Bias Point/Direction",(0,127),"<A1 - <C7;>A1 - >C7")
-    ,(17,"TVF Bias Level",(0,14),"-7 - +7")
-    ,(18,"TVF ENV Depth",(0,100),"0 - 100")
-    ,(19,"TVF ENV Velocity Range",(0,100),"0 - 100")
-    ,(20,"TVF ENV Depth Keyfollow",(0,4),"0 - 4")
-    ,(21,"TVF ENV Time Keyfollow",(0,10),"0 - 10")
-    ,(22,"TVF ENV Time 1",(0,100),"0 - 100")
-    ,(23,"TVF ENV Time 2",(0,100),"0 - 100")
-    ,(24,"TVF ENV Time 3",(0,100),"0 - 100")
-    ,(25,"TVF ENV Time 4",(0,100),"0 - 100")
-    ,(26,"TVF ENV Time 5",(0,100),"0 - 100")
-    ,(27,"TVF ENV Level 1",(0,100),"0 - 100")
-    ,(28,"TVF ENV Level 2",(0,100),"0 - 100")
-    ,(29,"TVF ENV Level 3",(0,100),"0 - 100")
-    ,(30,"TVF ENV Sustain Level",(0,100),"0 - 100")
-    ,(31,"TVF ENV End Level",(0,1),"0;100")
-    ,(32,"TVF Mod LFO Select",(0,5),"+1;-1;+2;-2;+3;-3")
-    ,(33,"TVF Mod LFO Depth",(0,100),"0 - 100")
-    ,(34,"TVF Mod Aftertouch Range",(0,14),"-7 - +7")
-    ,(35,"TVA Level",(0,100),"0 - 100")
-    ,(36,"TVA Velocity Range",(0,100),"-50 - +50")
-    ,(37,"TVA Bias Point Direction",(0,127),"<A1 - <C7;>A1 - >C7")
-    ,(38,"TVA Bias Level",(0,12),"-12 - 0")
-    ,(39,"TVA ENV Time 1",(0,100),"0 - 100")
-    ,(40,"TVA ENV Time 2",(0,100),"0 - 100")
-    ,(41,"TVA ENV Time 3",(0,100),"0 - 100")
-    ,(42,"TVA ENV Time 4",(0,100),"0 - 100")
-    ,(43,"TVA ENV Time 5",(0,100),"0 - 100")
-    ,(44,"TVA ENV Level 1",(0,100),"0 - 100")
-    ,(45,"TVA ENV Level 2",(0,100),"0 - 100")
-    ,(46,"TVA ENV Level 3",(0,100),"0 - 100")
-    ,(47,"TVA ENV Sustain Level",(0,100),"0 - 100")
-    ,(48,"TVA ENV End Level",(0,1),"0;100")
-    ,(49,"TVA ENV T1 Velo Follow",(0,4),"0 - 4")
-    ,(50,"TVA ENV Time Keyfollow",(0,4),"0 - 4")
-    ,(51,"TVA Mod LFO Select",(0,5),"+1;-1;+2;-2;+3;-3")
-    ,(52,"TVA Mod LFO Depth",(0,100),"0 - 100")
-    ,(53,"TVA Mod Aftertouch Range",(0,14),"-7 - +7")
+    [(0,"WG Pitch Coarse",73,0,wg_pitch_coarse_usr)
+    ,(1,"WG Pitch Fine",101,-50,"-50 - +50")
+    ,(2,"WG Pitch Keyfollow",17,0,wg_pitch_kf_usr)
+    ,(3,"WG Mod LFO Mode",4,0,"OFF;(+);(~);A&L")
+    ,(4,"WG Mod P-ENV Mode",3,0,"OFF;(+);(-)")
+    ,(5,"WG Mod Bender Mode",3,0,"OFF;KF;NORMAL")
+    ,(6,"WG Waveform",2,0,"SQU;SAW")
+    ,(7,"WG PCM Wave No.",100,1,"1 - 100")
+    ,(8,"WG Pulse Width",101,0,"0 - 100")
+    ,(9,"WG PW Velocity Range",15,-7,"-7 - +7")
+    ,(10,"WG PW LFO Select",6,0,"+1;-1;+2;-2;+3;-3")
+    ,(11,"WG PW LFO Depth",101,0,"0 - 100")
+    ,(12,"WG PW Aftertouch Range",15,-7,"-7 - +7")
+    ,(13,"TVF Cutoff Frequency",101,0,"0 - 100")
+    ,(14,"TVF Resonance",31,0,"0 - 30")
+    ,(15,"TVF Keyfollow",15,0,tvf_kf_usr)
+    ,(16,"TVF Bias Point/Direction",128,0,bias_point_direction_usr)
+    ,(17,"TVF Bias Level",15,-7,"-7 - +7")
+    ,(18,"TVF ENV Depth",101,0,"0 - 100")
+    ,(19,"TVF ENV Velocity Range",101,0,"0 - 100")
+    ,(20,"TVF ENV Depth Keyfollow",5,0,"0 - 4")
+    ,(21,"TVF ENV Time Keyfollow",11,0,"0 - 10")
+    ,(22,"TVF ENV Time 1",101,0,"0 - 100")
+    ,(23,"TVF ENV Time 2",101,0,"0 - 100")
+    ,(24,"TVF ENV Time 3",101,0,"0 - 100")
+    ,(25,"TVF ENV Time 4",101,0,"0 - 100")
+    ,(26,"TVF ENV Time 5",101,0,"0 - 100")
+    ,(27,"TVF ENV Level 1",101,0,"0 - 100")
+    ,(28,"TVF ENV Level 2",101,0,"0 - 100")
+    ,(29,"TVF ENV Level 3",101,0,"0 - 100")
+    ,(30,"TVF ENV Sustain Level",101,0,"0 - 100")
+    ,(31,"TVF ENV End Level",2,0,"0;100")
+    ,(32,"TVF Mod LFO Select",6,0,"+1;-1;+2;-2;+3;-3")
+    ,(33,"TVF Mod LFO Depth",101,0,"0 - 100")
+    ,(34,"TVF Mod Aftertouch Range",15,-7,"-7 - +7")
+    ,(35,"TVA Level",101,0,"0 - 100")
+    ,(36,"TVA Velocity Range",101,-50,"-50 - +50")
+    ,(37,"TVA Bias Point/Direction",128,0,bias_point_direction_usr)
+    ,(38,"TVA Bias Level",13,-12,"-12 - 0")
+    ,(39,"TVA ENV Time 1",101,0,"0 - 100")
+    ,(40,"TVA ENV Time 2",101,0,"0 - 100")
+    ,(41,"TVA ENV Time 3",101,0,"0 - 100")
+    ,(42,"TVA ENV Time 4",101,0,"0 - 100")
+    ,(43,"TVA ENV Time 5",101,0,"0 - 100")
+    ,(44,"TVA ENV Level 1",101,0,"0 - 100")
+    ,(45,"TVA ENV Level 2",101,0,"0 - 100")
+    ,(46,"TVA ENV Level 3",101,0,"0 - 100")
+    ,(47,"TVA ENV Sustain Level",101,0,"0 - 100")
+    ,(48,"TVA ENV End Level",2,0,"0;100")
+    ,(49,"TVA ENV T1 Velo Follow",5,0,"0 - 4")
+    ,(50,"TVA ENV Time Keyfollow",5,0,"0 - 4")
+    ,(51,"TVA Mod LFO Select",6,0,"+1;-1;+2;-2;+3;-3")
+    ,(52,"TVA Mod LFO Depth",101,0,"0 - 100")
+    ,(53,"TVA Mod Aftertouch Range",15,-7,"-7 - +7")
     ]
 
 type PARAM_GROUP = (String,String,[Int])
@@ -429,56 +450,57 @@ eq_hf_usr = "250;300;350;420;500;600;700;840;1.0;1.2;1.4;1.7;2.0;2.4;2.8;3.4;4.0
 -- > length d50_common_factors == 38
 d50_common_factors :: Num i => [Parameter i]
 d50_common_factors =
-    [(10,"Structure No.",(0,6),"1 - 7")
-    ,(11,"P-ENV Velocity Range",(0,2),"0 - 2")
-    ,(12,"P-ENV Time Keyfollow",(0,4),"0 - 4")
-    ,(13,"P-ENV Time 1",(0,50),"0 - 50")
-    ,(14,"P-ENV Time 2",(0,50),"0 - 50")
-    ,(15,"P-ENV Time 3",(0,50),"0 - 50")
-    ,(16,"P-ENV Time 4",(0,50),"0 - 50")
-    ,(17,"P-ENV Level 0",(0,100),"-50 - +50")
-    ,(18,"P-ENV Level 1",(0,100),"-50 - +50")
-    ,(19,"P-ENV Level 2",(0,100),"-50 - +50")
-    ,(20,"P-ENV Sustain Level",(0,100),"-50 - +50")
-    ,(21,"P-ENV End Level",(0,100),"-50 - +50")
-    ,(22,"Pitch Mod LFO Depth",(0,100),"0 - 100")
-    ,(23,"Pitch Mod Lever",(0,100),"0 - 100")
-    ,(24,"Pitch Mod Aftertouch",(0,100),"0 - 100")
-    ,(25,"LFO-1 Waveform",(0,3),"TRI;SAW;SQU;RND")
-    ,(26,"LFO-1 Rate",(0,100),"0 - 100")
-    ,(27,"LFO-1 Delay Time",(0,100),"0 - 100")
-    ,(28,"LFO-1 Sync",(0,2),"OFF;ON;KEY")
-    ,(29,"LFO-2 Waveform",(0,3),"TRI;SAW;SQU;RND")
-    ,(30,"LFO-2 Rate",(0,100),"0 - 100")
-    ,(31,"LFO-2 Delay Time",(0,100),"0 - 100")
-    ,(32,"LFO-2 Sync",(0,1),"OFF;ON")
-    ,(33,"LFO-3 Waveform",(0,3),"TRI;SAW;SQU;RND")
-    ,(34,"LFO-3 Rate",(0,100),"0 - 100")
-    ,(35,"LFO-3 Delay Time",(0,100),"0 - 100")
-    ,(36,"LFO-S Sync",(0,1),"OFF;ON")
-    ,(37,"Low EQ Frequency",(0,15),eq_lf_usr)
-    ,(38,"Low EQ Gain",(0,24),"-12 - +12")
-    ,(39,"High EQ Frequency",(0,21),eq_hf_usr)
-    ,(40,"High EQ Q",(0,8),"0.3;0.5;0.7;1.0;1.4;2.0;3.0;4.2;6.0")
-    ,(41,"High EQ Gain",(0,24),"-12 - +12")
-    ,(42,"Chorus Type",(0,7),"1 - 8")
-    ,(43,"Chorus Rate",(0,100),"0 - 100")
-    ,(44,"Chorus Depth",(0,100),"0 - 100")
-    ,(45,"Chorus Balance",(0,100),"0 - 100")
-    ,(46,"Partial Mute",(0,3),"MM;SM;MS;SS")
-    ,(47,"Partial Balance",(0,100),"0 - 100")
+    [(10,"Structure No.",7,1,"1 - 7")
+    ,(11,"P-ENV Velocity Range",3,0,"0 - 2")
+    ,(12,"P-ENV Time Keyfollow",5,0,"0 - 4")
+    ,(13,"P-ENV Time 1",51,0,"0 - 50")
+    ,(14,"P-ENV Time 2",51,0,"0 - 50")
+    ,(15,"P-ENV Time 3",51,0,"0 - 50")
+    ,(16,"P-ENV Time 4",51,0,"0 - 50")
+    ,(17,"P-ENV Level 0",101,-50,"-50 - +50")
+    ,(18,"P-ENV Level 1",101,-50,"-50 - +50")
+    ,(19,"P-ENV Level 2",101,-50,"-50 - +50")
+    ,(20,"P-ENV Sustain Level",101,-50,"-50 - +50")
+    ,(21,"P-ENV End Level",101,-50,"-50 - +50")
+    ,(22,"Pitch Mod LFO Depth",101,0,"0 - 100")
+    ,(23,"Pitch Mod Lever",101,0,"0 - 100")
+    ,(24,"Pitch Mod Aftertouch",101,0,"0 - 100")
+    ,(25,"LFO-1 Waveform",4,0,"TRI;SAW;SQU;RND")
+    ,(26,"LFO-1 Rate",101,0,"0 - 100")
+    ,(27,"LFO-1 Delay Time",101,0,"0 - 100")
+    ,(28,"LFO-1 Sync",3,0,"OFF;ON;KEY")
+    ,(29,"LFO-2 Waveform",4,0,"TRI;SAW;SQU;RND")
+    ,(30,"LFO-2 Rate",101,0,"0 - 100")
+    ,(31,"LFO-2 Delay Time",101,0,"0 - 100")
+    ,(32,"LFO-2 Sync",2,0,"OFF;ON")
+    ,(33,"LFO-3 Waveform",4,0,"TRI;SAW;SQU;RND")
+    ,(34,"LFO-3 Rate",101,0,"0 - 100")
+    ,(35,"LFO-3 Delay Time",101,0,"0 - 100")
+    ,(36,"LFO-S Sync",2,0,"OFF;ON")
+    ,(37,"Low EQ Frequency",16,0,eq_lf_usr)
+    ,(38,"Low EQ Gain",25,-12,"-12 - +12")
+    ,(39,"High EQ Frequency",22,0,eq_hf_usr)
+    ,(40,"High EQ Q",9,0,"0.3;0.5;0.7;1.0;1.4;2.0;3.0;4.2;6.0")
+    ,(41,"High EQ Gain",25,-12,"-12 - +12")
+    ,(42,"Chorus Type",8,1,"1 - 8")
+    ,(43,"Chorus Rate",101,0,"0 - 100")
+    ,(44,"Chorus Depth",101,0,"0 - 100")
+    ,(45,"Chorus Balance",101,0,"0 - 100")
+    ,(46,"Partial Mute",4,0,"MM;SM;MS;SS")
+    ,(47,"Partial Balance",101,0,"0 - 100")
      ]
 
 -- | /USR/ string indicating 'Char' enumeration sequence.
+-- "' ';'A' - 'Z';'a' - 'z';'1' - '9';'0';'-'"
 d50_char_code_usr :: String
-d50_char_code_usr = "' ';'A' - 'Z';'a' - 'z';'1' - '9';'0';'-'"
+d50_char_code_usr = intersperse ';' (map snd d50_char_table)
 
 -- | 'd50_common_factors' preceded by tone name.
 --
 -- > length d50_common_parameters == 48
 d50_common_parameters :: (Enum i,Num i,Show i) => [Parameter i]
 d50_common_parameters =
-    let ch n = (n,"Tone Name " ++ show (n + 1),(0,60),d50_char_code_usr)
+    let ch n = (n,"Tone Name " ++ show (n + 1),61,0,d50_char_code_usr)
     in map ch [0 .. 9] ++ d50_common_factors
 
 -- | Group structure of common parameters, as in D-50 menu system.
@@ -505,25 +527,25 @@ key_mode_usr = "WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPAR
 -- > length d50_patch_factors == 19
 d50_patch_factors :: Num i => [Parameter i]
 d50_patch_factors =
-    [(18,"Key Mode",(0,8),key_mode_usr)
-    ,(19,"Split Point",(0,60),"C2 - C7")
-    ,(20,"Portamento Mode",(0,2),"U;L;UL")
-    ,(21,"Hold Mode",(0,2),"U;L;UL")
-    ,(22,"Upper Tone Key Shift",(0,48),"-24 - +24")
-    ,(23,"Lower Tone Key Shift",(0,48),"-24 - +24")
-    ,(24,"Upper Tone Fine Tune",(0,100),"-50 - +50")
-    ,(25,"Lower Tone Fine Tune",(0,100),"-50 - +50")
-    ,(26,"Bender Range",(0,12),"0 - 12")
-    ,(27,"After Bend Range",(0,24),"-12 - +12")
-    ,(28,"Portamento Time",(0,100),"0 - 100")
-    ,(29,"Output Mode",(0,3),"1 - 4")
-    ,(30,"Reverb Type",(0,31),"1 - 32")
-    ,(31,"Reverb Balance",(0,100),"0 - 100")
-    ,(32,"Total Volume",(0,100),"0 - 100")
-    ,(33,"Tone Balance",(0,100),"0 - 100")
-    ,(34,"Chase Mode",(0,2),"UL;ULL;ULU")
-    ,(35,"Chase Level",(0,100),"0 - 100")
-    ,(36,"Chase Time",(0,100),"0 - 100")
+    [(18,"Key Mode",9,0,key_mode_usr)
+    ,(19,"Split Point",61,0,"C2 - C7")
+    ,(20,"Portamento Mode",3,0,"U;L;UL")
+    ,(21,"Hold Mode",3,0,"U;L;UL")
+    ,(22,"Upper Tone Key Shift",49,-24,"-24 - +24")
+    ,(23,"Lower Tone Key Shift",49,-24,"-24 - +24")
+    ,(24,"Upper Tone Fine Tune",101,-50,"-50 - +50")
+    ,(25,"Lower Tone Fine Tune",101,-50,"-50 - +50")
+    ,(26,"Bender Range",13,0,"0 - 12")
+    ,(27,"After Bend Range",25,-12,"-12 - +12")
+    ,(28,"Portamento Time",101,0,"0 - 100")
+    ,(29,"Output Mode",4,1,"1 - 4")
+    ,(30,"Reverb Type",32,1,"1 - 32")
+    ,(31,"Reverb Balance",101,0,"0 - 100")
+    ,(32,"Total Volume",101,0,"0 - 100")
+    ,(33,"Tone Balance",101,0,"0 - 100")
+    ,(34,"Chase Mode",3,0,"UL;ULL;ULU")
+    ,(35,"Chase Level",101,0,"0 - 100")
+    ,(36,"Chase Time",101,0,"0 - 100")
     ]
 
 d50_patch_groups :: [PARAM_GROUP]
@@ -541,20 +563,68 @@ d50_patch_groups =
 -- > length d50_patch_parameters == 37
 d50_patch_parameters :: (Enum i,Num i,Show i) => [Parameter i]
 d50_patch_parameters =
-    let ch n = (n,"Patch Name " ++ show (n + 1),(0,60),d50_char_code_usr)
+    let ch n = (n,"Patch Name " ++ show (n + 1),61,0,d50_char_code_usr)
     in map ch [0 .. 17] ++ d50_patch_factors
 
-parameter_pp :: (Ord i,Show i) => (i,i) -> (Parameter_Type, Parameter i) -> String
-parameter_pp (a,v) (ty,(ix,nm,(l,r),usr)) =
-    if v < l || v > r
-    then "ERROR: VALUE OUT OF RANGE:" ++ show (a,v,l,r)
-    else intercalate "," [show a,parameter_type_pp ty,show ix,nm,show v,range_pp (l,r),usr]
+d50_unused_parameter :: Num i => i -> Parameter i
+d50_unused_parameter ix = (ix,"UNUSED",1,0,"")
 
-d50_patch_csv :: (Bits i,Num i,Ord i,Show i,Enum i) => [i] -> [String]
+-- > length d50_parameters == 349
+-- > putStrLn $ unlines $ map show d50_parameters
+d50_parameters :: (Bits i,Enum i,Num i,Show i) => [Parameter i]
+d50_parameters =
+    let f i = map (\(ix,nm,stp,usr_diff,usr_str) -> (ix + i,nm,stp,usr_diff,usr_str))
+        a = map parameter_type_base_address parameter_type_seq
+        p = [d50_partial_parameters,d50_partial_parameters,d50_common_parameters
+            ,d50_partial_parameters,d50_partial_parameters,d50_common_parameters
+            ,d50_patch_parameters]
+    in concat (zipWith f a p)
+
+-- > length d50_parameters_seq == 421
+d50_parameters_seq :: (Bits i,Enum i,Num i,Show i) => [Parameter i]
+d50_parameters_seq =
+    let recur n sq =
+            case sq of
+              [] -> []
+              p:sq' -> if n == parameter_ix p
+                       then p : recur (n + 1) sq'
+                       else d50_unused_parameter n : recur (n + 1) sq
+    in recur 0 d50_parameters
+
+parameter_range :: Num i => Parameter i -> (i,i)
+parameter_range (_,_,stp,_,_) = (0,stp - 1)
+
+parameter_range_usr :: Num i => Parameter i -> (i,i)
+parameter_range_usr (_,_,stp,diff,_) = (diff,diff + stp - 1)
+
+parameter_value_verify :: (Num i,Ord i,Show i) => Parameter i -> i -> i
+parameter_value_verify (_,_,stp,_,_) x =
+    if x < 0 || x > stp
+    then error (show ("parameter_value_verify",x,stp))
+    else x
+
+parameter_value_usr :: (Integral i,Show i) => Parameter i -> i -> String
+parameter_value_usr p x =
+    let (_,_,stp,usr_diff,usr_str) = p
+    in if x < 0 || x > stp
+       then error (show ("parameter_value_usr",p,x))
+       else case splitOn ";" usr_str of
+              [_] -> show (x + usr_diff)
+              e -> e `genericIndex` x
+
+parameter_csv :: (Integral i,Ord i,Show i) => (i,i) -> (Parameter_Type, Parameter i) -> String
+parameter_csv (a,x) (ty,p) =
+    let (ix,nm,_,_,_usr_str) = p
+        x' = parameter_value_verify p x
+    in intercalate "," [show a,parameter_type_pp ty,show ix,nm
+                       ,show x',range_pp (parameter_range p)
+                       ,parameter_value_usr p x]
+
+d50_patch_csv :: (Bits i,Integral i,Ord i,Show i,Enum i) => [i] -> [String]
 d50_patch_csv =
-    let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,USER"
+    let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,VALUE-USER"
         f (a,v) = case address_to_parameter a of
-                    Just p -> parameter_pp (a,v) p
+                    Just p -> parameter_csv (a,v) p
                     _ -> if v == 0
                          then ""
                          else "ERROR: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v)
@@ -566,15 +636,15 @@ d50_group_seq =
     let tn = [d50_partial_groups,d50_partial_groups,d50_common_groups]
     in concat [tn,tn,[d50_patch_groups]]
 
-group_pp :: Show t => [t] -> PARAM_GROUP -> String
-group_pp p (g_nm,p_nm_seq,ix) =
-    let f p_nm v = concat [p_nm,"=",show v]
-    in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords (zipWith f (words p_nm_seq) (map (p !!) ix))
+group_pp :: (Integral t,Enum t,Show t) => [(Parameter t,t)] -> PARAM_GROUP -> String
+group_pp x_seq (g_nm,p_nm_seq,ix) =
+    let f p_nm (p,x) = concat [p_nm,"=",parameter_value_usr p x]
+    in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords (zipWith f (words p_nm_seq) (map (x_seq !!) ix))
 
-d50_patch_group_pp :: Show t => [t] -> [String]
+d50_patch_group_pp :: (Bits t,Integral t,Enum t,Show t) => [t] -> [String]
 d50_patch_group_pp =
     let f gr pr = "" : parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
-    in concat . zipWith f d50_group_seq . parameter_segment
+    in concat . zipWith f d50_group_seq . parameter_segment . zip d50_parameters_seq
 
 -- | Load text file consisting of 421 white-space separated
 -- two-character hexidecimal byte values.
