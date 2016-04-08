@@ -17,6 +17,7 @@ import Control.Monad {- base -}
 import qualified Data.ByteString as B {- bytestring -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
+import Data.Maybe {- base -}
 
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Read as T {- hmt -}
@@ -66,6 +67,7 @@ data D50_SYSEX_CMD = RQI_CMD -- ^ REQUEST DATA - ONE WAY
                    | ACK_CMD -- ^ ACKNOWLEDGE
                    | EOD_CMD -- ^ END OF DATA
                    | ERR_CMD -- ^ COMMUNICATION ERROR
+                   | WSD_CMD -- ^ WANT TO SEND DATA
 
 -- | SYSEX_CMD to 8-Bit identifier.
 --
@@ -81,6 +83,7 @@ d50_sysex_cmd_id cmd =
       ERR_CMD -> 0x43
       RQI_CMD -> 0x11
       DTI_CMD -> 0x12
+      WSD_CMD -> 0x40
 
 -- | The checksum is a derived from the address (three bytes)
 -- and the data bytes.
@@ -117,9 +120,13 @@ gen_d50_data_request_sysex ch a sz =
               ,a',sz'
               ,[chk,sysex_end]]
 
+type DTI = (U8, U24, [U8])
+
+-- | Parse DTI SYSEX message giving (DEVICE-ID,ADDRESS,DATA).
+--
 -- > let b = d50_dti_gen 0 1 [50]
 -- > d50_dti_parse b == (0,1,[50])
-d50_dti_parse :: [U8] -> (U8, U24, [U8])
+d50_dti_parse :: [U8] -> Maybe DTI
 d50_dti_parse b =
     let b0:b1:b2:b3:b4:b5:b6:b7:b' = b
         data_n = length b' - 2
@@ -129,27 +136,42 @@ d50_dti_parse b =
         dti = d50_sysex_cmd_id DTI_CMD
     in if any not [b0 == sysex_status,b1 == roland_id,b3 == d50_id,b4 == dti
                   ,ch == ch',eox == sysex_end]
-       then error "d50_dti_parse"
-       else (b2,u24_pack a,d)
+       then Nothing
+       else Just (b2,u24_pack a,d)
+
+dti_data :: DTI -> [U8]
+dti_data (_,_,d) = d
+
+d50_dti_parse_err :: [U8] -> DTI
+d50_dti_parse_err = fromMaybe (error "d50_dti_parse") . d50_dti_parse
 
 -- > import qualified Music.Theory.Show as T {- hmt -}
 -- > T.byte_seq_hex_pp (d50_dti_gen 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
 -- > T.byte_seq_hex_pp (d50_dti_gen 0 409 [0x10]) == "F0 41 00 14 12 00 03 19 10 54 F7"
-d50_dti_gen :: U8 -> U8 -> [U8] -> [U8]
-d50_dti_gen ch a d =
+d50_dti_gen :: DTI -> [U8]
+d50_dti_gen (ch,a,d) =
     let a' = u24_unpack a
         chk = roland_checksum (a' ++ d)
-    in concat [[sysex_status,roland_id,ch,d50_id,d50_sysex_cmd_id DTI_CMD]
-              ,a',d
-              ,[chk,sysex_end]]
+    in if length d > 256
+       then error "d50_dti_gen: #DATA > 256"
+       else concat [[sysex_status,roland_id,ch,d50_id,d50_sysex_cmd_id DTI_CMD]
+                   ,a',d
+                   ,[chk,sysex_end]]
+
+-- | Generate a sequence of DTI messages segmenting data sets longer than 256 elements.
+d50_dti_gen_seq :: DTI -> [[U8]]
+d50_dti_gen_seq (ch,a,d) =
+    if null d
+    then []
+    else if length d <= 256
+         then [d50_dti_gen (ch,a,d)]
+         else d50_dti_gen (ch,a,take 256 d) : d50_dti_gen_seq (ch,a + 256,drop 256 d)
 
 -- > let {nm = (Patch,"Lower Tone Fine Tune")
 -- >     ;r = "F0 41 00 14 12 00 03 19 10 54 F7"}
 -- > in fmap T.byte_seq_hex_pp (d50_gen_dti_nm 0 nm [0x10]) == Just r
 d50_gen_dti_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe [U8]
-d50_gen_dti_nm ch nm d =
-    let f a = d50_dti_gen ch a d
-    in fmap f (named_parameter_to_address nm)
+d50_gen_dti_nm ch nm d = fmap (\a -> d50_dti_gen (ch,a,d)) (named_parameter_to_address nm)
 
 -- | A patch has two tones, 'Upper' and 'Lower'.
 data Tone = Upper | Lower deriving (Eq,Show)
@@ -770,20 +792,37 @@ Address Description
 load_byte_seq :: FilePath -> IO [U8]
 load_byte_seq = fmap (map fromIntegral . B.unpack) . B.readFile
 
+sysex_segment :: [U8] -> [[U8]]
+sysex_segment = tail . T.split_at 0xF0
+
+{-| Load DTI sequence from D-50 SYSEX file.
+
+> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+> b <- load_byte_seq sysex_fn
+> let s = sysex_segment b
+> d <- d50_load_sysex_dti sysex_fn
+> let s' = d50_dti_gen_seq (0,patch_memory_base 0,concatMap dti_data d)
+> s == s'
+
+-}
+d50_load_sysex_dti :: FilePath -> IO [DTI]
+d50_load_sysex_dti fn = do
+  b <- load_byte_seq fn
+  let b_n = length b
+  when (b_n /= 36048) (putStrLn "d50_load_sysex: sysex != 36048")
+  when (b_n < 36048) (error "d50_load_sysex: sysex < 36048")
+  return (map d50_dti_parse_err (sysex_segment b))
+
 {-| Load patch data from D-50 SYSEX file.
 
-> p <- d50_load_sysex "/home/rohan/data/roland-d50/PN-D50-00/PND50-00.syx"
+> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+> p <- d50_load_sysex sysex_fn
 > putStrLn$unlines$concatMap d50_patch_group_pp p
 
 -}
 d50_load_sysex :: FilePath -> IO [[U8]]
 d50_load_sysex fn = do
-  b <- load_byte_seq fn
-  let b_n = length b
-  when (b_n /= 36048) (putStrLn "d50_load_sysex: sysex != 36048")
-  when (b_n < 36048) (error "d50_load_sysex: sysex < 36048")
-  let _:s = T.split_at 0xF0 b
-      d = concatMap ((\(_,_,x) -> x) . d50_dti_parse) s
+  dti <- d50_load_sysex_dti fn
+  let d = concatMap (\(_,_,x) -> x) dti
   when (length d /= 34688) (error "d50_load_sysex: dti/concat != 34688")
-  let p = take 64 (map (take 421) (chunksOf 448 d))
-  return p
+  return (take 64 (map (take 421) (chunksOf 448 d)))
