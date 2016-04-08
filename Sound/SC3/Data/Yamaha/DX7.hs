@@ -9,7 +9,7 @@ import Data.List.Split {- split -}
 import Data.Maybe {- base -}
 import Text.Printf {- base -}
 
-import qualified Music.Theory.Read as T {- hmt -}
+import qualified Music.Theory.Byte as T {- hmt -}
 
 type U8 = Int
 
@@ -203,9 +203,9 @@ function_parameters_tbl =
 -}
 load_dx7_sysex_hex :: FilePath -> IO [U8]
 load_dx7_sysex_hex fn = do
-  s <- readFile fn
-  case splitAt 4960 (words s) of
-    (h,[]) -> return (map (\x -> T.read_hex_byte x) h)
+  b <- T.load_hex_byte_seq fn
+  case splitAt 4960 b of
+    (h,[]) -> return h
     _ -> error "load_dx7_sysex_hex"
 
 -- * Voice

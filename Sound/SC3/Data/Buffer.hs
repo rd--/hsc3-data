@@ -1,3 +1,4 @@
+-- | 'b_allocRead' variant, writing data to temporary file.
 module Sound.SC3.Data.Buffer where
 
 import System.Directory {- directory -}

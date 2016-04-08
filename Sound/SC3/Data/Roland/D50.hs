@@ -19,8 +19,8 @@ import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
 
+import qualified Music.Theory.Byte as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Read as T {- hmt -}
 import qualified Music.Theory.Tuple as T {- hmt -}
 
 import qualified Sound.Midi.Type as M {- midi-osc -}
@@ -62,12 +62,13 @@ d50_id = 0x14
 -- | D50 SYSEX command ID.
 data D50_SYSEX_CMD = RQI_CMD -- ^ REQUEST DATA - ONE WAY
                    | DTI_CMD -- ^ DATA SET - ONE WAY
+                   | WSD_CMD -- ^ WANT TO SEND DATA
                    | RQD_CMD -- ^ REQUEST DATA
                    | DAT_CMD -- ^ DATA SET
                    | ACK_CMD -- ^ ACKNOWLEDGE
                    | EOD_CMD -- ^ END OF DATA
                    | ERR_CMD -- ^ COMMUNICATION ERROR
-                   | WSD_CMD -- ^ WANT TO SEND DATA
+                   | RJC_CMD -- ^ REJECTION
 
 -- | SYSEX_CMD to 8-Bit identifier.
 --
@@ -76,14 +77,15 @@ data D50_SYSEX_CMD = RQI_CMD -- ^ REQUEST DATA - ONE WAY
 d50_sysex_cmd_id :: D50_SYSEX_CMD -> U8
 d50_sysex_cmd_id cmd =
     case cmd of
-      RQD_CMD -> 0x41
-      DAT_CMD -> 0x41
-      ACK_CMD -> 0x43
-      EOD_CMD -> 0x43
-      ERR_CMD -> 0x43
       RQI_CMD -> 0x11
       DTI_CMD -> 0x12
       WSD_CMD -> 0x40
+      RQD_CMD -> 0x41
+      DAT_CMD -> 0x42
+      ACK_CMD -> 0x43
+      EOD_CMD -> 0x43
+      ERR_CMD -> 0x45
+      RJC_CMD -> 0x47
 
 -- | The checksum is a derived from the address (three bytes)
 -- and the data bytes.
@@ -110,9 +112,9 @@ u24_pack = fromIntegral . M.bits_21_join . T.t3 . map fromIntegral
 -- | Generate RTI command SYSEX.
 --
 -- > let r = map T.read_hex_byte (words "F0 41 00 14 11 00 00 00 00 03 25 58 F7")
--- > in gen_d50_data_request_sysex 0 0 421 == r
-gen_d50_data_request_sysex :: U8 -> ADDRESS -> U24 -> [U8]
-gen_d50_data_request_sysex ch a sz =
+-- > in d50_rqi_gen 0 0 421 == r
+d50_rqi_gen :: U8 -> ADDRESS -> U24 -> [U8]
+d50_rqi_gen ch a sz =
     let a' = u24_unpack a
         sz' = u24_unpack sz
         chk = roland_checksum (a' ++ sz')
@@ -120,12 +122,13 @@ gen_d50_data_request_sysex ch a sz =
               ,a',sz'
               ,[chk,sysex_end]]
 
+-- | (DEVICE-ID,ADDRESS,DATA)
 type DTI = (U8, U24, [U8])
 
--- | Parse DTI SYSEX message giving (DEVICE-ID,ADDRESS,DATA).
+-- | Parse DTI SYSEX message.
 --
--- > let b = d50_dti_gen 0 1 [50]
--- > d50_dti_parse b == (0,1,[50])
+-- > let b = d50_dti_gen (0,1,[50])
+-- > d50_dti_parse b == Just (0,1,[50])
 d50_dti_parse :: [U8] -> Maybe DTI
 d50_dti_parse b =
     let b0:b1:b2:b3:b4:b5:b6:b7:b' = b
@@ -145,9 +148,10 @@ dti_data (_,_,d) = d
 d50_dti_parse_err :: [U8] -> DTI
 d50_dti_parse_err = fromMaybe (error "d50_dti_parse") . d50_dti_parse
 
--- > import qualified Music.Theory.Show as T {- hmt -}
--- > T.byte_seq_hex_pp (d50_dti_gen 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
--- > T.byte_seq_hex_pp (d50_dti_gen 0 409 [0x10]) == "F0 41 00 14 12 00 03 19 10 54 F7"
+-- | Generate DTI SYSEX message.
+--
+-- > T.byte_seq_hex_pp (d50_dti_gen (0,1,[50])) == "F0 41 00 14 12 00 00 01 32 4D F7"
+-- > T.byte_seq_hex_pp (d50_dti_gen (0,409,[0x10])) == "F0 41 00 14 12 00 03 19 10 54 F7"
 d50_dti_gen :: DTI -> [U8]
 d50_dti_gen (ch,a,d) =
     let a' = u24_unpack a
@@ -625,9 +629,9 @@ d50_patch_group_pp =
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
 load_d50_text :: FilePath -> IO [U8]
 load_d50_text fn = do
-  s <- readFile fn
-  case splitAt 421 (words s) of
-    (h,[]) -> return (map (\x -> T.read_hex_byte x) h)
+  b <- T.load_hex_byte_seq fn
+  case splitAt 421 b of
+    (h,[]) -> return h
     _ -> error "load_d50_text"
 
 -- | Tone structure number diagram in plain text.
@@ -789,9 +793,11 @@ Address Description
 
 -}
 
+-- | Load binary 'U8' sequence from file.
 load_byte_seq :: FilePath -> IO [U8]
 load_byte_seq = fmap (map fromIntegral . B.unpack) . B.readFile
 
+-- | Segment byte-sequence into SYSEX messages, no verification.
 sysex_segment :: [U8] -> [[U8]]
 sysex_segment = tail . T.split_at 0xF0
 
