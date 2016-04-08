@@ -4,7 +4,9 @@
 -- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
 module Sound.SC3.Data.Yamaha.DX7 where
 
-import Data.List.Split {- base -}
+import Data.List {- base -}
+import Data.List.Split {- split -}
+import Data.Maybe {- base -}
 import Text.Printf {- base -}
 
 import qualified Music.Theory.Read as T {- hmt -}
@@ -21,6 +23,12 @@ usr_str_tbl =
 
 -- (DX7-IX,NAME,STEPS,USR_DIFF,USR_STR)
 type Parameter = (Int,String,Int,Int,String)
+
+parameter_ix :: Parameter -> Int
+parameter_ix (n,_,_,_,_) = n
+
+parameter_name :: Parameter -> String
+parameter_name (_,nm,_,_,_) = nm
 
 parameter_range :: Parameter -> (Int,Int)
 parameter_range (_,_,n,_,_) = (0,n - 1)
@@ -110,6 +118,12 @@ parameter_tbl_rem =
 -- > length dx7_parameter_tbl == 156
 dx7_parameter_tbl :: [Parameter]
 dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
+
+dx7_parameter_name :: Int -> String
+dx7_parameter_name n =
+    fromMaybe (error "dx7_parameter_name") $
+    fmap parameter_name $
+    find ((== n) . parameter_ix) dx7_parameter_tbl
 
 dx7_parameter_pp :: [Int] -> [String]
 dx7_parameter_pp =

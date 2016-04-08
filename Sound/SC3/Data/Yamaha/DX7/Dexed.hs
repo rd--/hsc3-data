@@ -2,6 +2,11 @@
 module Sound.SC3.Data.Yamaha.DX7.Dexed where
 
 import Data.List {- base -}
+import Data.Maybe {- base -}
+
+import qualified Data.Map as M {- containers -}
+
+import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
 
 {-
 
@@ -163,21 +168,33 @@ dexed_param =
     ,CtrlDX {name="OP6 KEY VELOCITY", steps=8, offset=15, display_value=0}
     ]
 
--- | This is the DEXED parameter list in the form (DX7-IX,DEXED-IX,
+-- | This is the DEXED parameter list in the form (DX7-IX,DEXED-IX,DX7-NAME).
 --
--- > import qualified Sound.SC3.Data.Yamaha.DX7 as DX7
 -- > mapM_ print $ zip dexed_param_dx7 DX7.dx7_parameter_tbl
-dexed_param_dx7 :: [(Int, String, Int)]
+dexed_param_dx7 :: [(Int, Int, String)]
 dexed_param_dx7 =
-    let p = map (\(i,c) -> (offset c,name c,i)) (zip [0..] dexed_param)
+    let p = map (\(i,c) -> let dx7_i = offset c
+                               dx7_nm = DX7.dx7_parameter_name dx7_i
+                           in (dx7_i,i,dx7_nm))
+            (zip [0..] dexed_param)
     in sortOn (\(i,_,_) -> i) p
+
+-- | Map from DX7 parameter index to DEXED parameter index.
+dx7_to_dexed_tbl :: M.Map Int Int
+dx7_to_dexed_tbl = M.fromList (map (\(i,c) -> (offset c,i)) (zip [0..] dexed_param))
+
+-- | 'M.lookup' of 'dx7_to_dexed_tbl'.
+--
+-- > map dx7_to_dexed [123,125,134,144] == [29,31,0,9]
+dx7_to_dexed :: Int -> Int
+dx7_to_dexed = fromMaybe (error "dx7_to_dexed") . flip M.lookup dx7_to_dexed_tbl
 
 {-
 import Sound.OSC.FD
 fd <- openUDP "127.0.0.1" 57210
-let p_set ix val = sendMessage fd (Message "/p_set" [Int32 (ix + 3),Float val])
-p_set 29 1 -- OP 1 OSC FREQ COARSE / 123
-p_set 31 1 -- OP 1 OSC DETUNE / 125
-p_set 0 0.5 -- ALGORITHM # / 134
-p_set 9 1 -- TRANSPOSE / 144
+let p_set ix val = sendMessage fd (Message "/p_set" [Int32 (dx7_to_dexed ix),Float val])
+p_set 123 1 -- OP 1 OSC FREQ COARSE
+p_set 125 1 -- OP 1 OSC DETUNE
+p_set 134 0.5 -- ALGORITHM #
+p_set 144 1 -- TRANSPOSE
 -}
