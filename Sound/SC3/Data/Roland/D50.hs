@@ -13,6 +13,8 @@ Hamamatsu, JP, 1987.
 -}
 module Sound.SC3.Data.Roland.D50 where
 
+import Control.Monad {- base -}
+import qualified Data.ByteString as B {- bytestring -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
 
@@ -115,13 +117,26 @@ gen_d50_data_request_sysex ch a sz =
               ,a',sz'
               ,[chk,sysex_end]]
 
--- d50_parse_dti b =
+-- > let b = d50_dti_gen 0 1 [50]
+-- > d50_dti_parse b == (0,1,[50])
+d50_dti_parse :: [U8] -> (U8, U24, [U8])
+d50_dti_parse b =
+    let b0:b1:b2:b3:b4:b5:b6:b7:b' = b
+        data_n = length b' - 2
+        a = [b5,b6,b7]
+        (d,[ch,eox]) = splitAt data_n b'
+        ch' = roland_checksum (a ++ d)
+        dti = d50_sysex_cmd_id DTI_CMD
+    in if any not [b0 == sysex_status,b1 == roland_id,b3 == d50_id,b4 == dti
+                  ,ch == ch',eox == sysex_end]
+       then error "d50_dti_parse"
+       else (b2,u24_pack a,d)
 
 -- > import qualified Music.Theory.Show as T {- hmt -}
--- > T.byte_seq_hex_pp (gen_d50_data_set_sysex 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
--- > T.byte_seq_hex_pp (gen_d50_data_set_sysex 0 409 [0x10]) == "F0 41 00 14 12 00 03 19 10 54 F7"
-gen_d50_data_set_sysex :: U8 -> U8 -> [U8] -> [U8]
-gen_d50_data_set_sysex ch a d =
+-- > T.byte_seq_hex_pp (d50_dti_gen 0 1 [50]) == "F0 41 00 14 12 00 00 01 32 4D F7"
+-- > T.byte_seq_hex_pp (d50_dti_gen 0 409 [0x10]) == "F0 41 00 14 12 00 03 19 10 54 F7"
+d50_dti_gen :: U8 -> U8 -> [U8] -> [U8]
+d50_dti_gen ch a d =
     let a' = u24_unpack a
         chk = roland_checksum (a' ++ d)
     in concat [[sysex_status,roland_id,ch,d50_id,d50_sysex_cmd_id DTI_CMD]
@@ -130,12 +145,11 @@ gen_d50_data_set_sysex ch a d =
 
 -- > let {nm = (Patch,"Lower Tone Fine Tune")
 -- >     ;r = "F0 41 00 14 12 00 03 19 10 54 F7"}
--- > in fmap T.byte_seq_hex_pp (gen_d50_data_set_sysex_nm 0 nm [0x10]) == Just r
-gen_d50_data_set_sysex_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe [U8]
-gen_d50_data_set_sysex_nm ch nm d =
-    let f a = gen_d50_data_set_sysex ch a d
+-- > in fmap T.byte_seq_hex_pp (d50_gen_dti_nm 0 nm [0x10]) == Just r
+d50_gen_dti_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe [U8]
+d50_gen_dti_nm ch nm d =
+    let f a = d50_dti_gen ch a d
     in fmap f (named_parameter_to_address nm)
-
 
 -- | A patch has two tones, 'Upper' and 'Lower'.
 data Tone = Upper | Lower deriving (Eq,Show)
@@ -418,7 +432,7 @@ d50_char_code_usr = intersperse ';' (map snd d50_char_table)
 -- > length d50_common_parameters == 48
 d50_common_parameters :: [Parameter]
 d50_common_parameters =
-    let ch n = (n,"Tone Name " ++ show (n + 1),61,0,d50_char_code_usr)
+    let ch n = (n,"Tone Name " ++ show (n + 1),64,0,d50_char_code_usr)
     in map ch [0 .. 9] ++ d50_common_factors
 
 -- | Group structure of common parameters, as in D-50 menu system.
@@ -481,7 +495,7 @@ d50_patch_groups =
 -- > length d50_patch_parameters == 37
 d50_patch_parameters :: [Parameter]
 d50_patch_parameters =
-    let ch n = (n,"Patch Name " ++ show (n + 1),61,0,d50_char_code_usr)
+    let ch n = (n,"Patch Name " ++ show (n + 1),64,0,d50_char_code_usr)
     in map ch [0 .. 17] ++ d50_patch_factors
 
 d50_unused_parameter :: U24 -> Parameter
@@ -587,7 +601,6 @@ d50_patch_group_pp =
 -- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 -- > let p' = unlines (filter (not . null) (d50_patch_csv p))
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
---
 load_d50_text :: FilePath -> IO [U8]
 load_d50_text fn = do
   s <- readFile fn
@@ -611,7 +624,7 @@ structure_pp n =
 -- | Table mapping byte to ASCII character.
 d50_char_table :: [(U8,Char)]
 d50_char_table =
-    let ch = [[' '],['A'..'Z'],['a'..'z'],['1'..'9'],['0','-']]
+    let ch = [[' '],['A'..'Z'],['a'..'z'],['1'..'9'],['0','-','?','?','-']]
     in zip [0..] (concat ch)
 
 -- | Lookup in 'd50_char_table'.
@@ -753,3 +766,24 @@ Address Description
 [04-0C-08] Reverb Data 32
 
 -}
+
+load_byte_seq :: FilePath -> IO [U8]
+load_byte_seq = fmap (map fromIntegral . B.unpack) . B.readFile
+
+{-| Load patch data from D-50 SYSEX file.
+
+> p <- d50_load_sysex "/home/rohan/data/roland-d50/PN-D50-00/PND50-00.syx"
+> putStrLn$unlines$concatMap d50_patch_group_pp p
+
+-}
+d50_load_sysex :: FilePath -> IO [[U8]]
+d50_load_sysex fn = do
+  b <- load_byte_seq fn
+  let b_n = length b
+  when (b_n /= 36048) (putStrLn "d50_load_sysex: sysex != 36048")
+  when (b_n < 36048) (error "d50_load_sysex: sysex < 36048")
+  let _:s = T.split_at 0xF0 b
+      d = concatMap ((\(_,_,x) -> x) . d50_dti_parse) s
+  when (length d /= 34688) (error "d50_load_sysex: dti/concat != 34688")
+  let p = take 64 (map (take 421) (chunksOf 448 d))
+  return p

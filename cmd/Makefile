@@ -1,6 +1,6 @@
 cmd =	ats au-to-pbm au-to-pgm \
 	csv-mnd-to-pgm csv-plot \
-	dx7-hex dx7-unpack \
+	d50-sysex dx7-hex dx7-unpack \
 	img-edit img-to-pbm img-to-pgm img-to-sf \
 	kml-to-csv \
 	midi-to-csv-mnd midi-to-text \
