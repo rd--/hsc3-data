@@ -6,20 +6,17 @@ import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 import qualified Sound.SC3 as S {- hsc3 -}
 import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
 
-linlin_hs :: Fractional a => (a, a) -> (a, a) -> a -> a
-linlin_hs (sl,sr) (dl,dr) i = S.linlin' i sl sr dl dr
-
 vec_normalise_1 :: (Fractional b, Ord b, V.Storable b) => V.Vector b -> V.Vector b
 vec_normalise_1 v =
     let v' = V.map abs v
         m = V.foldl1 max v'
-    in V.map (linlin_hs (- m,m) (-1,1)) v
+    in V.map (S.linlin_hs (- m,m) (-1,1)) v
 
 vec_normalise_2 :: (Fractional b, Ord b, V.Storable b) => V.Vector b -> V.Vector b
 vec_normalise_2 v =
     let l = V.foldl1 min v
         r = V.foldl1 max v
-    in V.map (linlin_hs (l,r) (-1,1)) v
+    in V.map (S.linlin_hs (l,r) (-1,1)) v
 
 vec_normalise_h :: (Fractional b, Ord b, V.Storable b) => Bool -> V.Vector b -> V.Vector b
 vec_normalise_h hlf = if hlf then vec_normalise_2 else vec_normalise_1
@@ -46,7 +43,7 @@ sf_draw_plain (nrm,hlf,inv,sym) h ch sf_fn pbm_fn = do
 sf_draw_table :: (Double,Double) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_table (l,r) h ch sf_fn pbm_fn = do
   (hdr,Just vec') <- SF.read_vec sf_fn
-  let vec = V.map (linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
+  let vec = V.map (S.linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
       nc = SF.channelCount hdr
       nf = SF.frameCount hdr
   when (ch >= nc) (error "ch >= nc")

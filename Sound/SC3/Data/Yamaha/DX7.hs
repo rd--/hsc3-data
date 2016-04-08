@@ -11,7 +11,16 @@ import Text.Printf {- base -}
 
 import qualified Music.Theory.Read as T {- hmt -}
 
-yamaha_id :: Num n => n
+type U8 = Int
+
+-- | Yamaha manufacturer ID.
+--
+-- > import Music.Theory.Bits
+-- > gen_bitseq_pp 8 yamaha_id == "01000011"
+--
+-- > :set -XBinaryLiterals
+-- > (yamaha_id == 67,yamaha_id == 0x43,yamaha_id == 0b01000011)
+yamaha_id :: U8
 yamaha_id = 0x43
 
 usr_str_tbl :: [(String,String)]
@@ -21,8 +30,8 @@ usr_str_tbl =
     ,("LFO-WAVE","TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD")
     ,("MODE","RATIO;FIXED")]
 
--- (DX7-IX,NAME,STEPS,USR_DIFF,USR_STR)
-type Parameter = (Int,String,Int,Int,String)
+-- | (DX7-IX,NAME,STEPS,USR_DIFF,USR_STR)
+type Parameter = (U8,String,U8,Int,String)
 
 parameter_ix :: Parameter -> Int
 parameter_ix (n,_,_,_,_) = n
@@ -33,14 +42,18 @@ parameter_name (_,nm,_,_,_) = nm
 parameter_range :: Parameter -> (Int,Int)
 parameter_range (_,_,n,_,_) = (0,n - 1)
 
+parameter_range_usr :: Parameter -> (Int,Int)
+parameter_range_usr (_,_,n,d,_) = (d,d + n - 1)
+
+-- | Normalise parameter value to be in (0,1).
+--
 -- > let p = operator_parameter_template !! 20
 -- > map (parameter_value_normalise p) [0 .. 14]
 parameter_value_normalise :: Parameter -> Int -> Float
 parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
 
-parameter_range_usr :: Parameter -> (Int,Int)
-parameter_range_usr (_,_,n,d,_) = (d,d + n - 1)
-
+-- | Template for six FM operators.
+--
 -- > length operator_parameter_template == 21
 operator_parameter_template :: [Parameter]
 operator_parameter_template =
@@ -67,6 +80,7 @@ operator_parameter_template =
     ,(20,"OSC DETUNE",15,-7,"-7 - +7")
     ]
 
+-- | Rewrite 'operator_parameter_template' for operator /n/.
 gen_operator_parameter_tbl :: Int -> [Parameter]
 gen_operator_parameter_tbl n =
     let n' = 6 - n
@@ -76,10 +90,22 @@ gen_operator_parameter_tbl n =
             in (ix',nm',stp,usr_diff,usr_str)
     in map f operator_parameter_template
 
+operator_group_structure :: [(String,String,[U8])]
+operator_group_structure =
+    [("EG RATE","1;2;3;4",[0..3])
+    ,("EG LEVEL","1;2;3;4",[4..7])
+    ,("KBD LEV SCL","BRK-PT;LFT-DEPTH;RHT-DEPTH;RHT-CURVE",[8..12])
+    ,("OSC","MODE;FREQ-COARSE;FREQ-FINE;DETUNE",[17..20])
+    ]
+
+-- | Six operators, descending order.
+--
 -- > length operator_parameter_tbl == 126
 operator_parameter_tbl :: [Parameter]
 operator_parameter_tbl = concatMap gen_operator_parameter_tbl [6,5 .. 1]
 
+-- | Remainder (non-operator) of parameter table.
+--
 -- > length parameter_tbl_rem == 30
 parameter_tbl_rem :: [Parameter]
 parameter_tbl_rem =
@@ -115,17 +141,28 @@ parameter_tbl_rem =
     ,(155,"OPERATOR ON/OFF",2,0,"BIT5=OP1 - BIT0=OP6") -- NOT STORED IN VOICE DATA
     ]
 
+rem_group_structure :: [(String,String,[U8])]
+rem_group_structure =
+    [("PITCH EG RATE","1;2;3;4",[126..129])
+    ,("PITCH EG LEVEL","1;2;3;4",[130..133])
+    ,("LFO","SPEED;DELAY;PITCH-MOD-DEPTH;AMP-MOD-DEPTH;SYNC;WAVEFORM",[137..142])
+    ,("VOICE NAME CHAR",";;;;;;;;;",[145..154])]
+
+-- | 'operator_parameter_tbl' and 'parameter_tbl_rem'.
+--
 -- > length dx7_parameter_tbl == 156
 dx7_parameter_tbl :: [Parameter]
 dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
 
-dx7_parameter_name :: Int -> String
+-- | Lookup parameter name.
+dx7_parameter_name :: U8 -> String
 dx7_parameter_name n =
     fromMaybe (error "dx7_parameter_name") $
     fmap parameter_name $
     find ((== n) . parameter_ix) dx7_parameter_tbl
 
-dx7_parameter_pp :: [Int] -> [String]
+-- | Print complete parameter sequence.
+dx7_parameter_pp :: [U8] -> [String]
 dx7_parameter_pp =
     let f (p,x) =
             let (ix,nm,stp,d,u) = p
@@ -156,15 +193,25 @@ function_parameters_tbl =
     ,(76,"AFTERTOUCH RANGE",100,0,"")
     ,(77,"AFTERTOUCH ASSIGN",8,0,"")]
 
-load_dx7_sysex_hex :: (Eq t,Num t) => FilePath -> IO [t]
+{- | Read unpacked 4960 parameter sequence from text file (see cmd/dx7-unpack.c).
+
+> h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/Dexed_01.syx.hex"
+> h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/SynprezFM/SynprezFM_03.syx.hex"
+> mapM_ (putStrLn . voice_name) (hex_voices h)
+> mapM_ (putStrLn . unlines . dx7_parameter_pp) (hex_voices h)
+
+-}
+load_dx7_sysex_hex :: FilePath -> IO [U8]
 load_dx7_sysex_hex fn = do
   s <- readFile fn
   case splitAt 4960 (words s) of
     (h,[]) -> return (map (\x -> T.read_hex_byte x) h)
     _ -> error "load_dx7_sysex_hex"
 
-{-
-h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/Dexed_01.syx.hex" :: IO [Int]
-let p = chunksOf 155 h
-mapM_ (putStrLn . unlines . dx7_parameter_pp) p
--}
+-- * Voice
+
+hex_voices :: [U8] -> [[U8]]
+hex_voices = chunksOf 155
+
+voice_name :: [U8] -> String
+voice_name v = map (toEnum . (v !!)) [145 .. 154]

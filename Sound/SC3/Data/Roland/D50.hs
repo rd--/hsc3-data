@@ -147,7 +147,7 @@ data Partial_Ix = One | Two deriving (Eq,Show)
 -- (U1,U2,L1,L2), two 'Common' (U,L), or 'Patch'.
 data Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
 
--- | The parameter type sequence (as stored).
+-- | The parameter type sequence (ie. in ascending ADDRESS order).
 parameter_type_seq :: [Parameter_Type]
 parameter_type_seq =
     [Partial Upper One,Partial Upper Two,Common Upper
@@ -245,7 +245,7 @@ named_parameter_to_address =
     in fmap f . parameter_lookup
 
 -- | (INDEX,NAME,STEPS,USR-OFFSET,USR-STRING)
-type Parameter = (U24,String,U8,U8,String)
+type Parameter = (U24,String,U8,Int,String)
 
 parameter_ix :: Parameter -> U8
 parameter_ix (ix,_,_,_,_) = ix
@@ -256,7 +256,7 @@ pitch_class_seq = words "C C# D D# E F F# G G# A A# B"
 pitch_seq :: [String]
 pitch_seq = [p ++ show o | o <- [1::Int .. 7],p <- pitch_class_seq]
 
--- "C1 - C7"
+-- | "C1 - C7"
 wg_pitch_coarse_usr :: String
 wg_pitch_coarse_usr = intercalate ";" (take 73 pitch_seq)
 
@@ -266,7 +266,7 @@ wg_pitch_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
 tvf_kf_usr :: String
 tvf_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
 
--- "<A1 - <C7;>A1 - >C7"
+-- | "<A1 - <C7;>A1 - >C7"
 bias_point_direction_usr :: String
 bias_point_direction_usr =
     let p = take 64 (drop 9 pitch_seq)
@@ -333,32 +333,35 @@ d50_partial_parameters =
     ,(53,"TVA Mod Aftertouch Range",15,-7,"-7 - +7")
     ]
 
+-- | (GROUP-NAME,PARAMETER-NAME-SEQ,PARAMETER-IX-SEQ)
 type PARAM_GROUP = (String,String,[Int])
 
 -- | Group structure of partial parameters, as in D-50 menu system.
 d50_partial_groups :: [PARAM_GROUP]
 d50_partial_groups =
-    [("WG Pitch","Cors Fine KF",[0..2])
-    ,("WG Mod","LFO ENV Bend",[3..5])
-    ,("WG Form","Wave PCM",[6..7])
-    ,("WG PW","PW Velo Aftr LFO LFOD",[8,9,12,10,11])
-    ,("TVF","Freq Reso KF BP Blvl",[13..17])
-    ,("TVF ENV 1","Dpth Velo DKF TKF",[18..21])
-    ,("TVF ENV 2","T1 T2 T3 T4 T5",[22..26])
-    ,("TVF ENV 3","L1 L2 L3 SusL EndL",[27..31])
-    ,("TVF MOD","LFO LFOD Aftr",[32..34])
-    ,("TVA","Levl Velo BP Blvl",[35..38])
-    ,("TVA ENV 1","T1 T2 T3 T4 T5",[39..43])
-    ,("TVA ENV 2","L1 L2 L3 SusL EndL",[44..48])
-    ,("TVA ENV 3","Velo TKF",[49..50])
-    ,("TVA MOD","LFO LFOD Aftr",[51..53])
+    [("WG Pitch","Cors;Fine;KF",[0..2])
+    ,("WG Mod","LFO;ENV;Bend",[3..5])
+    ,("WG Form","Wave;PCM",[6..7])
+    ,("WG PW","PW;Velo;Aftr;LFO;LFOD",[8,9,12,10,11])
+    ,("TVF","Freq;Reso;KF;BP;Blvl",[13..17])
+    ,("TVF ENV 1","Dpth;Velo;DKF;TKF",[18..21])
+    ,("TVF ENV 2","T1;T2;T3;T4;T5",[22..26])
+    ,("TVF ENV 3","L1;L2;L3;SusL;EndL",[27..31])
+    ,("TVF MOD","LFO;LFOD;Aftr",[32..34])
+    ,("TVA","Levl;Velo;BP;Blvl",[35..38])
+    ,("TVA ENV 1","T1;T2;T3;T4;T5",[39..43])
+    ,("TVA ENV 2","L1;L2;L3;SusL;EndL",[44..48])
+    ,("TVA ENV 3","Velo;TKF",[49..50])
+    ,("TVA MOD","LFO;LFOD;Aftr",[51..53])
     ]
 
 eq_lf_usr :: String
 eq_lf_usr = "63;75;88;105;125;150;175;210;250;300;350;420;500;600;700;840"
 
 eq_hf_usr :: String
-eq_hf_usr = "250;300;350;420;500;600;700;840;1.0;1.2;1.4;1.7;2.0;2.4;2.8;3.4;4.0;4.8;5.7;6.7;8.0;9.5"
+eq_hf_usr =
+    "250;300;350;420;500;600;700;840;" ++
+    "1.0;1.2;1.4;1.7;2.0;2.4;2.8;3.4;4.0;4.8;5.7;6.7;8.0;9.5"
 
 -- | Common parameters (4.4).
 --
@@ -421,17 +424,17 @@ d50_common_parameters =
 -- | Group structure of common parameters, as in D-50 menu system.
 d50_common_groups :: [PARAM_GROUP]
 d50_common_groups =
-    [("Tone Name Edit","C1 C2 C3 C4 C5 C6 C7 C8 C9 C10",[0..9])
+    [("Tone Name Edit",";;;;;;;;;",[0..9])
     ,("Structure","Str",[10])
-    ,("P-ENV Edit 1","Velo TKF",[11..12])
-    ,("P-ENV Edit 2","T1 T2 T3 T4",[13..16])
-    ,("P-ENV Edit 3","LO L1 L2 SusL EndL",[17..21])
-    ,("Pitch Mod Edit","LFOD Levr Aftr",[22..24])
-    ,("LFO-1 Edit","Wave Rate Dely Sync",[25..28])
-    ,("LFO-2 Edit","Wave Rate Dely Sync",[29..32])
-    ,("LFO-3 Edit","Wave Rate Dely Sync",[33..36])
-    ,("EQ Edit","Lf Lg Hf HQ Hg",[37..41])
-    ,("Chorus Edit","Type Rate Dpth Bal",[42..45])
+    ,("P-ENV Edit 1","Velo;TKF",[11..12])
+    ,("P-ENV Edit 2","T1;T2;T3;T4",[13..16])
+    ,("P-ENV Edit 3","LO;L1;L2;SusL;EndL",[17..21])
+    ,("Pitch Mod Edit","LFOD;Levr;Aftr",[22..24])
+    ,("LFO-1 Edit","Wave;Rate;Dely;Sync",[25..28])
+    ,("LFO-2 Edit","Wave;Rate;Dely;Sync",[29..32])
+    ,("LFO-3 Edit","Wave;Rate;Dely;Sync",[33..36])
+    ,("EQ Edit","Lf;Lg;Hf;HQ;Hg",[37..41])
+    ,("Chorus Edit","Type;Rate;Dpth;Bal",[42..45])
     ]
 
 key_mode_usr :: String
@@ -465,12 +468,12 @@ d50_patch_factors =
 
 d50_patch_groups :: [PARAM_GROUP]
 d50_patch_groups =
-    [("Patch Name Edit","C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15 C16 C17 C18",[0..17])
-    ,("MAIN","KEY-MODE SPLIT-POINT TONE-BALANCE",[18,19,33])
-    ,("Tone Tune","LKey UKey LTune UTune",[23,22,25,24])
-    ,("Control Edit","Bend AfPB Port Port Hold",[26,27,28,20,21])
-    ,("Output Mode Edit","Mode Rev Rbal Vol",[29..32])
-    ,("Chase Edit","Mode Levl Time",[34..36])
+    [("Patch Name Edit",";;;;;;;;;;;;;;;;;",[0..17])
+    ,("MAIN","KEY-MODE;SPLIT-POINT;TONE-BALANCE",[18,19,33])
+    ,("Tone Tune","LKey;UKey;LTune;UTune",[23,22,25,24])
+    ,("Control Edit","Bend;AfPB;Port;Port;Hold",[26,27,28,20,21])
+    ,("Output Mode Edit","Mode;Rev;Rbal;Vol",[29..32])
+    ,("Chase Edit","Mode;Levl;Time",[34..36])
     ]
 
 -- | 'd50_patch_factors' preceded by patch name.
@@ -553,7 +556,9 @@ d50_patch_csv =
                          else "ERROR: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v)
     in (hdr :) . map f . zip [0 ..]
 
--- > maximum (map (\(nm,_,_) -> length nm) (concat d50_group_seq))
+-- | 'PARAM_GROUP' in ADDRESS sequence.
+--
+-- > maximum (map (\(nm,_,_) -> length nm) (concat d50_group_seq)) == 16
 d50_group_seq :: [[PARAM_GROUP]]
 d50_group_seq =
     let tn = [d50_partial_groups,d50_partial_groups,d50_common_groups]
@@ -561,9 +566,16 @@ d50_group_seq =
 
 group_pp :: [(Parameter,U8)] -> PARAM_GROUP -> String
 group_pp x_seq (g_nm,p_nm_seq,ix) =
-    let f p_nm (p,x) = concat [p_nm,"=",parameter_value_usr p x]
-    in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords (zipWith f (words p_nm_seq) (map (x_seq !!) ix))
+    let f p_nm (p,x) = let x' = parameter_value_usr p x
+                       in if null p_nm then x' else concat [p_nm,"=",x']
+        gr_p = zipWith f (splitOn ";" p_nm_seq) (map (x_seq !!) ix)
+    in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
 
+-- | Pretty printer for D-50 patch following group structure (ie. HW screen layout).
+--
+-- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
+-- > let g = d50_patch_group_pp p
+-- > writeFile "/home/rohan/uc/invisible/light/d50/d50.group.text" (unlines g)
 d50_patch_group_pp :: [U8] -> [String]
 d50_patch_group_pp =
     let f gr pr = "" : parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
@@ -576,8 +588,6 @@ d50_patch_group_pp =
 -- > let p' = unlines (filter (not . null) (d50_patch_csv p))
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
 --
--- > let g = d50_patch_group_pp p
--- > writeFile "/home/rohan/uc/invisible/light/d50/d50.group.text" (unlines g)
 load_d50_text :: FilePath -> IO [U8]
 load_d50_text fn = do
   s <- readFile fn
@@ -610,33 +620,35 @@ d50_char_table =
 d50_byte_to_char :: U8 -> Maybe Char
 d50_byte_to_char n = lookup n d50_char_table
 
+-- | Reverse lookup in 'd50_char_table'.
+--
 -- > mapMaybe d50_char_to_byte "Inland" == [9,40,38,27,40,30]
 d50_char_to_byte :: Char -> Maybe U8
 d50_char_to_byte c = T.reverse_lookup c d50_char_table
 
-{-
+{- | Base address for patch memory /n/ (0,63)
 
-M.bits_21_join (0x02,0x00,0x00) == 32768
-M.bits_21_join (0x02,0x03,0x40) == 33216
-M.bits_21_join (0x03,0x60,0x00) == 61440
-M.bits_21_join (0x03,0x62,0x78) == 61816
-M.bits_21_join (0x04,0x0C,0x08) == 67080
-
-33216 - 32768 == 448
-32768 + (448 * 64) == 61440
-61440 - 448 == 60992
-M.bits_21_sep 60992 == (0x03,0x5C,0x40)
-
-61816 - 61440 == 376
-61440 + (376 * (32 - 17)) == 67080
+> M.bits_21_join (0x02,0x00,0x00) == 32768
+> M.bits_21_join (0x02,0x03,0x40) == 33216
+> M.bits_21_join (0x03,0x60,0x00) == 61440
+> 33216 - 32768 == 448
+> 32768 + (448 * 64) == 61440
+> 61440 - 448 == 60992
+> M.bits_21_sep 60992 == (0x03,0x5C,0x40)
 
 -}
-
--- | Base address for patch memory /n/ (0,63)
 patch_memory_base :: U8 -> ADDRESS
 patch_memory_base n = 32768 + (448 * n)
 
--- | Base address for reverb memory /n/ (0,15)
+{- | Base address for reverb memory /n/ (0,15)
+
+> M.bits_21_join (0x03,0x60,0x00) == 61440
+> M.bits_21_join (0x03,0x62,0x78) == 61816
+> M.bits_21_join (0x04,0x0C,0x08) == 67080
+> 61816 - 61440 == 376
+> 61440 + (376 * (32 - 17)) == 67080
+
+-}
 reverb_memory_base :: U8 -> ADDRESS
 reverb_memory_base n = 61440 + (376 * n)
 

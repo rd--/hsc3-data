@@ -1,5 +1,6 @@
 cmd =	ats au-to-pbm au-to-pgm \
 	csv-mnd-to-pgm csv-plot \
+	dx7-hex dx7-unpack \
 	img-edit img-to-pbm img-to-pgm img-to-sf \
 	kml-to-csv \
 	midi-to-csv-mnd midi-to-text \
@@ -12,10 +13,12 @@ cmd =	ats au-to-pbm au-to-pgm \
 
 include ~/sw/hsc3/mk/cmd.mk
 
+dx7-unpack: dx7-unpack.c
+	gcc -Wall -std=c99 -O3 -o dx7-unpack dx7-unpack.c
+
+# VST
+
 VST_SDK = $(HOME)/opt/src/vstsdk2.4
 
 lxvst-stat: lxvst-stat.cpp
 	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
-
-dx7-unpack: dx7-unpack.c
-	gcc -Wall -std=c99 -O3 -o dx7-unpack dx7-unpack.c
