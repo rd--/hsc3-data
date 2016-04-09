@@ -218,7 +218,8 @@ parameter_type_base_address_t3 ty =
       Common Lower -> (0x00,0x02,0x40)
       Patch -> (0x00,0x03,0x00)
 
--- > map parameter_type_base_address parameter_type_seq
+-- > map parameter_type_base_address parameter_type_seq == [0,64,128,192,256,320,384]
+-- > [0,64,128,192,256,320,384] == [0x000,0x040,0x080,0x0C0,0x100,0x140,0x180]
 parameter_type_base_address :: Parameter_Type -> ADDRESS
 parameter_type_base_address = u24_pack . T.t3_list . parameter_type_base_address_t3
 
@@ -659,20 +660,27 @@ d50_char_table =
 d50_byte_to_char :: U8 -> Maybe Char
 d50_byte_to_char n = lookup n d50_char_table
 
+d50_byte_to_char_err :: U8 -> Char
+d50_byte_to_char_err = fromMaybe (error "d50_byte_to_char") . d50_byte_to_char
+
 -- | Reverse lookup in 'd50_char_table'.
 --
 -- > mapMaybe d50_char_to_byte "Inland" == [9,40,38,27,40,30]
 d50_char_to_byte :: Char -> Maybe U8
 d50_char_to_byte c = T.reverse_lookup c d50_char_table
 
-{- | Base address for patch memory /n/ (0,63)
+-- | Patch name
+patch_name :: [U8] -> String
+patch_name = map d50_byte_to_char_err . take 18 . drop (parameter_type_base_address Patch)
 
-> M.bits_21_join (0x02,0x00,0x00) == 32768
-> M.bits_21_join (0x02,0x03,0x40) == 33216
-> M.bits_21_join (0x03,0x60,0x00) == 61440
-> 33216 - 32768 == 448
-> 32768 + (448 * 64) == 61440
-> 61440 - 448 == 60992
+{- | Base address for patch memory /n/ (0,63).
+
+> M.bits_21_join (0x02,0x00,0x00) == 0x8000 -- 32768
+> M.bits_21_join (0x02,0x03,0x40) == 0x81C0 -- 33216
+> M.bits_21_join (0x03,0x60,0x00) == 0xF000 -- 61440
+> 33216 - 32768 == 0x01C0 -- 448
+> 32768 + (448 * 64) == 0xF000 -- 61440
+> 61440 - 448 == 0xEE40 -- 60992
 > M.bits_21_sep 60992 == (0x03,0x5C,0x40)
 
 -}
@@ -690,6 +698,47 @@ patch_memory_base n = 32768 + (448 * n)
 -}
 reverb_memory_base :: U8 -> ADDRESS
 reverb_memory_base n = 61440 + (376 * n)
+
+-- | Load binary 'U8' sequence from file.
+load_byte_seq :: FilePath -> IO [U8]
+load_byte_seq = fmap (map fromIntegral . B.unpack) . B.readFile
+
+-- | Segment byte-sequence into SYSEX messages, no verification.
+sysex_segment :: [U8] -> [[U8]]
+sysex_segment = tail . T.split_at 0xF0
+
+{-| Load DTI sequence from D-50 SYSEX file.
+
+> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+> b <- load_byte_seq sysex_fn
+> let s = sysex_segment b
+> d <- d50_load_sysex_dti sysex_fn
+> let s' = d50_dti_gen_seq (0,patch_memory_base 0,concatMap dti_data d)
+> s == s'
+
+-}
+d50_load_sysex_dti :: FilePath -> IO [DTI]
+d50_load_sysex_dti fn = do
+  b <- load_byte_seq fn
+  let b_n = length b
+  when (b_n /= 36048) (putStrLn "d50_load_sysex: sysex != 36048")
+  when (b_n < 36048) (error "d50_load_sysex: sysex < 36048")
+  return (map d50_dti_parse_err (sysex_segment b))
+
+{-| Load patch data from D-50 SYSEX file.
+
+> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+> p <- d50_load_sysex sysex_fn
+> putStrLn$unlines$map patch_name p
+> putStrLn$unlines$concatMap d50_patch_group_pp p
+
+-}
+d50_load_sysex :: FilePath -> IO [[U8]]
+d50_load_sysex fn = do
+  dti <- d50_load_sysex_dti fn
+  let d = concatMap (\(_,_,x) -> x) dti
+  when (length d /= 34688) (error "d50_load_sysex: dti/concat != 34688")
+  return (take 64 (map (take 421) (chunksOf 448 d)))
 
 {-
 
@@ -792,43 +841,3 @@ Address Description
 [04-0C-08] Reverb Data 32
 
 -}
-
--- | Load binary 'U8' sequence from file.
-load_byte_seq :: FilePath -> IO [U8]
-load_byte_seq = fmap (map fromIntegral . B.unpack) . B.readFile
-
--- | Segment byte-sequence into SYSEX messages, no verification.
-sysex_segment :: [U8] -> [[U8]]
-sysex_segment = tail . T.split_at 0xF0
-
-{-| Load DTI sequence from D-50 SYSEX file.
-
-> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
-> b <- load_byte_seq sysex_fn
-> let s = sysex_segment b
-> d <- d50_load_sysex_dti sysex_fn
-> let s' = d50_dti_gen_seq (0,patch_memory_base 0,concatMap dti_data d)
-> s == s'
-
--}
-d50_load_sysex_dti :: FilePath -> IO [DTI]
-d50_load_sysex_dti fn = do
-  b <- load_byte_seq fn
-  let b_n = length b
-  when (b_n /= 36048) (putStrLn "d50_load_sysex: sysex != 36048")
-  when (b_n < 36048) (error "d50_load_sysex: sysex < 36048")
-  return (map d50_dti_parse_err (sysex_segment b))
-
-{-| Load patch data from D-50 SYSEX file.
-
-> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
-> p <- d50_load_sysex sysex_fn
-> putStrLn$unlines$concatMap d50_patch_group_pp p
-
--}
-d50_load_sysex :: FilePath -> IO [[U8]]
-d50_load_sysex fn = do
-  dti <- d50_load_sysex_dti fn
-  let d = concatMap (\(_,_,x) -> x) dti
-  when (length d /= 34688) (error "d50_load_sysex: dti/concat != 34688")
-  return (take 64 (map (take 421) (chunksOf 448 d)))
