@@ -38,6 +38,7 @@ lpc_recv_midi (p,fd) m =
       (0xC0,n,0,0) -> print n >> patch_pp (p !! n) >> send_patch fd (p !! n)
       _ -> return ()
 
+-- > lpc_run "/home/rohan/data/roland-d50/PND50-00.syx"
 lpc_run :: FilePath -> IO ()
 lpc_run fn = do
   p <- d50_load_sysex fn

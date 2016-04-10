@@ -111,8 +111,8 @@ u24_pack = fromIntegral . M.bits_21_join . T.t3 . map fromIntegral
 
 -- | Generate RTI command SYSEX.
 --
--- > let r = map T.read_hex_byte (words "F0 41 00 14 11 00 00 00 00 03 25 58 F7")
--- > in d50_rqi_gen 0 0 421 == r
+-- > let r = map T.read_hex_byte (words "F0 41 00 14 11 00 00 00 00 03 40 3D F7")
+-- > in d50_rqi_gen 0 0 0x1C0 == r
 d50_rqi_gen :: U8 -> ADDRESS -> U24 -> [U8]
 d50_rqi_gen ch a sz =
     let a' = u24_unpack a
@@ -225,14 +225,14 @@ parameter_type_base_address = u24_pack . T.t3_list . parameter_type_base_address
 
 -- | Base address, initial offset, number of parameters.
 --
--- > sum (map (\ty -> let (_,_,n) = parameter_type_extent ty in n) parameter_type_seq) == 309
--- > let (b,o,n) = parameter_type_extent (last parameter_type_seq) in b + o + n == 421
+-- > sum (map (\ty -> let (_,_,n) = parameter_type_extent ty in n) parameter_type_seq) == 312
+-- > let (b,o,n) = parameter_type_extent (last parameter_type_seq) in b + o + n == 424
 parameter_type_extent :: Parameter_Type -> (ADDRESS,U24,U24)
 parameter_type_extent ty =
     case ty of
       Partial _ _ -> (parameter_type_base_address ty,0,54)
       Common _ -> (parameter_type_base_address ty,10,38)
-      Patch -> (parameter_type_base_address ty,20,17)
+      Patch -> (parameter_type_base_address ty,20,20)
 
 range_pp :: Show a => (a,a) -> String
 range_pp (p,q) = show p ++ " - " ++ show q
@@ -483,7 +483,7 @@ key_mode_usr = "WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPAR
 
 -- | 4.5 Patch Factors.
 --
--- > length d50_patch_factors == 19
+-- > length d50_patch_factors == 22
 d50_patch_factors :: [Parameter]
 d50_patch_factors =
     [(18,"Key Mode",9,0,key_mode_usr)
@@ -505,6 +505,9 @@ d50_patch_factors =
     ,(34,"Chase Mode",3,0,"UL;ULL;ULU")
     ,(35,"Chase Level",101,0,"0 - 100")
     ,(36,"Chase Time",101,0,"0 - 100")
+    ,(37,"Midi Transmit Channel",17,0,"BASIC-CH | 1 - 16")
+    ,(38,"Midi Separate Rcv Channel",17,0,"OFF | 1 - 16")
+    ,(39,"Midi Transmit Prog. Change",101,0,"OFF | 1 - 100")
     ]
 
 d50_patch_groups :: [PARAM_GROUP]
@@ -528,7 +531,9 @@ d50_patch_parameters =
 d50_unused_parameter :: U24 -> Parameter
 d50_unused_parameter ix = (ix,"UNUSED",1,0,"")
 
--- > length d50_parameters == 349
+-- | Complete set of /used/ 'Parameter's.
+--
+-- > length d50_parameters == 352
 -- > putStrLn $ unlines $ map show d50_parameters
 d50_parameters :: [Parameter]
 d50_parameters =
@@ -539,7 +544,10 @@ d50_parameters =
             ,d50_patch_parameters]
     in concat (zipWith f a p)
 
--- > length d50_parameters_seq == 421
+-- | Complete 'Parameter' sequence, including all /unused/ parmaters.
+--
+-- > length d50_parameters_seq == 448
+-- > map parameter_ix d50_parameters_seq == [0 .. 447]
 d50_parameters_seq :: [Parameter]
 d50_parameters_seq =
     let recur n sq =
@@ -548,7 +556,7 @@ d50_parameters_seq =
               p:sq' -> if n == parameter_ix p
                        then p : recur (n + 1) sq'
                        else d50_unused_parameter n : recur (n + 1) sq
-    in recur 0 d50_parameters
+    in recur 0 d50_parameters ++ map d50_unused_parameter [424..447]
 
 parameter_type_parameters :: Parameter_Type -> [Parameter]
 parameter_type_parameters ty =
@@ -622,7 +630,7 @@ d50_patch_group_pp =
     let f gr pr = "" : parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
     in concat . zipWith f d50_group_seq . parameter_segment . zip d50_parameters_seq
 
--- | Load text file consisting of 421 white-space separated
+-- | Load text file consisting of 448 (0x1C0) white-space separated
 -- two-character hexidecimal byte values.
 --
 -- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
@@ -631,7 +639,7 @@ d50_patch_group_pp =
 load_d50_text :: FilePath -> IO [U8]
 load_d50_text fn = do
   b <- T.load_hex_byte_seq fn
-  case splitAt 421 b of
+  case splitAt 448 b of
     (h,[]) -> return h
     _ -> error "load_d50_text"
 
@@ -721,11 +729,19 @@ d50_load_sysex_dti :: FilePath -> IO [DTI]
 d50_load_sysex_dti fn = do
   b <- load_byte_seq fn
   let b_n = length b
-  when (b_n /= 36048) (putStrLn "d50_load_sysex: sysex != 36048")
-  when (b_n < 36048) (error "d50_load_sysex: sysex < 36048")
+  when (b_n /= 0x8CD0) (putStrLn "d50_load_sysex: sysex != 0x8CD0 (36048)")
+  when (b_n < 0x8CD0) (error "d50_load_sysex: sysex < 0x8CD0 (36048)")
   return (map d50_dti_parse_err (sysex_segment b))
 
-{-| Load patch data from D-50 SYSEX file.
+-- | 'dti_data' of 'd50_load_sysex_dti'.
+d50_load_sysex_u8 :: FilePath -> IO [U8]
+d50_load_sysex_u8 fn = do
+  dti <- d50_load_sysex_dti fn
+  let dat = concatMap dti_data dti
+  when (length dat /= 0x8780) (error "d50_load_sysex_u8: length != 0x8780 (34688)")
+  return dat
+
+{-| Load patch data (64 patches of 448 bytes) from D-50 SYSEX file.
 
 > let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
 > p <- d50_load_sysex sysex_fn
@@ -735,10 +751,8 @@ d50_load_sysex_dti fn = do
 -}
 d50_load_sysex :: FilePath -> IO [[U8]]
 d50_load_sysex fn = do
-  dti <- d50_load_sysex_dti fn
-  let d = concatMap (\(_,_,x) -> x) dti
-  when (length d /= 34688) (error "d50_load_sysex: dti/concat != 34688")
-  return (take 64 (map (take 421) (chunksOf 448 d)))
+  dat <- d50_load_sysex_u8 fn
+  return (take 64 (chunksOf 448 dat))
 
 {-
 
