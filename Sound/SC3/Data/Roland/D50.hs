@@ -35,12 +35,6 @@ type U24 = Int
 -- | Parameter address.
 type ADDRESS = U24
 
--- | (DEVICE-ID,ADDRESS,DATA)
-type DTI = (U8,ADDRESS,[U8])
-
-dti_data :: DTI -> [U8]
-dti_data (_,_,d) = d
-
 -- | A patch has two tones, 'Upper' and 'Lower'.
 data Tone = Upper | Lower deriving (Eq,Show)
 
@@ -73,6 +67,16 @@ data D50_SYSEX_CMD = RQI_CMD -- ^ REQUEST DATA - ONE WAY
                    | EOD_CMD -- ^ END OF DATA
                    | ERR_CMD -- ^ COMMUNICATION ERROR
                    | RJC_CMD -- ^ REJECTION
+                     deriving (Eq,Show)
+
+-- | DATA-SET COMMAND (DTI|DAT), (CMD,DEVICE-ID,ADDRESS,DATA)
+type DSC = (D50_SYSEX_CMD,U8,ADDRESS,[U8])
+
+dsc_address :: DSC -> ADDRESS
+dsc_address (_,_,a,_) = a
+
+dsc_data :: DSC -> [U8]
+dsc_data (_,_,_,d) = d
 
 -- * COMMON
 
@@ -98,7 +102,8 @@ sysex_segment = tail . T.split_at 0xF0
 
 -- | D50 device ID.
 --
--- > (d50_id == 0x14,d50_id == 0B00010100)
+-- > :set -XBinaryLiterals
+-- > (d50_id == 0x14,d50_id == 0b00010100)
 d50_id :: U8
 d50_id = 0x14
 
@@ -116,35 +121,57 @@ roland_checksum =
               x:w' -> let n' = n + x in f (if n' > 0x80 then n' - 0x80 else n') w'
     in f 0
 
+-- | Translate one-indexed (BANK-NUMBER,PATCH-NUMBER) index to zero linear index.
+--
+-- > map bank_to_ix [(1,1),(2,3),(7,4),(8,8)] == [0,10,51,63]
+bank_to_ix :: Num n => (n,n) -> n
+bank_to_ix (p,q) = ((p - 1) * 8) + (q - 1)
+
+-- | Inverse of 'bank_to_ix'.
+--
+-- > map ix_to_bank [0,10,51,63] == [(1,1),(2,3),(7,4),(8,8)]
+ix_to_bank :: Integral i => i -> (i,i)
+ix_to_bank n = let (p,q) = n `divMod` 8 in (p + 1,q + 1)
+
 -- * D-50 CMD
+
+-- | Table mapping 'D50_SYSEX_CMD' to it's 'U8' code.
+d50_sysex_cmd_tbl :: [(D50_SYSEX_CMD,U8)]
+d50_sysex_cmd_tbl =
+    [(RQI_CMD,0x11)
+    ,(DTI_CMD,0x12)
+    ,(WSD_CMD,0x40)
+    ,(RQD_CMD,0x41)
+    ,(DAT_CMD,0x42)
+    ,(ACK_CMD,0x43)
+    ,(EOD_CMD,0x45)
+    ,(ERR_CMD,0x4E)
+    ,(RJC_CMD,0x4F)]
+
+maybe_err :: String -> Maybe a -> a
+maybe_err str = fromMaybe (error str)
 
 -- | SYSEX_CMD to 8-Bit identifier.
 --
 -- > let k = d50_sysex_cmd_id DTI_CMD in (k == 0x12,k == 0b00010010)
 -- > let k = d50_sysex_cmd_id RQI_CMD in (k == 0x11,k == 0b00010001)
 d50_sysex_cmd_id :: D50_SYSEX_CMD -> U8
-d50_sysex_cmd_id cmd =
-    case cmd of
-      RQI_CMD -> 0x11
-      DTI_CMD -> 0x12
-      WSD_CMD -> 0x40
-      RQD_CMD -> 0x41
-      DAT_CMD -> 0x42
-      ACK_CMD -> 0x43
-      EOD_CMD -> 0x45
-      ERR_CMD -> 0x4E
-      RJC_CMD -> 0x4F
+d50_sysex_cmd_id cmd = maybe_err "d50_sysex_cmd_id" (lookup cmd d50_sysex_cmd_tbl)
+
+-- | Inverse of 'd50_sysex_cmd_id'.
+d50_sysex_cmd_parse :: U8 -> D50_SYSEX_CMD
+d50_sysex_cmd_parse i = maybe_err "d50_sysex_cmd_parse" (T.reverse_lookup i d50_sysex_cmd_tbl)
 
 d50_cmd_hdr :: U8 -> D50_SYSEX_CMD -> [U8]
 d50_cmd_hdr ch cmd = [M.sysex_status,M.roland_id,ch,d50_id,d50_sysex_cmd_id cmd]
 
-d50_cmd_dat_chk :: [U8] -> [U8]
-d50_cmd_dat_chk dat = dat ++ [roland_checksum dat,M.sysex_end]
+d50_cmd_data_chk :: [U8] -> [U8]
+d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.sysex_end]
 
 d50_addr_sz_cmd :: D50_SYSEX_CMD -> U8 -> ADDRESS -> U24 -> [U8]
 d50_addr_sz_cmd cmd ch a sz =
     let dat = u24_unpack a ++ u24_unpack sz
-    in concat [d50_cmd_hdr ch cmd,d50_cmd_dat_chk dat]
+    in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
 -- | Generate WSD command SYSEX.
 d50_wsd_gen :: U8 -> ADDRESS -> U24 -> [U8]
@@ -175,7 +202,7 @@ d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]
 
 -- | Parse SYSEX to (CH,CMD,DAT,#DAT).
 --
--- > d50_cmd_parse (d50_dti_gen (0,1,[50])) == Just (0,18,[0,0,1,50,77],5)
+-- > d50_cmd_parse (d50_dsc_gen (DTI_CMD,0,1,[50])) == Just (0,18,[0,0,1,50,77],5)
 d50_cmd_parse :: [U8] -> Maybe (U8,U8,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
@@ -185,11 +212,11 @@ d50_cmd_parse b =
        then Nothing
        else Just (b2,b4,dat,dat_n)
 
--- | Check and remove CHECKSUM from DAT.
+-- | Check and remove CHECKSUM from DATA.
 --
--- > d50_dat_chk ([0,0,1,50,77],5) == Just ([0,0,1,50],4)
-d50_dat_chk :: ([U8],U24) -> Maybe ([U8],U24)
-d50_dat_chk (dat,dat_n) =
+-- > d50_data_chk ([0,0,1,50,77],5) == Just ([0,0,1,50],4)
+d50_data_chk :: ([U8],U24) -> Maybe ([U8],U24)
+d50_data_chk (dat,dat_n) =
     let (dat',[ch]) = splitAt (dat_n - 1) dat
     in if roland_checksum dat' == ch
        then Just (dat',dat_n - 1)
@@ -197,54 +224,57 @@ d50_dat_chk (dat,dat_n) =
 
 -- | Remove and pack ADDRESS from start of DAT.
 --
--- > d50_dat_addr ([0,0,1,50],4) == Just (1,[50],1)
-d50_dat_addr :: ([U8],U24) -> Maybe (U24,[U8],U24)
-d50_dat_addr (dat,dat_n) =
+-- > d50_data_addr ([0,0,1,50],4) == Just (1,[50],1)
+d50_data_addr :: ([U8],U24) -> Maybe (U24,[U8],U24)
+d50_data_addr (dat,dat_n) =
     case dat of
       a0:a1:a2:dat' -> Just (u24_pack [a0,a1,a2],dat',dat_n - 3)
       _ -> Nothing
 
--- | Parse DTI SYSEX message.
+-- | Parse DSC (DTI|DAT) SYSEX message.
 --
--- > let b = d50_dti_gen (0,1,[50])
--- > d50_dti_parse b == Just (0,1,[50])
-d50_dti_parse :: [U8] -> Maybe DTI
-d50_dti_parse b =
+-- > let b = d50_dsc_gen (DTI_CMD,0,1,[50])
+-- > d50_dsc_parse b == Just (DTI_CMD,0,1,[50])
+d50_dsc_parse :: [U8] -> Maybe DSC
+d50_dsc_parse b =
     let Just (ch,cmd,dat,dat_n) = d50_cmd_parse b
-        Just (dat',dat_n') = d50_dat_chk (dat,dat_n)
-        Just (addr,dat'',_dat_n'') = d50_dat_addr (dat',dat_n')
-    in if cmd == d50_sysex_cmd_id DTI_CMD
-       then Just (ch,addr,dat'')
+        Just (dat',dat_n') = d50_data_chk (dat,dat_n)
+        Just (addr,dat'',_dat_n'') = d50_data_addr (dat',dat_n')
+        cmd' = d50_sysex_cmd_parse cmd
+    in if cmd' == DTI_CMD || cmd' == DAT_CMD
+       then Just (cmd',ch,addr,dat'')
        else Nothing
 
-d50_dti_parse_err :: [U8] -> DTI
-d50_dti_parse_err = fromMaybe (error "d50_dti_parse") . d50_dti_parse
+d50_dsc_parse_err :: [U8] -> DSC
+d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
--- | Generate DTI SYSEX message.
+-- | Generate DSC (DTI|DAT) SYSEX message.
 --
--- > T.byte_seq_hex_pp (d50_dti_gen (0,1,[50])) == "F0 41 00 14 12 00 00 01 32 4D F7"
--- > T.byte_seq_hex_pp (d50_dti_gen (0,409,[0x10])) == "F0 41 00 14 12 00 03 19 10 54 F7"
-d50_dti_gen :: DTI -> [U8]
-d50_dti_gen (ch,a,d) =
+-- > T.byte_seq_hex_pp (d50_dsc_gen (0,1,[50])) == "F0 41 00 14 12 00 00 01 32 4D F7"
+-- > T.byte_seq_hex_pp (d50_dsc_gen (0,409,[0x10])) == "F0 41 00 14 12 00 03 19 10 54 F7"
+d50_dsc_gen :: DSC -> [U8]
+d50_dsc_gen (cmd,ch,a,d) =
     let dat = u24_unpack a ++ d
     in if length d > 256
-       then error "d50_dti_gen: #DATA > 256"
-       else concat [d50_cmd_hdr ch DTI_CMD,d50_cmd_dat_chk dat]
+       then error "d50_dsc_gen: #DATA > 256"
+       else concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
--- | Generate a sequence of DTI messages segmenting data sets longer than 256 elements.
-d50_dti_gen_seq :: DTI -> [[U8]]
-d50_dti_gen_seq (ch,a,d) =
+-- | Generate a sequence of DSC messages segmenting data sets longer than 256 elements.
+d50_dsc_gen_seq :: DSC -> [[U8]]
+d50_dsc_gen_seq (cmd,ch,a,d) =
     if null d
     then []
     else if length d <= 256
-         then [d50_dti_gen (ch,a,d)]
-         else d50_dti_gen (ch,a,take 256 d) : d50_dti_gen_seq (ch,a + 256,drop 256 d)
+         then [d50_dsc_gen (cmd,ch,a,d)]
+         else d50_dsc_gen (cmd,ch,a,take 256 d) : d50_dsc_gen_seq (cmd,ch,a + 256,drop 256 d)
 
 -- > let {nm = (Patch,"Lower Tone Fine Tune")
 -- >     ;r = "F0 41 00 14 12 00 03 19 10 54 F7"}
 -- > in fmap T.byte_seq_hex_pp (d50_gen_dti_nm 0 nm [0x10]) == Just r
 d50_gen_dti_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe [U8]
-d50_gen_dti_nm ch nm d = fmap (\a -> d50_dti_gen (ch,a,d)) (named_parameter_to_address nm)
+d50_gen_dti_nm ch nm d =
+    let f a = d50_dsc_gen (DTI_CMD,ch,a,d)
+    in fmap f (named_parameter_to_address nm)
 
 -- * PARTIAL IX
 
@@ -277,11 +307,11 @@ parameter_type_pp ty =
 parameter_type_base_address_t3 :: Parameter_Type -> (U8,U8,U8)
 parameter_type_base_address_t3 ty =
     case ty of
-      Partial Upper One -> (0x00,0x00,0x00)
-      Partial Upper Two -> (0x00,0x00,0x40)
+      Partial Upper One -> (0x00,0x00,0x00) -- 0x000 = 000
+      Partial Upper Two -> (0x00,0x00,0x40) -- 0x040 = 064
       Common Upper -> (0x00,0x01,0x00)
-      Partial Lower One -> (0x00,0x01,0x40)
-      Partial Lower Two -> (0x00,0x02,0x00)
+      Partial Lower One -> (0x00,0x01,0x40) -- 0x0C0 = 192
+      Partial Lower Two -> (0x00,0x02,0x00) -- 0x100 = 256
       Common Lower -> (0x00,0x02,0x40)
       Patch -> (0x00,0x03,0x00)
 
@@ -291,6 +321,9 @@ parameter_type_base_address_t3 ty =
 -- > [0,64,128,192,256,320,384] == [0x000,0x040,0x080,0x0C0,0x100,0x140,0x180]
 parameter_type_base_address :: Parameter_Type -> ADDRESS
 parameter_type_base_address = u24_pack . T.t3_list . parameter_type_base_address_t3
+
+partial_base_address_seq :: [ADDRESS]
+partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
 
 -- | Base address, initial offset, number of parameters.
 --
@@ -412,7 +445,14 @@ wg_pitch_coarse_usr :: String
 wg_pitch_coarse_usr = intercalate ";" (take 73 pitch_seq)
 
 wg_pitch_kf_usr :: String
-wg_pitch_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
+wg_pitch_kf_usr = "-1;-1/2;-1/4;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
+
+wg_pitch_kf_rat :: Fractional n => ([n],[String])
+wg_pitch_kf_rat = ([-1,1/2,-1/4,0,1/8,1/4,3/8,1/2,5/6,3/4,7/8,1,5/4,3/2,2],["S1","S2"])
+
+-- > mapMaybe wg_pitch_kf_to_enum [1/8,1/4,1] == [4,5,11]
+wg_pitch_kf_to_enum :: (Eq n,Fractional n) => n -> Maybe Int
+wg_pitch_kf_to_enum n = findIndex (== n) (fst wg_pitch_kf_rat)
 
 tvf_kf_usr :: String
 tvf_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
@@ -750,7 +790,7 @@ d50_group_seq =
 group_pp :: [(Parameter,U8)] -> PARAM_GROUP -> String
 group_pp x_seq (g_nm,p_nm_seq,ix) =
     let f p_nm (p,x) = let x' = parameter_value_usr p x
-                       in if null p_nm then x' else concat [p_nm,"=",x']
+                       in if null p_nm {- ie. CHAR -} then x' else concat [p_nm,"=",x']
         gr_p = zipWith f (splitOn ";" p_nm_seq) (map (x_seq !!) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
 
@@ -767,6 +807,19 @@ d50_patch_group_pp =
 -- | Patch name
 patch_name :: [U8] -> String
 patch_name = map d50_byte_to_char_err . take 18 . drop (parameter_type_base_address Patch)
+
+-- * Tuning
+
+-- | Generate DSC/DTI sequence to set the @WG PITCH KF@ parameters of all
+-- four partials to indicated ratio.
+--
+-- > map d50_dsc_gen (d50_wg_pitch_kf_dti (1/4))
+d50_wg_pitch_kf_dti :: (Eq n,Fractional n) => n -> [DSC]
+d50_wg_pitch_kf_dti r =
+    let Just e = wg_pitch_kf_to_enum r
+        a_seq = map (+ 2) partial_base_address_seq
+        f a = (DTI_CMD,0,a,[e])
+    in map f a_seq
 
 -- * I/O
 
@@ -793,23 +846,23 @@ load_byte_seq = fmap (map fromIntegral . B.unpack) . B.readFile
 > b <- load_byte_seq sysex_fn
 > let s = sysex_segment b
 > d <- d50_load_sysex_dti sysex_fn
-> let s' = d50_dti_gen_seq (0,patch_memory_base 0,concatMap dti_data d)
+> let s' = d50_dsc_gen_seq (DTI_CMD,0,patch_memory_base 0,concatMap dsc_data d)
 > s == s'
 
 -}
-d50_load_sysex_dti :: FilePath -> IO [DTI]
+d50_load_sysex_dti :: FilePath -> IO [DSC]
 d50_load_sysex_dti fn = do
   b <- load_byte_seq fn
   let b_n = length b
   when (b_n /= 0x8CD0) (putStrLn "d50_load_sysex: sysex != 0x8CD0 (36048)")
   when (b_n < 0x8CD0) (error "d50_load_sysex: sysex < 0x8CD0 (36048)")
-  return (map d50_dti_parse_err (sysex_segment b))
+  return (map d50_dsc_parse_err (sysex_segment b))
 
--- | 'dti_data' of 'd50_load_sysex_dti'.
+-- | 'dsc_data' of 'd50_load_sysex_dti'.
 d50_load_sysex_u8 :: FilePath -> IO [U8]
 d50_load_sysex_u8 fn = do
-  dti <- d50_load_sysex_dti fn
-  let dat = concatMap dti_data dti
+  dsc <- d50_load_sysex_dti fn
+  let dat = concatMap dsc_data dsc
   when (length dat /= 0x8780) (error "d50_load_sysex_u8: length != 0x8780 (34688)")
   return dat
 
