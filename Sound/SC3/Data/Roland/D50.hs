@@ -15,6 +15,7 @@ module Sound.SC3.Data.Roland.D50 where
 
 import Control.Monad {- base -}
 import qualified Data.ByteString as B {- bytestring -}
+import Data.Char {- base -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
@@ -94,7 +95,7 @@ u24_pack = fromIntegral . M.bits_21_join . T.t3 . map fromIntegral
 range_pp :: Show a => (a,a) -> String
 range_pp (p,q) = show p ++ " - " ++ show q
 
--- | Segment byte-sequence into SYSEX messages, no verification.
+-- | Segment byte-sequence into SYSEX messages, no verification, ie. seperate at @0xF0@.
 sysex_segment :: [U8] -> [[U8]]
 sysex_segment = tail . T.split_at 0xF0
 
@@ -580,6 +581,17 @@ d50_partial_groups =
 
 -- * COMMON
 
+chorus_type_enum :: [String]
+chorus_type_enum =
+    ["Chorus 1","Chorus 2"
+    ,"Flanger1","Flanger2"
+    ,"FBChorus"
+    ,"Tremolo","C Trem"
+    ,"Dimensn"]
+
+chorus_type_usr :: String
+chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) chorus_type_enum)
+
 -- | Common parameters (4.4).
 --
 -- > length d50_common_factors == 38
@@ -617,7 +629,7 @@ d50_common_factors =
     ,(39,"High EQ Frequency",22,0,eq_hf_usr)
     ,(40,"High EQ Q",9,0,"0.3;0.5;0.7;1.0;1.4;2.0;3.0;4.2;6.0")
     ,(41,"High EQ Gain",25,-12,"-12 - +12")
-    ,(42,"Chorus Type",8,1,"1 - 8")
+    ,(42,"Chorus Type",8,1,chorus_type_usr)
     ,(43,"Chorus Rate",101,0,"0 - 100")
     ,(44,"Chorus Depth",101,0,"0 - 100")
     ,(45,"Chorus Balance",101,0,"0 - 100")
@@ -637,7 +649,7 @@ d50_common_parameters =
 d50_common_groups :: [PARAM_GROUP]
 d50_common_groups =
     [("Tone Name Edit",";;;;;;;;;",[0..9])
-    ,("Structure","Str",[10])
+    ,("Structure","Str;PMut;PBal",[10,46,47])
     ,("P-ENV Edit 1","Velo;TKF",[11..12])
     ,("P-ENV Edit 2","T1;T2;T3;T4",[13..16])
     ,("P-ENV Edit 3","LO;L1;L2;SusL;EndL",[17..21])
@@ -824,7 +836,7 @@ d50_wg_pitch_kf_dti r =
 -- * I/O
 
 -- | Load text file consisting of 448 (0x1C0) white-space separated
--- two-character hexidecimal byte values.
+-- two-character hexidecimal byte values, ie. a D50 patch.
 --
 -- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 -- > let p' = unlines (filter (not . null) (d50_patch_csv p))

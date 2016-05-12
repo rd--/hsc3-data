@@ -66,11 +66,19 @@ lpc_run fn = do
 
 -- * PRINT
 
-d50_print :: String -> ([U8] -> [String]) -> FilePath -> IO ()
-d50_print ix pp fn =
+-- > let fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+-- > d50_print_sysex "0" d50_patch_group_pp fn
+-- > d50_print_sysex "all" (return . patch_name) fn
+d50_print_sysex :: String -> ([U8] -> [String]) -> FilePath -> IO ()
+d50_print_sysex ix pp fn =
     if ix == "all"
-    then d50_load_sysex fn >>= putStrLn . unlines . concatMap pp
-    else d50_load_sysex fn >>= putStrLn . unlines . pp . (!! (read ix))
+    then d50_load_sysex fn >>= putStr . unlines . concatMap pp
+    else d50_load_sysex fn >>= putStr . unlines . pp . (!! (read ix))
+
+-- > let fn = "/home/rohan/cvs/ew/ew-46/D50/FRANCIS.hex.text"
+-- > d50_print_patch_text d50_patch_group_pp fn
+d50_print_patch_text :: ([U8] -> [String]) -> FilePath -> IO ()
+d50_print_patch_text pp fn = load_d50_text fn >>= putStr . unlines . pp
 
 -- * SEND
 
@@ -95,7 +103,8 @@ set_wg_pitch_kf r = send_sysex_def (map d50_dsc_gen (d50_wg_pitch_kf_dti r))
 usage :: IO ()
 usage =
     let h = ["load-on-program-change sysex-file"
-            ,"print {ix|all} {name|pp-group} sysex-file..."
+            ,"print-patch text {csv|pp-group} text-file..."
+            ,"print-sysex {ix|all} {name|pp-group} sysex-file..."
             ,"send patch {tmp|d50-ix} sysex-ix sysex-file"
             ,"set wg-pitch-kf ratio"]
     in putStrLn (unlines h)
@@ -105,8 +114,10 @@ main = do
   a <- getArgs
   case a of
     ["load-on-program-change",fn] -> M.pm_with_midi (lpc_run fn)
-    "print":ix:"name":fn_seq -> mapM_ (d50_print ix (return . patch_name)) fn_seq
-    "print":ix:"pp-group":fn_seq -> mapM_ (d50_print ix d50_patch_group_pp) fn_seq
+    "print-patch":"text":"csv":fn_seq -> mapM_ (d50_print_patch_text d50_patch_csv) fn_seq
+    "print-patch":"text":"pp-group":fn_seq -> mapM_ (d50_print_patch_text d50_patch_group_pp) fn_seq
+    "print-sysex":ix:"name":fn_seq -> mapM_ (d50_print_sysex ix (return . patch_name)) fn_seq
+    "print-sysex":ix:"pp-group":fn_seq -> mapM_ (d50_print_sysex ix d50_patch_group_pp) fn_seq
     ["send","patch",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix d50_ix) (read sysex_ix) fn
-    ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r)
+    ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
     _ -> usage
