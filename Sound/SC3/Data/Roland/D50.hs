@@ -455,6 +455,9 @@ wg_pitch_kf_rat = ([-1,1/2,-1/4,0,1/8,1/4,3/8,1/2,5/6,3/4,7/8,1,5/4,3/2,2],["S1"
 wg_pitch_kf_to_enum :: (Eq n,Fractional n) => n -> Maybe Int
 wg_pitch_kf_to_enum n = findIndex (== n) (fst wg_pitch_kf_rat)
 
+wg_pitch_kf_to_enum_err :: (Eq n,Fractional n) => n -> Int
+wg_pitch_kf_to_enum_err = fromMaybe (error "wg_pitch_kf_to_enum") . wg_pitch_kf_to_enum
+
 tvf_kf_usr :: String
 tvf_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
 
@@ -828,7 +831,7 @@ patch_name = map d50_byte_to_char_err . take 18 . drop (parameter_type_base_addr
 -- > map d50_dsc_gen (d50_wg_pitch_kf_dti (1/4))
 d50_wg_pitch_kf_dti :: (Eq n,Fractional n) => n -> [DSC]
 d50_wg_pitch_kf_dti r =
-    let Just e = wg_pitch_kf_to_enum r
+    let e = wg_pitch_kf_to_enum_err r
         a_seq = map (+ 2) partial_base_address_seq
         f a = (DTI_CMD,0,a,[e])
     in map f a_seq

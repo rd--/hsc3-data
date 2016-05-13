@@ -1,0 +1,130 @@
+# d50-sysex
+
+Roland D-50 utilities.
+
+Midi connections use the environment variables `PM_DEFAULT_INPUT` and
+`PM_DEFAULT_OUTPUT`.
+
+# load-on-program-change
+
+Reads MIDI program change messages and sends the indicated patch from
+a SYSEX file to the _temporary_ memory area of the synthesiser.
+
+# print-patch text
+
+Pretty printer for patch data stored as hexadecimal text.
+
+~~~~
+$ hsc3-d50-sysex print-patch text pp-group ~/uc/invisible/light/d50/d50.hex.text
+Upper Partial 1
+WG Pitch         -> Cors=C4 Fine=0 KF=1
+WG Mod           -> LFO=(+) ENV=(+) Bend=KF
+WG Form          -> Wave=SQU PCM=1
+WG PW            -> PW=0 Velo=0 Aftr=0 LFO=+2 LFOD=0
+TVF              -> Freq=60 Reso=0 KF=1/2 BP=<C4 Blvl=0
+TVF ENV 1        -> Dpth=0 Velo=0 DKF=0 TKF=0
+TVF ENV 2        -> T1=0 T2=50 T3=50 T4=50 T5=50
+TVF ENV 3        -> L1=100 L2=100 L3=100 SusL=100 EndL=0
+TVF MOD          -> LFO=+2 LFOD=0 Aftr=0
+TVA              -> Levl=100 Velo=10 BP=<C4 Blvl=0
+TVA ENV 1        -> T1=0 T2=50 T3=50 T4=50 T5=0
+TVA ENV 2        -> L1=100 L2=100 L3=100 SusL=100 EndL=0
+TVA ENV 3        -> Velo=0 TKF=0
+TVA MOD          -> LFO=+3 LFOD=0 Aftr=0
+
+Upper Partial 2
+WG Pitch         -> Cors=C4 Fine=0 KF=1
+WG Mod           -> LFO=(+) ENV=(+) Bend=KF
+WG Form          -> Wave=SQU PCM=1
+WG PW            -> PW=0 Velo=0 Aftr=0 LFO=+2 LFOD=0
+TVF              -> Freq=60 Reso=0 KF=1/2 BP=<C4 Blvl=0
+TVF ENV 1        -> Dpth=0 Velo=0 DKF=0 TKF=0
+TVF ENV 2        -> T1=0 T2=50 T3=50 T4=50 T5=50
+TVF ENV 3        -> L1=100 L2=100 L3=100 SusL=100 EndL=0
+TVF MOD          -> LFO=+2 LFOD=0 Aftr=0
+TVA              -> Levl=100 Velo=10 BP=<C4 Blvl=0
+TVA ENV 1        -> T1=0 T2=50 T3=50 T4=50 T5=0
+TVA ENV 2        -> L1=100 L2=100 L3=100 SusL=100 EndL=0
+TVA ENV 3        -> Velo=0 TKF=0
+TVA MOD          -> LFO=+3 LFOD=0 Aftr=0
+
+Upper Common
+Tone Name Edit   -> U n u s e d        
+Structure        -> Str=1 PMut=SS PBal=29
+P-ENV Edit 1     -> Velo=2 TKF=0
+P-ENV Edit 2     -> T1=7 T2=0 T3=0 T4=0
+P-ENV Edit 3     -> LO=-9 L1=0 L2=0 SusL=0 EndL=0
+Pitch Mod Edit   -> LFOD=0 Levr=0 Aftr=6
+LFO-1 Edit       -> Wave=TRI Rate=73 Dely=59 Sync=KEY
+LFO-2 Edit       -> Wave=SAW Rate=100 Dely=0 Sync=OFF
+LFO-3 Edit       -> Wave=TRI Rate=1 Dely=0 Sync=ON
+EQ Edit          -> Lf=150 Lg=4 Hf=250 HQ=0.3 Hg=0
+Chorus Edit      -> Type=CHORUS1 Rate=51 Dpth=59 Bal=10
+
+Lower Partial 1
+WG Pitch         -> Cors=C3 Fine=-5 KF=1
+WG Mod           -> LFO=(+) ENV=(+) Bend=KF
+WG Form          -> Wave=SQU PCM=28
+WG PW            -> PW=29 Velo=0 Aftr=7 LFO=+2 LFOD=38
+TVF              -> Freq=38 Reso=0 KF=3/4 BP=<A1 Blvl=7
+TVF ENV 1        -> Dpth=85 Velo=74 DKF=0 TKF=0
+TVF ENV 2        -> T1=38 T2=33 T3=61 T4=0 T5=94
+TVF ENV 3        -> L1=100 L2=64 L3=0 SusL=0 EndL=0
+TVF MOD          -> LFO=+2 LFOD=7 Aftr=2
+TVA              -> Levl=100 Velo=-8 BP=<C4 Blvl=0
+TVA ENV 1        -> T1=33 T2=79 T3=28 T4=31 T5=16
+TVA ENV 2        -> L1=34 L2=54 L3=83 SusL=53 EndL=0
+TVA ENV 3        -> Velo=0 TKF=0
+TVA MOD          -> LFO=-3 LFOD=29 Aftr=0
+
+Lower Partial 2
+WG Pitch         -> Cors=C3 Fine=24 KF=1
+WG Mod           -> LFO=A&L ENV=(+) Bend=NORMAL
+WG Form          -> Wave=SAW PCM=28
+WG PW            -> PW=44 Velo=1 Aftr=5 LFO=+3 LFOD=100
+TVF              -> Freq=31 Reso=18 KF=1/4 BP=<A1 Blvl=1
+TVF ENV 1        -> Dpth=50 Velo=27 DKF=4 TKF=4
+TVF ENV 2        -> T1=38 T2=85 T3=76 T4=87 T5=28
+TVF ENV 3        -> L1=86 L2=86 L3=0 SusL=0 EndL=100
+TVF MOD          -> LFO=+2 LFOD=0 Aftr=2
+TVA              -> Levl=100 Velo=50 BP=<C4 Blvl=0
+TVA ENV 1        -> T1=33 T2=33 T3=43 T4=31 T5=45
+TVA ENV 2        -> L1=83 L2=75 L3=86 SusL=69 EndL=0
+TVA ENV 3        -> Velo=3 TKF=4
+TVA MOD          -> LFO=-2 LFOD=79 Aftr=0
+
+Lower Common
+Tone Name Edit   -> I n l a n d        
+Structure        -> Str=1 PMut=SS PBal=52
+P-ENV Edit 1     -> Velo=2 TKF=3
+P-ENV Edit 2     -> T1=0 T2=0 T3=50 T4=0
+P-ENV Edit 3     -> LO=-9 L1=4 L2=-2 SusL=0 EndL=0
+Pitch Mod Edit   -> LFOD=0 Levr=20 Aftr=7
+LFO-1 Edit       -> Wave=TRI Rate=75 Dely=59 Sync=KEY
+LFO-2 Edit       -> Wave=TRI Rate=61 Dely=42 Sync=OFF
+LFO-3 Edit       -> Wave=TRI Rate=47 Dely=87 Sync=OFF
+EQ Edit          -> Lf=840 Lg=9 Hf=9.5 HQ=0.5 Hg=9
+Chorus Edit      -> Type=CHORUS1 Rate=49 Dpth=33 Bal=6
+
+Patch
+Patch Name Edit  -> I n l a n d                        
+MAIN             -> KEY-MODE=DUAL SPLIT-POINT=24 TONE-BALANCE=0
+Tone Tune        -> LKey=0 UKey=0 LTune=0 UTune=0
+Control Edit     -> Bend=2 AfPB=-12 Port=11 Port=UL Hold=U
+Output Mode Edit -> Mode=1 Rev=9 Rbal=21 Vol=100
+Chase Edit       -> Mode=ULU Levl=0 Time=52
+$
+~~~~
+
+# print-sysex
+
+Pretty printer for patch data stored in plain SYSEX file (ie. the
+format sent by the synthesiser as a BULK DUMP).
+
+# send patch
+
+Send indicated patch from SYSEX file to indicated location at synthesiser.
+
+# set wg-pitch-kf
+
+Set the `WG PITCH KF` for all partials to indicated ratio.
