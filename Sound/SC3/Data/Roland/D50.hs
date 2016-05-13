@@ -379,6 +379,8 @@ parameter_lookup (ty,nm) =
     in fmap (\p -> (ty,p)) (find f (parameter_type_parameters ty))
 
 -- > named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
+-- > named_parameter_to_address (Patch,"Patch Name 1") == Just 384
+-- > named_parameter_to_address (Common Upper,"Tone Name 1") == Just 128
 named_parameter_to_address :: (Parameter_Type,String) -> Maybe ADDRESS
 named_parameter_to_address =
     let f (ty,(n,_,_,_,_)) = let (b,_,_) = parameter_type_extent ty in b + n
@@ -822,6 +824,15 @@ d50_patch_group_pp =
 -- | Patch name
 patch_name :: [U8] -> String
 patch_name = map d50_byte_to_char_err . take 18 . drop (parameter_type_base_address Patch)
+
+-- | Tone name
+--
+-- > tone_name Upper p
+tone_name :: Tone -> [U8] -> String
+tone_name t = map d50_byte_to_char_err . take 10 . drop (parameter_type_base_address (Common t))
+
+patch_name_set :: [U8] -> [String]
+patch_name_set p = [patch_name p,tone_name Upper p,tone_name Lower p]
 
 -- * Tuning
 

@@ -119,7 +119,14 @@ $
 # print-sysex
 
 Pretty printer for patch data stored in plain SYSEX file (ie. the
-format sent by the synthesiser as a BULK DUMP).
+format sent by the synthesiser as a BULK DUMP).  Patch number is
+zero-indexed, or `all`.
+
+~~~~
+$ hsc3-d50-sysex print-sysex 1 name ~/sw/hsc3-data/data/roland/d50/PN-D50-01.syx
+Deep Analog Strngs|SynStrng l|SynStrng 2
+$
+~~~~
 
 # send patch
 

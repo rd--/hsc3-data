@@ -1,4 +1,5 @@
 import Control.Monad {- base -}
+import Data.List {- base -}
 import System.Environment {- base -}
 
 import Sound.OSC {- hosc -}
@@ -66,9 +67,10 @@ lpc_run fn = do
 
 -- * PRINT
 
--- > let fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+-- > let fn = "/home/rohan/data/roland-d50/PND50-01.syx"
 -- > d50_print_sysex "0" d50_patch_group_pp fn
 -- > d50_print_sysex "all" (return . patch_name) fn
+-- > d50_print_sysex "all" (return . intercalate "|" . patch_name_set) fn
 d50_print_sysex :: String -> ([U8] -> [String]) -> FilePath -> IO ()
 d50_print_sysex ix pp fn =
     if ix == "all"
@@ -116,7 +118,7 @@ main = do
     ["load-on-program-change",fn] -> M.pm_with_midi (lpc_run fn)
     "print-patch":"text":"csv":fn_seq -> mapM_ (d50_print_patch_text d50_patch_csv) fn_seq
     "print-patch":"text":"pp-group":fn_seq -> mapM_ (d50_print_patch_text d50_patch_group_pp) fn_seq
-    "print-sysex":ix:"name":fn_seq -> mapM_ (d50_print_sysex ix (return . patch_name)) fn_seq
+    "print-sysex":ix:"name":fn_seq -> mapM_ (d50_print_sysex ix (return . intercalate "|" . patch_name_set)) fn_seq
     "print-sysex":ix:"pp-group":fn_seq -> mapM_ (d50_print_sysex ix d50_patch_group_pp) fn_seq
     ["send","patch",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix d50_ix) (read sysex_ix) fn
     ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
