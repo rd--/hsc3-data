@@ -48,7 +48,7 @@ write_midi0 fn sq =
         tf = M.TicksPerBeat 1024
         ts = M.TimeSignature 4 2 24 8
         tc = M.TempoChange (mk_tempo 60)
-        ev = map (concat . map T.t2_list . map note_to_midi) sq
+        ev = map (concat . map T.t2_to_list . map note_to_midi) sq
         m = (0,ts) : (0,tc) : concat ev
         t = M.fromRealTime tf . M.fromAbsTime . add_track_end . sortOn fst $ m
     in M.exportFile fn (M.Midi ft tf [t])

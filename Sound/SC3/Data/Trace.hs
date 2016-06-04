@@ -83,7 +83,7 @@ trace_load_sf nc fn = do
   return (zip t (transpose d))
 
 trace_to_t2 :: Trace t [n] -> Trace t (n,n)
-trace_to_t2 = map (bimap id T.t2)
+trace_to_t2 = map (bimap id T.t2_from_list)
 
 -- | Variant for loading two-channel trace file.
 trace_load_sf2 :: FilePath -> IO (Trace Time (R,R))
@@ -303,14 +303,14 @@ iota a b n = iota' a b ((b - a) / fromIntegral (n - 1)) n
 -- > interleave2 ("one","two") == "otnweo"
 -- > interleave2 ("long","short") == "lsohnogrt"
 interleave2 :: ([t],[t]) -> [t]
-interleave2 = concat . transpose . T.t2_list
+interleave2 = concat . transpose . T.t2_to_list
 
 -- | Inverse of 'interleave2'.
 --
 -- > interleave2 ("abcd","ABCD") == "aAbBcCdD"
 -- > deinterleave2 "aAbBcCdD" == ("abcd","ABCD")
 deinterleave2 :: [a] -> ([a],[a])
-deinterleave2 = T.t2 . transpose . chunksOf 2
+deinterleave2 = T.t2_from_list . transpose . chunksOf 2
 
 -- * Plotting
 

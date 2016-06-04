@@ -83,11 +83,11 @@ dsc_data (_,_,_,d) = d
 
 -- | Unpack 'U24' to three 'U8'.
 u24_unpack :: U24 -> [U8]
-u24_unpack = map fromIntegral . T.t3_list . M.bits_21_sep . fromIntegral
+u24_unpack = map fromIntegral . T.t3_to_list . M.bits_21_sep . fromIntegral
 
 -- | Pack 'U24' from three 'U8'.
 u24_pack :: [U8] -> U24
-u24_pack = fromIntegral . M.bits_21_join . T.t3 . map fromIntegral
+u24_pack = fromIntegral . M.bits_21_join . T.t3_from_list . map fromIntegral
 
 -- | Range as @p - q@.
 --
@@ -321,7 +321,7 @@ parameter_type_base_address_t3 ty =
 -- > map parameter_type_base_address parameter_type_seq == [0,64,128,192,256,320,384]
 -- > [0,64,128,192,256,320,384] == [0x000,0x040,0x080,0x0C0,0x100,0x140,0x180]
 parameter_type_base_address :: Parameter_Type -> ADDRESS
-parameter_type_base_address = u24_pack . T.t3_list . parameter_type_base_address_t3
+parameter_type_base_address = u24_pack . T.t3_to_list . parameter_type_base_address_t3
 
 partial_base_address_seq :: [ADDRESS]
 partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
