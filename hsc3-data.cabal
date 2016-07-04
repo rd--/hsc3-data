@@ -16,7 +16,8 @@ Cabal-Version:     >= 1.8
 Data-files:        README
 
 Library
-  Build-Depends:   array,
+  Build-Depends:   aeson,
+                   array,
                    base >= 4.8,
                    bifunctors,
                    binary,
@@ -41,6 +42,8 @@ Library
                    safe,
                    split,
                    SVGPath >= 1.1.1,
+                   text,
+                   unordered-containers,
                    vector,
                    X11,
                    xml
@@ -54,6 +57,7 @@ Library
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Image.Type
+                   Sound.SC3.Data.JSON
                    Sound.SC3.Data.LPC
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Easing
