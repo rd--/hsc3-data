@@ -48,3 +48,11 @@ val_list = res_value . A.fromJSON
 val_obj_list :: A.Value -> [A.Object]
 val_obj_list = res_value . A.fromJSON
 
+-- * IO
+
+read_json_obj :: FilePath -> IO A.Object
+read_json_obj fn = do
+  b <- B.readFile fn
+  case json_raw b of
+    Nothing -> error "read_json_obj"
+    Just j -> return j
