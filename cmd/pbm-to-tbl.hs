@@ -2,9 +2,10 @@ import System.Environment {- base -}
 
 import qualified Music.Theory.List as T {- hmt -}
 
+import Sound.SC3.Common.Buffer {- hsc3 -}
+
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
-import qualified Sound.SC3.Lang.Collection as L {- hsc3-lang -}
 import qualified Sound.SC3.Lang.Math.Statistics as L {- hsc3-lang -}
 
 -- > pbm_to_tbl L.mean True "/home/rohan/uc/sp-id/eof/pbm/gs/02.pbm" "/tmp/t.au"
@@ -12,7 +13,7 @@ pbm_to_tbl :: Num n => ([n] -> Double) -> Bool -> FilePath -> FilePath -> IO ()
 pbm_to_tbl avg_f nrm pbm_fn au_fn = do
   i <- P.read_pbm pbm_fn
   let (nc,nr) = P.pbm_dimensions i
-      nrm_f = if nrm then L.normalise_rng (0,fromIntegral nc - 1) (0,1) else id
+      nrm_f = if nrm then normalise_rng (0,fromIntegral nc - 1) (0,1) else id
   print ("(w/nc,h/nr)",(nc,nr))
   let tbl = nrm_f .
             map snd .

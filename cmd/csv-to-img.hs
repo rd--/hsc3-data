@@ -1,6 +1,5 @@
 -- | Convert a CSV file having bit-indices of the form (row,column) to PBM file.
 
-import Data.List {- base -}
 import System.Environment {- base -}
 import qualified Text.CSV.Lazy.String as C {- lazy-csv -}
 
@@ -16,8 +15,10 @@ csv_load f fn = do
 csv_load_double :: FilePath -> IO [[Double]]
 csv_load_double = csv_load read
 
+{-
 csv_load_int :: FilePath -> IO [[Int]]
 csv_load_int = csv_load read
+-}
 
 csv_load_double_round :: FilePath -> IO [[Int]]
 csv_load_double_round = fmap (map (map round)) . csv_load_double
