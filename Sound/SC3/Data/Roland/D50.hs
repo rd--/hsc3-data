@@ -95,9 +95,10 @@ u24_pack = fromIntegral . M.bits_21_join . T.t3_from_list . map fromIntegral
 range_pp :: Show a => (a,a) -> String
 range_pp (p,q) = show p ++ " - " ++ show q
 
--- | Segment byte-sequence into SYSEX messages, no verification, ie. seperate at @0xF0@.
+-- | Segment byte-sequence into SYSEX messages, no verification,
+-- ie. seperate before each @0xF0@.
 sysex_segment :: [U8] -> [[U8]]
-sysex_segment = tail . T.split_at 0xF0
+sysex_segment = tail . T.split_before 0xF0
 
 -- * ROLAND
 
