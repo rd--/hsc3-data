@@ -7,8 +7,11 @@ import qualified Data.ByteString.Lazy as B {- bytestring -}
 import qualified Data.HashMap.Strict as M {- unordered-containers -}
 import qualified Data.Text as T {- text -}
 
-json_raw :: B.ByteString -> Maybe A.Object
-json_raw = A.decode
+json_decode_array :: B.ByteString -> Maybe A.Array
+json_decode_array = A.decode
+
+json_decode_object :: B.ByteString -> Maybe A.Object
+json_decode_object = A.decode
 
 obj_lookup :: String -> A.Object -> Maybe A.Value
 obj_lookup k o = M.lookup (T.pack k) o
@@ -50,9 +53,15 @@ val_obj_list = res_value . A.fromJSON
 
 -- * IO
 
-read_json_obj :: FilePath -> IO A.Object
-read_json_obj fn = do
+read_json :: (B.ByteString -> Maybe t) -> FilePath -> IO t
+read_json decode_f fn = do
   b <- B.readFile fn
-  case json_raw b of
-    Nothing -> error "read_json_obj"
+  case decode_f b of
+    Nothing -> error "read_json: decode failed"
     Just j -> return j
+
+read_json_obj :: FilePath -> IO A.Object
+read_json_obj = read_json json_decode_object
+
+read_json_array :: FilePath -> IO A.Array
+read_json_array = read_json json_decode_array
