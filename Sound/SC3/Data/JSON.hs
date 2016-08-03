@@ -13,6 +13,24 @@ json_decode_array = A.decode
 json_decode_object :: B.ByteString -> Maybe A.Object
 json_decode_object = A.decode
 
+from_json_err :: A.FromJSON a => A.Value -> a
+from_json_err o =
+    case A.fromJSON o of
+      A.Error err -> error err
+      A.Success res -> res
+
+value_to_array :: A.Value -> A.Array
+value_to_array o =
+    case o of
+      A.Array v -> v
+      _ -> error "value_to_array"
+
+value_to_object :: A.Value -> A.Object
+value_to_object v =
+    case v of
+      A.Object o -> o
+      _ -> error "value_to_object"
+
 obj_lookup :: String -> A.Object -> Maybe A.Value
 obj_lookup k o = M.lookup (T.pack k) o
 
