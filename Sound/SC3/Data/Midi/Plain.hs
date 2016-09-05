@@ -16,16 +16,19 @@ import qualified Codec.Midi as M {- HCodecs -}
 -- | Time in fractional seconds.
 type Time = Double
 
--- | ((start-time,duration),(midi-note-number,midi-channel))
-type Note = ((Time,Time),(Int,Int))
+-- | (midi-note-number,midi-velocity,midi-channel)
+type Event = (Int,Int,Int)
 
--- | 'T.Wseq' of (midi-note-number,midi-channel)
-type SEQ = T.Wseq Time (Int,Int)
+-- | ((start-time,duration),event)
+type Note = ((Time,Time),Event)
+
+-- | 'T.Wseq' of 'Event'.
+type SEQ = T.Wseq Time Event
 
 -- | Translate 'Note' to on & off messages.
 note_to_midi :: Note -> T.T2 (Time,M.Message)
-note_to_midi ((st,dur),(mn,ch)) =
-    let n_on = (st, M.NoteOn ch mn 127)
+note_to_midi ((st,dur),(mn,vel,ch)) =
+    let n_on = (st, M.NoteOn ch mn vel)
         n_off = (st + dur, M.NoteOff ch mn 0)
     in (n_on,n_off)
 
@@ -58,11 +61,12 @@ track_to_wseq =
     let f (tm,msg) = case msg of
                        M.NoteOn ch mnn vel ->
                            let ty = if vel == 0 then T.Off else T.On
-                           in Just (tm,ty (mnn,ch))
-                       M.NoteOff ch mnn _ ->
-                           Just (tm,T.Off (mnn,ch))
+                           in Just (tm,ty (mnn,vel,ch))
+                       M.NoteOff ch mnn vel ->
+                           Just (tm,T.Off (mnn,vel,ch))
                        _ -> Nothing
-    in T.tseq_on_off_to_wseq (==) . mapMaybe f
+        event_eq (n0,_,c0) (n1,_,c1) = n0 == n1 && c0 == c1
+    in T.tseq_on_off_to_wseq event_eq . mapMaybe f
 
 -- | Load Type-0 or Type-1 MIDI file as 'SEQ' data.  Ignores
 -- everything except note on and off messages.
@@ -84,7 +88,7 @@ write_csv_mnd :: FilePath -> [SEQ] -> IO ()
 write_csv_mnd fn =
     T.csv_mnd_write_tseq 4 fn .
     T.midi_wseq_to_midi_tseq .
-    T.tseq_map (\(mn,ch) -> (mn,127,T.int_to_word8 ch)) .
+    T.tseq_map (\(mn,vel,ch) -> (mn,vel,T.int_to_word8 ch)) .
     seq_merge
 
 seq_merge :: [SEQ] -> SEQ
