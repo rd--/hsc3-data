@@ -43,6 +43,9 @@ obj_lookup_err k o =
 obj_lookup_str :: String -> A.Object -> String
 obj_lookup_str k = val_string . obj_lookup_err k
 
+obj_lookup_str' :: String -> A.Object -> Maybe String
+obj_lookup_str' k = fmap val_string . obj_lookup k
+
 obj_lookup_int :: String -> A.Object -> Int
 obj_lookup_int k = val_int . obj_lookup_err k
 
