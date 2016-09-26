@@ -88,7 +88,7 @@ write_csv_mnd :: FilePath -> [SEQ] -> IO ()
 write_csv_mnd fn =
     T.csv_mnd_write_tseq 4 fn .
     T.midi_wseq_to_midi_tseq .
-    T.tseq_map (\(mn,vel,ch) -> (mn,vel,T.int_to_word8 ch)) .
+    T.tseq_map (\(mn,vel,ch) -> (mn,vel,T.int_to_word8 ch,[])) .
     seq_merge
 
 seq_merge :: [SEQ] -> SEQ
