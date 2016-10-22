@@ -78,7 +78,7 @@ read_json :: (B.ByteString -> Maybe t) -> FilePath -> IO t
 read_json decode_f fn = do
   b <- B.readFile fn
   case decode_f b of
-    Nothing -> error "read_json: decode failed"
+    Nothing -> error ("read_json: decode failed: " ++ fn)
     Just j -> return j
 
 read_json_obj :: FilePath -> IO A.Object
