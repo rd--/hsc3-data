@@ -152,7 +152,7 @@ pvoc_vec_f32_bin (hdr,(_,nf,vec)) (ch,bin) =
 
 {-
 
-import Sound.SC3.Plot
+import Sound.SC3.Plot {- hsc3-plot -}
 
 let fn = "/home/rohan/data/audio/pf-c5.pvx"
 
