@@ -6,10 +6,10 @@ import qualified Music.Theory.Time.Seq as T {- hmt -}
 import qualified Sound.SC3 as S {- hsc3 -}
 import qualified Sound.SC3.Data.Image.PGM as I {- hmt-diagrams -}
 
-load_csv :: FilePath -> IO (T.Wseq Double (Double,Double,C.Channel))
+load_csv :: FilePath -> IO (T.Wseq Double (C.Event Double))
 load_csv = fmap C.midi_tseq_to_midi_wseq . C.csv_mnd_read_tseq
 
-wseq_to_pgm :: (Int,Int) -> T.Wseq Double (Double,Double,C.Channel) -> I.PGM
+wseq_to_pgm :: (Int,Int) -> T.Wseq Double (C.Event Double) -> I.PGM
 wseq_to_pgm (w,h) sq =
   let (_,et) = T.wseq_tspan sq
       tm_incr = et / fromIntegral w
@@ -17,7 +17,7 @@ wseq_to_pgm (w,h) sq =
       nd = zip [0..] (map (T.wseq_at_window sq) tm_seq)
       to_y mnn = h - 1 - floor (S.linlin mnn 21 108 0 (fromIntegral h))
       to_grey = floor . (* 255) . (/ 127)
-      to_entry (x,(_,(mnn,vel,_))) = ((to_y mnn,x),to_grey vel)
+      to_entry (x,(_,(mnn,vel,_,_))) = ((to_y mnn,x),to_grey vel)
       uncollate (k,v) = zip (repeat k) v
       pgm = I.pgm_from_list (h,w) (concatMap (map to_entry . uncollate) nd)
   in I.pgm_invert pgm

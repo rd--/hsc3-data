@@ -35,14 +35,16 @@ pbm_to_csv_mnd opt pbm_fn csv_fn = do
   du_mod <- tbl_rd du_tbl
   mnn_mod <- tbl_rd mnn_tbl
   let ((nr,nc),bi') = let z = P.pbm_to_bitindices i
-                      in if le then B.bitindices_leading_edges B.RIGHT z else z
+                      in if le
+                         then B.bitindices_leading_edges B.RIGHT z
+                         else z
       bi = sortBy (compare `on` snd) bi'
       mnn_sq = let sq = zipWith (*) [mnn,mnn + mnn_incr .. ] (resamp1 nr mnn_mod)
                in if inv then reverse sq else sq
       tm_sq = T.dx_d 0 (map (* tm_incr) (resamp1 nc tm_mod))
       vel_sq = map (* vel) (resamp1 nc vel_mod)
       du_sq = map (* du) (resamp1 nc du_mod)
-      f (y,x) = ((tm_sq !! x,du_sq !! y),(mnn_sq !! y,vel_sq !! x,0))
+      f (y,x) = ((tm_sq !! x,du_sq !! y),(mnn_sq !! y,vel_sq !! x,0,[]))
   putStrLn (unwords . map (T.double_pp 3) $ mnn_sq)
   T.csv_mnd_write_tseq 4 csv_fn (T.midi_wseq_to_midi_tseq (map f bi))
 
