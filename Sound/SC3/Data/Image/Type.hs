@@ -1,5 +1,5 @@
 -- | Basic image types.  Indexes are in (x,y) or (column,row) form.
--- Origin is upper right.  Layout is row order unless indicated
+-- Origin is upper left.  Layout is row order unless indicated
 -- otherwise.
 module Sound.SC3.Data.Image.Type where
 
