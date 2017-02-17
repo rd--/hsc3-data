@@ -219,7 +219,7 @@ trace_table = map snd .:: trace_linearise_w
 -- | Variant of 'trace_linearize' assuming /t/ is normalised.
 --
 -- > trace_rescale lerpd [(0,[1]),(2,[2])] 3 == [(0,[1]),(0.5,[1.25]),(1,[1.5])]
-trace_rescale :: (Eq t,Ord t,Fractional t) => Lerp_F t a b -> Trace t a -> Int -> Trace t b
+trace_rescale :: (Ord t,Fractional t) => Lerp_F t a b -> Trace t a -> Int -> Trace t b
 trace_rescale lerp_f t = map (trace_lookup_err lerp_f t) . iota 0 1
 
 -- | Interpolate maintaining temporal shape, divide each step in half.
@@ -335,7 +335,7 @@ trace2_plot_tbl =
 
 -- * CSV
 
-trace_write_csv :: Show n => (n -> String,a -> [String]) -> FilePath -> [(n,a)] -> IO ()
+trace_write_csv :: (n -> String,a -> [String]) -> FilePath -> [(n,a)] -> IO ()
 trace_write_csv (n_pp,a_pp) fn =
     let f (n,a) = intercalate "," (n_pp n : a_pp a)
     in writeFile fn . unlines . map f
