@@ -127,7 +127,7 @@ gs_to_rgb8 :: RealFrac n => n -> RGB8
 gs_to_rgb8 x = let x' = floor (x * 255) in I.PixelRGB8 x' x' x'
 
 -- | Column order vector.
-img_gs_vec_co :: (V.Storable n,RealFrac n) => (RGB8 -> n) -> IMAGE -> V.Vector n
+img_gs_vec_co :: V.Storable n => (RGB8 -> n) -> IMAGE -> V.Vector n
 img_gs_vec_co to_gs i =
     let (w,h) = img_dimensions i
         f n = let (x,y) = n `divMod` h in to_gs (I.pixelAt i x y)

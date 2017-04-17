@@ -273,7 +273,7 @@ lerpd = lerp_pw lerpn
 -- * Geometry
 
 -- | Transform 'Ls' to 'Trace', /t/ is distance along line.
-ls_with_distance :: (Eq t,Floating t) => Ls t -> Trace t (Pt t)
+ls_with_distance :: Floating t => Ls t -> Trace t (Pt t)
 ls_with_distance p =
     let d = T.dx_d 0 (zipWith pt_distance p (tail p))
     in zip d p

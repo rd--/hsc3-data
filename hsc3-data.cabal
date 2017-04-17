@@ -54,6 +54,7 @@ Library
                    Sound.SC3.Data.Bitmap.PBM
                    Sound.SC3.Data.Bitmap.Type
                    Sound.SC3.Data.Buffer
+                   Sound.SC3.Data.CMUdict
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Image.Type
@@ -64,10 +65,12 @@ Library
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
                    Sound.SC3.Data.Midi.Plain
+                   Sound.SC3.Data.Modal
                    Sound.SC3.Data.PVOC
                    Sound.SC3.Data.Roland.D50
                    Sound.SC3.Data.SVG
                    Sound.SC3.Data.Trace
+                   Sound.SC3.Data.Vowel
                    Sound.SC3.Data.X11.Ptr
                    Sound.SC3.Data.XML.KML
                    Sound.SC3.Data.Yamaha.DX7
