@@ -10,7 +10,7 @@ import Sound.SC3 {- hsc3 -}
 import qualified Sound.File.NeXT as F {- hsc3-sf -}
 
 -- | Message to send data to scsynth via temporary audio file.
-b_tmp_allocRead :: (Floating n,Real n) => Int -> [n] -> IO Message
+b_tmp_allocRead :: Real n => Int -> [n] -> IO Message
 b_tmp_allocRead nid d = do
   tmp <- getTemporaryDirectory
   let nc = 1
