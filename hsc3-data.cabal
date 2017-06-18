@@ -48,7 +48,8 @@ Library
                    X11,
                    xml
   GHC-Options:     -Wall -fwarn-tabs
-  Exposed-modules: Sound.SC3.Data.ATS
+  Exposed-modules: Sound.SC3.Data.Array.CSV
+                   Sound.SC3.Data.ATS
                    Sound.SC3.Data.Bitmap.Font.BDF
                    Sound.SC3.Data.Bitmap.Font.CP437
                    Sound.SC3.Data.Bitmap.PBM
