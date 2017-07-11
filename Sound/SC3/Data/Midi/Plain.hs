@@ -13,6 +13,8 @@ import qualified Music.Theory.Time.Seq as T {- hmt -}
 
 import qualified Codec.Midi as M {- HCodecs -}
 
+-- * Types
+
 -- | Time in fractional seconds.
 type Time = Double
 
@@ -28,6 +30,41 @@ type Note = ((Time,Time),Event)
 -- | 'T.Wseq' of 'Event'.
 type SEQ = T.Wseq Time Event
 
+-- * MIDI arcana
+
+-- | Translate pulses per minute to micro seconds per quarter note.
+--
+-- > map ppm_to_mspqn [60,120,240] == [10^6,5*10^5,25*10^4]
+ppm_to_mspqn :: Int -> Int
+ppm_to_mspqn ppm =
+    let microseconds_per_minute = 60000000
+    in microseconds_per_minute `div` ppm
+
+-- | Tempo change, given in pulses per minute.
+--
+-- > mk_tempo_change 60 == M.TempoChange (10^6)
+mk_tempo_change :: Int -> M.Message
+mk_tempo_change = M.TempoChange . ppm_to_mspqn
+
+-- | Table mapping time signature denominator to MIDI notation.
+ts_denominator_tbl :: [(Int,Int)]
+ts_denominator_tbl = [(1,0),(2,1),(4,2),(8,3),(16,4),(32,5),(64,6)]
+
+mk_denominator :: Int -> Int
+mk_denominator d = T.lookup_err d ts_denominator_tbl
+
+-- | Make time signature with default values for ticks-per-pulse and 1/32-per-1/4.
+--
+-- > mk_time_signature (4,4) == M.TimeSignature 4 2 24 8
+mk_time_signature :: (Int,Int) -> M.Message
+mk_time_signature (nn,d) =
+    let dd = mk_denominator d
+        cc = 24 -- midi ticks per pulse
+        bb = 8 -- 1/32 per 1/4
+    in M.TimeSignature nn dd cc bb
+
+-- * Write
+
 -- | Translate 'Note' to on & off messages or time-signature message.
 note_to_midi :: Note -> [(Time,M.Message)]
 note_to_midi ((st,dur),(msg,d1,d2)) =
@@ -41,30 +78,6 @@ note_to_midi ((st,dur),(msg,d1,d2)) =
 -- | Add 'M.TrackEnd' message.
 add_track_end :: T.Tseq t M.Message -> T.Tseq t M.Message
 add_track_end tr = tr ++ [(fst (last tr),M.TrackEnd)]
-
--- | Translate pulses per minute to micro seconds per quarter note.
---
--- > map ppm_to_mspqn [60,120,240] == [10^6,5*10^5,25*10^4]
-ppm_to_mspqn :: Int -> Int
-ppm_to_mspqn ppm =
-    let microseconds_per_minute = 60000000
-    in microseconds_per_minute `div` ppm
-
--- > mk_tempo_change 60 == M.TempoChange (10^6)
-mk_tempo_change :: Int -> M.Message
-mk_tempo_change = M.TempoChange . ppm_to_mspqn
-
-mk_denominator :: Int -> Int
-mk_denominator d = T.lookup_err d [(1,0),(2,1),(4,2),(8,3),(16,4),(32,5),(64,6)]
-
--- > mk_time_signature (4,4) == M.TimeSignature 4 2 24 8
--- > mk_time_signature (3,4)
-mk_time_signature :: (Int,Int) -> M.Message
-mk_time_signature (nn,d) =
-    let dd = mk_denominator d
-        cc = 24 -- midi ticks per pulse
-        bb = 8 -- 1/32 per 1/4
-    in M.TimeSignature nn dd cc bb
 
 write_midi0_opt :: Maybe Int -> Maybe (Int,Int) -> FilePath -> [SEQ] -> IO ()
 write_midi0_opt m_tc m_ts fn sq =
@@ -80,6 +93,8 @@ write_midi0_opt m_tc m_ts fn sq =
 -- | Write Type-0 midi file, tempo is 60, time signature is 4/4.
 write_midi0 :: FilePath -> [SEQ] -> IO ()
 write_midi0 = write_midi0_opt (Just 60) (Just (4,4))
+
+-- * Read
 
 track_to_wseq :: [(Time,M.Message)] -> SEQ
 track_to_wseq =
@@ -108,6 +123,11 @@ read_midi fn = do
                   then return sq
                   else error (show ("read_midi: not type-0 or type-1",ty))
 
+-- * CSV
+
+seq_merge :: [SEQ] -> SEQ
+seq_merge = foldr T.wseq_merge []
+
 -- | Write MND type CSV file.
 write_csv_mnd :: FilePath -> [SEQ] -> IO ()
 write_csv_mnd fn =
@@ -115,6 +135,3 @@ write_csv_mnd fn =
     T.midi_wseq_to_midi_tseq .
     T.tseq_map (\(mn,vel,ch) -> (mn,vel,T.int_to_word8 ch,[])) .
     seq_merge
-
-seq_merge :: [SEQ] -> SEQ
-seq_merge = foldr T.wseq_merge []
