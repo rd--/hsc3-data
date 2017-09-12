@@ -1,6 +1,6 @@
 module Sound.SC3.Data.Array.CSV where
 
-import Sound.OSC.Type {- hosc -}
+import Sound.OSC.Datum {- hosc -}
 
 import qualified Music.Theory.Array.CSV as T {- hmt -}
 
