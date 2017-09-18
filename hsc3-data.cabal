@@ -43,6 +43,7 @@ Library
                    split,
                    SVGPath >= 1.1.1,
                    text,
+                   time,
                    unordered-containers,
                    vector,
                    X11,
@@ -70,6 +71,7 @@ Library
                    Sound.SC3.Data.PVOC
                    Sound.SC3.Data.Roland.D50
                    Sound.SC3.Data.SVG
+                   Sound.SC3.Data.Timestamp
                    Sound.SC3.Data.Trace
                    Sound.SC3.Data.URandom
                    Sound.SC3.Data.Vowel
