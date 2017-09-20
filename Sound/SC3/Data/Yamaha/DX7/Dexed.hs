@@ -17,6 +17,13 @@ CtrlDX::CtrlDX > printf("CtrlDX {name=\"%s\", steps=%d, offset=%d, display_value
 
 data CtrlDX = CtrlDX {name :: String, steps :: Int, offset :: Int, display_value :: Int}
 
+-- > length non_dx7_param == 4
+non_dx7_param :: [String]
+non_dx7_param = ["Cutoff", "Resonance", "Output", "MASTER TUNE ADJ"]
+
+dx7_param_0 :: Int
+dx7_param_0 = length non_dx7_param
+
 -- > length dexed_param == 145
 -- > sort (map offset dexed_param) == [0 .. 144]
 dexed_param :: [CtrlDX]
@@ -176,23 +183,23 @@ dexed_param_dx7 =
     let p = map (\(i,c) -> let dx7_i = offset c
                                dx7_nm = DX7.dx7_parameter_name dx7_i
                            in (dx7_i,i,dx7_nm))
-            (zip [0..] dexed_param)
+            (zip [dx7_param_0 ..] dexed_param)
     in sortOn (\(i,_,_) -> i) p
 
 -- | Map from DX7 parameter index to DEXED parameter index.
 dx7_to_dexed_tbl :: M.Map Int Int
-dx7_to_dexed_tbl = M.fromList (map (\(i,c) -> (offset c,i)) (zip [0..] dexed_param))
+dx7_to_dexed_tbl = M.fromList (map (\(i,c) -> (offset c,i)) (zip [dx7_param_0 ..] dexed_param))
 
 -- | 'M.lookup' of 'dx7_to_dexed_tbl'.
 --
--- > map dx7_to_dexed [123,125,134,144] == [29,31,0,9]
+-- > map dx7_to_dexed [123,125,134,144] == [33,35,4,13]
 dx7_to_dexed :: Int -> Int
 dx7_to_dexed = fromMaybe (error "dx7_to_dexed") . flip M.lookup dx7_to_dexed_tbl
 
 {-
-import Sound.OSC.FD
+import Sound.OSC.FD {- hosc -}
 fd <- openUDP "127.0.0.1" 57210
-let p_set ix val = sendMessage fd (Message "/p_set" [Int32 (dx7_to_dexed ix),Float val])
+let p_set ix val = sendMessage fd (Message "/p_set" [int32 (dx7_to_dexed ix),Float val])
 p_set 123 1 -- OP 1 OSC FREQ COARSE
 p_set 125 1 -- OP 1 OSC DETUNE
 p_set 134 0.5 -- ALGORITHM #
