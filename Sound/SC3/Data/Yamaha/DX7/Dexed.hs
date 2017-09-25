@@ -6,7 +6,175 @@ import Data.Maybe {- base -}
 
 import qualified Data.Map as M {- containers -}
 
-import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
+data Ctrl = Ctrl {label :: String, idx :: Int}
+            deriving (Eq,Show)
+
+{-
+
+    for(i=0;i < ctrl.size(); i++) {
+        printf("Ctrl {label=\"%s\", idx=%d}\n",
+               ctrl[i]->label.toStdString().c_str(),
+               ctrl[i]->idx);
+    }
+
+-}
+dexed_param :: [Ctrl]
+dexed_param =
+    [Ctrl {label="Cutoff", idx=0}
+    ,Ctrl {label="Resonance", idx=1}
+    ,Ctrl {label="Output", idx=2}
+    ,Ctrl {label="MASTER TUNE ADJ", idx=3}
+    ,Ctrl {label="ALGORITHM", idx=4}
+    ,Ctrl {label="FEEDBACK", idx=5}
+    ,Ctrl {label="OSC KEY SYNC", idx=6}
+    ,Ctrl {label="LFO SPEED", idx=7}
+    ,Ctrl {label="LFO DELAY", idx=8}
+    ,Ctrl {label="LFO PM DEPTH", idx=9}
+    ,Ctrl {label="LFO AM DEPTH", idx=10}
+    ,Ctrl {label="LFO KEY SYNC", idx=11}
+    ,Ctrl {label="LFO WAVE", idx=12}
+    ,Ctrl {label="MIDDLE C", idx=13}
+    ,Ctrl {label="P MODE SENS.", idx=14}
+    ,Ctrl {label="PITCH EG RATE 1", idx=15}
+    ,Ctrl {label="PITCH EG RATE 2", idx=16}
+    ,Ctrl {label="PITCH EG RATE 3", idx=17}
+    ,Ctrl {label="PITCH EG RATE 4", idx=18}
+    ,Ctrl {label="PITCH EG LEVEL 1", idx=19}
+    ,Ctrl {label="PITCH EG LEVEL 2", idx=20}
+    ,Ctrl {label="PITCH EG LEVEL 3", idx=21}
+    ,Ctrl {label="PITCH EG LEVEL 4", idx=22}
+    ,Ctrl {label="OP1 EG RATE 1", idx=23}
+    ,Ctrl {label="OP1 EG RATE 2", idx=24}
+    ,Ctrl {label="OP1 EG RATE 3", idx=25}
+    ,Ctrl {label="OP1 EG RATE 4", idx=26}
+    ,Ctrl {label="OP1 EG LEVEL 1", idx=27}
+    ,Ctrl {label="OP1 EG LEVEL 2", idx=28}
+    ,Ctrl {label="OP1 EG LEVEL 3", idx=29}
+    ,Ctrl {label="OP1 EG LEVEL 4", idx=30}
+    ,Ctrl {label="OP1 OUTPUT LEVEL", idx=31}
+    ,Ctrl {label="OP1 MODE", idx=32}
+    ,Ctrl {label="OP1 F COARSE", idx=33}
+    ,Ctrl {label="OP1 F FINE", idx=34}
+    ,Ctrl {label="OP1 OSC DETUNE", idx=35}
+    ,Ctrl {label="OP1 BREAK POINT", idx=36}
+    ,Ctrl {label="OP1 L SCALE DEPTH", idx=37}
+    ,Ctrl {label="OP1 R SCALE DEPTH", idx=38}
+    ,Ctrl {label="OP1 L KEY SCALE", idx=39}
+    ,Ctrl {label="OP1 R KEY SCALE", idx=40}
+    ,Ctrl {label="OP1 RATE SCALING", idx=41}
+    ,Ctrl {label="OP1 A MOD SENS.", idx=42}
+    ,Ctrl {label="OP1 KEY VELOCITY", idx=43}
+    ,Ctrl {label="OP1 SWITCH", idx=44}
+    ,Ctrl {label="OP2 EG RATE 1", idx=45}
+    ,Ctrl {label="OP2 EG RATE 2", idx=46}
+    ,Ctrl {label="OP2 EG RATE 3", idx=47}
+    ,Ctrl {label="OP2 EG RATE 4", idx=48}
+    ,Ctrl {label="OP2 EG LEVEL 1", idx=49}
+    ,Ctrl {label="OP2 EG LEVEL 2", idx=50}
+    ,Ctrl {label="OP2 EG LEVEL 3", idx=51}
+    ,Ctrl {label="OP2 EG LEVEL 4", idx=52}
+    ,Ctrl {label="OP2 OUTPUT LEVEL", idx=53}
+    ,Ctrl {label="OP2 MODE", idx=54}
+    ,Ctrl {label="OP2 F COARSE", idx=55}
+    ,Ctrl {label="OP2 F FINE", idx=56}
+    ,Ctrl {label="OP2 OSC DETUNE", idx=57}
+    ,Ctrl {label="OP2 BREAK POINT", idx=58}
+    ,Ctrl {label="OP2 L SCALE DEPTH", idx=59}
+    ,Ctrl {label="OP2 R SCALE DEPTH", idx=60}
+    ,Ctrl {label="OP2 L KEY SCALE", idx=61}
+    ,Ctrl {label="OP2 R KEY SCALE", idx=62}
+    ,Ctrl {label="OP2 RATE SCALING", idx=63}
+    ,Ctrl {label="OP2 A MOD SENS.", idx=64}
+    ,Ctrl {label="OP2 KEY VELOCITY", idx=65}
+    ,Ctrl {label="OP2 SWITCH", idx=66}
+    ,Ctrl {label="OP3 EG RATE 1", idx=67}
+    ,Ctrl {label="OP3 EG RATE 2", idx=68}
+    ,Ctrl {label="OP3 EG RATE 3", idx=69}
+    ,Ctrl {label="OP3 EG RATE 4", idx=70}
+    ,Ctrl {label="OP3 EG LEVEL 1", idx=71}
+    ,Ctrl {label="OP3 EG LEVEL 2", idx=72}
+    ,Ctrl {label="OP3 EG LEVEL 3", idx=73}
+    ,Ctrl {label="OP3 EG LEVEL 4", idx=74}
+    ,Ctrl {label="OP3 OUTPUT LEVEL", idx=75}
+    ,Ctrl {label="OP3 MODE", idx=76}
+    ,Ctrl {label="OP3 F COARSE", idx=77}
+    ,Ctrl {label="OP3 F FINE", idx=78}
+    ,Ctrl {label="OP3 OSC DETUNE", idx=79}
+    ,Ctrl {label="OP3 BREAK POINT", idx=80}
+    ,Ctrl {label="OP3 L SCALE DEPTH", idx=81}
+    ,Ctrl {label="OP3 R SCALE DEPTH", idx=82}
+    ,Ctrl {label="OP3 L KEY SCALE", idx=83}
+    ,Ctrl {label="OP3 R KEY SCALE", idx=84}
+    ,Ctrl {label="OP3 RATE SCALING", idx=85}
+    ,Ctrl {label="OP3 A MOD SENS.", idx=86}
+    ,Ctrl {label="OP3 KEY VELOCITY", idx=87}
+    ,Ctrl {label="OP3 SWITCH", idx=88}
+    ,Ctrl {label="OP4 EG RATE 1", idx=89}
+    ,Ctrl {label="OP4 EG RATE 2", idx=90}
+    ,Ctrl {label="OP4 EG RATE 3", idx=91}
+    ,Ctrl {label="OP4 EG RATE 4", idx=92}
+    ,Ctrl {label="OP4 EG LEVEL 1", idx=93}
+    ,Ctrl {label="OP4 EG LEVEL 2", idx=94}
+    ,Ctrl {label="OP4 EG LEVEL 3", idx=95}
+    ,Ctrl {label="OP4 EG LEVEL 4", idx=96}
+    ,Ctrl {label="OP4 OUTPUT LEVEL", idx=97}
+    ,Ctrl {label="OP4 MODE", idx=98}
+    ,Ctrl {label="OP4 F COARSE", idx=99}
+    ,Ctrl {label="OP4 F FINE", idx=100}
+    ,Ctrl {label="OP4 OSC DETUNE", idx=101}
+    ,Ctrl {label="OP4 BREAK POINT", idx=102}
+    ,Ctrl {label="OP4 L SCALE DEPTH", idx=103}
+    ,Ctrl {label="OP4 R SCALE DEPTH", idx=104}
+    ,Ctrl {label="OP4 L KEY SCALE", idx=105}
+    ,Ctrl {label="OP4 R KEY SCALE", idx=106}
+    ,Ctrl {label="OP4 RATE SCALING", idx=107}
+    ,Ctrl {label="OP4 A MOD SENS.", idx=108}
+    ,Ctrl {label="OP4 KEY VELOCITY", idx=109}
+    ,Ctrl {label="OP4 SWITCH", idx=110}
+    ,Ctrl {label="OP5 EG RATE 1", idx=111}
+    ,Ctrl {label="OP5 EG RATE 2", idx=112}
+    ,Ctrl {label="OP5 EG RATE 3", idx=113}
+    ,Ctrl {label="OP5 EG RATE 4", idx=114}
+    ,Ctrl {label="OP5 EG LEVEL 1", idx=115}
+    ,Ctrl {label="OP5 EG LEVEL 2", idx=116}
+    ,Ctrl {label="OP5 EG LEVEL 3", idx=117}
+    ,Ctrl {label="OP5 EG LEVEL 4", idx=118}
+    ,Ctrl {label="OP5 OUTPUT LEVEL", idx=119}
+    ,Ctrl {label="OP5 MODE", idx=120}
+    ,Ctrl {label="OP5 F COARSE", idx=121}
+    ,Ctrl {label="OP5 F FINE", idx=122}
+    ,Ctrl {label="OP5 OSC DETUNE", idx=123}
+    ,Ctrl {label="OP5 BREAK POINT", idx=124}
+    ,Ctrl {label="OP5 L SCALE DEPTH", idx=125}
+    ,Ctrl {label="OP5 R SCALE DEPTH", idx=126}
+    ,Ctrl {label="OP5 L KEY SCALE", idx=127}
+    ,Ctrl {label="OP5 R KEY SCALE", idx=128}
+    ,Ctrl {label="OP5 RATE SCALING", idx=129}
+    ,Ctrl {label="OP5 A MOD SENS.", idx=130}
+    ,Ctrl {label="OP5 KEY VELOCITY", idx=131}
+    ,Ctrl {label="OP5 SWITCH", idx=132}
+    ,Ctrl {label="OP6 EG RATE 1", idx=133}
+    ,Ctrl {label="OP6 EG RATE 2", idx=134}
+    ,Ctrl {label="OP6 EG RATE 3", idx=135}
+    ,Ctrl {label="OP6 EG RATE 4", idx=136}
+    ,Ctrl {label="OP6 EG LEVEL 1", idx=137}
+    ,Ctrl {label="OP6 EG LEVEL 2", idx=138}
+    ,Ctrl {label="OP6 EG LEVEL 3", idx=139}
+    ,Ctrl {label="OP6 EG LEVEL 4", idx=140}
+    ,Ctrl {label="OP6 OUTPUT LEVEL", idx=141}
+    ,Ctrl {label="OP6 MODE", idx=142}
+    ,Ctrl {label="OP6 F COARSE", idx=143}
+    ,Ctrl {label="OP6 F FINE", idx=144}
+    ,Ctrl {label="OP6 OSC DETUNE", idx=145}
+    ,Ctrl {label="OP6 BREAK POINT", idx=146}
+    ,Ctrl {label="OP6 L SCALE DEPTH", idx=147}
+    ,Ctrl {label="OP6 R SCALE DEPTH", idx=148}
+    ,Ctrl {label="OP6 L KEY SCALE", idx=149}
+    ,Ctrl {label="OP6 R KEY SCALE", idx=150}
+    ,Ctrl {label="OP6 RATE SCALING", idx=151}
+    ,Ctrl {label="OP6 A MOD SENS.", idx=152}
+    ,Ctrl {label="OP6 KEY VELOCITY", idx=153}
+    ,Ctrl {label="OP6 SWITCH", idx=154}]
 
 {-
 
@@ -16,18 +184,12 @@ CtrlDX::CtrlDX > printf("CtrlDX {name=\"%s\", steps=%d, offset=%d, display_value
 -}
 
 data CtrlDX = CtrlDX {name :: String, steps :: Int, offset :: Int, display_value :: Int}
+              deriving (Eq,Show)
 
--- > length non_dx7_param == 4
-non_dx7_param :: [String]
-non_dx7_param = ["Cutoff", "Resonance", "Output", "MASTER TUNE ADJ"]
-
-dx7_param_0 :: Int
-dx7_param_0 = length non_dx7_param
-
--- > length dexed_param == 145
--- > sort (map offset dexed_param) == [0 .. 144]
-dexed_param :: [CtrlDX]
-dexed_param =
+-- > length dexed_dx7_param == 145
+-- > sort (map offset dexed_dx7_param) == [0 .. 144]
+dexed_dx7_param :: [CtrlDX]
+dexed_dx7_param =
     [CtrlDX {name="ALGORITHM", steps=32, offset=134, display_value=1}
     ,CtrlDX {name="FEEDBACK", steps=8, offset=135, display_value=0}
     ,CtrlDX {name="OSC KEY SYNC", steps=2, offset=136, display_value=0}
@@ -175,20 +337,24 @@ dexed_param =
     ,CtrlDX {name="OP6 KEY VELOCITY", steps=8, offset=15, display_value=0}
     ]
 
+-- > map (\c -> (idx c,dexed_dx7_param_by_name (label c))) dexed_param
+dexed_dx7_param_by_name :: String -> Maybe CtrlDX
+dexed_dx7_param_by_name nm = find ((== nm) . name) dexed_dx7_param
+
 -- | This is the DEXED parameter list in the form (DX7-IX,DEXED-IX,DX7-NAME).
 --
--- > mapM_ print $ zip dexed_param_dx7 DX7.dx7_parameter_tbl
-dexed_param_dx7 :: [(Int, Int, String)]
-dexed_param_dx7 =
-    let p = map (\(i,c) -> let dx7_i = offset c
-                               dx7_nm = DX7.dx7_parameter_name dx7_i
-                           in (dx7_i,i,dx7_nm))
-            (zip [dx7_param_0 ..] dexed_param)
+-- > mapM_ print $ zip dexed_dx7_param_dx7 DX7.dx7_parameter_tbl
+dexed_dx7_param_dx7 :: [(Int, Int, String)]
+dexed_dx7_param_dx7 =
+    let f (i,c) = case c of
+                    Nothing -> Nothing
+                    Just dx -> Just (offset dx,i,name dx)
+        p = mapMaybe (\c -> f (idx c,dexed_dx7_param_by_name (label c))) dexed_param
     in sortOn (\(i,_,_) -> i) p
 
--- | Map from DX7 parameter index to DEXED parameter index.
+-- | 'M.Map' from DX7 parameter index to DEXED parameter index.
 dx7_to_dexed_tbl :: M.Map Int Int
-dx7_to_dexed_tbl = M.fromList (map (\(i,c) -> (offset c,i)) (zip [dx7_param_0 ..] dexed_param))
+dx7_to_dexed_tbl = M.fromList (map (\(i,j,_) -> (i,j)) dexed_dx7_param_dx7)
 
 -- | 'M.lookup' of 'dx7_to_dexed_tbl'.
 --
@@ -196,7 +362,20 @@ dx7_to_dexed_tbl = M.fromList (map (\(i,c) -> (offset c,i)) (zip [dx7_param_0 ..
 dx7_to_dexed :: Int -> Int
 dx7_to_dexed = fromMaybe (error "dx7_to_dexed") . flip M.lookup dx7_to_dexed_tbl
 
+-- | 'Ctrl' that are not DX7 parameters.
+--
+-- > length non_dx7_param == 10
+non_dx7_param :: [Ctrl]
+non_dx7_param =
+    let f (c,dx) = case dx of
+                    Nothing -> Just c
+                    Just _ -> Nothing
+    in mapMaybe (\c -> f (c,dexed_dx7_param_by_name (label c))) dexed_param
+
 {-
+
+http://rd.slavepianos.org/sw/rju/cmd/jack-lxvst.cpp
+
 import Sound.OSC.FD {- hosc -}
 fd <- openUDP "127.0.0.1" 57210
 let p_set ix val = sendMessage fd (Message "/p_set" [int32 (dx7_to_dexed ix),Float val])
@@ -204,4 +383,5 @@ p_set 123 1 -- OP 1 OSC FREQ COARSE
 p_set 125 1 -- OP 1 OSC DETUNE
 p_set 134 0.5 -- ALGORITHM #
 p_set 144 1 -- TRANSPOSE
+
 -}
