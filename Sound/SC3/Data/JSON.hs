@@ -40,17 +40,17 @@ obj_lookup_err k o =
         err = error ("obj_lookup: " ++ k ++ " -- " ++ show o)
     in fromMaybe err r
 
-obj_lookup_str :: String -> A.Object -> String
-obj_lookup_str k = val_string . obj_lookup_err k
+obj_lookup_str :: String -> A.Object -> Maybe String
+obj_lookup_str k = fmap val_string . obj_lookup k
 
-obj_lookup_str' :: String -> A.Object -> Maybe String
-obj_lookup_str' k = fmap val_string . obj_lookup k
+obj_lookup_str_err :: String -> A.Object -> String
+obj_lookup_str_err k = val_string . obj_lookup_err k
 
-obj_lookup_int :: String -> A.Object -> Int
-obj_lookup_int k = val_int . obj_lookup_err k
+obj_lookup_int_err :: String -> A.Object -> Int
+obj_lookup_int_err k = val_int . obj_lookup_err k
 
-obj_lookup_obj_list :: String -> A.Object -> [A.Object]
-obj_lookup_obj_list k = val_obj_list . obj_lookup_err k
+obj_lookup_obj_list_err :: String -> A.Object -> [A.Object]
+obj_lookup_obj_list_err k = val_obj_list . obj_lookup_err k
 
 res_value :: A.Result t -> t
 res_value r =
