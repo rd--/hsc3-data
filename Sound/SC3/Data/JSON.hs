@@ -19,17 +19,42 @@ from_json_err o =
       A.Error err -> error err
       A.Success res -> res
 
-value_to_array :: A.Value -> A.Array
+value_to_string :: A.Value -> Maybe String
+value_to_string o =
+    case o of
+      A.String t -> Just (T.unpack t)
+      _ -> Nothing
+
+value_to_null :: A.Value -> Maybe ()
+value_to_null o =
+    case o of
+      A.Null -> Just ()
+      _ -> Nothing
+
+value_to_string_or_null :: A.Value -> Maybe (Either String ())
+value_to_string_or_null o =
+    case o of
+      A.String t -> Just (Left (T.unpack t))
+      A.Null -> Just (Right ())
+      _ -> Nothing
+
+value_to_array :: A.Value -> Maybe A.Array
 value_to_array o =
     case o of
-      A.Array v -> v
-      _ -> error "value_to_array"
+      A.Array v -> Just v
+      _ -> Nothing
 
-value_to_object :: A.Value -> A.Object
+value_to_array_err :: A.Value -> A.Array
+value_to_array_err = fromMaybe (error "value_to_array") . value_to_array
+
+value_to_object :: A.Value -> Maybe A.Object
 value_to_object v =
     case v of
-      A.Object o -> o
-      _ -> error "value_to_object"
+      A.Object o -> Just o
+      _ -> Nothing
+
+value_to_object_err :: A.Value -> A.Object
+value_to_object_err = fromMaybe (error "value_to_object") . value_to_object
 
 obj_lookup :: String -> A.Object -> Maybe A.Value
 obj_lookup k o = M.lookup (T.pack k) o
@@ -45,6 +70,12 @@ obj_lookup_str k = fmap val_string . obj_lookup k
 
 obj_lookup_str_err :: String -> A.Object -> String
 obj_lookup_str_err k = val_string . obj_lookup_err k
+
+obj_lookup_str_or_null_err :: String -> A.Object -> Either String ()
+obj_lookup_str_or_null_err k =
+    fromMaybe (error "obj_lookup_str_or_null") .
+    value_to_string_or_null .
+    obj_lookup_err k
 
 obj_lookup_int_err :: String -> A.Object -> Int
 obj_lookup_int_err k = val_int . obj_lookup_err k
