@@ -1,8 +1,11 @@
 module Sound.SC3.Data.Math.Bouwkamp where
 
+import Control.Monad {- base -}
 import Data.List {- base -}
 import System.Exit {- base -}
 import System.Process {- process -}
+
+import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
 import qualified Data.CG.Minus as CG {- hcg-minus -}
 import qualified Graphics.PS as PS {- hps -}
@@ -120,3 +123,47 @@ ln_entry ln =
 
 gen_csv :: FilePath -> [Sq] -> IO ()
 gen_csv nm = writeFile nm . unlines . concatMap (map ln_entry . sq_ln)
+
+-- * Type
+
+type Bouwkamp_Code = (Int, Int, Int, [[Int]])
+
+-- * Parser
+
+type P a = P.GenParser Char () a
+
+p_comma :: P Char
+p_comma = P.char ','
+
+p_int :: P Int
+p_int = liftM read (P.many1 P.digit)
+
+p_int_list :: P [Int]
+p_int_list = P.sepEndBy1 p_int p_comma
+
+p_int_paren_list :: P [Int]
+p_int_paren_list = do
+  _ <- P.char '('
+  r <- p_int_list
+  _ <- P.char ')'
+  return r
+
+p_space :: P Char
+p_space = P.char ' '
+
+p_bouwkamp :: P Bouwkamp_Code
+p_bouwkamp = do
+  n <- p_int
+  _ <- p_space
+  w <- p_int
+  _ <- p_space
+  h <- p_int
+  _ <- p_space
+  l <- P.many1 p_int_paren_list
+  return (n,w,h,l)
+
+bouwkamp_parse_err :: String -> Bouwkamp_Code
+bouwkamp_parse_err s =
+    case P.parse p_bouwkamp "p_bouwkamp" s of
+      Left err -> error (show err)
+      Right r -> r
