@@ -31,6 +31,7 @@ Library
                    HCodecs,
                    hmt == 0.16.*,
                    hosc == 0.16.*,
+                   hps == 0.16.*,
                    hsc3 == 0.16.*,
                    hsc3-lang == 0.16.*,
                    hsc3-plot == 0.16.*,
@@ -39,6 +40,7 @@ Library
                    JuicyPixels,
                    midi-osc == 0.16.*,
                    pgm,
+                   process,
                    safe,
                    split,
                    SVGPath >= 1.1.1,
@@ -64,6 +66,7 @@ Library
                    Sound.SC3.Data.JSON
                    Sound.SC3.Data.LPC
                    Sound.SC3.Data.Math.Bourke
+                   Sound.SC3.Data.Math.Bouwkamp
                    Sound.SC3.Data.Math.Easing
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
