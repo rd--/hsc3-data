@@ -8,6 +8,7 @@ import System.Process {- process -}
 import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
 import qualified Data.CG.Minus as CG {- hcg-minus -}
+import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
 import qualified Graphics.PS as PS {- hps -}
 
 type Pt = (Int,Int)
@@ -65,17 +66,17 @@ place_row (x,y) r =
       [] -> []
       r0:r' -> ((x,y),r0) : place_row (x + r0,y) r'
 
-place_square :: [Sq] -> Pt -> [[Sz]] -> [Sq]
-place_square pl pt sq =
+place_square_f :: [Sq] -> Pt -> [[Sz]] -> [Sq]
+place_square_f pl pt sq =
     case sq of
       [] -> pl
       sq0:sq' -> let pl' = pl ++ place_row pt sq0
                      pt' = next_slot pl'
-                 in place_square pl' pt' sq'
+                 in place_square_f pl' pt' sq'
 
--- > place_square' sq_21_112
-place_square' :: [[Sz]] -> [Sq]
-place_square' = place_square [] (0,0)
+-- > place_square sq_21_112
+place_square :: [[Sz]] -> [Sq]
+place_square = place_square_f [] (0,0)
 
 -- * ASCII
 
@@ -90,17 +91,20 @@ sq_ascii (w,h) sq =
 to_pt :: Int -> Pt -> CG.Pt Double
 to_pt h (x,y) = CG.Pt (fromIntegral x) (fromIntegral (h - y))
 
-gen_path :: Int -> [Sq] -> PS.Path
-gen_path h =
-    let wr = PS.polygon . map (to_pt h) . sq_corners_cw
-    in foldl1 PS.Join . map wr
+gen_poly :: Int -> [Sq] -> [PS.Path]
+gen_poly h = let wr = PS.polygon . map (to_pt h) . sq_corners_cw in map wr
 
-gen_eps :: Int -> String -> [Sq] -> IO ExitCode
-gen_eps sz nm sq = do
-  let p = gen_path sz sq
+gen_clr :: Int -> [PS.GS]
+gen_clr = map (\(r,g,b) -> PS.defaultGS (PS.RGB r g b)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
+
+gen_eps :: Maybe [PS.GS] -> Int -> String -> [Sq] -> IO ExitCode
+gen_eps m_clr sz nm sq = do
+  let p = gen_poly sz sq
       gs = PS.greyGS 0.0
       gs' = gs {PS.gs_line_width = 0.1}
-      i = PS.Stroke gs' $ PS.translate 4 4 $ p
+      i = case m_clr of
+            Just clr -> PS.translate 4 4 $ foldl1 PS.Over $ zipWith PS.Fill clr $ p
+            Nothing -> PS.translate 4 4 $ PS.Stroke gs' $ foldl1 PS.Join $ p
       fn ty = nm ++ "." ++ ty
   PS.eps (fn "eps") (PS.BBox 0 0 (sz + 8) (sz + 8)) i
   eps_to_svg (fn "eps") (fn "pdf") (fn "svg")
