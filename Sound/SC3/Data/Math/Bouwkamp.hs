@@ -4,6 +4,7 @@ import Control.Monad {- base -}
 import Data.List {- base -}
 import System.Exit {- base -}
 import System.Process {- process -}
+import Text.Printf {- base -}
 
 import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
@@ -24,7 +25,7 @@ sq_lower_right :: Sq -> Pt
 sq_lower_right ((x,y),sz) = (x + sz,y + sz)
 
 sq_corners_cw :: Sq -> [Pt]
-sq_corners_cw ((x,y),z) = [(x,y),(x + z,y),(x + z,y + z),(x,y +z)]
+sq_corners_cw ((x,y),sz) = [(x,y),(x + sz,y),(x + sz,y + sz),(x,y + sz)]
 
 sq_ln :: Sq -> [CG.Ln Int]
 sq_ln sq =
@@ -32,16 +33,22 @@ sq_ln sq =
         [p0,p1,p2,p3] = map f (sq_corners_cw sq)
     in zipWith CG.Ln [p0,p1,p2,p3] [p1,p2,p3,p0]
 
-sq_contains :: Sq -> Pt -> Bool
-sq_contains sq (x,y) =
+sq_ul_lr :: Sq -> (Pt,Pt)
+sq_ul_lr sq =
     let ((x0,y0),_) = sq
         (x1,y1) = sq_lower_right sq
+    in ((x0,y0),(x1,y1))
+
+-- | Does 'Pt' lie within 'Sq', inclusive of upper & left, exclusive of lower & right.
+sq_contains_xlr :: Sq -> Pt -> Bool
+sq_contains_xlr sq (x,y) =
+    let ((x0,y0),(x1,y1)) = sq_ul_lr sq
     in x >= x0 && x < x1 && y >= y0 && y < y1
 
+-- | Does 'Pt' lie upon an edge of 'Sq'.
 sq_on_edge :: Sq -> Pt -> Bool
 sq_on_edge sq (x,y) =
-    let ((x0,y0),_) = sq
-        (x1,y1) = sq_lower_right sq
+    let ((x0,y0),(x1,y1)) = sq_ul_lr sq
     in ((x == x0 || x == x1) && (y >= y0 && y < y1)) ||
        ((y == y0 || y == y1) && (x >= x0 && x < x1))
 
@@ -55,7 +62,7 @@ uppermost_leftmost (x0,y0) (x1,y1) =
 next_slot :: [Sq] -> Pt
 next_slot sq =
     let f = minimumBy uppermost_leftmost .
-            filter (\p -> not (any id (map (\e -> sq_contains e p) sq))) .
+            filter (\p -> not (any id (map (\e -> sq_contains_xlr e p) sq))) .
             map sq_lower_left
     in f sq
 
@@ -132,6 +139,9 @@ gen_csv nm = writeFile nm . unlines . concatMap (map ln_entry . sq_ln)
 
 type Bouwkamp_Code = (Int, Int, Int, [[Int]])
 
+bc_to_sq :: Bouwkamp_Code -> [Sq]
+bc_to_sq (_,_,_,sz) = place_square sz
+
 -- * Parser
 
 type P a = P.GenParser Char () a
@@ -171,3 +181,42 @@ bouwkamp_parse_err s =
     case P.parse p_bouwkamp "p_bouwkamp" s of
       Left err -> error (show err)
       Right r -> r
+
+-- * Analysis
+
+bc_vertices :: [Sq] -> [Pt]
+bc_vertices = nub . sort . concatMap sq_corners_cw
+
+bc_pt_connects :: Pt -> [Sq] -> [Sq]
+bc_pt_connects pt =
+    let f sq = sq_on_edge sq pt
+    in filter f
+
+-- > let r = [[],[],[('a','b')],[('a','b'),('a','c'),('b','c')]]
+-- > in map all_pairs_asc ["","a","ab","abc"] == r
+all_pairs_asc :: Ord t => [t] -> [(t,t)]
+all_pairs_asc l = [(p,q) | p <- l, q <- l, p < q]
+
+-- > let s = "21 112 112 (50,35,27)(8,19)(15,17,11)(6,24)(29,25,9,2)(7,18)(16)(42)(4,37)(33)"
+-- > let c = bouwkamp_parse_err s
+-- > let sq = bc_to_sq c
+-- > bc_connection_graph sq
+-- > putStrLn $ unlines $ bc_connection_graph_dot sq
+bc_connection_graph :: [Sq] -> [(Sq,Sq,Pt)]
+bc_connection_graph sq =
+    let v = bc_vertices sq
+        f pt = bc_pt_connects pt sq
+        g (pt,ls) = map (\(p,q) -> (p,q,pt)) (all_pairs_asc ls)
+        e = sort (concatMap g (zip v (map f v)))
+    in e -- should collate equal edges, ie. (Sq,Sq,[Pt])
+
+bc_connection_graph_dot :: [Sq] -> [String]
+bc_connection_graph_dot sq_set =
+    let sq_nm,sq_txt :: Sq -> String
+        sq_nm ((x,y),sz) = printf "sq_%d_%d_%d" x y sz
+        sq_txt ((x,y),sz) = printf "(%d,%d):%d" x y sz
+        n_pp sq = printf "%s [label=\"%s\"]" (sq_nm sq) (sq_txt sq)
+        e_pp (p,q,(x,y)) = printf "%s -- %s [label=\"(%d,%d)\"]" (sq_nm p) (sq_nm q) x y
+        g = map n_pp sq_set ++ map e_pp (bc_connection_graph sq_set)
+    in g
+
