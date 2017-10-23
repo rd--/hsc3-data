@@ -11,6 +11,7 @@ import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 import qualified Data.CG.Minus as CG {- hcg-minus -}
 import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
 import qualified Graphics.PS as PS {- hps -}
+import qualified Music.Theory.List as T {- hmt -}
 
 type Pt = (Int,Int)
 type Sz = Int
@@ -197,26 +198,28 @@ bc_pt_connects pt =
 all_pairs_asc :: Ord t => [t] -> [(t,t)]
 all_pairs_asc l = [(p,q) | p <- l, q <- l, p < q]
 
--- > let s = "21 112 112 (50,35,27)(8,19)(15,17,11)(6,24)(29,25,9,2)(7,18)(16)(42)(4,37)(33)"
--- > let c = bouwkamp_parse_err s
--- > let sq = bc_to_sq c
--- > bc_connection_graph sq
--- > putStrLn $ unlines $ bc_connection_graph_dot sq
-bc_connection_graph :: [Sq] -> [(Sq,Sq,Pt)]
+bc_connection_graph :: [Sq] -> [((Sq,Sq),[Pt])]
 bc_connection_graph sq =
     let v = bc_vertices sq
         f pt = bc_pt_connects pt sq
-        g (pt,ls) = map (\(p,q) -> (p,q,pt)) (all_pairs_asc ls)
+        g (pt,ls) = map (\(p,q) -> ((p,q),pt)) (all_pairs_asc ls)
         e = sort (concatMap g (zip v (map f v)))
-    in e -- should collate equal edges, ie. (Sq,Sq,[Pt])
+    in T.collate_adjacent e
 
-bc_connection_graph_dot :: [Sq] -> [String]
+bc_connection_graph_dot :: [Sq] -> ([String],[String])
 bc_connection_graph_dot sq_set =
     let sq_nm,sq_txt :: Sq -> String
         sq_nm ((x,y),sz) = printf "sq_%d_%d_%d" x y sz
-        sq_txt ((x,y),sz) = printf "(%d,%d):%d" x y sz
+        pt_pp :: Pt -> String
+        pt_pp (x,y) = printf "%d,%d" x y
+        sq_txt (pt,sz) = printf "%s□%d" (pt_pp pt) sz
         n_pp sq = printf "%s [label=\"%s\"]" (sq_nm sq) (sq_txt sq)
-        e_pp (p,q,(x,y)) = printf "%s -- %s [label=\"(%d,%d)\"]" (sq_nm p) (sq_nm q) x y
-        g = map n_pp sq_set ++ map e_pp (bc_connection_graph sq_set)
-    in g
+        embrace s = "{" ++ s ++ "}"
+        pt_set_pp = embrace . intercalate "∘" . map pt_pp
+        e_pp ((p,q),e) = printf "%s -- %s [label=\"%s\"]" (sq_nm p) (sq_nm q) (pt_set_pp e)
+    in (map n_pp sq_set,map e_pp (bc_connection_graph sq_set))
 
+bc_connection_graph_dot_wr :: [String] -> FilePath -> [Sq] -> IO ()
+bc_connection_graph_dot_wr attr fn sq = do
+  let (n,e) = bc_connection_graph_dot sq
+  writeFile fn (unlines (concat [["graph {"],attr,n,e,["}"]]))
