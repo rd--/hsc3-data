@@ -23,6 +23,7 @@ Library
                    binary,
                    bitwise,
                    bytestring,
+                   colour,
                    containers,
                    directory,
                    filepath,

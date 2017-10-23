@@ -1,6 +1,7 @@
 module Sound.SC3.Data.Math.Bouwkamp where
 
 import Control.Monad {- base -}
+import Data.Colour.SRGB {- colour -}
 import Data.List {- base -}
 import System.Exit {- base -}
 import System.Process {- process -}
@@ -206,6 +207,9 @@ bc_connection_graph sq =
         e = sort (concatMap g (zip v (map f v)))
     in T.collate_adjacent e
 
+gen_hex_clr :: Int -> [String]
+gen_hex_clr = map sRGB24show . drop 2 . RYB.colour_gen . (+ 2)
+
 bc_connection_graph_dot :: [Sq] -> ([String],[String])
 bc_connection_graph_dot sq_set =
     let sq_nm,sq_txt :: Sq -> String
@@ -213,7 +217,8 @@ bc_connection_graph_dot sq_set =
         pt_pp :: Pt -> String
         pt_pp (x,y) = printf "%d,%d" x y
         sq_txt (pt,sz) = printf "%s□%d" (pt_pp pt) sz
-        n_pp sq = printf "%s [label=\"%s\"]" (sq_nm sq) (sq_txt sq)
+        clr_tbl = zip sq_set (gen_hex_clr (length sq_set))
+        n_pp sq = printf "%s [label=\"%s\",style=\"filled\",fillcolor=\"%s\"]" (sq_nm sq) (sq_txt sq) (T.lookup_err sq clr_tbl)
         embrace s = "{" ++ s ++ "}"
         pt_set_pp = embrace . intercalate "∘" . map pt_pp
         e_pp ((p,q),e) = printf "%s -- %s [label=\"%s\"]" (sq_nm p) (sq_nm q) (pt_set_pp e)
