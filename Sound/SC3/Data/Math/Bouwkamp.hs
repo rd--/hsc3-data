@@ -7,6 +7,7 @@ import System.Exit {- base -}
 import System.Process {- process -}
 import Text.Printf {- base -}
 
+import qualified Language.Dot as D {- language-dot -}
 import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
 import qualified Data.CG.Minus as CG {- hcg-minus -}
@@ -207,10 +208,27 @@ bc_connection_graph sq =
         e = sort (concatMap g (zip v (map f v)))
     in T.collate_adjacent e
 
+-- * Dot
+
 gen_hex_clr :: Int -> [String]
 gen_hex_clr = map sRGB24show . drop 2 . RYB.colour_gen . (+ 2)
 
-bc_connection_graph_dot :: [Sq] -> ([String],[String])
+dot_attr_str :: String -> String -> D.Attribute
+dot_attr_str k v = D.AttributeSetValue (D.NameId k) (D.StringId v)
+
+str_to_node_id :: String -> D.NodeId
+str_to_node_id k = D.NodeId (D.NameId k) Nothing
+
+dot_node :: String -> [D.Attribute] -> D.Statement
+dot_node k = D.NodeStatement (str_to_node_id k)
+
+dot_uedge :: String -> String -> [D.Attribute] -> D.Statement
+dot_uedge p q =
+    let p' = D.ENodeId D.NoEdge (str_to_node_id p)
+        q' = D.ENodeId D.UndirectedEdge (str_to_node_id q)
+    in D.EdgeStatement [p',q']
+
+bc_connection_graph_dot :: [Sq] -> ([D.Statement],[D.Statement])
 bc_connection_graph_dot sq_set =
     let sq_nm,sq_txt :: Sq -> String
         sq_nm ((x,y),sz) = printf "sq_%d_%d_%d" x y sz
@@ -218,13 +236,25 @@ bc_connection_graph_dot sq_set =
         pt_pp (x,y) = printf "%d,%d" x y
         sq_txt (pt,sz) = printf "%s□%d" (pt_pp pt) sz
         clr_tbl = zip sq_set (gen_hex_clr (length sq_set))
-        n_pp sq = printf "%s [label=\"%s\",style=\"filled\",fillcolor=\"%s\"]" (sq_nm sq) (sq_txt sq) (T.lookup_err sq clr_tbl)
+        n_pp sq = dot_node (sq_nm sq) [dot_attr_str "label" (sq_txt sq)
+                                      ,dot_attr_str "style" "filled"
+                                      ,dot_attr_str "fillcolor" (T.lookup_err sq clr_tbl)]
         embrace s = "{" ++ s ++ "}"
         pt_set_pp = embrace . intercalate "∘" . map pt_pp
-        e_pp ((p,q),e) = printf "%s -- %s [label=\"%s\"]" (sq_nm p) (sq_nm q) (pt_set_pp e)
+        e_pp ((p,q),e) = dot_uedge (sq_nm p) (sq_nm q) [dot_attr_str "label" (pt_set_pp e)]
     in (map n_pp sq_set,map e_pp (bc_connection_graph sq_set))
 
-bc_connection_graph_dot_wr :: [String] -> FilePath -> [Sq] -> IO ()
-bc_connection_graph_dot_wr attr fn sq = do
+dot_ugraph :: [D.Statement] -> D.Graph
+dot_ugraph = D.Graph D.StrictGraph D.UndirectedGraph Nothing
+
+dot_graph_attr :: [D.Attribute] -> D.Statement
+dot_graph_attr = D.AttributeStatement D.GraphAttributeStatement
+
+dot_node_attr :: [D.Attribute] -> D.Statement
+dot_node_attr = D.AttributeStatement D.NodeAttributeStatement
+
+bc_connection_graph_dot_wr :: [D.Statement] -> FilePath -> [Sq] -> IO ()
+bc_connection_graph_dot_wr x fn sq = do
   let (n,e) = bc_connection_graph_dot sq
-  writeFile fn (unlines (concat [["graph {"],attr,n,e,["}"]]))
+  writeFile fn (D.renderDot (dot_ugraph (x ++ n ++ e)))
+
