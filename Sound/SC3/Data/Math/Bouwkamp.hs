@@ -228,19 +228,19 @@ dot_uedge p q =
         q' = D.ENodeId D.UndirectedEdge (str_to_node_id q)
     in D.EdgeStatement [p',q']
 
-bc_connection_graph_dot :: [Sq] -> ([D.Statement],[D.Statement])
-bc_connection_graph_dot sq_set =
+bc_connection_graph_dot :: Bool -> [Sq] -> ([D.Statement],[D.Statement])
+bc_connection_graph_dot opt sq_set =
     let sq_nm,sq_txt :: Sq -> String
         sq_nm ((x,y),sz) = printf "sq_%d_%d_%d" x y sz
+        sq_txt (pt,sz) = if opt then printf "%s□%d" (pt_pp pt) sz else show sz
         pt_pp :: Pt -> String
         pt_pp (x,y) = printf "%d,%d" x y
-        sq_txt (pt,sz) = printf "%s□%d" (pt_pp pt) sz
         clr_tbl = zip sq_set (gen_hex_clr (length sq_set))
         n_pp sq = dot_node (sq_nm sq) [dot_attr_str "label" (sq_txt sq)
                                       ,dot_attr_str "style" "filled"
                                       ,dot_attr_str "fillcolor" (T.lookup_err sq clr_tbl)]
         embrace s = "{" ++ s ++ "}"
-        pt_set_pp = embrace . intercalate "∘" . map pt_pp
+        pt_set_pp = if opt then embrace . intercalate "∘" . map pt_pp else const ""
         e_pp ((p,q),e) = dot_uedge (sq_nm p) (sq_nm q) [dot_attr_str "label" (pt_set_pp e)]
     in (map n_pp sq_set,map e_pp (bc_connection_graph sq_set))
 
@@ -253,8 +253,8 @@ dot_graph_attr = D.AttributeStatement D.GraphAttributeStatement
 dot_node_attr :: [D.Attribute] -> D.Statement
 dot_node_attr = D.AttributeStatement D.NodeAttributeStatement
 
-bc_connection_graph_dot_wr :: [D.Statement] -> FilePath -> [Sq] -> IO ()
-bc_connection_graph_dot_wr x fn sq = do
-  let (n,e) = bc_connection_graph_dot sq
+bc_connection_graph_dot_wr :: Bool -> [D.Statement] -> FilePath -> [Sq] -> IO ()
+bc_connection_graph_dot_wr opt x fn sq = do
+  let (n,e) = bc_connection_graph_dot opt sq
   writeFile fn (D.renderDot (dot_ugraph (x ++ n ++ e)))
 
