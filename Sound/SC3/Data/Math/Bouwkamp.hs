@@ -105,7 +105,7 @@ gen_poly :: Int -> [Sq] -> [PS.Path]
 gen_poly h = let wr = PS.polygon . map (to_pt h) . sq_corners_cw in map wr
 
 gen_clr :: Int -> [PS.GS]
-gen_clr = map (\(r,g,b) -> PS.defaultGS (PS.RGB r g b)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
+gen_clr = map (\(r,g,b) -> PS.defaultGS (PS.RGBA r g b 1)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
 
 gen_eps :: Maybe [PS.GS] -> Int -> String -> [Sq] -> IO ExitCode
 gen_eps m_clr sz nm sq = do

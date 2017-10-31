@@ -9,7 +9,7 @@ import qualified Text.XML.Light as X {- xml -}
 import qualified Graphics.SVG.ReadPath as P {- SVGPath -}
 
 import Data.CG.Minus {- hcg-minus -}
-import Sound.SC3.Plot {- hsc3-plot -}
+import qualified Sound.SC3.Plot as Plot {- hsc3-plot -}
 
 -- | Make 'X.QName' with @svg@ 'X.qURI'.
 --
@@ -41,7 +41,7 @@ subpaths_to_ls :: (R,R) -> [P.PathCommand] -> [Ls R]
 subpaths_to_ls (dx,dy) r =
     case P.commandsToPoints r (dx,dy) (0,0) of
       [] -> error "subpaths_to_ls: no sub-paths"
-      p -> map (map pt') p
+      p -> map (Ls . map pt') p
 
 svg_load_ls :: (R, R) -> FilePath -> IO [Ls R]
 svg_load_ls rs fn = do
@@ -51,8 +51,8 @@ svg_load_ls rs fn = do
   return p
 
 -- | 'plotCoord' of 'pt_xy'.
-plot_ls :: PNum t => [Ls t] -> IO ()
-plot_ls = plotCoord . map (map pt_xy)
+plot_ls :: Plot.PNum t => [Ls t] -> IO ()
+plot_ls = Plot.plotCoord . map (map pt_xy . ls_elem)
 
 -- | Convert a relative 'P.PathCommand' to the absolute form, giving
 -- also the absolute end point.

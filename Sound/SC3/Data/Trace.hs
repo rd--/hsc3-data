@@ -8,13 +8,18 @@ import Data.Maybe {- base -}
 import Safe {- safe -}
 import System.FilePath.Glob {- glob -}
 
-import Data.CG.Minus {- hcg-minus -}
+import Data.CG.Minus.Types {- hcg-minus -}
+import qualified Data.CG.Minus.Core as CG {- hcg-minus -}
+
 import qualified Music.Theory.Array.CSV as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Tuple as T {- hmt -}
+
 import qualified Sound.File.HSndFile as F {- hsc3-sf-hsndfile -}
+
 import Sound.SC3.Lang.Core {- hsc3-lang -}
-import Sound.SC3.Plot {- hsc3-plot -}
+
+import qualified Sound.SC3.Plot as P {- hsc3-plot -}
 
 {- | Traces are sequences @Ord t => [(t,a)]@ where t is ascending.
 
@@ -274,8 +279,8 @@ lerpd = lerp_pw lerpn
 
 -- | Transform 'Ls' to 'Trace', /t/ is distance along line.
 ls_with_distance :: Floating t => Ls t -> Trace t (Pt t)
-ls_with_distance p =
-    let d = T.dx_d 0 (zipWith pt_distance p (tail p))
+ls_with_distance (Ls p) =
+    let d = T.dx_d 0 (zipWith CG.pt_distance p (tail p))
     in zip d p
 
 -- * List
@@ -319,19 +324,19 @@ deinterleave2 = T.t2_from_list . transpose . chunksOf 2
 -- > t <- trace_load_csv2 "/home/rohan/sw/hsc3-data/data/csv/trace/b.csv"
 -- > trace2_plot_3d [t]
 trace2_plot_3d :: [Trace R (R,R)] -> IO ()
-trace2_plot_3d = plotPath . map (map (\(t,(p,q)) -> (t,p,q)))
+trace2_plot_3d = P.plotPath . map (map (\(t,(p,q)) -> (t,p,q)))
 
 -- | Two-dimensional plot of two-dimensional traces (/time/ not drawn), ie. 'plotCoord'.
 --
 -- > trace2_plot_2d [t]
 trace2_plot_2d :: [Trace R (R,R)] -> IO ()
-trace2_plot_2d = plotCoord . map (map snd)
+trace2_plot_2d = P.plotCoord . map (map snd)
 
 -- > trace2_plot_tbl [t]
 trace2_plot_tbl :: [Trace R (R,R)] -> IO ()
 trace2_plot_tbl =
     let f t = [trace_map fst t,trace_map snd t]
-    in plotCoord . concatMap f
+    in P.plotCoord . concatMap f
 
 -- * CSV
 
