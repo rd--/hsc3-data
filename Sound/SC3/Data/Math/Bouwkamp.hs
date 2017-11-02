@@ -132,7 +132,7 @@ eps_to_svg i o1 o2 = eps_to_pdf i o1 >> pdf_to_svg o1 o2
 
 ln_entry :: Show a => CG.Ln a -> String
 ln_entry ln =
-    let ((x0,y0),(x1,y1)) = CG.ln_pt' ln
+    let ((x0,y0),(x1,y1)) = CG.ln_elem ln
     in intercalate "," (map show [x0,y0,x1,y1])
 
 gen_csv :: FilePath -> [Sq] -> IO ()
