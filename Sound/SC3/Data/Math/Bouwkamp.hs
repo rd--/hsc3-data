@@ -113,8 +113,8 @@ gen_pdf m_clr sz nm sq = do
   let p = gen_poly sz sq
       black_pen = CG.Pen 0.1 (CG.rgba_to_ca (0,0,0,1)) CG.no_dash
       i = case m_clr of
-            Just clr_seq -> zipWith (CG.Polygon CG.no_pen) clr_seq p
-            Nothing -> map (CG.Polygon black_pen CG.no_colour) p
+            Just clr_seq -> zipWith (CG.polygon_f) clr_seq p
+            Nothing -> map (CG.polygon_l black_pen) p
       fn ty = nm ++ "." ++ ty
   CG.picture_to_pdf 4 (fn "pdf") i
   pdf_to_svg (fn "pdf") (fn "svg")
