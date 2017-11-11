@@ -12,7 +12,8 @@ import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
 import qualified Data.CG.Minus as CG {- hcg-minus -}
 import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
-import qualified Graphics.PS as PS {- hps -}
+import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
+import qualified Render.CG.Minus.Picture as CG {- hcg-minus-cairo -}
 import qualified Music.Theory.List as T {- hmt -}
 
 type Pt = (Int,Int)
@@ -96,28 +97,27 @@ sq_ascii (w,h) sq =
         g r = map (f r) [0 .. w]
     in map g [0 .. h]
 
--- * PS
+-- * PDF
 
 to_pt :: Int -> Pt -> CG.Pt Double
 to_pt h (x,y) = CG.Pt (fromIntegral x) (fromIntegral (h - y))
 
-gen_poly :: Int -> [Sq] -> [PS.Path]
-gen_poly h = let wr = PS.polygon . map (to_pt h) . sq_corners_cw in map wr
+gen_poly :: Int -> [Sq] -> [[CG.Pt Double]]
+gen_poly h = let f = map (to_pt h) . sq_corners_cw in map f
 
-gen_clr :: Int -> [PS.GS]
-gen_clr = map (\(r,g,b) -> PS.defaultGS (PS.RGBA r g b 1)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
+gen_clr :: Int -> [CG.Ca]
+gen_clr = map (\(r,g,b) -> CG.rgba_to_ca (r,g,b,1)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
 
-gen_eps :: Maybe [PS.GS] -> Int -> String -> [Sq] -> IO ExitCode
-gen_eps m_clr sz nm sq = do
+gen_pdf :: Maybe [CG.Ca] -> Int -> String -> [Sq] -> IO ExitCode
+gen_pdf m_clr sz nm sq = do
   let p = gen_poly sz sq
-      gs = PS.greyGS 0.0
-      gs' = gs {PS.gs_line_width = 0.1}
+      black_pen = CG.Pen 0.1 (CG.rgba_to_ca (0,0,0,1)) CG.no_dash
       i = case m_clr of
-            Just clr -> PS.translate 4 4 $ foldl1 PS.Over $ zipWith PS.Fill clr $ p
-            Nothing -> PS.translate 4 4 $ PS.Stroke gs' $ foldl1 PS.Join $ p
+            Just clr_seq -> zipWith (CG.Polygon CG.no_pen) clr_seq p
+            Nothing -> map (CG.Polygon black_pen CG.no_colour) p
       fn ty = nm ++ "." ++ ty
-  PS.eps (fn "eps") (PS.BBox 0 0 (sz + 8) (sz + 8)) i
-  eps_to_svg (fn "eps") (fn "pdf") (fn "svg")
+  CG.picture_to_pdf 4 (fn "pdf") i
+  pdf_to_svg (fn "pdf") (fn "svg")
 
 eps_to_pdf :: String -> String -> IO ExitCode
 eps_to_pdf i o = rawSystem "ps2pdf" ["-dEPSCrop",i,o]
