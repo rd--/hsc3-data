@@ -3,8 +3,6 @@ module Sound.SC3.Data.Math.Bouwkamp where
 import Control.Monad {- base -}
 import Data.Colour.SRGB {- colour -}
 import Data.List {- base -}
-import System.Exit {- base -}
-import System.Process {- process -}
 import Text.Printf {- base -}
 
 import qualified Language.Dot as D {- language-dot -}
@@ -108,25 +106,14 @@ gen_poly h = let f = map (to_pt h) . sq_corners_cw in map f
 gen_clr :: Int -> [CG.Ca]
 gen_clr = map (\(r,g,b) -> CG.rgba_to_ca (r,g,b,1)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
 
-gen_pdf :: Maybe [CG.Ca] -> Int -> String -> [Sq] -> IO ExitCode
+gen_pdf :: Maybe [CG.Ca] -> Int -> String -> [Sq] -> IO ()
 gen_pdf m_clr sz nm sq = do
   let p = gen_poly sz sq
       black_pen = CG.Pen 0.1 (CG.rgba_to_ca (0,0,0,1)) CG.no_dash
       i = case m_clr of
             Just clr_seq -> zipWith (CG.polygon_f) clr_seq p
             Nothing -> map (CG.polygon_l black_pen) p
-      fn ty = nm ++ "." ++ ty
-  CG.picture_to_pdf 4 (fn "pdf") i
-  pdf_to_svg (fn "pdf") (fn "svg")
-
-eps_to_pdf :: String -> String -> IO ExitCode
-eps_to_pdf i o = rawSystem "ps2pdf" ["-dEPSCrop",i,o]
-
-pdf_to_svg :: String -> String -> IO ExitCode
-pdf_to_svg i o = rawSystem "pdf2svg" [i,o]
-
-eps_to_svg :: String -> String -> String -> IO ExitCode
-eps_to_svg i o1 o2 = eps_to_pdf i o1 >> pdf_to_svg o1 o2
+  CG.picture_to_pdf_and_svg 4 nm i
 
 -- * CSV
 
