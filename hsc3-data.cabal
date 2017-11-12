@@ -84,7 +84,9 @@ Library
                    Sound.SC3.Data.URandom
                    Sound.SC3.Data.Vowel
                    Sound.SC3.Data.X11.Ptr
+                   Sound.SC3.Data.XML
                    Sound.SC3.Data.XML.KML
+                   Sound.SC3.Data.XML.SVL
                    Sound.SC3.Data.Yamaha.DX7
                    Sound.SC3.Data.Yamaha.DX7.Dexed
 
