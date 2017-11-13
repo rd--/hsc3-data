@@ -3,6 +3,8 @@ module Sound.SC3.Data.Yamaha.DX7.PX7 where
 
 import Data.List {- base -}
 
+-- | Non-operator PX7 parameter names paired with DX7 parameter index.
+--
 -- > length px7_param_names_rem == 19
 -- > sort (map snd px7_param_names_rem) == [126 .. 144]
 px7_param_names_rem :: [(String,Int)]
@@ -27,6 +29,8 @@ px7_param_names_rem =
   ,("Pitch_EG_L3",132)
   ,("Pitch_EG_L4",133)]
 
+-- | Operator parameter names, without operator prefix, with DX7 index.
+--
 -- > length px7_param_names_op_tbl == 21
 -- > 19 + 21 * 6 == 145
 -- > sort (map snd px7_param_names_op_tbl) == [0 .. 20]
@@ -54,11 +58,14 @@ px7_param_names_op_tbl =
   ,("KeybVelSens",15)
   ,("LFO_AmplitudeModSens",14)]
 
+-- | Generate parameter data for operator /n/ with DX7 parameter index.
 px7_param_names_op :: Int -> [(String,Int)]
 px7_param_names_op n =
   let f (nm,ix) = ("OP" ++ show n ++ "_" ++ nm,ix + (21 * (6 - n)))
   in map f px7_param_names_op_tbl
 
+-- | Complete set of PX7 parameters with DX7 indices in sequence given in PX7 file.
+--
 -- > length px7_param_seq == 145
 -- > sort (map snd px7_param_seq) == [0 .. 144]
 px7_param_seq :: [(String, Int)]
@@ -71,10 +78,13 @@ px7_param_seq = px7_param_names_rem ++ concatMap px7_param_names_op [1 .. 6]
 px7_reverse :: Num a => a -> a
 px7_reverse n = 99 - n
 
+-- | Predicate over parmeter name for reversed value.
+--
 -- > map (\(nm,ix) -> (nm,px7_param_is_reversed nm,ix)) px7_param_seq
 px7_param_is_reversed :: String -> Bool
 px7_param_is_reversed nm = reverse "_reversed" == take 9 (reverse nm)
 
+-- | Translate data sequence in PX7 order to DX7 order, reverse data as required.
 px7_param_data_to_dx7 :: (Ord t,Num t) => [t] -> [t]
 px7_param_data_to_dx7 =
   let f ((nm,ix),d) = (ix,if px7_param_is_reversed nm then px7_reverse d else d)
