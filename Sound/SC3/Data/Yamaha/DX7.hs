@@ -5,11 +5,11 @@
 module Sound.SC3.Data.Yamaha.DX7 where
 
 import Data.List {- base -}
-import Data.List.Split {- split -}
+import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
 import Text.Printf {- base -}
 
-import qualified Music.Theory.Byte as T {- hmt -}
+import qualified Music.Theory.Byte as Byte {- hmt -}
 
 type U8 = Int
 
@@ -98,7 +98,7 @@ operator_group_structure =
     ,("OSC","MODE;FREQ-COARSE;FREQ-FINE;DETUNE",[17..20])
     ]
 
--- | Six operators, descending order.
+-- | Six operators, descending order, one-indexed.
 --
 -- > length operator_parameter_tbl == 126
 operator_parameter_tbl :: [Parameter]
@@ -168,7 +168,7 @@ dx7_parameter_pp =
             let (ix,nm,stp,d,u) = p
                 x' = if u == "ASCII"
                      then ['\'',toEnum x,'\'']
-                     else case splitOn ";" u of
+                     else case Split.splitOn ";" u of
                             [_] -> show (x + d)
                             e -> e !! x
             in if x >= stp
@@ -203,7 +203,7 @@ function_parameters_tbl =
 -}
 load_dx7_sysex_hex :: FilePath -> IO [U8]
 load_dx7_sysex_hex fn = do
-  b <- T.load_hex_byte_seq fn
+  b <- Byte.load_hex_byte_seq fn
   case splitAt 4960 b of
     (h,[]) -> return h
     _ -> error "load_dx7_sysex_hex"
@@ -211,7 +211,8 @@ load_dx7_sysex_hex fn = do
 -- * Voice
 
 hex_voices :: [U8] -> [[U8]]
-hex_voices = chunksOf 155
+hex_voices = Split.chunksOf 155
 
 voice_name :: [U8] -> String
 voice_name v = map (toEnum . (v !!)) [145 .. 154]
+

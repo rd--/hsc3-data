@@ -88,7 +88,9 @@ Library
                    Sound.SC3.Data.XML.KML
                    Sound.SC3.Data.XML.SVL
                    Sound.SC3.Data.Yamaha.DX7
+                   Sound.SC3.Data.Yamaha.DX7.AFX
                    Sound.SC3.Data.Yamaha.DX7.Dexed
+                   Sound.SC3.Data.Yamaha.DX7.PX7
 
 Source-Repository  head
   Type:            darcs
