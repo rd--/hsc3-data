@@ -11,6 +11,7 @@ import Text.Printf {- base -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
 
+-- | Parameter values are at most in 0-99.
 type U8 = Int
 
 -- | Yamaha manufacturer ID.
@@ -154,12 +155,23 @@ rem_group_structure =
 dx7_parameter_tbl :: [Parameter]
 dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
 
--- | Lookup parameter name.
+-- | Lookup parameter name given index.
+--
+-- > dx7_parameter_name 134 ==  "ALGORITHM #"
 dx7_parameter_name :: U8 -> String
 dx7_parameter_name n =
     fromMaybe (error "dx7_parameter_name") $
     fmap parameter_name $
     find ((== n) . parameter_ix) dx7_parameter_tbl
+
+-- | Lookup parameter index given name.
+--
+-- > dx7_parameter_index "ALGORITHM #" == 134
+dx7_parameter_index :: String -> U8
+dx7_parameter_index nm =
+    fromMaybe (error "dx7_parameter_ix") $
+    fmap parameter_ix $
+    find ((== nm) . parameter_name) dx7_parameter_tbl
 
 -- | Print complete parameter sequence.
 dx7_parameter_pp :: [U8] -> [String]
@@ -216,3 +228,66 @@ hex_voices = Split.chunksOf 155
 voice_name :: [U8] -> String
 voice_name v = map (toEnum . (v !!)) [145 .. 154]
 
+-- * Algorithms
+
+-- | Algorithm given as a list of (dst,src) operator edges and a list of output operators.
+--   Operators are zero-indexed.
+type DX7_Algorithm = ([(Int,Int)],[Int])
+
+-- | The 32 DX7 algorithms in sequence.
+dx7_algorithms :: [DX7_Algorithm]
+dx7_algorithms =
+  [([(0,1),(2,3),(3,4),(4,5),(5,5)],[0,2]) -- 1
+  ,([(0,1),(1,1),(2,3),(3,4),(4,5)],[0,2])
+  ,([(0,1),(1,2),(3,4),(4,5),(5,5)],[0,3])
+  ,([(0,1),(1,2),(3,4),(4,5),(5,3)],[0,3])
+  ,([(0,1),(2,3),(4,5),(5,5)],[0,2,4]) -- 5
+  ,([(0,1),(2,3),(4,5),(5,4)],[0,2,4])
+  ,([(0,1),(2,3),(2,4),(4,5),(5,5)],[0,2])
+  ,([(0,1),(2,3),(2,4),(4,5),(3,3)],[0,2])
+  ,([(0,1),(2,3),(2,4),(4,5),(1,1)],[0,2])
+  ,([(0,1),(1,2),(3,4),(3,5),(2,2)],[0,3]) -- 10
+  ,([(0,1),(1,2),(3,4),(3,5),(5,5)],[0,3])
+  ,([(0,1),(2,3),(2,4),(2,5),(1,1)],[0,2]) -- 12
+  ,([(0,1),(2,3),(2,4),(2,5),(5,5)],[0,2])
+  ,([(0,1),(2,3),(3,4),(3,5),(5,5)],[0,2]) -- 14
+  ,([(0,1),(2,3),(3,4),(3,5),(1,1)],[0,2])
+  ,([(0,1),(0,2),(0,4),(2,3),(4,5),(5,5)],[0])
+  ,([(0,1),(0,2),(0,4),(2,3),(4,5),(1,1)],[0])
+  ,([(0,1),(0,2),(0,3),(3,4),(4,5),(2,2)],[0])
+  ,([(0,1),(1,2),(3,5),(4,5),(5,5)],[0,3,4])
+  ,([(0,2),(1,2),(3,4),(3,5),(2,2)],[0,1,3])
+  ,([(0,2),(1,2),(3,5),(4,5),(2,2)],[0,1,3,4])
+  ,([(0,1),(2,5),(3,5),(4,5),(5,5)],[0,2,3,4])
+  ,([(1,2),(3,5),(4,5),(5,5)],[0,1,3,4])
+  ,([(2,5),(3,5),(4,5),(5,5)],[0,1,2,3,4])
+  ,([(3,5),(4,5),(5,5)],[0,1,2,3,4])
+  ,([(1,2),(3,4),(3,5),(5,5)],[0,1,3])
+  ,([(1,2),(3,4),(3,5),(2,2)],[0,1,3])
+  ,([(0,1),(2,3),(3,4),(4,4)],[0,2,5])
+  ,([(2,3),(4,5),(5,5)],[0,1,2,4])
+  ,([(2,3),(3,4),(4,4)],[0,1,2,5])
+  ,([(4,5),(5,5)],[0,1,2,3,4])
+  ,([(5,5)],[0,1,2,3,4,5])]
+
+{- | Simple dot graph of algorithm.
+
+> let wr k = writeFile (printf "/tmp/dx7.%02d.dot" k) (unlines (dx7_algorithm_dot (dx7_algorithms !! k)))
+> mapM_ wr [0 .. 31]
+
+-}
+dx7_algorithm_dot :: DX7_Algorithm -> [String]
+dx7_algorithm_dot (e,o) =
+  let n_f k = printf "%d [shape=square,label=%d];" k (k + 1)
+      e_f (dst,src) = printf "%d -> %d [color=%s,constraint=%s];" src dst (if src > dst then "black" else "slategray") (if src > dst then "true" else "false") -- orangered
+      o_f k = printf "%d -> o;" k
+  in concat
+     [["digraph g {"
+      ,"graph [splines=ortho];" -- polyline ortho line
+      ,"node [style=solid,color=black];"
+      ,"edge [dir=forward,arrowhead=dot,arrowtail=none,arrowsize=0.35];"] -- headport=n,tailport=s
+     ,map n_f [0::Int .. 5]
+     ,["o [shape=\"circle\",label=\"·\"];"]
+     ,map e_f e
+     ,map o_f o
+     ,["}"]]

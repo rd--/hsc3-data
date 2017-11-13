@@ -35,6 +35,10 @@ afx_load = fmap afx_parse . B.readFile
 > d <- afx_load_dx7 "/home/rohan/opt/src/DX7-Supercollider/DX7.afx"
 > putStrLn$unlines$ dx7_parameter_pp (d !! 0)
 
+> import qualified Music.Theory.List as T {- hmt -}
+> let n = dx7_parameter_index "ALGORITHM #"
+> T.histogram (map (!! n) d)
+
 -}
 afx_load_dx7 :: FilePath -> IO [[U8]]
 afx_load_dx7 = fmap (map PX7.px7_param_data_to_dx7) . afx_load
