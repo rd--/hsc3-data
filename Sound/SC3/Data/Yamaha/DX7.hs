@@ -173,20 +173,28 @@ dx7_parameter_index nm =
     fmap parameter_ix $
     find ((== nm) . parameter_name) dx7_parameter_tbl
 
+dx7_parameter_pp :: (Parameter,U8) -> (String,Bool)
+dx7_parameter_pp (p,x) =
+  let (ix,nm,stp,d,u) = p
+      x_clip = if x >= stp then stp - 1 else x
+      x' = if u == "ASCII"
+           then ['\'',toEnum x_clip,'\'']
+           else case Split.splitOn ";" u of
+                  [_] -> show (x_clip + d)
+                  e -> e !! x_clip
+  in if x >= stp
+     then (printf "%03d: %s = %s (ERROR BYTE=0x%02X)" ix nm x' x,True)
+     else (printf "%03d: %s = %s" ix nm x',False)
+
+dx7_parameter_pp_err :: (Parameter,U8) -> String
+dx7_parameter_pp_err (p,x) =
+  case dx7_parameter_pp (p,x) of
+    (r,True) -> error (show ("dx7_parameter_pp",x,r))
+    (r,False) -> r
+
 -- | Print complete parameter sequence.
-dx7_parameter_pp :: [U8] -> [String]
-dx7_parameter_pp =
-    let f (p,x) =
-            let (ix,nm,stp,d,u) = p
-                x' = if u == "ASCII"
-                     then ['\'',toEnum x,'\'']
-                     else case Split.splitOn ";" u of
-                            [_] -> show (x + d)
-                            e -> e !! x
-            in if x >= stp
-               then error (show ("dx7_parameter_pp",x,p))
-               else printf "%03d: %s = %s" ix nm x'
-    in map f . zip dx7_parameter_tbl
+dx7_parameter_seq_pp :: [U8] -> [String]
+dx7_parameter_seq_pp = map (fst . dx7_parameter_pp) . zip dx7_parameter_tbl
 
 function_parameters_tbl :: [Parameter]
 function_parameters_tbl =
@@ -209,8 +217,9 @@ function_parameters_tbl =
 
 > h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/Dexed_01.syx.hex"
 > h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/SynprezFM/SynprezFM_03.syx.hex"
+> h <- load_dx7_sysex_hex "/home/rohan/rd/j/2017-11-14/ROM3A.hex.text"
 > mapM_ (putStrLn . voice_name) (hex_voices h)
-> mapM_ (putStrLn . unlines . dx7_parameter_pp) (hex_voices h)
+> mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) (hex_voices h)
 
 -}
 load_dx7_sysex_hex :: FilePath -> IO [U8]

@@ -7,7 +7,6 @@ import System.FilePath {- base -}
 import Text.Printf {- base -}
 
 import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Read as T {- hmt -}
 
 import qualified Sound.SC3.Data.Bitmap.PBM as I {- hsc3-data -}
 import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
@@ -85,10 +84,13 @@ trace2_set_write_csv fn =
     let f (p,q) = [show p,show q]
     in TR.trace_write_csv (show,f) fn . trace2_set_to_trace
 
+{-
+import qualified Music.Theory.Read as T {- hmt -}
 trace_set_read_csv :: Read n => FilePath -> IO [[[n]]]
 trace_set_read_csv fn = do
   tr <- TR.trace_read_csv (T.read_int,map read) fn
   return (map (map snd) (T.group_on fst tr))
+-}
 
 pbm_trace :: (Bool,Int,Bool) -> FilePath -> FilePath -> IO ()
 pbm_trace (jn,lm,ly) pbm_fn out_dir = do

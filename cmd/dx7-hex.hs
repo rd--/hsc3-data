@@ -11,7 +11,9 @@ usage =
 main :: IO ()
 main = do
   a <- getArgs
+  let ld = load_dx7_sysex_hex
+      wr = putStrLn . unlines
   case a of
-    ["print-parameters",fn] -> load_dx7_sysex_hex fn >>= putStrLn . unlines . concatMap dx7_parameter_pp . hex_voices
-    ["print-voice-names",fn] -> load_dx7_sysex_hex fn >>= putStrLn . unlines . map voice_name . hex_voices
+    ["print-parameters",fn] -> ld fn >>= wr. concatMap dx7_parameter_seq_pp . hex_voices
+    ["print-voice-names",fn] -> ld fn >>= wr . map voice_name . hex_voices
     _ -> usage

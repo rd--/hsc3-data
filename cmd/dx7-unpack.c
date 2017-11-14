@@ -2,7 +2,7 @@
 
 DX7 SYSEX files have some fields bit-packed.
 
-dx7-unpack prints the 4960 element unpacked sysex data as plain text.
+dx7-unpack prints the 4960 element unpacked sysex data as plain text (310 * 16)
 
 http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt
 http://sourceforge.net/u/tedfelix/dx7dump/
