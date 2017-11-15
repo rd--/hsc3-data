@@ -7,12 +7,19 @@ module Sound.SC3.Data.Yamaha.DX7 where
 import Data.List {- base -}
 import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
+import Safe {- safe -}
 import Text.Printf {- base -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
 
 -- | Parameter values are at most in 0-99.
 type U8 = Int
+
+-- | Voice data (# = 155 = 21 * 6 + 29)
+type Voice = [U8]
+
+-- | Bank data (# = 4960 = 32 * 155)
+type Bank = [U8]
 
 -- | Yamaha manufacturer ID.
 --
@@ -173,28 +180,41 @@ dx7_parameter_index nm =
     fmap parameter_ix $
     find ((== nm) . parameter_name) dx7_parameter_tbl
 
-dx7_parameter_pp :: (Parameter,U8) -> (String,Bool)
-dx7_parameter_pp (p,x) =
-  let (ix,nm,stp,d,u) = p
-      x_clip = if x >= stp then stp - 1 else x
-      x' = if u == "ASCII"
-           then ['\'',toEnum x_clip,'\'']
-           else case Split.splitOn ";" u of
-                  [_] -> show (x_clip + d)
-                  e -> e !! x_clip
-  in if x >= stp
-     then (printf "%03d: %s = %s (ERROR BYTE=0x%02X)" ix nm x' x,True)
-     else (printf "%03d: %s = %s" ix nm x',False)
+-- | Pretty print value give 'Parameter'.
+dx7_parameter_value_pp :: Parameter -> U8 -> String
+dx7_parameter_value_pp p x =
+  let (_,_,stp,d,u) = p
+      (x_clip,err) = if x >= stp
+                     then (stp - 1,printf "(ERROR BYTE=0x%02X)" x)
+                     else (x,"")
+      r = if u == "ASCII"
+          then ['\'',toEnum x_clip,'\'']
+          else case Split.splitOn ";" u of
+                 [_] -> printf "%02d" (x_clip + d)
+                 e -> Safe.at e x_clip
+  in r ++ err
 
-dx7_parameter_pp_err :: (Parameter,U8) -> String
-dx7_parameter_pp_err (p,x) =
-  case dx7_parameter_pp (p,x) of
-    (r,True) -> error (show ("dx7_parameter_pp",x,r))
-    (r,False) -> r
+dx7_parameter_pp :: Bool -> Parameter -> U8 -> String
+dx7_parameter_pp with_ix p x =
+  let (ix,nm,_,_,_) = p
+  in if with_ix
+     then printf "%03d: %s = %s" ix nm (dx7_parameter_value_pp p x)
+     else printf "%s = %s" nm (dx7_parameter_value_pp p x)
+
+dx7_parameter_set_pp :: Parameter -> [U8] -> String
+dx7_parameter_set_pp p x =
+  let (_,nm,_,_,_) = p
+  in printf "%s = %s" nm (intercalate "," (map (dx7_parameter_value_pp p) x))
 
 -- | Print complete parameter sequence.
-dx7_parameter_seq_pp :: [U8] -> [String]
-dx7_parameter_seq_pp = map (fst . dx7_parameter_pp) . zip dx7_parameter_tbl
+dx7_parameter_seq_pp :: Voice -> [String]
+dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
+
+dx7_voice_pp :: Voice -> [String]
+dx7_voice_pp p =
+  let p_grp = Split.splitPlaces (replicate 6 (21::Int) ++ [19,10,1]) p
+  in concat [zipWith (dx7_parameter_pp False) parameter_tbl_rem (Safe.at p_grp 6)
+            ,zipWith dx7_parameter_set_pp operator_parameter_template (transpose (take 6 p_grp))]
 
 function_parameters_tbl :: [Parameter]
 function_parameters_tbl =
@@ -218,8 +238,10 @@ function_parameters_tbl =
 > h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/Dexed_01.syx.hex"
 > h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/SynprezFM/SynprezFM_03.syx.hex"
 > h <- load_dx7_sysex_hex "/home/rohan/rd/j/2017-11-14/ROM3A.hex.text"
-> mapM_ (putStrLn . voice_name) (hex_voices h)
-> mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) (hex_voices h)
+> mapM_ (putStrLn . dx7_voice_name) (dx7_bank_voices h)
+> mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) (dx7_bank_voices h)
+> mapM_ (putStrLn . unlines . dx7_voice_pp) (dx7_bank_voices h)
+> mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) (dx7_bank_voices h)
 
 -}
 load_dx7_sysex_hex :: FilePath -> IO [U8]
@@ -231,11 +253,45 @@ load_dx7_sysex_hex fn = do
 
 -- * Voice
 
-hex_voices :: [U8] -> [[U8]]
-hex_voices = Split.chunksOf 155
+dx7_bank_voices :: [U8] -> [Voice]
+dx7_bank_voices = Split.chunksOf 155
 
-voice_name :: [U8] -> String
-voice_name v = map (toEnum . (v !!)) [145 .. 154]
+dx7_voice_name :: Voice -> String
+dx7_voice_name v = map (toEnum . Safe.at v) [145 .. 154]
+
+-- * Patch sheet
+
+-- > sort (concatMap (\(_,_,ix) -> ix) dx7_voice_data_list) == [0 .. 20] ++ [126 .. 144]
+dx7_voice_data_list :: [(String, [String], [U8])]
+dx7_voice_data_list =
+  [("",["ALGORITHM"],[134])
+  ,("",["FEEDBACK"],[135])
+  ,("LFO",["WAVE","SPEED","DELAY","PMD","AMD","SYNC"],[142,137,138,139,140,141])
+  ,("MOD SENSITIVITY",["PITCH","AMPLITUDE"],[143,14])
+  ,("OSCILLATOR",["MOD","SYNC","FREQ. COARSE","FREQ. FINE","DETUNE"],17:136:[18 .. 20])
+  ,("EG",["R1","R2","R3","R4","L1","L2","L3","L4"],[0 .. 7])
+  ,("KEYBOARD LEVEL SCALING",["BREAK POINT","CURVE L","CURVE R","DEPTH L","DEPTH R"],[8,11,12,9,10])
+  ,("",["K.BOARD RATE SCALING"],[13])
+  ,("OPERATOR",["OUTPUT LEVEL","VELO SENS"],[16,15])
+  ,("PITCH EG",["R1","R2","R3","R4","L1","L2","L3","L4"],[126 .. 133])
+  ,("",["KEY TRANSPOSE"],[144])]
+
+dx7_voice_data_list_pp :: Voice -> [String]
+dx7_voice_data_list_pp d =
+  let op_ix_set n = [n, n + 21 .. n + 21 * 5]
+      is_op_ix n = n < 126
+      ix_val n =
+        if is_op_ix n
+        then intercalate ","
+             (map (dx7_parameter_value_pp (Safe.at operator_parameter_template n)) (map (Safe.at d) (op_ix_set n)))
+        else dx7_parameter_value_pp (Safe.at parameter_tbl_rem (n - 126)) (Safe.at d n)
+      pp z nm ix = concat [z,nm,"=",ix_val ix]
+      f (grp,nm,ix) =
+        if null grp
+        then zipWith (pp "") nm ix
+        else grp : zipWith (pp "  ") nm ix
+      vc_nm = "NAME = " ++ dx7_voice_name d
+  in vc_nm : concatMap f dx7_voice_data_list
 
 -- * Algorithms
 

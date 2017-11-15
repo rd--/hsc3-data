@@ -14,6 +14,6 @@ main = do
   let ld = load_dx7_sysex_hex
       wr = putStrLn . unlines
   case a of
-    ["print-parameters",fn] -> ld fn >>= wr. concatMap dx7_parameter_seq_pp . hex_voices
-    ["print-voice-names",fn] -> ld fn >>= wr . map voice_name . hex_voices
+    ["print-parameters",fn] -> ld fn >>= wr. concatMap dx7_parameter_seq_pp . dx7_bank_voices
+    ["print-voice-names",fn] -> ld fn >>= wr . map dx7_voice_name . dx7_bank_voices
     _ -> usage
