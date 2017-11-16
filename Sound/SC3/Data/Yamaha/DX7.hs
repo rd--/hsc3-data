@@ -235,9 +235,7 @@ function_parameters_tbl =
 
 {- | Read unpacked 4960 parameter sequence from text file (see cmd/dx7-unpack.c).
 
-> h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/Dexed_01.syx.hex"
-> h <- load_dx7_sysex_hex "/home/rohan/data/yamaha/DX7/SynprezFM/SynprezFM_03.syx.hex"
-> h <- load_dx7_sysex_hex "/home/rohan/rd/j/2017-11-14/ROM3A.hex.text"
+> h <- load_dx7_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text"
 > mapM_ (putStrLn . dx7_voice_name) (dx7_bank_voices h)
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) (dx7_bank_voices h)
 > mapM_ (putStrLn . unlines . dx7_voice_pp) (dx7_bank_voices h)
@@ -259,41 +257,55 @@ dx7_bank_voices = Split.chunksOf 155
 dx7_voice_name :: Voice -> String
 dx7_voice_name v = map (toEnum . Safe.at v) [145 .. 154]
 
--- * Patch sheet
+-- * DX7 VOICE DATA LIST
 
+-- | Arrangement of parameters on printed DX7 VOICE DATA LIST.
+--
 -- > sort (concatMap (\(_,_,ix) -> ix) dx7_voice_data_list) == [0 .. 20] ++ [126 .. 144]
 dx7_voice_data_list :: [(String, [String], [U8])]
 dx7_voice_data_list =
-  [("",["ALGORITHM"],[134])
-  ,("",["FEEDBACK"],[135])
-  ,("LFO",["WAVE","SPEED","DELAY","PMD","AMD","SYNC"],[142,137,138,139,140,141])
-  ,("MOD SENSITIVITY",["PITCH","AMPLITUDE"],[143,14])
-  ,("OSCILLATOR",["MOD","SYNC","FREQ. COARSE","FREQ. FINE","DETUNE"],17:136:[18 .. 20])
-  ,("EG",["R1","R2","R3","R4","L1","L2","L3","L4"],[0 .. 7])
-  ,("KEYBOARD LEVEL SCALING",["BREAK POINT","CURVE L","CURVE R","DEPTH L","DEPTH R"],[8,11,12,9,10])
+  [(""
+   ,["ALGORITHM"],[134])
+  ,(""
+   ,["FEEDBACK"],[135])
+  ,("LFO"
+   ,["WAVE","SPEED","DELAY","PMD","AMD","SYNC"],[142,137,138,139,140,141])
+  ,("MOD SENSITIVITY"
+   ,["PITCH","AMPLITUDE"],[143,14])
+  ,("OSCILLATOR"
+   ,["MOD","SYNC","FREQ. COARSE","FREQ. FINE","DETUNE"],17:136:[18 .. 20])
+  ,("EG"
+   ,["R1","R2","R3","R4","L1","L2","L3","L4"],[0 .. 7])
+  ,("KEYBOARD LEVEL SCALING"
+   ,["BREAK POINT","CURVE L","CURVE R","DEPTH L","DEPTH R"],[8,11,12,9,10])
   ,("",["K.BOARD RATE SCALING"],[13])
-  ,("OPERATOR",["OUTPUT LEVEL","VELO SENS"],[16,15])
-  ,("PITCH EG",["R1","R2","R3","R4","L1","L2","L3","L4"],[126 .. 133])
-  ,("",["KEY TRANSPOSE"],[144])]
+  ,("OPERATOR"
+   ,["OUTPUT LEVEL","VELO SENS"],[16,15])
+  ,("PITCH EG"
+   ,["R1","R2","R3","R4","L1","L2","L3","L4"],[126 .. 133])
+  ,(""
+   ,["KEY TRANSPOSE"],[144])]
 
 dx7_voice_data_list_pp :: Voice -> [String]
 dx7_voice_data_list_pp d =
   let op_ix_set n = [n, n + 21 .. n + 21 * 5]
+      op_ix_pp n = map
+                   (dx7_parameter_value_pp (Safe.at operator_parameter_template n))
+                   (map (Safe.at d) (op_ix_set n))
       is_op_ix n = n < 126
       ix_val n =
         if is_op_ix n
-        then intercalate ","
-             (map (dx7_parameter_value_pp (Safe.at operator_parameter_template n)) (map (Safe.at d) (op_ix_set n)))
+        then intercalate "," (op_ix_pp n)
         else dx7_parameter_value_pp (Safe.at parameter_tbl_rem (n - 126)) (Safe.at d n)
       pp z nm ix = concat [z,nm,"=",ix_val ix]
       f (grp,nm,ix) =
         if null grp
         then zipWith (pp "") nm ix
         else grp : zipWith (pp "  ") nm ix
-      vc_nm = "NAME = " ++ dx7_voice_name d
+      vc_nm = "NAME=" ++ dx7_voice_name d
   in vc_nm : concatMap f dx7_voice_data_list
 
--- * Algorithms
+-- * DX7 ALGORITHM
 
 -- | Algorithm given as a list of (dst,src) operator edges and a list of output operators.
 --   Operators are zero-indexed.
@@ -337,20 +349,26 @@ dx7_algorithms =
 
 {- | Simple dot graph of algorithm.
 
-> let wr k = writeFile (printf "/tmp/dx7.%02d.dot" k) (unlines (dx7_algorithm_dot (dx7_algorithms !! k)))
+> let ad = unlines . dx7_algorithm_dot . (!!) dx7_algorithms
+> let wr k = writeFile (printf "/tmp/dx7.%02d.dot" k) (ad k)
 > mapM_ wr [0 .. 31]
 
 -}
 dx7_algorithm_dot :: DX7_Algorithm -> [String]
 dx7_algorithm_dot (e,o) =
   let n_f k = printf "%d [shape=square,label=%d];" k (k + 1)
-      e_f (dst,src) = printf "%d -> %d [color=%s,constraint=%s];" src dst (if src > dst then "black" else "slategray") (if src > dst then "true" else "false") -- orangered
+      e_f (dst,src) = printf
+                      "%d -> %d [color=%s,constraint=%s];"
+                      src
+                      dst
+                      (if src > dst then "black" else "slategray")
+                      (if src > dst then "true" else "false") -- orangered
       o_f k = printf "%d -> o;" k
   in concat
      [["digraph g {"
-      ,"graph [splines=ortho];" -- polyline ortho line
+      ,"graph [layout=dot,splines=ortho];" -- polyline ortho line
       ,"node [style=solid,color=black];"
-      ,"edge [dir=forward,arrowhead=dot,arrowtail=none,arrowsize=0.35];"] -- headport=n,tailport=s
+      ,"edge [arrowhead=dot,arrowsize=0.35];"]
      ,map n_f [0::Int .. 5]
      ,["o [shape=\"circle\",label=\"·\"];"]
      ,map e_f e

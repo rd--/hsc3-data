@@ -2,6 +2,7 @@
 module Sound.SC3.Data.Yamaha.DX7.PX7 where
 
 import Data.List {- base -}
+import Data.Maybe {- base -}
 
 -- | Non-operator PX7 parameter names paired with DX7 parameter index.
 --
@@ -84,8 +85,35 @@ px7_reverse n = 99 - n
 px7_param_is_reversed :: String -> Bool
 px7_param_is_reversed nm = reverse "_reversed" == take 9 (reverse nm)
 
+-- | Table of (PX7,DX7) parameter indices.
+px7_ix_tbl :: [(Int,Int)]
+px7_ix_tbl = zip [0..] (map snd px7_param_seq)
+
+-- | Given PX7 index, lookup DX7 index.
+--
+-- > px7_ix_to_dx7_ix 0 == 134
+px7_ix_to_dx7_ix :: Int -> Int
+px7_ix_to_dx7_ix =
+  fromMaybe (error "px7_ix_to_dx7_ix") .
+  flip lookup px7_ix_tbl
+
+-- | Inverse of 'px7_ix_to_dx7_ix'.
+--
+-- > px7_ix_from_dx7_ix 134 == 0
+px7_ix_from_dx7_ix :: Int -> Int
+px7_ix_from_dx7_ix k =
+  fromMaybe (error "px7_ix_from_dx7_ix")
+  (findIndex ((==) k . snd) px7_param_seq)
+
 -- | Translate data sequence in PX7 order to DX7 order, reverse data as required.
 px7_param_data_to_dx7 :: (Ord t,Num t) => [t] -> [t]
 px7_param_data_to_dx7 =
   let f ((nm,ix),d) = (ix,if px7_param_is_reversed nm then px7_reverse d else d)
   in map snd . sort . map f . zip px7_param_seq
+
+-- | Inverse of 'px7_param_data_to_dx7'.
+px7_param_data_from_dx7 :: (Ord t,Num t) => [t] -> [t]
+px7_param_data_from_dx7 =
+  let f ((nm,ix),d) = (px7_ix_from_dx7_ix ix
+                      ,if px7_param_is_reversed nm then px7_reverse d else d)
+  in map snd . sort . map f . zip (sortOn snd px7_param_seq)
