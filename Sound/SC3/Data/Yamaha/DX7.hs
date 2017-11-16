@@ -8,6 +8,7 @@ import Data.List {- base -}
 import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
 import Safe {- safe -}
+import System.Process {- process -}
 import Text.Printf {- base -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
@@ -16,10 +17,7 @@ import qualified Music.Theory.Byte as Byte {- hmt -}
 type U8 = Int
 
 -- | Voice data (# = 155 = 21 * 6 + 29)
-type Voice = [U8]
-
--- | Bank data (# = 4960 = 32 * 155)
-type Bank = [U8]
+type DX7_Voice = [U8]
 
 -- | Yamaha manufacturer ID.
 --
@@ -207,10 +205,10 @@ dx7_parameter_set_pp p x =
   in printf "%s = %s" nm (intercalate "," (map (dx7_parameter_value_pp p) x))
 
 -- | Print complete parameter sequence.
-dx7_parameter_seq_pp :: Voice -> [String]
+dx7_parameter_seq_pp :: DX7_Voice -> [String]
 dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 
-dx7_voice_pp :: Voice -> [String]
+dx7_voice_pp :: DX7_Voice -> [String]
 dx7_voice_pp p =
   let p_grp = Split.splitPlaces (replicate 6 (21::Int) ++ [19,10,1]) p
   in concat [zipWith (dx7_parameter_pp False) parameter_tbl_rem (Safe.at p_grp 6)
@@ -233,28 +231,9 @@ function_parameters_tbl =
     ,(76,"AFTERTOUCH RANGE",100,0,"")
     ,(77,"AFTERTOUCH ASSIGN",8,0,"")]
 
-{- | Read unpacked 4960 parameter sequence from text file (see cmd/dx7-unpack.c).
-
-> h <- load_dx7_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text"
-> mapM_ (putStrLn . dx7_voice_name) (dx7_bank_voices h)
-> mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) (dx7_bank_voices h)
-> mapM_ (putStrLn . unlines . dx7_voice_pp) (dx7_bank_voices h)
-> mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) (dx7_bank_voices h)
-
--}
-load_dx7_sysex_hex :: FilePath -> IO [U8]
-load_dx7_sysex_hex fn = do
-  b <- Byte.load_hex_byte_seq fn
-  case splitAt 4960 b of
-    (h,[]) -> return h
-    _ -> error "load_dx7_sysex_hex"
-
 -- * Voice
 
-dx7_bank_voices :: [U8] -> [Voice]
-dx7_bank_voices = Split.chunksOf 155
-
-dx7_voice_name :: Voice -> String
+dx7_voice_name :: DX7_Voice -> String
 dx7_voice_name v = map (toEnum . Safe.at v) [145 .. 154]
 
 -- * DX7 VOICE DATA LIST
@@ -286,7 +265,7 @@ dx7_voice_data_list =
   ,(""
    ,["KEY TRANSPOSE"],[144])]
 
-dx7_voice_data_list_pp :: Voice -> [String]
+dx7_voice_data_list_pp :: DX7_Voice -> [String]
 dx7_voice_data_list_pp d =
   let op_ix_set n = [n, n + 21 .. n + 21 * 5]
       op_ix_pp n = map
@@ -374,3 +353,34 @@ dx7_algorithm_dot (e,o) =
      ,map e_f e
      ,map o_f o
      ,["}"]]
+
+-- * SYSEX IO
+
+{- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
+
+> d <- dx7_load_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text"
+> mapM_ (putStrLn . dx7_voice_name) d
+> mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
+> mapM_ (putStrLn . unlines . dx7_voice_pp) d
+> mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
+
+-}
+dx7_load_sysex_hex :: FilePath -> IO [DX7_Voice]
+dx7_load_sysex_hex fn = do
+  b <- Byte.load_hex_byte_seq fn
+  case splitAt 4960 b of
+    (h,[]) -> return (Split.chunksOf 155 h)
+    _ -> error "dx7_load_sysex_hex"
+
+{- | Read unpacked 4960 parameter sequence from binary sysex file (see cmd/dx7-unpack.c).
+
+> b <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> t <- dx7_load_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text"
+> (length b,length t,b == t)
+
+-}
+dx7_load_sysex :: String -> IO [DX7_Voice]
+dx7_load_sysex fn = do
+  s <- readProcess "hsc3-dx7-unpack" ["unpack","binary",fn] ""
+  return (Split.chunksOf 155 (map fromEnum s))
+
