@@ -2,6 +2,7 @@
 module Sound.SC3.Data.Yamaha.DX7.AFX where
 
 import Data.Char {- base -}
+import Text.Printf {- base -}
 
 import qualified Data.ByteString.Char8 as B {- bytestring -}
 
@@ -11,11 +12,19 @@ import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7
 afx_entry_verify :: B.ByteString -> Bool
 afx_entry_verify = (== 290) . B.length
 
+-- > u8_parse_c2 ('3','2') == 32
+u8_parse_c2 :: (Char,Char) -> Int
+u8_parse_c2 (c1,c2) = digitToInt c1 * 10 + digitToInt c2
+
+-- > map (u8_parse_c2 . u8_pp_c2) [0 .. 99] == [0 .. 99]
+u8_pp_c2 :: Int -> (Char, Char)
+u8_pp_c2 n = let (p,q) = n `divMod` 10 in (intToDigit p,intToDigit q)
+
 -- | Each entry is 145 two digit decimal numbers with no spaces.
 --   The data is in PX7 patch file sequence.
 afx_parse_line :: B.ByteString -> [U8]
 afx_parse_line s =
-  let f k = digitToInt (B.index s (k * 2)) * 10 + digitToInt (B.index s (k * 2 + 1))
+  let f k = u8_parse_c2 (B.index s (k * 2),B.index s (k * 2 + 1))
   in if afx_entry_verify s then map f [0 .. 144] else error "afx_parse_line"
 
 afx_parse :: B.ByteString -> [[U8]]
@@ -39,12 +48,18 @@ afx_load = fmap afx_parse . B.readFile
 > d <- afx_load_dx7 "/home/rohan/opt/src/DX7-Supercollider/DX7.afx"
 > let d0:_ = d
 > putStrLn$unlines$ dx7_parameter_seq_pp d0
-> 
 
 > import qualified Music.Theory.List as T {- hmt -}
 > let n = dx7_parameter_index "ALGORITHM #"
 > T.histogram (map (!! n) d)
 
 -}
-afx_load_dx7 :: FilePath -> IO [[U8]]
+afx_load_dx7 :: FilePath -> IO [Voice]
 afx_load_dx7 = fmap (map PX7.px7_param_data_to_dx7) . afx_load
+
+-- | AFX pretty printer (inverse of 'afx_parse_line').
+afx_pp :: [U8] -> String
+afx_pp = concatMap (printf "%02d")
+
+afx_dx7_pp :: Voice -> String
+afx_dx7_pp = afx_pp . PX7.px7_param_data_from_dx7
