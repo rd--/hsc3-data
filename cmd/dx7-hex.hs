@@ -1,3 +1,4 @@
+import Data.List {- base -}
 import System.Environment {- base -}
 
 import Sound.SC3.Data.Yamaha.DX7
@@ -14,8 +15,9 @@ main = do
   a <- getArgs
   let ld = dx7_load_sysex_hex
       wr = putStrLn . unlines
+      ic = intercalate [""]
   case a of
-    ["print-parameters",fn] -> ld fn >>= wr. concatMap dx7_parameter_seq_pp
+    ["print-parameters",fn] -> ld fn >>= wr . ic . map dx7_parameter_seq_pp
     ["print-voice-names",fn] -> ld fn >>= wr . map dx7_voice_name
-    ["print-voice-data-list",fn] -> ld fn >>= wr . concatMap dx7_voice_data_list_pp
+    ["print-voice-data-list",fn] -> ld fn >>= wr . ic . map dx7_voice_data_list_pp
     _ -> usage
