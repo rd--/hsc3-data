@@ -21,7 +21,7 @@ type DX7_Voice = [U8]
 
 -- | Yamaha manufacturer ID.
 --
--- > import Music.Theory.Bits
+-- > import Music.Theory.Bits {- hmt -}
 -- > gen_bitseq_pp 8 yamaha_id == "01000011"
 --
 -- > :set -XBinaryLiterals
@@ -37,32 +37,35 @@ usr_str_tbl =
     ,("MODE","RATIO;FIXED")]
 
 -- | (DX7-IX,NAME,STEPS,USR_DIFF,USR_STR)
-type Parameter = (U8,String,U8,Int,String)
+type DX7_Parameter = (U8,String,U8,Int,String)
 
-parameter_ix :: Parameter -> Int
-parameter_ix (n,_,_,_,_) = n
+dx7_parameter_ix :: DX7_Parameter -> Int
+dx7_parameter_ix (n,_,_,_,_) = n
 
-parameter_name :: Parameter -> String
-parameter_name (_,nm,_,_,_) = nm
+dx7_parameter_nm :: DX7_Parameter -> String
+dx7_parameter_nm (_,nm,_,_,_) = nm
 
-parameter_range :: Parameter -> (Int,Int)
-parameter_range (_,_,n,_,_) = (0,n - 1)
+dx7_parameter_range :: DX7_Parameter -> (Int,Int)
+dx7_parameter_range (_,_,n,_,_) = (0,n - 1)
 
-parameter_range_usr :: Parameter -> (Int,Int)
-parameter_range_usr (_,_,n,d,_) = (d,d + n - 1)
+dx7_parameter_range_usr :: DX7_Parameter -> (Int,Int)
+dx7_parameter_range_usr (_,_,n,d,_) = (d,d + n - 1)
 
 -- | Normalise parameter value to be in (0,1).
 --
--- > let p = operator_parameter_template !! 20
--- > map (parameter_value_normalise p) [0 .. 14]
-parameter_value_normalise :: Parameter -> Int -> Float
-parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
+-- > let p = dx7_op_parameter_tbl !! 20
+-- > map (dx7_parameter_value_normalise p) [0 .. 14]
+dx7_parameter_value_normalise :: DX7_Parameter -> Int -> Float
+dx7_parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
+
+dx7_op_nparam :: Int
+dx7_op_nparam = 21
 
 -- | Template for six FM operators.
 --
--- > length operator_parameter_template == 21
-operator_parameter_template :: [Parameter]
-operator_parameter_template =
+-- > length dx7_op_parameter_tbl == dx7_op_nparam
+dx7_op_parameter_tbl :: [DX7_Parameter]
+dx7_op_parameter_tbl =
     [(00,"EG RATE 1",100,0,"")
     ,(01,"EG RATE 2",100,0,"")
     ,(02,"EG RATE 3",100,0,"")
@@ -86,15 +89,15 @@ operator_parameter_template =
     ,(20,"OSC DETUNE",15,-7,"-7 - +7")
     ]
 
--- | Rewrite 'operator_parameter_template' for operator /n/.
-gen_operator_parameter_tbl :: Int -> [Parameter]
-gen_operator_parameter_tbl n =
+-- | Rewrite 'dx7_op_parameter_tbl' for operator /n/.
+dx7_rewrite_op_dx7_parameter_tbl :: Int -> [DX7_Parameter]
+dx7_rewrite_op_dx7_parameter_tbl n =
     let n' = 6 - n
         f (ix,nm,stp,usr_diff,usr_str) =
             let ix' = ix + (21 * n')
                 nm' = "OP " ++ show n ++ " " ++ nm
             in (ix',nm',stp,usr_diff,usr_str)
-    in map f operator_parameter_template
+    in map f dx7_op_parameter_tbl
 
 operator_group_structure :: [(String,String,[U8])]
 operator_group_structure =
@@ -106,15 +109,19 @@ operator_group_structure =
 
 -- | Six operators, descending order, one-indexed.
 --
--- > length operator_parameter_tbl == 126
-operator_parameter_tbl :: [Parameter]
-operator_parameter_tbl = concatMap gen_operator_parameter_tbl [6,5 .. 1]
+-- > length dx7_op6_dx7_parameter_tbl == 6 * dx7_op_nparam
+dx7_op6_dx7_parameter_tbl :: [DX7_Parameter]
+dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1]
+
+-- | Number of shared (non-operator) parameters.
+dx7_sh_nparam :: Int
+dx7_sh_nparam = 19
 
 -- | Remainder (non-operator) of parameter table.
 --
--- > length parameter_tbl_rem == 30
-parameter_tbl_rem :: [Parameter]
-parameter_tbl_rem =
+-- > length dx7_sh_parameter_tbl == dx7_sh_nparam
+dx7_sh_parameter_tbl :: [DX7_Parameter]
+dx7_sh_parameter_tbl =
     [(126,"PITCH EG RATE 1",100,0,"")
     ,(127,"PITCH EG RATE 2",100,0,"")
     ,(128,"PITCH EG RATE 3",100,0,"")
@@ -133,19 +140,28 @@ parameter_tbl_rem =
     ,(141,"LFO SYNC",2,0,"OFF;ON")
     ,(142,"LFO WAVEFORM",6,0,"TR;SD;SU;SQ;SI;SH")
     ,(143,"PITCH MOD SENSITIVITY",8,0,"")
-    ,(144,"TRANSPOSE",49,0,"12=C2")
-    ,(145,"VOICE NAME CHAR 1",128,0,"ASCII")
-    ,(146,"VOICE NAME CHAR 2",128,0,"ASCII")
-    ,(147,"VOICE NAME CHAR 3",128,0,"ASCII")
-    ,(148,"VOICE NAME CHAR 4",128,0,"ASCII")
-    ,(149,"VOICE NAME CHAR 5",128,0,"ASCII")
-    ,(150,"VOICE NAME CHAR 6",128,0,"ASCII")
-    ,(151,"VOICE NAME CHAR 7",128,0,"ASCII")
-    ,(152,"VOICE NAME CHAR 8",128,0,"ASCII")
-    ,(153,"VOICE NAME CHAR 9",128,0,"ASCII")
-    ,(154,"VOICE NAME CHAR 10",128,0,"ASCII")
-    ,(155,"OPERATOR ON/OFF",2,0,"BIT5=OP1 - BIT0=OP6") -- NOT STORED IN VOICE DATA
-    ]
+    ,(144,"TRANSPOSE",49,0,"12=C2")]
+
+-- | Number of bytes for voice name.
+dx7_name_nchar :: Int
+dx7_name_nchar = 10
+
+dx7_name_dx7_parameter_tbl :: [DX7_Parameter]
+dx7_name_dx7_parameter_tbl =
+    [(145,"VOICE NAME CHAR 01",128,0,"ASCII")
+    ,(146,"VOICE NAME CHAR 02",128,0,"ASCII")
+    ,(147,"VOICE NAME CHAR 03",128,0,"ASCII")
+    ,(148,"VOICE NAME CHAR 04",128,0,"ASCII")
+    ,(149,"VOICE NAME CHAR 05",128,0,"ASCII")
+    ,(150,"VOICE NAME CHAR 06",128,0,"ASCII")
+    ,(151,"VOICE NAME CHAR 07",128,0,"ASCII")
+    ,(152,"VOICE NAME CHAR 08",128,0,"ASCII")
+    ,(153,"VOICE NAME CHAR 09",128,0,"ASCII")
+    ,(154,"VOICE NAME CHAR 10",128,0,"ASCII")]
+
+-- | NOT STORED IN VOICE DATA
+dx7_opstatus_param :: DX7_Parameter
+dx7_opstatus_param = (155,"OPERATOR ON/OFF",2,0,"BIT5=OP1 - BIT0=OP6")
 
 rem_group_structure :: [(String,String,[U8])]
 rem_group_structure =
@@ -154,11 +170,17 @@ rem_group_structure =
     ,("LFO","SPEED;DELAY;PITCH-MOD-DEPTH;AMP-MOD-DEPTH;SYNC;WAVEFORM",[137..142])
     ,("VOICE NAME CHAR",";;;;;;;;;",[145..154])]
 
--- | 'operator_parameter_tbl' and 'parameter_tbl_rem'.
+dx7_nparam :: Int
+dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam + dx7_name_nchar
+
+-- | All DX7 parameters.
 --
--- > length dx7_parameter_tbl == 156
-dx7_parameter_tbl :: [Parameter]
-dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
+-- > length dx7_parameter_tbl == dx7_nparam
+dx7_parameter_tbl :: [DX7_Parameter]
+dx7_parameter_tbl =
+  concat [dx7_op6_dx7_parameter_tbl
+         ,dx7_sh_parameter_tbl
+         ,dx7_name_dx7_parameter_tbl]
 
 -- | Lookup parameter name given index.
 --
@@ -166,8 +188,8 @@ dx7_parameter_tbl = operator_parameter_tbl ++ parameter_tbl_rem
 dx7_parameter_name :: U8 -> String
 dx7_parameter_name n =
     fromMaybe (error "dx7_parameter_name") $
-    fmap parameter_name $
-    find ((== n) . parameter_ix) dx7_parameter_tbl
+    fmap dx7_parameter_nm $
+    find ((== n) . dx7_parameter_ix) dx7_parameter_tbl
 
 -- | Lookup parameter index given name.
 --
@@ -175,11 +197,11 @@ dx7_parameter_name n =
 dx7_parameter_index :: String -> U8
 dx7_parameter_index nm =
     fromMaybe (error "dx7_parameter_ix") $
-    fmap parameter_ix $
-    find ((== nm) . parameter_name) dx7_parameter_tbl
+    fmap dx7_parameter_ix $
+    find ((== nm) . dx7_parameter_nm) dx7_parameter_tbl
 
--- | Pretty print value give 'Parameter'.
-dx7_parameter_value_pp :: Parameter -> U8 -> String
+-- | Pretty print value give 'DX7_Parameter'.
+dx7_parameter_value_pp :: DX7_Parameter -> U8 -> String
 dx7_parameter_value_pp p x =
   let (_,_,stp,d,u) = p
       (x_clip,err) = if x >= stp
@@ -192,14 +214,14 @@ dx7_parameter_value_pp p x =
                  e -> Safe.at e x_clip
   in r ++ err
 
-dx7_parameter_pp :: Bool -> Parameter -> U8 -> String
+dx7_parameter_pp :: Bool -> DX7_Parameter -> U8 -> String
 dx7_parameter_pp with_ix p x =
   let (ix,nm,_,_,_) = p
   in if with_ix
      then printf "%03d: %s = %s" ix nm (dx7_parameter_value_pp p x)
      else printf "%s = %s" nm (dx7_parameter_value_pp p x)
 
-dx7_parameter_set_pp :: Parameter -> [U8] -> String
+dx7_parameter_set_pp :: DX7_Parameter -> [U8] -> String
 dx7_parameter_set_pp p x =
   let (_,nm,_,_,_) = p
   in printf "%s = %s" nm (intercalate "," (map (dx7_parameter_value_pp p) x))
@@ -211,11 +233,11 @@ dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 dx7_voice_pp :: DX7_Voice -> [String]
 dx7_voice_pp p =
   let p_grp = Split.splitPlaces (replicate 6 (21::Int) ++ [19,10,1]) p
-  in concat [zipWith (dx7_parameter_pp False) parameter_tbl_rem (Safe.at p_grp 6)
-            ,zipWith dx7_parameter_set_pp operator_parameter_template (transpose (take 6 p_grp))]
+  in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (Safe.at p_grp 6)
+            ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
 
-function_parameters_tbl :: [Parameter]
-function_parameters_tbl =
+dx7_function_parameters_tbl :: [DX7_Parameter]
+dx7_function_parameters_tbl =
     [(64,"MODE CHANGE",2,0,"POLY;MONO")
     ,(65,"PITCH BEND RANGE",13,0,"")
     ,(66,"PITCH BEND STEP",13,0,"")
@@ -265,17 +287,20 @@ dx7_voice_data_list =
   ,(""
    ,["KEY TRANSPOSE"],[144])]
 
+-- | Plain text voice data list.
+--
+-- > putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
 dx7_voice_data_list_pp :: DX7_Voice -> [String]
 dx7_voice_data_list_pp d =
   let op_ix_set n = [n, n + 21 .. n + 21 * 5]
       op_ix_pp n = map
-                   (dx7_parameter_value_pp (Safe.at operator_parameter_template n))
+                   (dx7_parameter_value_pp (Safe.at dx7_op_parameter_tbl n))
                    (map (Safe.at d) (op_ix_set n))
       is_op_ix n = n < 126
       ix_val n =
         if is_op_ix n
         then intercalate "," (op_ix_pp n)
-        else dx7_parameter_value_pp (Safe.at parameter_tbl_rem (n - 126)) (Safe.at d n)
+        else dx7_parameter_value_pp (Safe.at dx7_sh_parameter_tbl (n - 126)) (Safe.at d n)
       pp z nm ix = concat [z,nm,"=",ix_val ix]
       f (grp,nm,ix) =
         if null grp
@@ -356,15 +381,7 @@ dx7_algorithm_dot (e,o) =
 
 -- * SYSEX IO
 
-{- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
-
-> d <- dx7_load_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text"
-> mapM_ (putStrLn . dx7_voice_name) d
-> mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
-> mapM_ (putStrLn . unlines . dx7_voice_pp) d
-> mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
-
--}
+-- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
 dx7_load_sysex_hex :: FilePath -> IO [DX7_Voice]
 dx7_load_sysex_hex fn = do
   b <- Byte.load_hex_byte_seq fn
@@ -374,13 +391,17 @@ dx7_load_sysex_hex fn = do
 
 {- | Read unpacked 4960 parameter sequence from binary sysex file (see cmd/dx7-unpack.c).
 
-> b <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> mapM_ (putStrLn . dx7_voice_name) d
+> mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
+> mapM_ (putStrLn . unlines . dx7_voice_pp) d
+> mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
+
 > t <- dx7_load_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text"
-> (length b,length t,b == t)
+> (length d,length t,d == t)
 
 -}
 dx7_load_sysex :: String -> IO [DX7_Voice]
 dx7_load_sysex fn = do
   s <- readProcess "hsc3-dx7-unpack" ["unpack","binary",fn] ""
   return (Split.chunksOf 155 (map fromEnum s))
-

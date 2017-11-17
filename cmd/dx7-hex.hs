@@ -12,7 +12,7 @@ usage =
 main :: IO ()
 main = do
   a <- getArgs
-  let ld = fmap dx7_bank_voices . load_dx7_sysex_hex
+  let ld = dx7_load_sysex_hex
       wr = putStrLn . unlines
   case a of
     ["print-parameters",fn] -> ld fn >>= wr. concatMap dx7_parameter_seq_pp
