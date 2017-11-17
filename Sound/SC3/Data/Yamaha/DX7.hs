@@ -8,6 +8,7 @@ import Control.Monad {- base -}
 import qualified Data.ByteString as Char8 {- bytestring -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
+import Data.Word {- base -}
 import Safe {- safe -}
 import qualified System.Process as Process {- process -}
 import Text.Printf {- base -}
@@ -17,6 +18,9 @@ import qualified Music.Theory.Byte as Byte {- hmt -}
 
 -- | Parameter values are at most in 0-99.
 type U8 = Int
+
+u8_to_word8 :: U8 -> Word8
+u8_to_word8 = fromIntegral
 
 -- | Voice data (# = 155 = 21 * 6 + 29)
 type DX7_Voice = [U8]
@@ -433,4 +437,4 @@ dx7_store_sysex fn b = do
       d_str = Byte.byte_seq_hex_pp d ++ "\n"
   when (length d /= 4960) (error "dx7_store_sysex")
   syx <- Process.readProcess "hsc3-dx7-unpack" ["repack","text","text"] d_str
-  Char8.writeFile fn (Char8.pack (map fromIntegral (Byte.read_hex_byte_seq syx)))
+  Char8.writeFile fn (Char8.pack (map u8_to_word8 (Byte.read_hex_byte_seq syx)))
