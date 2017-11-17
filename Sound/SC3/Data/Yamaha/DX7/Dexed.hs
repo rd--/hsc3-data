@@ -6,16 +6,20 @@ import Data.Maybe {- base -}
 
 import qualified Data.Map as M {- containers -}
 
-data Ctrl = Ctrl {label :: String, idx :: Int}
-            deriving (Eq,Show)
+-- * CTRL
 
-{-
+-- | Dexed control, idx=index.
+data Ctrl =
+  Ctrl {label :: String, idx :: Int}
+  deriving (Eq,Show)
 
-    for(i=0;i < ctrl.size(); i++) {
-        printf("Ctrl {label=\"%s\", idx=%d}\n",
-               ctrl[i]->label.toStdString().c_str(),
-               ctrl[i]->idx);
-    }
+{- | Dexed control parameters.
+
+> > for(i=0;i < ctrl.size(); i++) {
+> >   printf("Ctrl {label=\"%s\", idx=%d}\n",
+> >     ctrl[i]->label.toStdString().c_str(),
+> >     ctrl[i]->idx);
+> > }
 
 -}
 dexed_param :: [Ctrl]
@@ -176,18 +180,25 @@ dexed_param =
     ,Ctrl {label="OP6 KEY VELOCITY", idx=153}
     ,Ctrl {label="OP6 SWITCH", idx=154}]
 
-{-
+-- * CTRLDX
 
-CtrlDX::CtrlDX > printf("CtrlDX {name=\"%s\", steps=%d, offset=%d, display_value=(%d)}\n"
-                        ,name.toStdString().c_str(),steps,offset,displayValue);
+-- | Dexed data for DX7 parameter.
+data CtrlDX =
+  CtrlDX {name :: String
+         ,steps :: Int
+         ,offset :: Int
+         ,display_value :: Int}
+  deriving (Eq,Show)
+
+{- | Dexed DX7 parameters.
+
+> > printf("CtrlDX {name=\"%s\", steps=%d, offset=%d, display_value=(%d)}\n",
+> >   name.toStdString().c_str(),steps,offset,displayValue);
+
+> length dexed_dx7_param == 145
+> sort (map offset dexed_dx7_param) == [0 .. 144]
 
 -}
-
-data CtrlDX = CtrlDX {name :: String, steps :: Int, offset :: Int, display_value :: Int}
-              deriving (Eq,Show)
-
--- > length dexed_dx7_param == 145
--- > sort (map offset dexed_dx7_param) == [0 .. 144]
 dexed_dx7_param :: [CtrlDX]
 dexed_dx7_param =
     [CtrlDX {name="ALGORITHM", steps=32, offset=134, display_value=1}
@@ -337,12 +348,15 @@ dexed_dx7_param =
     ,CtrlDX {name="OP6 KEY VELOCITY", steps=8, offset=15, display_value=0}
     ]
 
+-- | Lookup 'dexed_dx7_param' by name.
+--
 -- > map (\c -> (idx c,dexed_dx7_param_by_name (label c))) dexed_param
 dexed_dx7_param_by_name :: String -> Maybe CtrlDX
 dexed_dx7_param_by_name nm = find ((== nm) . name) dexed_dx7_param
 
--- | This is the DEXED parameter list in the form (DX7-IX,DEXED-IX,DX7-NAME).
+-- | DEXED parameter list in the form (DX7-IX,DEXED-IX,DX7-NAME).
 --
+-- > import qualified Sound.SC3.Data.Yamaha.DX7 as DX7
 -- > mapM_ print $ zip dexed_dx7_param_dx7 DX7.dx7_parameter_tbl
 dexed_dx7_param_dx7 :: [(Int, Int, String)]
 dexed_dx7_param_dx7 =
@@ -362,9 +376,12 @@ dx7_to_dexed_tbl = M.fromList (map (\(i,j,_) -> (i,j)) dexed_dx7_param_dx7)
 dx7_to_dexed :: Int -> Int
 dx7_to_dexed = fromMaybe (error "dx7_to_dexed") . flip M.lookup dx7_to_dexed_tbl
 
+-- * NON-DX7
+
 -- | 'Ctrl' that are not DX7 parameters.
 --
 -- > length non_dx7_param == 10
+-- > length dexed_param - length dexed_dx7_param == 10
 non_dx7_param :: [Ctrl]
 non_dx7_param =
     let f (c,dx) = case dx of

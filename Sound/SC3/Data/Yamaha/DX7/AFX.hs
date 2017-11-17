@@ -78,5 +78,5 @@ afx_load_dx7 = fmap (map PX7.px7_param_data_to_dx7) . afx_load
 afx_dx7_pp :: DX7_Voice -> String
 afx_dx7_pp = afx_pp . PX7.px7_param_data_from_dx7
 
-afx_store_dx7 :: FilePath -> [[U8]] -> IO ()
+afx_store_dx7 :: FilePath -> [DX7_Voice] -> IO ()
 afx_store_dx7 fn = writeFile fn . unlines . map afx_dx7_pp
