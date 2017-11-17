@@ -7,13 +7,13 @@ module Sound.SC3.Data.Yamaha.DX7 where
 import Control.Monad {- base -}
 import qualified Data.ByteString as Char8 {- bytestring -}
 import Data.List {- base -}
+import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
-import Safe {- safe -}
+import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
 import Text.Printf {- base -}
 
-import qualified Data.List.Split as Split {- split -}
 import qualified Music.Theory.Byte as Byte {- hmt -}
 
 -- | Parameter values are at most in 0-99.
@@ -41,8 +41,14 @@ dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam + dx7_name_nchar
 -- | Voice data (# = 155 = dx7_nparam)
 type DX7_Voice = [U8]
 
+dx7_voice_verify :: DX7_Voice -> Bool
+dx7_voice_verify = (==) dx7_nparam . length
+
 -- | Sequence of 32 voices.
 type DX7_Bank = [DX7_Voice]
+
+dx7_bank_verify :: DX7_Bank -> Bool
+dx7_bank_verify b = length b == 32 && all id (map dx7_voice_verify b)
 
 -- | Yamaha manufacturer ID.
 --
@@ -395,7 +401,7 @@ dx7_algorithm_dot (e,o) =
 -- * SYSEX IO
 
 -- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
-dx7_load_sysex_hex :: FilePath -> IO [DX7_Voice]
+dx7_load_sysex_hex :: FilePath -> IO DX7_Bank
 dx7_load_sysex_hex fn = do
   d <- Byte.load_hex_byte_seq fn
   when (length d /= 4960) (error "dx7_load_sysex_hex")
@@ -407,7 +413,7 @@ dx7_load_sysex_hex fn = do
 > dx7_store_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text" d
 
 -}
-dx7_store_sysex_hex :: FilePath -> [DX7_Voice] -> IO ()
+dx7_store_sysex_hex :: FilePath -> DX7_Bank -> IO ()
 dx7_store_sysex_hex fn b = do
   let d = concat b
   when (length d /= 4960) (error "dx7_store_sysex_hex")
@@ -416,6 +422,7 @@ dx7_store_sysex_hex fn b = do
 {- | Read unpacked 4960 parameter sequence from binary sysex file (see cmd/dx7-unpack.c).
 
 > d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> dx7_bank_verify d
 > mapM_ (putStrLn . dx7_voice_name) d
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
@@ -425,7 +432,7 @@ dx7_store_sysex_hex fn b = do
 > (length d,length t,d == t)
 
 -}
-dx7_load_sysex :: String -> IO [DX7_Voice]
+dx7_load_sysex :: String -> IO DX7_Bank
 dx7_load_sysex fn = do
   s <- Process.readProcess "hsc3-dx7-unpack" ["unpack","binary","text",fn] ""
   return (Split.chunksOf 155 (Byte.read_hex_byte_seq s))
@@ -438,7 +445,7 @@ dx7_load_sysex fn = do
 > Process.rawSystem "cmp" ["-l",fn,"/tmp/ROM1A.syx"]
 
 -}
-dx7_store_sysex :: FilePath -> [DX7_Voice] -> IO ()
+dx7_store_sysex :: FilePath -> DX7_Bank -> IO ()
 dx7_store_sysex fn b = do
   let d = concat b
       d_str = Byte.byte_seq_hex_pp d ++ "\n"
