@@ -22,8 +22,27 @@ type U8 = Int
 u8_to_word8 :: U8 -> Word8
 u8_to_word8 = fromIntegral
 
--- | Voice data (# = 155 = 21 * 6 + 29)
+-- | Number of operator parameters.
+dx7_op_nparam :: Int
+dx7_op_nparam = 21
+
+-- | Number of shared (non-operator) parameters.
+dx7_sh_nparam :: Int
+dx7_sh_nparam = 19
+
+-- | Number of bytes for voice name.
+dx7_name_nchar :: Int
+dx7_name_nchar = 10
+
+-- | Number of voice parameters.
+dx7_nparam :: Int
+dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam + dx7_name_nchar
+
+-- | Voice data (# = 155 = dx7_nparam)
 type DX7_Voice = [U8]
+
+-- | Sequence of 32 voices.
+type DX7_Bank = [DX7_Voice]
 
 -- | Yamaha manufacturer ID.
 --
@@ -64,9 +83,6 @@ dx7_parameter_range_usr (_,_,n,d,_) = (d,d + n - 1)
 dx7_parameter_value_normalise :: DX7_Parameter -> Int -> Float
 dx7_parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
 
-dx7_op_nparam :: Int
-dx7_op_nparam = 21
-
 -- | Template for six FM operators.
 --
 -- > length dx7_op_parameter_tbl == dx7_op_nparam
@@ -100,7 +116,7 @@ dx7_rewrite_op_dx7_parameter_tbl :: Int -> [DX7_Parameter]
 dx7_rewrite_op_dx7_parameter_tbl n =
     let n' = 6 - n
         f (ix,nm,stp,usr_diff,usr_str) =
-            let ix' = ix + (21 * n')
+            let ix' = ix + (dx7_op_nparam * n')
                 nm' = "OP " ++ show n ++ " " ++ nm
             in (ix',nm',stp,usr_diff,usr_str)
     in map f dx7_op_parameter_tbl
@@ -118,10 +134,6 @@ operator_group_structure =
 -- > length dx7_op6_dx7_parameter_tbl == 6 * dx7_op_nparam
 dx7_op6_dx7_parameter_tbl :: [DX7_Parameter]
 dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1]
-
--- | Number of shared (non-operator) parameters.
-dx7_sh_nparam :: Int
-dx7_sh_nparam = 19
 
 -- | Remainder (non-operator) of parameter table.
 --
@@ -148,10 +160,6 @@ dx7_sh_parameter_tbl =
     ,(143,"PITCH MOD SENSITIVITY",8,0,"")
     ,(144,"TRANSPOSE",49,0,"12=C2")]
 
--- | Number of bytes for voice name.
-dx7_name_nchar :: Int
-dx7_name_nchar = 10
-
 dx7_name_dx7_parameter_tbl :: [DX7_Parameter]
 dx7_name_dx7_parameter_tbl =
     [(145,"VOICE NAME CHAR 01",128,0,"ASCII")
@@ -175,9 +183,6 @@ rem_group_structure =
     ,("PITCH EG LEVEL","1;2;3;4",[130..133])
     ,("LFO","SPEED;DELAY;PITCH-MOD-DEPTH;AMP-MOD-DEPTH;SYNC;WAVEFORM",[137..142])
     ,("VOICE NAME CHAR",";;;;;;;;;",[145..154])]
-
-dx7_nparam :: Int
-dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam + dx7_name_nchar
 
 -- | All DX7 parameters.
 --
@@ -238,7 +243,9 @@ dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 
 dx7_voice_pp :: DX7_Voice -> [String]
 dx7_voice_pp p =
-  let p_grp = Split.splitPlaces (replicate 6 (21::Int) ++ [19,10,1]) p
+  let p_ix = concat [replicate 6 dx7_op_nparam
+                    ,[dx7_sh_nparam,dx7_name_nchar]]
+      p_grp = Split.splitPlaces p_ix p
   in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (Safe.at p_grp 6)
             ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
 
@@ -298,7 +305,7 @@ dx7_voice_data_list =
 -- > putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
 dx7_voice_data_list_pp :: DX7_Voice -> [String]
 dx7_voice_data_list_pp d =
-  let op_ix_set n = [n, n + 21 .. n + 21 * 5]
+  let op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
       op_ix_pp n = map
                    (dx7_parameter_value_pp (Safe.at dx7_op_parameter_tbl n))
                    (map (Safe.at d) (op_ix_set n))
