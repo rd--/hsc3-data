@@ -6,8 +6,8 @@ dx7-unpack prints the 4960 element unpacked sysex data as plain text or as unpac
 
 ~~~~
 $ cd ~/sw/hsc3-data/data/yamaha/dx7/
-$ hsc3-dx7-unpack unpack text ROM1A.syx > ROM1A.syx.text
-$ hsc3-dx7-unpack repack text ROM1A.syx.text > ROM1A.repack
+$ hsc3-dx7-unpack unpack binary text ROM1A.syx > ROM1A.syx.text
+$ hsc3-dx7-unpack repack text binary ROM1A.syx.text > ROM1A.repack
 $ cmp -l ROM1A.syx ROM1A.repack
 $ rm ROM1A.repack
 $ cat ROM1A.syx.text

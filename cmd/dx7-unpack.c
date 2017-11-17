@@ -176,7 +176,7 @@ struct dx7_sysex pack_dx7_sysex(u8 *b)
     return s;
 }
 
-void print_unpacked(u8 *b,int n)
+void print_u8_as_hex(u8 *b,int n)
 {
     for(int i = 0;i < n;i ++) {
 	printf("%02X%c",b[i],i % 16 == 15 ? '\n' : ' ');
@@ -202,9 +202,10 @@ void read_unpacked(FILE *fp,u8 *b,int n)
     }
 }
 
-void do_unpack(char *fn,bool opt_binary)
+void do_unpack(char *fn,bool opt_in_binary,bool opt_out_binary)
 {
-    FILE *fp = fopen(fn,"rb");
+    fail_if(!opt_in_binary,"UNPACK: TEXT");
+    FILE *fp = fn ? fopen(fn,"rb") : stdin;
     fail_if(fp == NULL,"FOPEN == NULL");
     u8 sysex_data[4104];
     size_t err = fread(sysex_data, 1, 4104, fp);
@@ -214,19 +215,19 @@ void do_unpack(char *fn,bool opt_binary)
     dx7_verify(sysex);
     u8 data[4960];
     unpack_dx7_sysex(*sysex,data);
-    if(opt_binary) {
+    if(opt_out_binary) {
         fwrite(data,1,4960,stdout);
     } else {
-        print_unpacked(data,4960);
+        print_u8_as_hex(data,4960);
     }
 }
 
-void do_repack(char *fn,bool opt_binary)
+void do_repack(char *fn,bool opt_in_binary,bool opt_out_binary)
 {
-    FILE *fp = fopen(fn,"r");
+    FILE *fp = fn ? fopen(fn,"r") : stdin;
     fail_if(fp == NULL,"FOPEN");
     u8 data[4960];
-    if(opt_binary) {
+    if(opt_in_binary) {
         fread(data,1,4960,fp);
     } else {
         read_unpacked(fp,data,4960);
@@ -234,22 +235,28 @@ void do_repack(char *fn,bool opt_binary)
     fclose(fp);
     struct dx7_sysex sysex = pack_dx7_sysex(data);
     dx7_verify(&sysex);
-    size_t err = fwrite(&sysex, 1, 4104, stdout);
-    fail_if(err != 4104,"FWRITE");
+    if(opt_out_binary) {
+        size_t err = fwrite(&sysex, 1, 4104, stdout);
+        fail_if(err != 4104,"FWRITE");
+    } else {
+        print_u8_as_hex((u8*)&sysex,4104);
+    }
 }
 
 int main(int argc, char *argv[])
 {
-    fail_if(argc != 4,"dx7-unpack pack|unpack text|binary sysex-file");
+    fail_if(argc < 4 || argc > 5,"dx7-unpack pack|unpack text|binary text|binary [sysex-file]");
     verify_eq("OP",sizeof(struct operator_packed),17);
     verify_eq("VC",sizeof(struct voice_packed),128);
     verify_eq("SYSEX",sizeof(struct dx7_sysex),4104);
     bool opt_repack = strncmp(argv[1],"repack",4) == 0;
-    bool opt_binary = strncmp(argv[2],"binary",4) == 0;
+    bool opt_in_binary = strncmp(argv[2],"binary",4) == 0;
+    bool opt_out_binary = strncmp(argv[3],"binary",4) == 0;
+    char *opt_fn = argc == 5 ? argv[4] : NULL;
     if(opt_repack) {
-        do_repack(argv[3],opt_binary);
+        do_repack(opt_fn,opt_in_binary,opt_out_binary);
     } else {
-        do_unpack(argv[3],opt_binary);
+        do_unpack(opt_fn,opt_in_binary,opt_out_binary);
     }
     return 0;
 }

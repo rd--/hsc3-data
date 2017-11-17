@@ -4,13 +4,15 @@
 -- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
 module Sound.SC3.Data.Yamaha.DX7 where
 
+import Control.Monad {- base -}
+import qualified Data.ByteString as Char8 {- bytestring -}
 import Data.List {- base -}
-import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
 import Safe {- safe -}
-import System.Process {- process -}
+import qualified System.Process as Process {- process -}
 import Text.Printf {- base -}
 
+import qualified Data.List.Split as Split {- split -}
 import qualified Music.Theory.Byte as Byte {- hmt -}
 
 -- | Parameter values are at most in 0-99.
@@ -384,10 +386,21 @@ dx7_algorithm_dot (e,o) =
 -- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
 dx7_load_sysex_hex :: FilePath -> IO [DX7_Voice]
 dx7_load_sysex_hex fn = do
-  b <- Byte.load_hex_byte_seq fn
-  case splitAt 4960 b of
-    (h,[]) -> return (Split.chunksOf 155 h)
-    _ -> error "dx7_load_sysex_hex"
+  d <- Byte.load_hex_byte_seq fn
+  when (length d /= 4960) (error "dx7_load_sysex_hex")
+  return (Split.chunksOf 155 d)
+
+{- | Read unpacked 4960 parameter sequence from binary sysex file (see cmd/dx7-unpack.c).
+
+> d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> dx7_store_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text" d
+
+-}
+dx7_store_sysex_hex :: FilePath -> [DX7_Voice] -> IO ()
+dx7_store_sysex_hex fn b = do
+  let d = concat b
+  when (length d /= 4960) (error "dx7_store_sysex_hex")
+  Byte.store_hex_byte_seq fn d
 
 {- | Read unpacked 4960 parameter sequence from binary sysex file (see cmd/dx7-unpack.c).
 
@@ -403,5 +416,21 @@ dx7_load_sysex_hex fn = do
 -}
 dx7_load_sysex :: String -> IO [DX7_Voice]
 dx7_load_sysex fn = do
-  s <- readProcess "hsc3-dx7-unpack" ["unpack","binary",fn] ""
-  return (Split.chunksOf 155 (map fromEnum s))
+  s <- Process.readProcess "hsc3-dx7-unpack" ["unpack","binary","text",fn] ""
+  return (Split.chunksOf 155 (Byte.read_hex_byte_seq s))
+
+{- | Write DX7 sysex file.
+
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> d <- dx7_load_sysex fn
+> dx7_store_sysex "/tmp/ROM1A.syx" d
+> Process.rawSystem "cmp" ["-l",fn,"/tmp/ROM1A.syx"]
+
+-}
+dx7_store_sysex :: FilePath -> [DX7_Voice] -> IO ()
+dx7_store_sysex fn b = do
+  let d = concat b
+      d_str = Byte.byte_seq_hex_pp d ++ "\n"
+  when (length d /= 4960) (error "dx7_store_sysex")
+  syx <- Process.readProcess "hsc3-dx7-unpack" ["repack","text","text"] d_str
+  Char8.writeFile fn (Char8.pack (map fromIntegral (Byte.read_hex_byte_seq syx)))
