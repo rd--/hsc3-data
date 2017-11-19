@@ -23,8 +23,6 @@ svl_model_attr =
 svl_dataset_attr :: [String]
 svl_dataset_attr = ["id","dimensions"]
 
-type SR = Double
-
 svl_get_model :: X.Element -> X.Element
 svl_get_model = x_get_elem_path ["data","model"]
 
@@ -44,9 +42,6 @@ svl_get_model_of_type ty e =
 svl_get_dataset :: X.Element -> X.Element
 svl_get_dataset = x_get_elem_path ["data","dataset"]
 
-svl_model_sample_rate :: X.Element -> SR
-svl_model_sample_rate = read . x_get_attr "sampleRate"
-
 -- | (frame,value,duration)
 type SVL_PT = (Int,Int,Int)
 
@@ -56,12 +51,6 @@ svl_point e =
     ,read (x_get_attr "value" e)
     ,read (x_get_attr "duration" e))
 
-frame_to_sec :: SR -> Int -> Int
-frame_to_sec sr x = round (fromIntegral x / sr)
-
-svl_pt_to_sec :: SR -> SVL_PT -> (Int,Int,Int)
-svl_pt_to_sec sr (tm,mnn,du) = (frame_to_sec sr tm,mnn,frame_to_sec sr du)
-
 svl_load :: FilePath -> IO (Maybe X.Element)
 svl_load fn = do
   b <- B.readFile fn
@@ -69,8 +58,10 @@ svl_load fn = do
 
 -- * SVL_NODE
 
+type CSEC = Int
+
 -- | (start-time,([note],[dur]))
-type SVL_NODE n = (Int,([n],[Int]))
+type SVL_NODE n = (CSEC,([n],[CSEC]))
 
 svl_node_map :: ([t] -> [u]) -> SVL_NODE t -> SVL_NODE u
 svl_node_map f (tm,(el,du)) = (tm,(f el,du))
@@ -79,11 +70,32 @@ svl_node_map f (tm,(el,du)) = (tm,(f el,du))
 
 type SVL_NODE_m = SVL_NODE T.Midi
 
-svl_load_node_m :: (Int -> Int) -> FilePath -> IO [SVL_NODE_m]
-svl_load_node_m mnn_f fn = do
+-- | SR = sample rate
+type SR = Double
+
+-- > map (quantise 25) [-100,-90 .. 100]
+-- > map (quantise 100) [-100,-50 .. 100]
+quantise :: Integral a => a -> a -> a
+quantise k n =
+  let k2 = k `div` 2
+      (d,m) = n `divMod` k
+  in if m > k2 then k * (d + 1) else k * d
+
+svl_model_sample_rate :: X.Element -> SR
+svl_model_sample_rate = read . x_get_attr "sampleRate"
+
+frame_to_csec :: SR -> Int -> Int -> Int
+frame_to_csec sr q x = quantise q (round (100 * fromIntegral x / sr))
+
+svl_pt_to_csec :: SR -> Int -> SVL_PT -> (CSEC,Int,CSEC)
+svl_pt_to_csec sr q (tm,mnn,du) = (frame_to_csec sr q tm,mnn,frame_to_csec sr q du)
+
+svl_load_node_m :: Int -> (Int -> Int) -> FilePath -> IO [SVL_NODE_m]
+svl_load_node_m q mnn_f fn = do
   Just e <- svl_load fn
   let sr = svl_model_sample_rate (svl_get_model_of_type ("sparse","note") e)
-      m = sort (map (svl_pt_to_sec sr . svl_point) (x_get_elem_set "point" (svl_get_dataset e)))
+      pt = x_get_elem_set "point" (svl_get_dataset e)
+      m = sort (map (svl_pt_to_csec sr q . svl_point) pt)
       n = T.collate (map (\(tm,mnn,du) -> (tm,(mnn,du))) m)
       to_p (tm,(mnn,du)) = (tm,(map mnn_f mnn,du))
   return (map (to_p . (\(tm,el) -> (tm,unzip el))) n)
@@ -92,15 +104,14 @@ svl_load_node_m mnn_f fn = do
 
 type SVL_NODE_p = SVL_NODE T.Pitch
 
-svl_load_node_p :: (Int -> Int) -> FilePath -> IO [SVL_NODE_p]
-svl_load_node_p mnn_f = fmap (map (svl_node_map T.spell_midi_set)) . svl_load_node_m mnn_f
+svl_load_node_p :: Int -> (Int -> Int) -> FilePath -> IO [SVL_NODE_p]
+svl_load_node_p q mnn_f = fmap (map (svl_node_map T.spell_midi_set)) . svl_load_node_m q mnn_f
 
 svl_node_p_pp :: SVL_NODE_p -> String
 svl_node_p_pp (tm,(p,du)) =
-    unwords [T.minsec_pp (T.sec_to_minsec tm)
+    unwords [T.mincsec_pp_opt True (T.csec_to_mincsec tm)
             ,intercalate "," (map T.pitch_pp p)
             ,intercalate "," (map show du)]
 
 svl_node_p_seq_wr :: [SVL_NODE_p] -> IO ()
 svl_node_p_seq_wr =  putStrLn . unlines . map svl_node_p_pp
-
