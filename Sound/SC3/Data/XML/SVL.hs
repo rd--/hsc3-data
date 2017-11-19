@@ -109,9 +109,10 @@ svl_load_node_p q mnn_f = fmap (map (svl_node_map T.spell_midi_set)) . svl_load_
 
 svl_node_p_pp :: SVL_NODE_p -> String
 svl_node_p_pp (tm,(p,du)) =
-    unwords [T.mincsec_pp_opt True (T.csec_to_mincsec tm)
-            ,intercalate "," (map T.pitch_pp p)
-            ,intercalate "," (map show du)]
+  let csec_pp = T.mincsec_pp_opt True . T.csec_to_mincsec
+  in unwords [csec_pp tm
+             ,intercalate "," (map T.pitch_pp p)
+             ,intercalate "," (map csec_pp du)]
 
 svl_node_p_seq_wr :: [SVL_NODE_p] -> IO ()
 svl_node_p_seq_wr =  putStrLn . unlines . map svl_node_p_pp
