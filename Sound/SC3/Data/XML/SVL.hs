@@ -7,6 +7,8 @@ import qualified Text.XML.Light as X {- xml -}
 
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Pitch as T {- hmt -}
+import qualified Music.Theory.Pitch.Spelling as T {- hmt -}
+import qualified Music.Theory.Time.Notation as T {- hmt -}
 
 import Sound.SC3.Data.XML
 
@@ -14,7 +16,9 @@ svl_doctype :: String
 svl_doctype = "sonic-visualiser"
 
 svl_model_attr :: [String]
-svl_model_attr = ["id","name","sampleRate","start","end","type","dimensions","resolution","notifyOnAdd","dataset","subtype","valueQuantization","minimum","maximum","units"]
+svl_model_attr =
+  ["id","name","sampleRate","start","end","type","dimensions","resolution"
+  ,"notifyOnAdd","dataset","subtype","valueQuantization","minimum","maximum","units"]
 
 svl_dataset_attr :: [String]
 svl_dataset_attr = ["id","dimensions"]
@@ -63,10 +67,16 @@ svl_load fn = do
   b <- B.readFile fn
   return (X.parseXMLDoc b)
 
--- * Node
+-- * SVL_NODE
 
 -- | (start-time,([note],[dur]))
 type SVL_NODE n = (Int,([n],[Int]))
+
+svl_node_map :: ([t] -> [u]) -> SVL_NODE t -> SVL_NODE u
+svl_node_map f (tm,(el,du)) = (tm,(f el,du))
+
+-- * SVL_NODE_m
+
 type SVL_NODE_m = SVL_NODE T.Midi
 
 svl_load_node_m :: (Int -> Int) -> FilePath -> IO [SVL_NODE_m]
@@ -77,4 +87,20 @@ svl_load_node_m mnn_f fn = do
       n = T.collate (map (\(tm,mnn,du) -> (tm,(mnn,du))) m)
       to_p (tm,(mnn,du)) = (tm,(map mnn_f mnn,du))
   return (map (to_p . (\(tm,el) -> (tm,unzip el))) n)
+
+-- * SVL_NODE_p
+
+type SVL_NODE_p = SVL_NODE T.Pitch
+
+svl_load_node_p :: (Int -> Int) -> FilePath -> IO [SVL_NODE_p]
+svl_load_node_p mnn_f = fmap (map (svl_node_map T.spell_midi_set)) . svl_load_node_m mnn_f
+
+svl_node_p_pp :: SVL_NODE_p -> String
+svl_node_p_pp (tm,(p,du)) =
+    unwords [T.minsec_pp (T.sec_to_minsec tm)
+            ,intercalate "," (map T.pitch_pp p)
+            ,intercalate "," (map show du)]
+
+svl_node_p_seq_wr :: [SVL_NODE_p] -> IO ()
+svl_node_p_seq_wr =  putStrLn . unlines . map svl_node_p_pp
 
