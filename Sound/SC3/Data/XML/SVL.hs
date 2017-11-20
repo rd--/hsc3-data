@@ -95,8 +95,8 @@ quantise k n =
       (d,m) = n `divMod` k
   in if m > k2 then k * (d + 1) else k * d
 
-frame_to_csec :: Int -> SR -> Int -> CSEC
-frame_to_csec q sr x = quantise q (round (100 * fromIntegral x / sr))
+svl_frame_to_csec :: Int -> SR -> Int -> CSEC
+svl_frame_to_csec q sr x = quantise q (round (100 * fromIntegral x / sr))
 
 svl_load_sparse_note_tm :: (SR -> FRAME -> t) -> FilePath -> IO (T.Wseq t SVL_SN_PT_DATA)
 svl_load_sparse_note_tm tm_f fn = do
@@ -105,15 +105,25 @@ svl_load_sparse_note_tm tm_f fn = do
   return (T.wseq_tmap (bimap1 (tm_f sr)) sq)
 
 svl_load_sparse_note_csec :: Int -> FilePath -> IO (T.Wseq CSEC SVL_SN_PT_DATA)
-svl_load_sparse_note_csec q = svl_load_sparse_note_tm (frame_to_csec q)
+svl_load_sparse_note_csec q = svl_load_sparse_note_tm (svl_frame_to_csec q)
 
 type SEC = Int
 
-frame_to_sec :: SR -> Int -> SEC
-frame_to_sec sr x = round (fromIntegral x / sr)
+svl_frame_to_sec :: SR -> Int -> SEC
+svl_frame_to_sec sr x = round (fromIntegral x / sr)
 
 svl_load_sparse_note_sec :: FilePath -> IO (T.Wseq SEC SVL_SN_PT_DATA)
-svl_load_sparse_note_sec = svl_load_sparse_note_tm frame_to_sec
+svl_load_sparse_note_sec = svl_load_sparse_note_tm svl_frame_to_sec
+
+svl_load_sparse_note_mnn_accum :: (Ord t,Num t) => (SR -> FRAME -> t) -> FilePath -> IO (Bool,T.Tseq t ([Int], [Int], [Int]))
+svl_load_sparse_note_mnn_accum tm_f fn = do
+  sq <- svl_load_sparse_note_tm tm_f fn
+  let sel_mnn (mnn,_,_) = mnn
+      mnn_sq = T.wseq_map sel_mnn sq
+      ol = T.wseq_has_overlaps (==) mnn_sq
+      mnn_sq_edit = if ol then T.wseq_remove_overlaps (==) id mnn_sq else mnn_sq
+      a_sq = T.tseq_begin_end_accum (T.tseq_group (T.wseq_begin_end mnn_sq_edit))
+  return (ol,a_sq)
 
 -- * SVL_NODE
 
