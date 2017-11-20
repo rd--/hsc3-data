@@ -9,8 +9,11 @@ import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Pitch as T {- hmt -}
 import qualified Music.Theory.Pitch.Spelling as T {- hmt -}
 import qualified Music.Theory.Time.Notation as T {- hmt -}
+import qualified Music.Theory.Time.Seq as T {- hmt -}
 
-import Sound.SC3.Data.XML
+import qualified Sound.SC3.Data.XML as XML {- hsc3-data -}
+
+-- * GENERA
 
 svl_doctype :: String
 svl_doctype = "sonic-visualiser"
@@ -24,13 +27,14 @@ svl_dataset_attr :: [String]
 svl_dataset_attr = ["id","dimensions"]
 
 svl_get_model :: X.Element -> X.Element
-svl_get_model = x_get_elem_path ["data","model"]
+svl_get_model = XML.x_get_elem_path ["data","model"]
 
+-- | Get model type and sub-type.
 svl_model_type :: X.Element -> (String,String)
 svl_model_type m =
-    if x_elem_name m /= "model"
-    then error "svl_get_model_ty"
-    else (x_get_attr "type" m,x_get_attr "subtype" m)
+    if XML.x_elem_name m /= "model"
+    then error "svl_model_ty"
+    else (XML.x_get_attr "type" m,XML.x_get_attr "subtype" m)
 
 svl_get_model_of_type :: (String, String) -> X.Element -> X.Element
 svl_get_model_of_type ty e =
@@ -40,25 +44,78 @@ svl_get_model_of_type ty e =
        else error "svl_get_model_of_type"
 
 svl_get_dataset :: X.Element -> X.Element
-svl_get_dataset = x_get_elem_path ["data","dataset"]
-
--- | (frame,value,duration)
-type SVL_PT = (Int,Int,Int)
-
-svl_point :: X.Element -> SVL_PT
-svl_point e =
-    (read (x_get_attr "frame" e)
-    ,read (x_get_attr "value" e)
-    ,read (x_get_attr "duration" e))
+svl_get_dataset = XML.x_get_elem_path ["data","dataset"]
 
 svl_load :: FilePath -> IO (Maybe X.Element)
 svl_load fn = do
   b <- B.readFile fn
   return (X.parseXMLDoc b)
 
--- * SVL_NODE
+-- | SN = SPARSE-NOTE
+
+-- | SR = sample rate
+type SR = Double
+
+type FRAME = Int
+
+svl_model_sample_rate :: X.Element -> SR
+svl_model_sample_rate = read . XML.x_get_attr "sampleRate"
+
+-- | ((frame,duration),(value,level,label))
+type SVL_SN_PT_DATA = (Int,Double,String)
+type SVL_SN_PT = ((FRAME,FRAME),SVL_SN_PT_DATA)
+
+svl_parse_point :: X.Element -> SVL_SN_PT
+svl_parse_point e =
+    ((read (XML.x_get_attr "frame" e)
+     ,read (XML.x_get_attr "duration" e))
+    ,(read (XML.x_get_attr "value" e)
+     ,read (XML.x_get_attr "level" e)
+     ,XML.x_get_attr "label" e))
+
+svl_load_sparse_note :: FilePath -> IO (SR,T.Wseq FRAME SVL_SN_PT_DATA)
+svl_load_sparse_note fn = do
+  Just e <- svl_load fn
+  let md = svl_get_model_of_type ("sparse","note") e
+      sr = svl_model_sample_rate md
+      pt = XML.x_get_elem_set "point" (svl_get_dataset e)
+  return (sr,map svl_parse_point pt)
+
+-- * CSEC/SEC
 
 type CSEC = Int
+
+-- | Quantise to nearest multiple of /k/.
+--
+-- > map (quantise 25) [-100,-90 .. 100]
+-- > map (quantise 100) [-100,-50 .. 100]
+quantise :: Integral a => a -> a -> a
+quantise k n =
+  let k2 = k `div` 2
+      (d,m) = n `divMod` k
+  in if m > k2 then k * (d + 1) else k * d
+
+frame_to_csec :: Int -> SR -> Int -> CSEC
+frame_to_csec q sr x = quantise q (round (100 * fromIntegral x / sr))
+
+svl_load_sparse_note_tm :: (SR -> FRAME -> t) -> FilePath -> IO (T.Wseq t SVL_SN_PT_DATA)
+svl_load_sparse_note_tm tm_f fn = do
+  (sr,sq) <- svl_load_sparse_note fn
+  let bimap1 f (t,u) = (f t,f u)
+  return (T.wseq_tmap (bimap1 (tm_f sr)) sq)
+
+svl_load_sparse_note_csec :: Int -> FilePath -> IO (T.Wseq CSEC SVL_SN_PT_DATA)
+svl_load_sparse_note_csec q = svl_load_sparse_note_tm (frame_to_csec q)
+
+type SEC = Int
+
+frame_to_sec :: SR -> Int -> SEC
+frame_to_sec sr x = round (fromIntegral x / sr)
+
+svl_load_sparse_note_sec :: FilePath -> IO (T.Wseq SEC SVL_SN_PT_DATA)
+svl_load_sparse_note_sec = svl_load_sparse_note_tm frame_to_sec
+
+-- * SVL_NODE
 
 -- | (start-time,([note],[dur]))
 type SVL_NODE n = (CSEC,([n],[CSEC]))
@@ -70,33 +127,10 @@ svl_node_map f (tm,(el,du)) = (tm,(f el,du))
 
 type SVL_NODE_m = SVL_NODE T.Midi
 
--- | SR = sample rate
-type SR = Double
-
--- > map (quantise 25) [-100,-90 .. 100]
--- > map (quantise 100) [-100,-50 .. 100]
-quantise :: Integral a => a -> a -> a
-quantise k n =
-  let k2 = k `div` 2
-      (d,m) = n `divMod` k
-  in if m > k2 then k * (d + 1) else k * d
-
-svl_model_sample_rate :: X.Element -> SR
-svl_model_sample_rate = read . x_get_attr "sampleRate"
-
-frame_to_csec :: SR -> Int -> Int -> Int
-frame_to_csec sr q x = quantise q (round (100 * fromIntegral x / sr))
-
-svl_pt_to_csec :: SR -> Int -> SVL_PT -> (CSEC,Int,CSEC)
-svl_pt_to_csec sr q (tm,mnn,du) = (frame_to_csec sr q tm,mnn,frame_to_csec sr q du)
-
 svl_load_node_m :: Int -> (Int -> Int) -> FilePath -> IO [SVL_NODE_m]
 svl_load_node_m q mnn_f fn = do
-  Just e <- svl_load fn
-  let sr = svl_model_sample_rate (svl_get_model_of_type ("sparse","note") e)
-      pt = x_get_elem_set "point" (svl_get_dataset e)
-      m = sort (map (svl_pt_to_csec sr q . svl_point) pt)
-      n = T.collate (map (\(tm,mnn,du) -> (tm,(mnn,du))) m)
+  pt <- svl_load_sparse_note_csec q fn
+  let n = T.collate (map (\((tm,du),(mnn,_,_)) -> (tm,(mnn,du))) pt)
       to_p (tm,(mnn,du)) = (tm,(map mnn_f mnn,du))
   return (map (to_p . (\(tm,el) -> (tm,unzip el))) n)
 

@@ -100,13 +100,13 @@ track_to_wseq :: [(Time,M.Message)] -> SEQ
 track_to_wseq =
     let f (tm,msg) = case msg of
                        M.NoteOn ch mnn vel ->
-                           let ty = if vel == 0 then T.Off else T.On
+                           let ty = if vel == 0 then T.End else T.Begin
                            in Just (tm,ty (mnn,vel,ch))
                        M.NoteOff ch mnn vel ->
-                           Just (tm,T.Off (mnn,vel,ch))
+                           Just (tm,T.End (mnn,vel,ch))
                        _ -> Nothing
         event_eq (n0,_,c0) (n1,_,c1) = n0 == n1 && c0 == c1
-    in T.tseq_on_off_to_wseq event_eq . mapMaybe f
+    in T.tseq_begin_end_to_wseq event_eq . mapMaybe f
 
 -- | Load Type-0 or Type-1 MIDI file as 'SEQ' data.  Ignores
 -- everything except note on and off messages.
