@@ -1,5 +1,5 @@
 Name:              hsc3-data
-Version:           0.16
+Version:           0.17
 Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL
@@ -28,20 +28,20 @@ Library
                    directory,
                    filepath,
                    Glob,
-                   hcg-minus == 0.16.*,
-                   hcg-minus-cairo == 0.16.*,
+                   hcg-minus == 0.17.*,
+                   hcg-minus-cairo == 0.17.*,
                    HCodecs,
-                   hmt == 0.16.*,
-                   hosc == 0.16.*,
-                   hps == 0.16.*,
-                   hsc3 == 0.16.*,
-                   hsc3-lang == 0.16.*,
-                   hsc3-plot == 0.16.*,
-                   hsc3-sf == 0.16.*,
-                   hsc3-sf-hsndfile == 0.16.*,
+                   hmt == 0.17.*,
+                   hosc == 0.17.*,
+                   hps == 0.17.*,
+                   hsc3 == 0.17.*,
+                   hsc3-lang == 0.17.*,
+                   hsc3-plot == 0.17.*,
+                   hsc3-sf == 0.17.*,
+                   hsc3-sf-hsndfile == 0.17.*,
                    JuicyPixels,
                    language-dot,
-                   midi-osc == 0.16.*,
+                   midi-osc == 0.17.*,
                    parsec,
                    pgm,
                    process,
