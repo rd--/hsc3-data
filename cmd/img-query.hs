@@ -2,26 +2,28 @@ import System.Environment {- base -}
 
 import qualified Sound.SC3.Data.Image.Plain as Plain {- hsc3-data -}
 
-img_uniq :: FilePath -> IO ()
-img_uniq fn = do
+img_uniq :: Char -> FilePath -> IO ()
+img_uniq md fn = do
   i <- Plain.img_load fn
-  let u = Plain.img_uniq_colours_gr i
-      f (ix,c) = (ix,Plain.rgb24_unpack c)
-  print (map length u)
-  print (map (map f) u)
+  let f (ix,c) = (ix,Plain.rgb24_unpack c)
+  case md of
+    'c' -> print (map (Plain.rgb24_unpack . snd) (Plain.img_uniq_colours i))
+    'l' -> print (map f (Plain.img_uniq_colours i))
+    'g' -> print (map (map f) (Plain.img_uniq_colours_gr i))
+    _ -> error "img_uniq"
 
 help :: String
 help =
     unlines
-    ["img-query uniq img-file"]
+    ["img-query uniq c|l|g img-file"]
 
 main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["uniq",fn] -> img_uniq fn
+    ["uniq",[md],fn] -> img_uniq md fn
     _ -> putStrLn help
 
 {-
-img_uniq "/home/rohan/I-008.png"
+img_uniq "/home/rohan/rd/j/2017-11-30/G.0.png"
 -}
