@@ -1,7 +1,7 @@
 import System.Environment {- base -}
 import Sound.SC3.Data.Image.Plain {- hsc3-data -}
 
-img_to_pgm :: Int -> (RGB8 -> GREY) -> FilePath -> FilePath -> IO ()
+img_to_pgm :: Int -> (RGB24 -> GREY) -> FilePath -> FilePath -> IO ()
 img_to_pgm d to_grey img_fn pgm_fn = do
   i <- img_load img_fn
   img_write_pgm5 d to_grey pgm_fn i

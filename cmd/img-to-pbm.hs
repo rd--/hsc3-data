@@ -1,7 +1,7 @@
 import System.Environment {- base -}
 import Sound.SC3.Data.Image.Plain {- hsc3-data -}
 
-img_to_pbm :: (RGB8 -> BW) -> FilePath -> FilePath -> IO ()
+img_to_pbm :: (RGB24 -> BW) -> FilePath -> FilePath -> IO ()
 img_to_pbm to_bw img_fn pbm_fn = do
   i <- img_load img_fn
   img_bw_write_pbm4 to_bw pbm_fn i
