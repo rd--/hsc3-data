@@ -13,7 +13,7 @@ type Height = Int
 -- The ordering follows the indexing scheme (ie. (column,row) or (x,y)).
 type Dimensions = (Width,Height)
 
--- | (x,y) index.
+-- | (x/column,y/row) index.
 type Ix = (Int,Int)
 
 -- | Row-order indices for given 'Dimensions'.

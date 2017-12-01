@@ -2,7 +2,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 	csv-mnd-to-pgm csv-plot csv-to-img \
 	d50-sysex dx7-hex dx7-unpack \
 	hex \
-	img-edit img-to-pbm img-to-pgm img-to-sf \
+	img-edit img-query img-to-pbm img-to-pgm img-to-sf \
 	kml-to-csv \
 	midi-to-csv-mnd midi-to-text \
 	pbm-indices pbm-to-csv-mnd pbm-to-tbl pbm-trace \

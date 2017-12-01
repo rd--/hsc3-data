@@ -13,6 +13,6 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
-    [d,"eq",img_fn,pgm_fn] -> img_to_pgm (read d) rgb8_to_gs_eq' img_fn pgm_fn
+    [d,"eq",img_fn,pgm_fn] -> img_to_pgm (read d) rgb24_to_gs_eq' img_fn pgm_fn
     [d,"lm/rec.709",img_fn,pgm_fn] -> img_to_pgm (read d) rgb_to_gs_rec_709 img_fn pgm_fn
     _ -> putStrLn help

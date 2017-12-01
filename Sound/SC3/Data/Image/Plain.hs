@@ -1,5 +1,9 @@
 module Sound.SC3.Data.Image.Plain where
 
+import Data.Function {- base -}
+import Data.List {- base -}
+import Data.Word {- base -}
+
 import qualified Data.Array.Unboxed as A {- array -}
 import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.Vector.Storable as V {- vector -}
@@ -19,7 +23,7 @@ import qualified Sound.SC3.Data.Image.Type as T {- hsc3-data -}
 
 -- * IMAGE
 
--- | 24-bit RGB triple.
+-- | Packed 24-bit RGB.
 type RGB24 = I.PixelRGB8
 
 -- | Array of RGB24.
@@ -42,6 +46,16 @@ img_write_png = I.writePng
 -- | Dimensions as (width,height) pair.
 img_dimensions :: IMAGE -> T.Dimensions
 img_dimensions i = (I.imageWidth i,I.imageHeight i)
+
+img_index_safe :: IMAGE -> T.Ix -> RGB24
+img_index_safe i (c,r) =
+    let (w,h) = img_dimensions i
+    in if c < 0 || c >= w || r < 0 || r >= h
+       then error "img_index_safe: domain error"
+       else I.pixelAt i c r
+
+img_index :: IMAGE -> T.Ix -> RGB24
+img_index i (c,r) = I.pixelAt i c r
 
 img_row :: IMAGE -> Int -> [RGB24]
 img_row i r =
@@ -67,23 +81,29 @@ img_row_order i = map (img_row i) [0 .. I.imageHeight i - 1]
 
 type RGB n = (n,n,n)
 
-w8_to_fractional :: Fractional n => I.Pixel8 -> n
+rgb24_unpack :: RGB24 -> RGB Word8
+rgb24_unpack (I.PixelRGB8 r g b) = (r,g,b)
+
+rgb24_pack :: RGB Word8 -> RGB24
+rgb24_pack (r,g,b) = I.PixelRGB8 r g b
+
+w8_to_fractional :: Fractional n => Word8 -> n
 w8_to_fractional = (/ 255) . fromIntegral
 
-w8_to_f32 :: I.Pixel8 -> Float
+w8_to_f32 :: Word8 -> Float
 w8_to_f32 = w8_to_fractional
 
-w8_to_f64 :: I.Pixel8 -> Double
+w8_to_f64 :: Word8 -> Double
 w8_to_f64 = w8_to_fractional
 
-rgb8_to_rgb :: Fractional n => RGB24 -> RGB n
-rgb8_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_fractional in (f r,f g,f b)
+rgb24_to_rgb :: Fractional n => RGB24 -> RGB n
+rgb24_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_fractional in (f r,f g,f b)
 
 img_row_rgb :: Fractional n => IMAGE -> Int -> [RGB n]
-img_row_rgb i = map rgb8_to_rgb . img_row i
+img_row_rgb i = map rgb24_to_rgb . img_row i
 
 img_column_rgb :: Fractional n => IMAGE -> Int -> [RGB n]
-img_column_rgb i = map rgb8_to_rgb . img_column i
+img_column_rgb i = map rgb24_to_rgb . img_column i
 
 img_column_order_rgb :: Fractional n => IMAGE -> [[RGB n]]
 img_column_order_rgb i = map (img_column_rgb i) [0 .. I.imageWidth i - 1]
@@ -100,34 +120,34 @@ type GREY = Double
 data CHANNEL = RED | GREEN | BLUE
 
 -- | Extract channel.
-rgb8_ch :: CHANNEL -> RGB24 -> I.Pixel8
-rgb8_ch ch (I.PixelRGB8 r g b) =
+rgb24_ch :: CHANNEL -> RGB24 -> Word8
+rgb24_ch ch (I.PixelRGB8 r g b) =
     case ch of
       RED -> r
       GREEN -> g
       BLUE -> b
 
-rgb8_to_gs_ch :: Fractional n => CHANNEL -> RGB24 -> n
-rgb8_to_gs_ch ch = w8_to_fractional . rgb8_ch ch
+rgb24_to_gs_ch :: Fractional n => CHANNEL -> RGB24 -> n
+rgb24_to_gs_ch ch = w8_to_fractional . rgb24_ch ch
 
 rgb_to_gs_rec_709 ::  Fractional n => RGB24 -> n
-rgb_to_gs_rec_709 = C.rgb_to_gs_luminosity C.luminosity_coef_rec_709 . rgb8_to_rgb
+rgb_to_gs_rec_709 = C.rgb_to_gs_luminosity C.luminosity_coef_rec_709 . rgb24_to_rgb
 
 -- | Require R G and B values to be equal.
-rgb8_to_gs_eq :: Fractional n => RGB24 -> Either RGB24 n
-rgb8_to_gs_eq px =
+rgb24_to_gs_eq :: Fractional n => RGB24 -> Either RGB24 n
+rgb24_to_gs_eq px =
     let (I.PixelRGB8 r g b) = px
     in if r == g && r == b then Right (w8_to_fractional r) else Left px
 
 -- | 'error' variant.
-rgb8_to_gs_eq' :: Fractional n => RGB24 -> n
-rgb8_to_gs_eq' = either_err "rgb8_to_gs_eq" . rgb8_to_gs_eq
+rgb24_to_gs_eq' :: Fractional n => RGB24 -> n
+rgb24_to_gs_eq' = either_err "rgb24_to_gs_eq" . rgb24_to_gs_eq
 
 -- | 'GREY' to 'RGB24'.
 --
--- > map gs_to_rgb8 [0.0,1.0] == [I.PixelRGB8 0 0 0,I.PixelRGB8 255 255 255]
-gs_to_rgb8 :: RealFrac n => n -> RGB24
-gs_to_rgb8 x = let x' = floor (x * 255) in I.PixelRGB8 x' x' x'
+-- > map gs_to_rgb24 [0.0,1.0] == [I.PixelRGB8 0 0 0,I.PixelRGB8 255 255 255]
+gs_to_rgb24 :: RealFrac n => n -> RGB24
+gs_to_rgb24 x = let x' = floor (x * 255) in I.PixelRGB8 x' x' x'
 
 -- | Column order vector.
 img_gs_vec_co :: V.Storable n => (RGB24 -> n) -> IMAGE -> V.Vector n
@@ -139,7 +159,7 @@ img_gs_vec_co to_gs i =
 -- | Construct GS 'IMAGE' from column order 'V.Vector'.
 img_from_vec_co :: (V.Storable n,RealFrac n) => T.Dimensions -> V.Vector n -> IMAGE
 img_from_vec_co (w,h) v =
-    let f x y = gs_to_rgb8 (v V.! T.ix_to_linear_co (w,h) (x,y))
+    let f x y = gs_to_rgb24 (v V.! T.ix_to_linear_co (w,h) (x,y))
     in I.generateImage f w h
 
 -- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
@@ -160,7 +180,7 @@ img_gs_write_au to_gs fn i =
 
 img_from_gs :: T.Dimensions -> [[GREY]] -> IMAGE
 img_from_gs (w,h) ro =
-    let ro' = map (map gs_to_rgb8) ro
+    let ro' = map (map gs_to_rgb24) ro
         f x y = (ro' !! y) !! x
     in I.generateImage f w h
 
@@ -214,12 +234,12 @@ gs_to_bw_mp = (< 0.5)
 
 -- | Translates (0,0,0) to Black/True and (1,1,1) to White/False, any
 -- other inputs are errors.
-rgb8_to_bw_eq :: RGB24 -> Either RGB24 BW
-rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c :: Either RGB24 Double)
+rgb24_to_bw_eq :: RGB24 -> Either RGB24 BW
+rgb24_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb24_to_gs_eq c :: Either RGB24 Double)
 
 -- | Error variant.
-rgb8_to_bw_eq' :: I.PixelRGB8 -> BW
-rgb8_to_bw_eq' = either_err "rgb8_to_bw_eq" . rgb8_to_bw_eq
+rgb24_to_bw_eq' :: I.PixelRGB8 -> BW
+rgb24_to_bw_eq' = either_err "rgb24_to_bw_eq" . rgb24_to_bw_eq
 
 -- | Black & white image to 'BM.Bitindices' using given reduction function.
 img_bw_to_bitindices' :: (RGB24 -> Bool) -> IMAGE -> BM.Bitindices
@@ -233,9 +253,9 @@ img_bw_to_bitindices' to_bw i =
                                in f ix' (x + 1,y)
     in ((h,w),f [] (0,0))
 
--- | 'img_bw_to_bitindices'' of 'rgb8_to_bw_eq''.
+-- | 'img_bw_to_bitindices'' of 'rgb24_to_bw_eq''.
 img_bw_to_bitindices :: IMAGE -> BM.Bitindices
-img_bw_to_bitindices = img_bw_to_bitindices' rgb8_to_bw_eq'
+img_bw_to_bitindices = img_bw_to_bitindices' rgb24_to_bw_eq'
 
 -- | Black & white image to 'BM.Bitarray' using given reduction function.
 img_bw_to_bitarray' :: (RGB24 -> BW) -> IMAGE -> BM.Bitarray
@@ -245,9 +265,9 @@ img_bw_to_bitarray' f i =
         ro' = map (map f) ro
     in ((h,w),ro')
 
--- | 'img_bw_to_bitarray'' of 'rgb8_to_bw_eq''.
+-- | 'img_bw_to_bitarray'' of 'rgb24_to_bw_eq''.
 img_bw_to_bitarray :: IMAGE -> BM.Bitarray
-img_bw_to_bitarray = img_bw_to_bitarray' rgb8_to_bw_eq'
+img_bw_to_bitarray = img_bw_to_bitarray' rgb24_to_bw_eq'
 
 img_bw_write_pbm1 :: FilePath -> IMAGE -> IO ()
 img_bw_write_pbm1 fn = writeFile fn . PBM.bitarray_pbm1 . img_bw_to_bitarray
@@ -258,18 +278,38 @@ img_bw_write_pbm4 f pbm_fn =
     PBM.bitindices_to_pbm .
     img_bw_to_bitindices' f
 
-rgb8_bw_inverse :: RGB24 -> RGB24
-rgb8_bw_inverse (I.PixelRGB8 r g b) =
+rgb24_bw_inverse :: RGB24 -> RGB24
+rgb24_bw_inverse (I.PixelRGB8 r g b) =
     case (r,g,b) of
       (255,255,255) -> I.PixelRGB8 0 0 0
       (0,0,0) -> I.PixelRGB8 255 255 255
-      _ -> error "rgb8_bw_inverse: not B or W"
+      _ -> error "rgb24_bw_inverse: not B or W"
 
 img_bw_inverse :: IMAGE -> IMAGE
-img_bw_inverse = I.pixelMap rgb8_bw_inverse
+img_bw_inverse = I.pixelMap rgb24_bw_inverse
 
 img_bw_write_sf :: FilePath -> IMAGE -> IO ()
-img_bw_write_sf fn = img_gs_write_sf (rgb8_to_gs_ch RED) fn . img_bw_inverse
+img_bw_write_sf fn = img_gs_write_sf (rgb24_to_gs_ch RED) fn . img_bw_inverse
+
+-- * QUERY
+
+-- | List of uniqe colours with location of initial occurence, in row-order.
+img_uniq_colours :: IMAGE -> [(T.Ix,RGB24)]
+img_uniq_colours i =
+  let dm = img_dimensions i
+      f r u l =
+        case l of
+          [] -> reverse r
+          (ix:l') -> let c = img_index i ix
+                     in if c `elem` u
+                        then f r u l'
+                        else f ((ix,c):r) (c:u) l'
+  in f [] [] (T.img_indices dm)
+
+-- | Grouped by row.
+img_uniq_colours_gr :: IMAGE -> [[(T.Ix,RGB24)]]
+img_uniq_colours_gr = groupBy ((==) `on` (snd . fst)) . img_uniq_colours
+
 
 -- * Miscellaneous
 

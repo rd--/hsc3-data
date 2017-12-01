@@ -24,11 +24,11 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["bw/r",fn] -> img_to_sf (round_f32 . (1 - ) . rgb8_to_gs_ch RED) fn
-    ["bw/eq",fn] -> img_to_sf (fromIntegral . fromEnum . rgb8_to_bw_eq') fn
-    ["gs/eq",fn] -> img_to_sf rgb8_to_gs_eq' fn
-    ["gs/ch/r",fn] -> img_to_sf (rgb8_to_gs_ch RED) fn
-    ["gs/ch/g",fn] -> img_to_sf (rgb8_to_gs_ch GREEN) fn
-    ["gs/ch/b",fn] -> img_to_sf (rgb8_to_gs_ch BLUE) fn
+    ["bw/r",fn] -> img_to_sf (round_f32 . (1 - ) . rgb24_to_gs_ch RED) fn
+    ["bw/eq",fn] -> img_to_sf (fromIntegral . fromEnum . rgb24_to_bw_eq') fn
+    ["gs/eq",fn] -> img_to_sf rgb24_to_gs_eq' fn
+    ["gs/ch/r",fn] -> img_to_sf (rgb24_to_gs_ch RED) fn
+    ["gs/ch/g",fn] -> img_to_sf (rgb24_to_gs_ch GREEN) fn
+    ["gs/ch/b",fn] -> img_to_sf (rgb24_to_gs_ch BLUE) fn
     ["gs/lm/rec.709",fn] -> img_to_sf rgb_to_gs_rec_709 fn
     _ -> help

@@ -19,7 +19,7 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["eq",img_fn,pbm_fn] -> img_to_pbm rgb8_to_bw_eq' img_fn pbm_fn
+    ["eq",img_fn,pbm_fn] -> img_to_pbm rgb24_to_bw_eq' img_fn pbm_fn
     ["lm/rec.709",th,img_fn,pbm_fn] ->
         let f = (< (read_double th)) . rgb_to_gs_rec_709
         in img_to_pbm f img_fn pbm_fn
