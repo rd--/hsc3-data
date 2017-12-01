@@ -19,8 +19,11 @@ import qualified Sound.SC3.Data.Image.Type as T {- hsc3-data -}
 
 -- * IMAGE
 
-type RGB8 = I.PixelRGB8
-type IMAGE = I.Image RGB8
+-- | 24-bit RGB triple.
+type RGB24 = I.PixelRGB8
+
+-- | Array of RGB24.
+type IMAGE = I.Image RGB24
 
 img_load :: FilePath -> IO IMAGE
 img_load fn = do
@@ -31,7 +34,7 @@ img_load fn = do
     Right (I.ImageRGB8 img) -> return img
     Right (I.ImageCMYK8 img) -> return (I.convertImage img)
     Right (I.ImageYCbCr8 img) -> return (I.convertImage img)
-    Right _ -> error "img_load: not Y8|RGB8|CMYK8|YCbCr8 image"
+    Right _ -> error "img_load: not Y8|RGB24|CMYK8|YCbCr8 image"
 
 img_write_png :: FilePath -> IMAGE -> IO ()
 img_write_png = I.writePng
@@ -40,24 +43,24 @@ img_write_png = I.writePng
 img_dimensions :: IMAGE -> T.Dimensions
 img_dimensions i = (I.imageWidth i,I.imageHeight i)
 
-img_row :: IMAGE -> Int -> [RGB8]
+img_row :: IMAGE -> Int -> [RGB24]
 img_row i r =
     let (w,h) = img_dimensions i
     in if r >= h
        then error "img_row: domain error"
        else map (\c -> I.pixelAt i c r) [0 .. w - 1]
 
-img_column :: IMAGE -> Int -> [RGB8]
+img_column :: IMAGE -> Int -> [RGB24]
 img_column i c =
     let (w,h) = img_dimensions i
     in if c >= w
        then error "img_column: domain error"
        else map (\r -> I.pixelAt i c r) [0 .. h - 1]
 
-img_column_order :: IMAGE -> [[RGB8]]
+img_column_order :: IMAGE -> [[RGB24]]
 img_column_order i = map (img_column i) [0 .. I.imageWidth i - 1]
 
-img_row_order :: IMAGE -> [[RGB8]]
+img_row_order :: IMAGE -> [[RGB24]]
 img_row_order i = map (img_row i) [0 .. I.imageHeight i - 1]
 
 -- * RGB
@@ -73,7 +76,7 @@ w8_to_f32 = w8_to_fractional
 w8_to_f64 :: I.Pixel8 -> Double
 w8_to_f64 = w8_to_fractional
 
-rgb8_to_rgb :: Fractional n => RGB8 -> RGB n
+rgb8_to_rgb :: Fractional n => RGB24 -> RGB n
 rgb8_to_rgb (I.PixelRGB8 r g b) = let f = w8_to_fractional in (f r,f g,f b)
 
 img_row_rgb :: Fractional n => IMAGE -> Int -> [RGB n]
@@ -97,37 +100,37 @@ type GREY = Double
 data CHANNEL = RED | GREEN | BLUE
 
 -- | Extract channel.
-rgb8_ch :: CHANNEL -> RGB8 -> I.Pixel8
+rgb8_ch :: CHANNEL -> RGB24 -> I.Pixel8
 rgb8_ch ch (I.PixelRGB8 r g b) =
     case ch of
       RED -> r
       GREEN -> g
       BLUE -> b
 
-rgb8_to_gs_ch :: Fractional n => CHANNEL -> RGB8 -> n
+rgb8_to_gs_ch :: Fractional n => CHANNEL -> RGB24 -> n
 rgb8_to_gs_ch ch = w8_to_fractional . rgb8_ch ch
 
-rgb_to_gs_rec_709 ::  Fractional n => RGB8 -> n
+rgb_to_gs_rec_709 ::  Fractional n => RGB24 -> n
 rgb_to_gs_rec_709 = C.rgb_to_gs_luminosity C.luminosity_coef_rec_709 . rgb8_to_rgb
 
 -- | Require R G and B values to be equal.
-rgb8_to_gs_eq :: Fractional n => RGB8 -> Either RGB8 n
+rgb8_to_gs_eq :: Fractional n => RGB24 -> Either RGB24 n
 rgb8_to_gs_eq px =
     let (I.PixelRGB8 r g b) = px
     in if r == g && r == b then Right (w8_to_fractional r) else Left px
 
 -- | 'error' variant.
-rgb8_to_gs_eq' :: Fractional n => RGB8 -> n
+rgb8_to_gs_eq' :: Fractional n => RGB24 -> n
 rgb8_to_gs_eq' = either_err "rgb8_to_gs_eq" . rgb8_to_gs_eq
 
--- | 'GREY' to 'RGB8'.
+-- | 'GREY' to 'RGB24'.
 --
 -- > map gs_to_rgb8 [0.0,1.0] == [I.PixelRGB8 0 0 0,I.PixelRGB8 255 255 255]
-gs_to_rgb8 :: RealFrac n => n -> RGB8
+gs_to_rgb8 :: RealFrac n => n -> RGB24
 gs_to_rgb8 x = let x' = floor (x * 255) in I.PixelRGB8 x' x' x'
 
 -- | Column order vector.
-img_gs_vec_co :: V.Storable n => (RGB8 -> n) -> IMAGE -> V.Vector n
+img_gs_vec_co :: V.Storable n => (RGB24 -> n) -> IMAGE -> V.Vector n
 img_gs_vec_co to_gs i =
     let (w,h) = img_dimensions i
         f n = let (x,y) = n `divMod` h in to_gs (I.pixelAt i x y)
@@ -140,7 +143,7 @@ img_from_vec_co (w,h) v =
     in I.generateImage f w h
 
 -- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
-img_gs_write_sf :: (RGB8 -> Double) -> FilePath -> IMAGE -> IO ()
+img_gs_write_sf :: (RGB24 -> Double) -> FilePath -> IMAGE -> IO ()
 img_gs_write_sf to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
@@ -148,7 +151,7 @@ img_gs_write_sf to_gs fn i =
     in SF.write_vec fn hdr v
 
 -- | Write greyscale image as audio file.  Each row is stored as a channel.
-img_gs_write_au :: (RGB8 -> Float) -> FilePath -> IMAGE -> IO ()
+img_gs_write_au :: (RGB24 -> Float) -> FilePath -> IMAGE -> IO ()
 img_gs_write_au to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
@@ -183,7 +186,7 @@ img_gs_read_au fn = do
   return (img_from_gs (nf,nc) ro)
 
 -- | Write 8-bit or 16-bit PGM5 file.
-img_write_pgm5 :: PGM.Depth -> (RGB8 -> GREY) -> FilePath -> IMAGE -> IO ()
+img_write_pgm5 :: PGM.Depth -> (RGB24 -> GREY) -> FilePath -> IMAGE -> IO ()
 img_write_pgm5 d to_gs fn i =
     let (w,h) = img_dimensions i
         z = case d of
@@ -211,15 +214,15 @@ gs_to_bw_mp = (< 0.5)
 
 -- | Translates (0,0,0) to Black/True and (1,1,1) to White/False, any
 -- other inputs are errors.
-rgb8_to_bw_eq :: RGB8 -> Either RGB8 BW
-rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c :: Either RGB8 Double)
+rgb8_to_bw_eq :: RGB24 -> Either RGB24 BW
+rgb8_to_bw_eq c = either Left (gs_to_bw_eq c) (rgb8_to_gs_eq c :: Either RGB24 Double)
 
 -- | Error variant.
 rgb8_to_bw_eq' :: I.PixelRGB8 -> BW
 rgb8_to_bw_eq' = either_err "rgb8_to_bw_eq" . rgb8_to_bw_eq
 
 -- | Black & white image to 'BM.Bitindices' using given reduction function.
-img_bw_to_bitindices' :: (RGB8 -> Bool) -> IMAGE -> BM.Bitindices
+img_bw_to_bitindices' :: (RGB24 -> Bool) -> IMAGE -> BM.Bitindices
 img_bw_to_bitindices' to_bw i =
     let (w,h) = img_dimensions i
         f ix (x,y) = if y >= h
@@ -235,7 +238,7 @@ img_bw_to_bitindices :: IMAGE -> BM.Bitindices
 img_bw_to_bitindices = img_bw_to_bitindices' rgb8_to_bw_eq'
 
 -- | Black & white image to 'BM.Bitarray' using given reduction function.
-img_bw_to_bitarray' :: (RGB8 -> BW) -> IMAGE -> BM.Bitarray
+img_bw_to_bitarray' :: (RGB24 -> BW) -> IMAGE -> BM.Bitarray
 img_bw_to_bitarray' f i =
     let (w,h) = img_dimensions i
         ro = img_row_order i
@@ -249,13 +252,13 @@ img_bw_to_bitarray = img_bw_to_bitarray' rgb8_to_bw_eq'
 img_bw_write_pbm1 :: FilePath -> IMAGE -> IO ()
 img_bw_write_pbm1 fn = writeFile fn . PBM.bitarray_pbm1 . img_bw_to_bitarray
 
-img_bw_write_pbm4 :: (RGB8 -> BW) -> FilePath -> IMAGE -> IO ()
+img_bw_write_pbm4 :: (RGB24 -> BW) -> FilePath -> IMAGE -> IO ()
 img_bw_write_pbm4 f pbm_fn =
     PBM.pbm4_write pbm_fn .
     PBM.bitindices_to_pbm .
     img_bw_to_bitindices' f
 
-rgb8_bw_inverse :: RGB8 -> RGB8
+rgb8_bw_inverse :: RGB24 -> RGB24
 rgb8_bw_inverse (I.PixelRGB8 r g b) =
     case (r,g,b) of
       (255,255,255) -> I.PixelRGB8 0 0 0
