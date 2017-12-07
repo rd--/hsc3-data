@@ -25,5 +25,5 @@ main = do
     _ -> putStrLn help
 
 {-
-img_uniq "/home/rohan/rd/j/2017-11-30/G.0.png"
+mapM_ (\n -> img_uniq 'c' ("/home/rohan/rd/j/2017-11-30/G." ++ show n ++ ".png")) [0 .. 7]
 -}
