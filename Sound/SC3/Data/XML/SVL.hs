@@ -128,36 +128,38 @@ svl_load_sparse_note_mnn_accum tm_f fn = do
 -- * SVL_NODE
 
 -- | (start-time,([note],[dur]))
-type SVL_NODE n = (CSEC,([n],[CSEC]))
+type SVL_NODE t n = (t,([n],[t]))
 
-svl_node_map :: ([t] -> [u]) -> SVL_NODE t -> SVL_NODE u
+svl_node_map :: ([u] -> [v]) -> SVL_NODE t u -> SVL_NODE t v
 svl_node_map f (tm,(el,du)) = (tm,(f el,du))
 
 -- * SVL_NODE_m
 
-type SVL_NODE_m = SVL_NODE T.Midi
+type SVL_NODE_m t = SVL_NODE t T.Midi
 
-svl_load_node_m :: Int -> (Int -> Int) -> FilePath -> IO [SVL_NODE_m]
-svl_load_node_m q mnn_f fn = do
-  pt <- svl_load_sparse_note_csec q fn
+svl_load_node_m :: Ord t => (SR -> FRAME -> t) -> (Int -> Int) -> FilePath -> IO [SVL_NODE_m t]
+svl_load_node_m tm_f mnn_f fn = do
+  pt <- svl_load_sparse_note_tm tm_f fn
   let n = T.collate (map (\((tm,du),(mnn,_,_)) -> (tm,(mnn,du))) pt)
       to_p (tm,(mnn,du)) = (tm,(map mnn_f mnn,du))
   return (map (to_p . (\(tm,el) -> (tm,unzip el))) n)
 
 -- * SVL_NODE_p
 
-type SVL_NODE_p = SVL_NODE T.Pitch
+type SVL_NODE_p t = SVL_NODE t T.Pitch
 
-svl_load_node_p :: Int -> (Int -> Int) -> FilePath -> IO [SVL_NODE_p]
-svl_load_node_p q mnn_f = fmap (map (svl_node_map T.spell_midi_set)) . svl_load_node_m q mnn_f
+svl_load_node_p :: Ord t => (SR -> FRAME -> t) -> (Int -> Int) -> FilePath -> IO [SVL_NODE_p t]
+svl_load_node_p tm_f mnn_f =
+  fmap (map (svl_node_map T.spell_midi_set)) .
+  svl_load_node_m tm_f mnn_f
 
-svl_node_p_pp :: SVL_NODE_p -> String
-svl_node_p_pp (tm,(p,du)) =
+svl_node_p_csec_pp :: SVL_NODE_p CSEC -> String
+svl_node_p_csec_pp (tm,(p,du)) =
   let csec_tm_pp = T.mincsec_pp_opt True . T.csec_to_mincsec
       csec_du_pp = show . flip div 100
   in unwords [csec_tm_pp tm
              ,intercalate "," (map T.pitch_pp p)
              ,intercalate "," (map csec_du_pp du)]
 
-svl_node_p_seq_wr :: [SVL_NODE_p] -> IO ()
-svl_node_p_seq_wr =  putStrLn . unlines . map svl_node_p_pp
+svl_node_p_csec_seq_wr :: [SVL_NODE_p CSEC] -> IO ()
+svl_node_p_csec_seq_wr =  putStrLn . unlines . map svl_node_p_csec_pp
