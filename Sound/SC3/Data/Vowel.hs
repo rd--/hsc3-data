@@ -44,7 +44,7 @@ data Voice = Soprano | Alto | CounterTenor | Tenor | Bass
 data Vowel = A | E | I | O | U
              deriving (Enum,Bounded,Eq,Read,Show)
 
--- | Vowel tuple of form ('Voice','Vowel',/freq/,/db/,/bw/).
+-- | Vowel tuple of form ('Voice','Vowel',/freq:hz/,/gain:db/,/bw:hz/).
 type Fdata n = (Voice,Vowel,[n],[n],[n])
 
 -- | Enumeration of formant indices.
@@ -54,6 +54,7 @@ data Fn = F0 | F1 | F2 | F3 | F4
 -- * Table
 
 -- | 'Fdata' table.
+-- |  From Csound Manual, Table III: Formant values
 fdata_table :: Num n => [Fdata n]
 fdata_table =
     [(Soprano
