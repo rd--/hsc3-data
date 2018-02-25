@@ -95,6 +95,9 @@ quantise k n =
       (d,m) = n `divMod` k
   in if m > k2 then k * (d + 1) else k * d
 
+-- | q = quantise, sr = sample-rate, x = frame-count
+--
+-- > svl_frame_to_csec 50 48000 72000 == 150
 svl_frame_to_csec :: Int -> SR -> Int -> CSEC
 svl_frame_to_csec q sr x = quantise q (round (100 * fromIntegral x / sr))
 
