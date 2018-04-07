@@ -4,7 +4,7 @@ Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL
 Category:          Sound
-Copyright:         (c) Rohan Drape, 2013-2017
+Copyright:         (c) Rohan Drape, 2013-2018
 Author:            Rohan Drape
 Maintainer:        rd@slavepianos.org
 Stability:         Experimental
@@ -73,6 +73,7 @@ Library
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Bouwkamp
                    Sound.SC3.Data.Math.Easing
+                   Sound.SC3.Data.Math.Hermite
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
                    Sound.SC3.Data.Math.Weaire_Phelan
