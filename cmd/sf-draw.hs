@@ -21,20 +21,27 @@ vec_normalise_2 v =
 vec_normalise_h :: (Fractional b, Ord b, V.Storable b) => Bool -> V.Vector b -> V.Vector b
 vec_normalise_h hlf = if hlf then vec_normalise_2 else vec_normalise_1
 
+vec_from_wavetable :: (V.Storable a, Num a) => V.Vector a -> V.Vector a
+vec_from_wavetable wt =
+  let n = V.length wt
+      f k = (wt V.! (k * 2)) + (wt V.! (k * 2 + 1))
+  in V.generate (n `div` 2) f
+
 vec_ix :: Bool -> Double -> Int -> Int -> V.Vector Double -> Int -> [(Int,Int)]
 vec_ix sym h ch nc vec i =
     let v = vec V.! ((i * nc) + ch)
         f x = round (((x + 1) / 2) * (h - 1))
     in if sym then [(f v,i),(f (negate v),i)] else [(f v,i)]
 
-sf_draw_plain :: (Bool,Bool,Bool,Bool) -> Int -> Int -> FilePath -> FilePath -> IO ()
-sf_draw_plain (nrm,hlf,inv,sym) h ch sf_fn pbm_fn = do
+sf_draw_plain :: (Bool,Bool,Bool,Bool,Bool) -> Int -> Int -> FilePath -> FilePath -> IO ()
+sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
   (hdr,Just vec') <- SF.read_vec sf_fn
   let vec = ((if sym then V.map abs else id) .
              (if inv then id else V.map negate) .
-             (if nrm then vec_normalise_h hlf else id)) vec'
+             (if nrm then vec_normalise_h hlf else id) .
+             (if sc3_wt then vec_from_wavetable else id)) vec'
       nc = SF.channelCount hdr
-      nf = SF.frameCount hdr
+      nf = V.length vec -- not (SF.frameCount hdr) due to vec_from_wavetable
       ix = vec_ix sym (fromIntegral h) ch nc vec
   when (ch >= nc) (error "ch >= nc")
   let b = ((h,nf),concatMap ix [0 .. nf - 1])
@@ -54,7 +61,7 @@ help :: [String]
 help =
     [unwords
      ["sf-draw","plain","pbm"
-     ,"normalise:bool","normalise-mode:bool","invert:bool","symmetrical:bool"
+     ,"normalise:bool","normalise-mode:bool","invert:bool","symmetrical:bool","sc3-wavetable:bool"
      ,"pbm-height:int","channel:int","sound-file","pbm-file"]
     ,"sf-draw table pbm left:float right:float pbm-height:int channel:int sound-file pbm-file"
     ,"  normalise-mode: f = retain symmetry about zero, t = ignore symmetry"]
@@ -63,8 +70,10 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["plain","pbm",nrm,hlf,inv,sym,h,ch,sf_fn,pbm_fn] ->
-     sf_draw_plain (nrm == "t",hlf == "t",inv == "t",sym == "t") (read h) (read ch) sf_fn pbm_fn
+    ["plain","pbm",nrm,hlf,inv,sym,sc3_wt,h,ch,sf_fn,pbm_fn] ->
+     sf_draw_plain
+      (nrm == "t",hlf == "t",inv == "t",sym == "t",sc3_wt == "t")
+      (read h) (read ch) sf_fn pbm_fn
     ["table","pbm",l,r,h,ch,sf_fn,pbm_fn] ->
      sf_draw_table (read l,read r) (read h) (read ch) sf_fn pbm_fn
     _ -> mapM_ putStrLn help
@@ -73,12 +82,12 @@ main = do
 
 let sf_fn = "/home/rohan/data/audio/gebet.R.1024.au"
 let pbm_fn = "/tmp/t.pbm"
-sf_draw (False,False,False,True) 128 0 sf_fn pbm_fn
+sf_draw_plain (False,False,False,True,False) 128 0 sf_fn pbm_fn
 
 let sf_fn = "/home/rohan/uc/sp-id/eof/au/tbl/gs/01.tbl.au"
-sf_draw (True,True,True,False) 32 0 sf_fn pbm_fn
+sf_draw_plain (True,True,True,False,False) 32 0 sf_fn pbm_fn
 
-import System.Process
+import System.Process {- process -}
 rawSystem "display" [pbm_fn]
 rawSystem "convert" [pbm_fn,pbm_fn ++ ".png"]
 

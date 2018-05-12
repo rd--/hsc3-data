@@ -2,13 +2,13 @@ import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
-import Sound.SC3.Data.Image.Plain {- hsc3-data -}
+import qualified Sound.SC3.Data.Image.Plain as I {- hsc3-data -}
 
 sf_to_png :: (Double -> Double) -> FilePath -> FilePath -> IO ()
 sf_to_png op sf_fn png_fn = do
   (hdr,Just vec) <- SF.read_vec sf_fn
-  let png = img_from_vec_co (SF.frameCount hdr,SF.channelCount hdr) (V.map op vec)
-  img_write_png png_fn png
+  let png = I.img_from_vec_co (SF.frameCount hdr,SF.channelCount hdr) (V.map op vec)
+  I.img_write_png png_fn png
 
 help :: IO ()
 help = putStrLn "sf-to-png {bw|gs} sound-file png-file"
