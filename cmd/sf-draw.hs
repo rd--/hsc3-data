@@ -3,29 +3,24 @@ import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
-import qualified Sound.SC3 as S {- hsc3 -}
+import qualified Sound.SC3.Common.Math as M {- hsc3 -}
+import qualified Sound.SC3.Common.Buffer.Vector as B {- hsc3 -}
 import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
 
 vec_normalise_1 :: (Fractional b, Ord b, V.Storable b) => V.Vector b -> V.Vector b
 vec_normalise_1 v =
     let v' = V.map abs v
         m = V.foldl1 max v'
-    in V.map (S.linlin_hs (- m,m) (-1,1)) v
+    in V.map (M.linlin_hs (- m,m) (-1,1)) v
 
 vec_normalise_2 :: (Fractional b, Ord b, V.Storable b) => V.Vector b -> V.Vector b
 vec_normalise_2 v =
     let l = V.foldl1 min v
         r = V.foldl1 max v
-    in V.map (S.linlin_hs (l,r) (-1,1)) v
+    in V.map (M.linlin_hs (l,r) (-1,1)) v
 
 vec_normalise_h :: (Fractional b, Ord b, V.Storable b) => Bool -> V.Vector b -> V.Vector b
 vec_normalise_h hlf = if hlf then vec_normalise_2 else vec_normalise_1
-
-vec_from_wavetable :: (V.Storable a, Num a) => V.Vector a -> V.Vector a
-vec_from_wavetable wt =
-  let n = V.length wt
-      f k = (wt V.! (k * 2)) + (wt V.! (k * 2 + 1))
-  in V.generate (n `div` 2) f
 
 vec_ix :: Bool -> Double -> Int -> Int -> V.Vector Double -> Int -> [(Int,Int)]
 vec_ix sym h ch nc vec i =
@@ -39,9 +34,9 @@ sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
   let vec = ((if sym then V.map abs else id) .
              (if inv then id else V.map negate) .
              (if nrm then vec_normalise_h hlf else id) .
-             (if sc3_wt then vec_from_wavetable else id)) vec'
+             (if sc3_wt then B.from_wavetable else id)) vec'
       nc = SF.channelCount hdr
-      nf = V.length vec -- not (SF.frameCount hdr) due to vec_from_wavetable
+      nf = V.length vec -- not (SF.frameCount hdr) due to B.from_wavetable
       ix = vec_ix sym (fromIntegral h) ch nc vec
   when (ch >= nc) (error "ch >= nc")
   let b = ((h,nf),concatMap ix [0 .. nf - 1])
@@ -50,7 +45,7 @@ sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
 sf_draw_table :: (Double,Double) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_table (l,r) h ch sf_fn pbm_fn = do
   (hdr,Just vec') <- SF.read_vec sf_fn
-  let vec = V.map (S.linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
+  let vec = V.map (M.linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
       nc = SF.channelCount hdr
       nf = SF.frameCount hdr
   when (ch >= nc) (error "ch >= nc")

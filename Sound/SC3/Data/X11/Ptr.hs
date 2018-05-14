@@ -1,9 +1,9 @@
 -- | X11 pointer access
 module Sound.SC3.Data.X11.Ptr where
 
-import Foreign.C.Types
-import qualified Graphics.X11.Xlib as X
-import qualified Graphics.X11.Xlib.Extras as E
+import Foreign.C.Types {- base -}
+import qualified Graphics.X11.Xlib as X {- X11 -}
+import qualified Graphics.X11.Xlib.Extras as E {- X11 -}
 
 -- | X11 connection state.
 type X11 n = (X.Display,X.Window,CInt,n)
