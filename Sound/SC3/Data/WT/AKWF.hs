@@ -60,10 +60,6 @@ akwf_filenames ext = akwf_gen_fn ext . akwf_lookup_err
 akwf_filepaths_grp :: String -> FilePath -> AKWF_GRP -> [FilePath]
 akwf_filepaths_grp ext dir = map (dir </>) . akwf_gen_fn ext
 
-{-
-> ext = ".png"
-> putStrLn $ unlines $ concatMap (akwf_filepaths ext dir . fst) akwf_grp
--}
 akwf_filepaths :: String -> FilePath -> String -> [FilePath]
 akwf_filepaths ext dir = akwf_filepaths_grp ext dir . akwf_lookup_err
 
@@ -74,7 +70,7 @@ akfw_get_png_cmd dir grp =
       fn_seq = akwf_filepaths_grp ".png" dir grp
   in zip3 uri_seq fn_seq (repeat Nothing)
 
--- > akfw_get_png "/home/rohan/data/audio/wt/akwf/png" (akwf_lookup_err "0004")
+-- > mapM_ (akfw_get_png "/home/rohan/data/audio/wt/akwf/png" . akwf_lookup_err . fst) akwf_grp
 akfw_get_png :: FilePath -> AKWF_GRP -> IO ()
 akfw_get_png dir = mapM_ WWW.url_fetch . akfw_get_png_cmd dir
 
@@ -88,15 +84,23 @@ akwf_load_to_sc3_cmd dir nm k = do
 {-
 > ld = akwf_load_to_sc3 "/home/rohan/data/audio/wt/akwf"
 > ld "bw_sawrounded" 0
-> ld "bw_squrounded" 128
-> ld "bw_tri" 256
+> ld "bw_squrounded" 0
+> ld "bw_tri" 0
 > ld "granular" 384
 > ld "hdrawn" 512
 > ld "birds" 640
 > ld "bw_blended" 768
 > ld "0001" 896
-> ld "0002" 2048
-
+> ld "0009" 0
+> ld "fmsynth" 0
+> ld "clarinett" 0
+> ld "flute" 0
+> ld "oboe" 0
+> ld "bitreduced" 0
+> ld "c604" 0
+> ld "hvoice" 0
+> ld "eorgan" 0
+> ld "linear" 0
 -}
 akwf_load_to_sc3 :: FilePath -> String -> SC3.Buffer_Id -> IO ()
 akwf_load_to_sc3 dir nm k = do
@@ -154,6 +158,13 @@ akwf_bw =
 akwf_misc :: [AKWF_GRP]
 akwf_misc =
   [("birds",gen_pseq 4 "birds_" (1,14))
+  ,("bitreduced"
+   ,gen_pseq 4 "bitreduced_" (1,40)
+     ++
+     ["saw2bit","saw3bit","saw4bit","saw5bit","saw6bit","saw7bit","saw8bit"
+     ,"sin2bit","sin3bit","sin4bit","sin5bit","sin6bit","sin7bit","sin8bit"
+     ,"squ2bit","squ3bit","squ4bit","squ5bit","squ6bit","squ7bit","squ8bit"
+     ,"tri2bit","tri3bit","tri4bit","tri5bit","tri6bit","tri7bit","tri8bit"])
   ,("c604",gen_pseq 4 "c604_" (1,32))
   ,("distorted",gen_pseq 4 "distorted_" (1,45))
   ,("fmsynth",gen_pseq 4 "fmsynth_" (1,122))
@@ -177,12 +188,6 @@ akwf_misc =
 
 /home/rohan/data/audio/wt/akwf/
 
-
-,("bitreduced","bitreduced_",["bitreduced_0001","bitreduced_0002","bitreduced_0003","bitreduced_0004","bitreduced_0005","bitreduced_0006","bitreduced_0007","bitreduced_0008","bitreduced_0009","bitreduced_0010","bitreduced_0011","bitreduced_0012","bitreduced_0013","bitreduced_0014","bitreduced_0015","bitreduced_0016","bitreduced_0017","bitreduced_0018","bitreduced_0019","bitreduced_0020","bitreduced_0021","bitreduced_0022","bitreduced_0023","bitreduced_0024","bitreduced_0025","bitreduced_0026","bitreduced_0027","bitreduced_0028","bitreduced_0029","bitreduced_0030","bitreduced_0031","bitreduced_0032","bitreduced_0033","bitreduced_0034","bitreduced_0035","bitreduced_0036","bitreduced_0037","bitreduced_0038","bitreduced_0039","bitreduced_0040"
-                               ,"saw2bit","saw3bit","saw4bit","saw5bit","saw6bit","saw7bit","saw8bit"
-                               ,"sin2bit","sin3bit","sin4bit","sin5bit","sin6bit","sin7bit","sin8bit"
-                               ,"squ2bit","squ3bit","squ4bit","squ5bit","squ6bit","squ7bit","squ8bit"
-                               ,"tri2bit","tri3bit","tri4bit","tri5bit","tri6bit","tri7bit","tri8bit"])
   ,("theremin","",["tannerin_0001","tannerin_0002","tannerin_0003","tannerin_0004"
                   ,"theremin_0001","theremin_0002","theremin_0003","theremin_0004","theremin_0005","theremin_0006","theremin_0007","theremin_0008","theremin_0009","theremin_0010","theremin_0011","theremin_0012","theremin_0013","theremin_0014","theremin_0015","theremin_0016","theremin_0017","theremin_0018","theremin_0019","theremin_0020","theremin_0021","theremin_0022"])
   ,("vgamebasic","",["vgsaw_0001","vgsaw_0002","vgsaw_0003","vgsaw_0004","vgsaw_0005","vgsaw_0006","vgsaw_0007","vgsaw_0008","vgsaw_0009","vgsaw_0010","vgsaw_0011","vgsaw_0012","vgsaw_0013","vgsaw_0014","vgsaw_0015","vgsaw_0016"
