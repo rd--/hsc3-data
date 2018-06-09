@@ -1,10 +1,25 @@
 module Sound.SC3.Data.WT.AKWF where
 
+import Control.Monad {- base -}
+import Data.List {- base -}
+import Data.Maybe {- base -}
+import System.FilePath {- filepath -}
 import Text.Printf {- base -}
 
--- > mapM_ putStrLn $ concatMap akwf_gen_fn akwf_grp
-akwf_gen_fn :: AKWF_GRP -> [FilePath]
-akwf_gen_fn (dir,sq) = map (\k -> concat ["AKWF_",dir,"/AKWF_",k,".wav"]) sq
+import qualified Sound.OSC.Core as O {- hosc -}
+
+import qualified Sound.SC3.Common.Buffer as SC3 {- hsc3 -}
+import qualified Sound.SC3.Server.Command.Plain as SC3 {- hsc3 -}
+import qualified Sound.SC3.Server.Transport.Monad as SC3 {- hsc3 -}
+
+import qualified Sound.File.Header as SF {- hsc3-sf -}
+import qualified Sound.File.WAVE as SF {- hsc3-sf -}
+
+import qualified WWW.Minus.Fetch as WWW {- www-minus -}
+
+-- > mapM_ putStrLn $ concatMap (akwf_gen_fn ".wav") akwf_grp
+akwf_gen_fn :: String -> AKWF_GRP -> [FilePath]
+akwf_gen_fn ext (dir,sq) = map (\k -> concat ["AKWF_",dir,"/AKWF_",k,ext]) sq
 
 -- > map (\k -> show_int_k k 5) [2,4]
 show_int_k :: Int -> Int -> String
@@ -31,28 +46,97 @@ akwf_gen_ntables n =
   let lhs = ((n - 1) * 100) + 1
   in (show_int_k 4 n,gen_nseq 4 (lhs,lhs + 99) [])
 
+-- > akwf_lookup "bw_sawrounded"
+akwf_lookup :: String -> Maybe AKWF_GRP
+akwf_lookup nm = find ((== nm) . fst) akwf_grp
+
+akwf_lookup_err :: String -> AKWF_GRP
+akwf_lookup_err = fromMaybe (error "akwf_lookup") . akwf_lookup
+
+-- > akwf_filenames ".wav" "bw_sawrounded"
+akwf_filenames :: String -> String -> [FilePath]
+akwf_filenames ext = akwf_gen_fn ext . akwf_lookup_err
+
+akwf_filepaths_grp :: String -> FilePath -> AKWF_GRP -> [FilePath]
+akwf_filepaths_grp ext dir = map (dir </>) . akwf_gen_fn ext
+
+{-
+> ext = ".png"
+> putStrLn $ unlines $ concatMap (akwf_filepaths ext dir . fst) akwf_grp
+-}
+akwf_filepaths :: String -> FilePath -> String -> [FilePath]
+akwf_filepaths ext dir = akwf_filepaths_grp ext dir . akwf_lookup_err
+
+akfw_get_png_cmd :: FilePath -> AKWF_GRP -> [WWW.URL_FETCH]
+akfw_get_png_cmd dir grp =
+  let png_loc = "https://www.adventurekid.se/AKRTfiles/AKWF/view/"
+      uri_seq = akwf_filepaths_grp ".png" png_loc grp
+      fn_seq = akwf_filepaths_grp ".png" dir grp
+  in zip3 uri_seq fn_seq (repeat Nothing)
+
+-- > akfw_get_png "/home/rohan/data/audio/wt/akwf/png" (akwf_lookup_err "0004")
+akfw_get_png :: FilePath -> AKWF_GRP -> IO ()
+akfw_get_png dir = mapM_ WWW.url_fetch . akfw_get_png_cmd dir
+
+akwf_load_to_sc3_cmd :: FilePath -> String -> SC3.Buffer_Id -> IO [O.Message]
+akwf_load_to_sc3_cmd dir nm k = do
+  let fn_set = akwf_filepaths ".wav" dir nm
+      alloc_f ix = SC3.b_alloc_setn1 ix 0
+  fn_dat <- mapM akwf_load_512 fn_set
+  return (zipWith alloc_f [k ..] (map SC3.to_wavetable fn_dat))
+
+{-
+> ld = akwf_load_to_sc3 "/home/rohan/data/audio/wt/akwf"
+> ld "bw_sawrounded" 0
+> ld "bw_squrounded" 128
+> ld "bw_tri" 256
+> ld "granular" 384
+> ld "hdrawn" 512
+> ld "birds" 640
+> ld "bw_blended" 768
+> ld "0001" 896
+> ld "0002" 2048
+
+-}
+akwf_load_to_sc3 :: FilePath -> String -> SC3.Buffer_Id -> IO ()
+akwf_load_to_sc3 dir nm k = do
+  m <- akwf_load_to_sc3_cmd dir nm k
+  SC3.withSC3 (mapM_ SC3.async m)
+
+akwf_load :: FilePath -> IO [Double]
+akwf_load nm = do
+  (hdr,dat) <- SF.wave_load nm
+  when (SF.frameCount hdr /= 600 || SF.channelCount hdr /= 1) (error "akwf_load")
+  return (dat !! 0)
+
+akwf_load_512 :: FilePath -> IO [Double]
+akwf_load_512 = fmap (SC3.resamp1 512) . akwf_load
+
 akwf_grp :: [AKWF_GRP]
 akwf_grp = concat [akwf_ntables,akwf_instr,akwf_bw,akwf_misc]
 
 akwf_ntables :: [AKWF_GRP]
 akwf_ntables = map akwf_gen_ntables [1 .. 20]
 
+akwf_instr_set :: [(String,Int)]
+akwf_instr_set =
+  [("aguitar",38)
+  ,("altosax",26)
+  ,("cello",19)
+  ,("clarinett",25)
+  ,("clavinet",33)
+  ,("dbass",69)
+  ,("ebass",70)
+  ,("eguitar",22)
+  ,("eorgan",154)
+  ,("epiano",73)
+  ,("flute",17)
+  ,("oboe",13)
+  ,("piano",30)
+  ,("violin",14)]
+
 akwf_instr :: [AKWF_GRP]
-akwf_instr =
-  [akwf_gen_nm_grp "aguitar" 38
-  ,akwf_gen_nm_grp "altosax" 26
-  ,akwf_gen_nm_grp "cello" 19
-  ,akwf_gen_nm_grp "clarinett" 25
-  ,akwf_gen_nm_grp "clavinet" 33
-  ,akwf_gen_nm_grp "dbass" 69
-  ,akwf_gen_nm_grp "ebass" 70
-  ,akwf_gen_nm_grp "eguitar" 22
-  ,akwf_gen_nm_grp "eorgan" 154
-  ,akwf_gen_nm_grp "epiano" 73
-  ,akwf_gen_nm_grp "flute" 17
-  ,akwf_gen_nm_grp "oboe" 13
-  ,akwf_gen_nm_grp "piano" 30
-  ,akwf_gen_nm_grp "violin" 14]
+akwf_instr = map (uncurry akwf_gen_nm_grp) akwf_instr_set
 
 akwf_bw :: [AKWF_GRP]
 akwf_bw =

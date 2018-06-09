@@ -10,6 +10,17 @@ type U8 = Word8
 set_sysex :: U8 -> U8 -> U8 -> [U8]
 set_sysex pp cc vv = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,pp,cc,vv,0xF7]
 
+enc_set_sysex_cc :: U8 -> U8 -> [U8]
+enc_set_sysex_cc k cc = set_sysex 0x03 k cc
+
+enc_set_sysex_abs :: U8 -> (U8,U8,(U8,U8)) -> [[U8]]
+enc_set_sysex_abs k (ch,cc,(l,r)) =
+  [set_sysex 0x02 k ch
+  ,set_sysex 0x03 k cc
+  ,set_sysex 0x04 k l
+  ,set_sysex 0x05 k r
+  ,set_sysex 0x05 k 0x00]
+
 -- > request_sysex 0x01 0x20
 request_sysex :: U8 -> U8 -> [U8]
 request_sysex pp cc = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x01,0x00,pp,cc,0xF7]
@@ -35,7 +46,7 @@ enc_param_dsc =
   ,(0x03,"CC_NUMBER")
   ,(0x04,"MINIMA")
   ,(0x05,"MAXIMA")
-  ,(0x03,"BEHAVIOUR")]
+  ,(0x06,"BEHAVIOUR")]
 
 enc_behaviour_dsc :: [(U8,String)]
 enc_behaviour_dsc =
@@ -43,6 +54,7 @@ enc_behaviour_dsc =
   ,(0x01,"RELATIVE_1")
   ,(0x02,"RELATIVE_2")
   ,(0x03,"RELATIVE_3")]
+
 
 control_key_codes :: [(String,U8)]
 control_key_codes =
