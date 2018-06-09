@@ -15,8 +15,6 @@ import qualified Sound.SC3.Server.Transport.Monad as SC3 {- hsc3 -}
 import qualified Sound.File.Header as SF {- hsc3-sf -}
 import qualified Sound.File.WAVE as SF {- hsc3-sf -}
 
-import qualified WWW.Minus.Fetch as WWW {- www-minus -}
-
 -- > mapM_ putStrLn $ concatMap (akwf_gen_fn ".wav") akwf_grp
 akwf_gen_fn :: String -> AKWF_GRP -> [FilePath]
 akwf_gen_fn ext (dir,sq) = map (\k -> concat ["AKWF_",dir,"/AKWF_",k,ext]) sq
@@ -63,16 +61,12 @@ akwf_filepaths_grp ext dir = map (dir </>) . akwf_gen_fn ext
 akwf_filepaths :: String -> FilePath -> String -> [FilePath]
 akwf_filepaths ext dir = akwf_filepaths_grp ext dir . akwf_lookup_err
 
-akfw_get_png_cmd :: FilePath -> AKWF_GRP -> [WWW.URL_FETCH]
+akfw_get_png_cmd :: FilePath -> AKWF_GRP -> [(String,String,Maybe String)]
 akfw_get_png_cmd dir grp =
   let png_loc = "https://www.adventurekid.se/AKRTfiles/AKWF/view/"
       uri_seq = akwf_filepaths_grp ".png" png_loc grp
       fn_seq = akwf_filepaths_grp ".png" dir grp
   in zip3 uri_seq fn_seq (repeat Nothing)
-
--- > mapM_ (akfw_get_png "/home/rohan/data/audio/wt/akwf/png" . akwf_lookup_err . fst) akwf_grp
-akfw_get_png :: FilePath -> AKWF_GRP -> IO ()
-akfw_get_png dir = mapM_ WWW.url_fetch . akfw_get_png_cmd dir
 
 akwf_load_to_sc3_cmd :: FilePath -> String -> SC3.Buffer_Id -> IO [O.Message]
 akwf_load_to_sc3_cmd dir nm k = do
@@ -81,27 +75,6 @@ akwf_load_to_sc3_cmd dir nm k = do
   fn_dat <- mapM akwf_load_512 fn_set
   return (zipWith alloc_f [k ..] (map SC3.to_wavetable fn_dat))
 
-{-
-> ld = akwf_load_to_sc3 "/home/rohan/data/audio/wt/akwf"
-> ld "bw_sawrounded" 0
-> ld "bw_squrounded" 0
-> ld "bw_tri" 0
-> ld "granular" 384
-> ld "hdrawn" 512
-> ld "birds" 640
-> ld "bw_blended" 768
-> ld "0001" 896
-> ld "0009" 0
-> ld "fmsynth" 0
-> ld "clarinett" 0
-> ld "flute" 0
-> ld "oboe" 0
-> ld "bitreduced" 0
-> ld "c604" 0
-> ld "hvoice" 0
-> ld "eorgan" 0
-> ld "linear" 0
--}
 akwf_load_to_sc3 :: FilePath -> String -> SC3.Buffer_Id -> IO ()
 akwf_load_to_sc3 dir nm k = do
   m <- akwf_load_to_sc3_cmd dir nm k
@@ -159,12 +132,12 @@ akwf_misc :: [AKWF_GRP]
 akwf_misc =
   [("birds",gen_pseq 4 "birds_" (1,14))
   ,("bitreduced"
-   ,gen_pseq 4 "bitreduced_" (1,40)
-     ++
-     ["saw2bit","saw3bit","saw4bit","saw5bit","saw6bit","saw7bit","saw8bit"
-     ,"sin2bit","sin3bit","sin4bit","sin5bit","sin6bit","sin7bit","sin8bit"
-     ,"squ2bit","squ3bit","squ4bit","squ5bit","squ6bit","squ7bit","squ8bit"
-     ,"tri2bit","tri3bit","tri4bit","tri5bit","tri6bit","tri7bit","tri8bit"])
+   ,concat
+     [gen_pseq 4 "bitreduced_" (1,40)
+     ,["saw2bit","saw3bit","saw4bit","saw5bit","saw6bit","saw7bit","saw8bit"
+      ,"sin2bit","sin3bit","sin4bit","sin5bit","sin6bit","sin7bit","sin8bit"
+      ,"squ2bit","squ3bit","squ4bit","squ5bit","squ6bit","squ7bit","squ8bit"
+      ,"tri2bit","tri3bit","tri4bit","tri5bit","tri6bit","tri7bit","tri8bit"]])
   ,("c604",gen_pseq 4 "c604_" (1,32))
   ,("distorted",gen_pseq 4 "distorted_" (1,45))
   ,("fmsynth",gen_pseq 4 "fmsynth_" (1,122))
@@ -181,18 +154,12 @@ akwf_misc =
   ,("stereo",gen_pseq 4 "stereo_" (1,200))
   ,("stringbox",gen_pseq 4 "cheeze_" (1,6))
   ,("symetric",gen_pseq 4 "symetric_" (1,17))
+  ,("theremin",gen_pseq 4 "tannerin_" (1,4) ++ gen_pseq 4 "theremin_" (1,22))
   ,("vgame",gen_pseq 4 "vgame_" (1,137))
+  ,("vgamebasic",
+     concat
+     [gen_pseq 4 "vgsaw_" (1,16)
+     ,gen_pseq 4 "vgsin_" (1,16)
+     ,gen_pseq 4 "vgsqu_" (1,16)
+     ,gen_pseq 4 "vgtri_" (1,16)])
   ]
-
-{-
-
-/home/rohan/data/audio/wt/akwf/
-
-  ,("theremin","",["tannerin_0001","tannerin_0002","tannerin_0003","tannerin_0004"
-                  ,"theremin_0001","theremin_0002","theremin_0003","theremin_0004","theremin_0005","theremin_0006","theremin_0007","theremin_0008","theremin_0009","theremin_0010","theremin_0011","theremin_0012","theremin_0013","theremin_0014","theremin_0015","theremin_0016","theremin_0017","theremin_0018","theremin_0019","theremin_0020","theremin_0021","theremin_0022"])
-  ,("vgamebasic","",["vgsaw_0001","vgsaw_0002","vgsaw_0003","vgsaw_0004","vgsaw_0005","vgsaw_0006","vgsaw_0007","vgsaw_0008","vgsaw_0009","vgsaw_0010","vgsaw_0011","vgsaw_0012","vgsaw_0013","vgsaw_0014","vgsaw_0015","vgsaw_0016"
-                    ,"vgsin_0001","vgsin_0002","vgsin_0003","vgsin_0004","vgsin_0005","vgsin_0006","vgsin_0007","vgsin_0008","vgsin_0009","vgsin_0010","vgsin_0011","vgsin_0012","vgsin_0013","vgsin_0014","vgsin_0015","vgsin_0016"
-                    ,"vgsqu_0001","vgsqu_0002","vgsqu_0003","vgsqu_0004","vgsqu_0005","vgsqu_0006","vgsqu_0007","vgsqu_0008","vgsqu_0009","vgsqu_0010","vgsqu_0011","vgsqu_0012","vgsqu_0013","vgsqu_0014","vgsqu_0015","vgsqu_0016"
-                    ,"vgtri_0001","vgtri_0002","vgtri_0003","vgtri_0004","vgtri_0005","vgtri_0006","vgtri_0007","vgtri_0008","vgtri_0009","vgtri_0010","vgtri_0011","vgtri_0012","vgtri_0013","vgtri_0014","vgtri_0015","vgtri_0016"])
-  ]
--}
