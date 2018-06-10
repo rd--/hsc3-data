@@ -12,4 +12,7 @@ akwf_get_png_all dir = mapM_ (akfw_get_png_grp dir . akwf_lookup_err . fst) akwf
 
 akwf_get_png_all "/home/rohan/data/audio/wt/akwf/png"
 
+let ix_fn = "/home/rohan/sw/hsc3-data/md/akwf.md"
+writeFile ix_fn (unlines (akfw_png_ix_all "sw/hsc3-data/png/akwf"))
+
 -}

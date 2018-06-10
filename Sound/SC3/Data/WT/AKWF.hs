@@ -15,9 +15,15 @@ import qualified Sound.SC3.Server.Transport.Monad as SC3 {- hsc3 -}
 import qualified Sound.File.Header as SF {- hsc3-sf -}
 import qualified Sound.File.WAVE as SF {- hsc3-sf -}
 
+-- | (CATEGORY,[ENTRIES])
+type AKWF_GRP = (String, [String])
+
+akwf_fn :: String -> String -> String -> FilePath
+akwf_fn ext dir k = concat ["AKWF_",dir,"/AKWF_",k,ext]
+
 -- > mapM_ putStrLn $ concatMap (akwf_gen_fn ".wav") akwf_grp
 akwf_gen_fn :: String -> AKWF_GRP -> [FilePath]
-akwf_gen_fn ext (dir,sq) = map (\k -> concat ["AKWF_",dir,"/AKWF_",k,ext]) sq
+akwf_gen_fn ext (dir,sq) = map (akwf_fn ext dir) sq
 
 -- > map (\k -> show_int_k k 5) [2,4]
 show_int_k :: Int -> Int -> String
@@ -35,9 +41,6 @@ gen_pseq k p n = gen_pseq_flt k p n []
 
 akwf_gen_nm_grp :: String -> Int -> AKWF_GRP
 akwf_gen_nm_grp nm n = (nm,gen_pseq 4 (nm ++ "_") (1,n))
-
-type AKWF_GRP = (String, [String])
-type AKWF_DSC = (String, String, [String])
 
 akwf_gen_ntables :: Int -> AKWF_GRP
 akwf_gen_ntables n =
@@ -67,6 +70,14 @@ akfw_get_png_cmd dir grp =
       uri_seq = akwf_filepaths_grp ".png" png_loc grp
       fn_seq = akwf_filepaths_grp ".png" dir grp
   in zip3 uri_seq fn_seq (repeat Nothing)
+
+akfw_png_ix_grp :: FilePath -> AKWF_GRP -> [String]
+akfw_png_ix_grp dir (cat,sq) =
+  let f x = "![](" ++ (dir </> akwf_fn ".png" cat x) ++ ")"
+  in ("# " ++ cat ++ "\n") : "" : map f sq ++ [""]
+
+akfw_png_ix_all :: FilePath -> [String]
+akfw_png_ix_all dir = concatMap (akfw_png_ix_grp dir) akwf_grp
 
 akwf_load_to_sc3_cmd :: FilePath -> String -> SC3.Buffer_Id -> IO [O.Message]
 akwf_load_to_sc3_cmd dir nm k = do
