@@ -129,7 +129,9 @@ enc_cm_behaviour_dsc =
   ,(0x02,"RELATIVE_2")
   ,(0x03,"RELATIVE_3")]
 
--- ENCODER 1-16 = 0x20-0x2F
+-- | The controls are refered to by unique identifiers.
+--
+-- ENCODER 1-16 = 0x20-0x2F,
 -- PAD 1-16 = 0x70-0x7F
 control_id_dsc :: [(U8,String)]
 control_id_dsc =
