@@ -5,6 +5,9 @@ import Data.Word {- base -}
 -- | Unsigned 8-bit integer (ie. Word8).
 type U8 = Word8
 
+enum_to_u8 :: Enum e => e -> U8
+enum_to_u8 = fromIntegral . fromEnum
+
 -- | System-exclusive data.
 type SYSEX = [U8]
 
@@ -16,14 +19,40 @@ type SYSEX = [U8]
 set_sysex :: U8 -> U8 -> U8 -> SYSEX
 set_sysex pp cc vv = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,pp,cc,vv,0xF7]
 
--- | General form of "GET" messages.
---
--- pp = parameter number,
--- cc = contol ID
---
--- > request_sysex 0x01 0x20
+{- | General form of "GET" messages.
+
+pp = parameter number,
+cc = contol ID
+
+> request_sysex 0x01 0x20 == [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x01,0x00,0x01,0x20,0xF7]
+
+-}
 request_sysex :: U8 -> U8 -> SYSEX
 request_sysex pp cc = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x01,0x00,pp,cc,0xF7]
+
+-- * Global
+
+set_global_midi_channel :: U8 -> SYSEX
+set_global_midi_channel ch = set_sysex 0x50 0x0B ch
+
+set_cv_gate_interface_receive_channel :: U8 -> SYSEX
+set_cv_gate_interface_receive_channel ch = set_sysex 0x50 0x0C ch
+
+-- | There are three encoder acceleration modes.
+--
+-- > map toEnum [0,1,2] == [Slow,Medium,Fast]
+data Acceleration = Slow | Medium | Fast deriving (Eq,Enum,Show)
+
+-- 0=slow, 1=medium, 2=fast
+set_encoder_acceleration :: U8 -> SYSEX
+set_encoder_acceleration x = set_sysex 0x41 0x04 x
+
+-- > map toEnum [0 .. 3] == [Linear,Logarithmic,Exponential,Full]
+data Curve = Linear | Logarithmic | Exponential | Full deriving (Eq,Enum,Show)
+
+-- 0=linear, 1=logarithmic, 2=exponential, 3=full
+pad_velocity_curve :: U8 -> SYSEX
+pad_velocity_curve x = set_sysex 0x41 0x03 x
 
 -- * ENC = encoder
 
@@ -42,6 +71,9 @@ enc_cm_set_abs_sysex k (ch,cc,(l,r)) =
   ,set_sysex 0x05 k r
   ,set_sysex 0x06 k 0x00 -- absolute-value mode
   ]
+
+enc_cm_set_basic_sysex :: U8 -> U8 -> [SYSEX]
+enc_cm_set_basic_sysex ch cc0 = concatMap (\k -> enc_cm_set_abs_sysex (0x20 + k) (ch,cc0 + k,(0,127))) [0 .. 15]
 
 -- * DSC = description
 
@@ -113,17 +145,18 @@ control_id_dsc =
 
 {-
 
-import qualified Sound.OSC as O
 import qualified Sound.Midi.PM as PM
 
 k <- PM.pm_output_by_name "Arturia BeatStep MIDI 1"
 run = PM.pm_with_output_device k
 
+run (\fd -> PM.pm_sysex_write fd (set_encoder_acceleration (enum_to_u8 Slow)))
+
 run (\fd -> PM.pm_sysex_write fd (enc_cm_set_ch_sysex 0x20 0x00))
 run (\fd -> PM.pm_sysex_write fd (enc_cm_set_cc_sysex 0x20 0x00))
 
-run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_abs_sysex 0x20 (0x0F,0x00,(0x00,0x7F))))
-run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_abs_sysex 0x20 (0x0A,0x0F,(0x50,0x6F))))
+run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_abs_sysex 0x20 (0x00,0x00,(0x00,0x7F))))
+run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_basic_sysex 0 0))
 
 PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x2C,0x7F))
 PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x2C,0x00))
