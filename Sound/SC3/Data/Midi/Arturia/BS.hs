@@ -1,68 +1,131 @@
 module Sound.SC3.Data.Midi.Arturia.BS where
 
--- pp = parameter number (1-6)
--- cc = controller number (0x20-0x2F=encoders,0x70-0x7F=pads,0x30=level,)
-
 import Data.Word {- base -}
 
+-- | Unsigned 8-bit integer (ie. Word8).
 type U8 = Word8
 
-set_sysex :: U8 -> U8 -> U8 -> [U8]
+-- | System-exclusive data.
+type SYSEX = [U8]
+
+-- | General form of "SET" messages.
+--
+-- pp = parameter number,
+-- cc = control ID (see 'control_id_dsc'),
+-- vv = value
+set_sysex :: U8 -> U8 -> U8 -> SYSEX
 set_sysex pp cc vv = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,pp,cc,vv,0xF7]
 
-enc_set_sysex_cc :: U8 -> U8 -> [U8]
-enc_set_sysex_cc k cc = set_sysex 0x03 k cc
+-- | General form of "GET" messages.
+--
+-- pp = parameter number,
+-- cc = contol ID
+--
+-- > request_sysex 0x01 0x20
+request_sysex :: U8 -> U8 -> SYSEX
+request_sysex pp cc = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x01,0x00,pp,cc,0xF7]
 
-enc_set_sysex_abs :: U8 -> (U8,U8,(U8,U8)) -> [[U8]]
-enc_set_sysex_abs k (ch,cc,(l,r)) =
-  [set_sysex 0x02 k ch
+-- * ENC = encoder
+
+enc_cm_set_cc_sysex :: U8 -> U8 -> SYSEX
+enc_cm_set_cc_sysex k cc = set_sysex 0x03 k cc
+
+enc_cm_set_ch_sysex :: U8 -> U8 -> SYSEX
+enc_cm_set_ch_sysex k ch = set_sysex 0x02 k ch
+
+enc_cm_set_abs_sysex :: U8 -> (U8,U8,(U8,U8)) -> [SYSEX]
+enc_cm_set_abs_sysex k (ch,cc,(l,r)) =
+  [set_sysex 0x01 k 0x01 -- control-change mode
+  ,set_sysex 0x02 k ch
   ,set_sysex 0x03 k cc
   ,set_sysex 0x04 k l
   ,set_sysex 0x05 k r
-  ,set_sysex 0x05 k 0x00]
+  ,set_sysex 0x06 k 0x00 -- absolute-value mode
+  ]
 
--- > request_sysex 0x01 0x20
-request_sysex :: U8 -> U8 -> [U8]
-request_sysex pp cc = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x01,0x00,pp,cc,0xF7]
+-- * DSC = description
 
 pad_mode_dsc :: [(U8,String)]
 pad_mode_dsc =
   [(0x00,"OFF")
-  ,(0x01,"CC_SWITCH/SILENT")
+  ,(0x01,"CC_SWITCH/SILENT") -- cc = control-change
+  ,(0x02,"UNKNOWN")
+  ,(0x03,"UNKNOWN")
+  ,(0x04,"UNKNOWN")
+  ,(0x05,"UNKNOWN")
+  ,(0x06,"UNKNOWN")
   ,(0x07,"MMC")
-  ,(0x08,"CC_Switch")
-  ,(0x09,"NOTE")
+  ,(0x08,"CC_SWITCH")
+  ,(0x09,"MNN") -- mnn = midi-note-number
+  ,(0x0A,"UNKNOWN")
   ,(0x0B,"PROGRAM_CHANGE")]
+
+-- | nm = NOTE MODE
+pad_nm_param_dsc :: [(U8,String)]
+pad_nm_param_dsc =
+  [(0x02,"MIDI_CHANNEL")
+  ,(0x03,"MNN")
+  ,(0x06,"BEHAVIOUR")]
+
+pad_nm_behaviour_dsc :: [(U8,String)]
+pad_nm_behaviour_dsc =
+  [(0x00,"TOGGLE")
+  ,(0x01,"GATE")]
 
 enc_mode_dsc :: [(U8,String)]
 enc_mode_dsc =
   [(0x00,"OFF")
-  ,(0x01,"MIDI_CC")
+  ,(0x01,"CC") -- CC = CONTROL-CHANGE
+  ,(0x02,"UNKNOWN")
+  ,(0x03,"UNKNOWN")
   ,(0x04,"RPN/NRPN")]
 
-enc_param_dsc :: [(U8,String)]
-enc_param_dsc =
-  [(0x02,"MIDI_CHANNEL")
+-- cm = CONTROL-CHANGE MODE
+enc_cm_param_dsc :: [(U8,String)]
+enc_cm_param_dsc =
+  [(0x01,"MODE")
+  ,(0x02,"MIDI_CHANNEL")
   ,(0x03,"CC_NUMBER")
   ,(0x04,"MINIMA")
   ,(0x05,"MAXIMA")
   ,(0x06,"BEHAVIOUR")]
 
-enc_behaviour_dsc :: [(U8,String)]
-enc_behaviour_dsc =
+enc_cm_behaviour_dsc :: [(U8,String)]
+enc_cm_behaviour_dsc =
   [(0x00,"ABSOLUTE")
   ,(0x01,"RELATIVE_1")
   ,(0x02,"RELATIVE_2")
   ,(0x03,"RELATIVE_3")]
 
+-- ENCODER 1-16 = 0x20-0x2F
+-- PAD 1-16 = 0x70-0x7F
+control_id_dsc :: [(U8,String)]
+control_id_dsc =
+  [(0x30,"LEVEL/RATE")
+  ,(0x58,"STOP")
+  ,(0x59,"START")
+  ,(0x5A,"CNTRL/SEQ")
+  ,(0x5B,"EXTSYNC")
+  ,(0x5C,"RECALL")
+  ,(0x5D,"STORE")
+  ,(0x5E,"SHIFT")
+  ,(0x5F,"CHAN")]
 
-control_key_codes :: [(String,U8)]
-control_key_codes =
-  [("STOP",0x58)
-  ,("START",0x59)
-  ,("CNTRL/SEQ",0x5A)
-  ,("EXTSYNC",0x5B)
-  ,("RECALL",0x5C)
-  ,("STORE",0x5D)
-  ,("SHIFT",0x5E)
-  ,("CHAN",0x5F)]
+{-
+
+import qualified Sound.OSC as O
+import qualified Sound.Midi.PM as PM
+
+k <- PM.pm_output_by_name "Arturia BeatStep MIDI 1"
+run = PM.pm_with_output_device k
+
+run (\fd -> PM.pm_sysex_write fd (enc_cm_set_ch_sysex 0x20 0x00))
+run (\fd -> PM.pm_sysex_write fd (enc_cm_set_cc_sysex 0x20 0x00))
+
+run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_abs_sysex 0x20 (0x0F,0x00,(0x00,0x7F))))
+run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_abs_sysex 0x20 (0x0A,0x0F,(0x50,0x6F))))
+
+PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x2C,0x7F))
+PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x2C,0x00))
+
+-}
