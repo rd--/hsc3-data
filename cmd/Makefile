@@ -9,6 +9,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 	pgm-to-au \
 	pvoc-header \
 	sf-condense sf-draw sf-to-png \
+	svl \
 	text-monitor text-osc trace-rec-x11 \
 	x11-ptr-to-midi-osc
 

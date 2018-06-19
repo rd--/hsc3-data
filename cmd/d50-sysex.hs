@@ -3,11 +3,15 @@ import Data.List {- base -}
 import System.Environment {- base -}
 
 import Sound.OSC {- hosc -}
+
 import qualified Sound.PortMidi as M {- portmidi -}
 import qualified Sound.Midi.PM as M {- midi-osc -}
-import Sound.SC3.Data.Roland.D50 {- hsc3-data -}
+
+import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
 
 -- * COMMON
+
+type U8 = M.U8
 
 -- > map ms_to_sec [1,10,50,100,1000] == [0.001,0.01,0.05,0.1,1]
 ms_to_sec :: Int -> Double
@@ -19,25 +23,28 @@ sleep_ms = pauseThread . ms_to_sec
 with_default_output :: (M.PMStream -> IO r) -> IO r
 with_default_output f = M.pm_default_output >>= \k -> M.pm_with_output_device k f
 
-send_sysex :: M.PMStream -> [[U8]] -> IO ()
-send_sysex fd = mapM_ (\x -> M.pm_sysex_write fd x >> sleep_ms 50)
+--send_sysex :: M.PMStream -> [[U8]] -> IO ()
+--send_sysex fd = mapM_ (\x -> M.pm_sysex_write fd x >> sleep_ms 50)
+
+--send_sysex :: M.PMStream -> [[U8]] -> IO ()
+--send_sysex = void . M.pm_sysex_write_set
 
 send_sysex_def :: [[U8]] -> IO ()
-send_sysex_def x = with_default_output (\fd -> send_sysex fd x)
+send_sysex_def x = void (with_default_output (\fd -> M.pm_sysex_write_set fd x))
 
 send_patch_fd :: M.PMStream -> Maybe U8 -> [U8] -> IO ()
 send_patch_fd fd d50_ix p =
     let d = case d50_ix of
-              Nothing -> d50_dsc_gen_seq (DTI_CMD,0,0,p)
-              Just i -> let a = patch_memory_base i
-                        in d50_wsd_gen 0 a (length p) : d50_dsc_gen_seq (DAT_CMD,0,a,p)
-    in send_sysex fd d
+              Nothing -> D50.d50_dsc_gen_seq (D50.DTI_CMD,0,0,p)
+              Just i -> let a = D50.patch_memory_base i
+                        in D50.d50_wsd_gen 0 a (length p) : D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
+    in void (M.pm_sysex_write_set fd d)
 
 send_patch_def :: Maybe U8 -> [U8] -> IO ()
 send_patch_def ix p = with_default_output (\fd -> send_patch_fd fd ix p)
 
 patch_pp :: [U8] -> IO ()
-patch_pp = putStrLn. unlines . d50_patch_group_pp
+patch_pp = putStrLn. unlines . D50.d50_patch_group_pp
 
 pm_run_proc :: Int -> M.PMStream -> M.PROC_F U8 -> IO ()
 pm_run_proc dt fd proc_f =
@@ -49,16 +56,19 @@ pm_run_proc dt fd proc_f =
 
 -- * LOAD ON PROGRAM CHANGE (LPC)
 
+u8_index :: [t] -> U8 -> t
+u8_index l n = l !! (fromIntegral n)
+
 lpc_recv_midi :: ([[U8]], M.PMStream) -> (U8,U8,U8,U8) -> IO ()
 lpc_recv_midi (p,fd) m =
     case m of
-      (0xC0,n,0,0) -> print n >> patch_pp (p !! n) >> send_patch_fd fd Nothing (p !! n)
+      (0xC0,n,0,0) -> print n >> patch_pp (u8_index p n) >> send_patch_fd fd Nothing (u8_index p n)
       _ -> return ()
 
 -- > lpc_run "/home/rohan/data/roland-d50/PND50-00.syx"
 lpc_run :: FilePath -> IO ()
 lpc_run fn = do
-  p <- d50_load_sysex fn
+  p <- D50.d50_load_sysex fn
   in_k <- M.pm_default_input
   out_k <- M.pm_default_output
   in_fd <- M.pm_open_input in_k
@@ -74,13 +84,13 @@ lpc_run fn = do
 d50_print_sysex :: String -> ([U8] -> [String]) -> FilePath -> IO ()
 d50_print_sysex ix pp fn =
     if ix == "all"
-    then d50_load_sysex fn >>= putStr . unlines . concatMap pp
-    else d50_load_sysex fn >>= putStr . unlines . pp . (!! (read ix))
+    then D50.d50_load_sysex fn >>= putStr . unlines . concatMap pp
+    else D50.d50_load_sysex fn >>= putStr . unlines . pp . (!! (read ix))
 
 -- > let fn = "/home/rohan/cvs/ew/ew-46/D50/FRANCIS.hex.text"
 -- > d50_print_patch_text d50_patch_group_pp fn
 d50_print_patch_text :: ([U8] -> [String]) -> FilePath -> IO ()
-d50_print_patch_text pp fn = load_d50_text fn >>= putStr . unlines . pp
+d50_print_patch_text pp fn = D50.load_d50_text fn >>= putStr . unlines . pp
 
 -- * SEND
 
@@ -91,14 +101,14 @@ parse_d50_ix s = if s == "tmp" then Nothing else Just (read s)
 -- > send_patch (Just 10) 0 "/home/rohan/data/roland-d50/PND50-00.syx"
 send_patch :: Maybe U8 -> U8 -> FilePath -> IO ()
 send_patch d50_ix sysex_ix fn = do
-  p <- d50_load_sysex fn
-  send_patch_def d50_ix (p !! sysex_ix)
+  p <- D50.d50_load_sysex fn
+  send_patch_def d50_ix (u8_index p sysex_ix)
 
 -- * SET
 
 -- > set_wg_pitch_kf (1/8)
 set_wg_pitch_kf :: (Eq n, Fractional n) => n -> IO ()
-set_wg_pitch_kf r = send_sysex_def (map d50_dsc_gen (d50_wg_pitch_kf_dti r))
+set_wg_pitch_kf r = send_sysex_def (map D50.d50_dsc_gen (D50.d50_wg_pitch_kf_dti r))
 
 -- * MAIN
 
@@ -116,10 +126,10 @@ main = do
   a <- getArgs
   case a of
     ["load-on-program-change",fn] -> M.pm_with_midi (lpc_run fn)
-    "print-patch":"text":"csv":fn_seq -> mapM_ (d50_print_patch_text d50_patch_csv) fn_seq
-    "print-patch":"text":"pp-group":fn_seq -> mapM_ (d50_print_patch_text d50_patch_group_pp) fn_seq
-    "print-sysex":ix:"name":fn_seq -> mapM_ (d50_print_sysex ix (return . intercalate "|" . patch_name_set)) fn_seq
-    "print-sysex":ix:"pp-group":fn_seq -> mapM_ (d50_print_sysex ix d50_patch_group_pp) fn_seq
+    "print-patch":"text":"csv":fn_seq -> mapM_ (d50_print_patch_text D50.d50_patch_csv) fn_seq
+    "print-patch":"text":"pp-group":fn_seq -> mapM_ (d50_print_patch_text D50.d50_patch_group_pp) fn_seq
+    "print-sysex":ix:"name":fn_seq -> mapM_ (d50_print_sysex ix (return . intercalate "|" . D50.patch_name_set)) fn_seq
+    "print-sysex":ix:"pp-group":fn_seq -> mapM_ (d50_print_sysex ix D50.d50_patch_group_pp) fn_seq
     ["send","patch",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix d50_ix) (read sysex_ix) fn
     ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
     _ -> usage

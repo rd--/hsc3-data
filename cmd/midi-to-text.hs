@@ -1,3 +1,4 @@
+import Data.Maybe {- base -}
 import System.Environment {- base -}
 
 import qualified Codec.Midi as C {- HCodecs -}
@@ -39,7 +40,7 @@ node_to_text :: Int -> (Int,C.Message) -> [String]
 node_to_text n (t,m) =
     let to_w8 = fromIntegral
         l_f = (["T","","",""] ++)
-        r_f = ("M" :) . map show . (\(p,q,r) -> [p,to_w8 q,to_w8 r]) . M.m_encode_cvm3
+        r_f = ("M" :) . map show . (\(p,q,r) -> [p,to_w8 q,to_w8 r]) . fromMaybe (error "node_to_text") . M.mm_to_cvm3
     in show n : show t : either l_f r_f (parse_c_message m)
 
 track_to_text :: (Int, [(Int, C.Message)]) -> [[String]]

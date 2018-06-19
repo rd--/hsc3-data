@@ -11,7 +11,7 @@ import qualified Sound.Midi.OSC as M {- midi-osc -}
 type R = Double
 
 to_cc_msg :: Word8 -> Word8 -> Double -> Message
-to_cc_msg ch cc r = M.m_message (-1) (M.Control_Change ch cc (floor (r * 127)))
+to_cc_msg ch cc r = M.mm_to_osc (-1) (M.Control_Change ch cc (floor (r * 127)))
 
 -- > x11_ptr_to_midi_osc (0.01,0,1,0,2)
 x11_ptr_to_midi_osc :: (R, Word8, Word8, Word8, Word8) -> IO ()

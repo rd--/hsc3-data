@@ -19,6 +19,7 @@ import Data.Char {- base -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
+import Data.Word {- base -}
 
 import qualified Music.Theory.Byte as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
@@ -28,10 +29,22 @@ import qualified Sound.Midi.Constant as M {- midi-osc -}
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
 -- | 8-bit unsigned integer, ie. parameter values, midi data etc.
-type U8 = Int
+type U8 = Word8
+
+-- | 8-bit signed integer, ie. USR-OFFSET
+type I8 = Int
 
 -- | 24-bit unsigned integer, ie. ADDRESS and related offsets and extents.
 type U24 = Int
+
+int_to_u8 :: Int -> U8
+int_to_u8 n = if n >= 0 && n <= 255 then fromIntegral n else error "int_to_u8"
+
+u8_to_i8 :: U8 -> I8
+u8_to_i8 = fromIntegral
+
+u8_to_u24 :: U8 -> U24
+u8_to_u24 = fromIntegral
 
 -- | Parameter address.
 type ADDRESS = U24
@@ -47,13 +60,16 @@ data Partial_Ix = One | Two deriving (Eq,Show)
 data Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
 
 -- | (INDEX,NAME,STEPS,USR-OFFSET,USR-STRING)
-type Parameter = (U24,String,U8,Int,String)
+type Parameter = (U24,String,U8,I8,String)
 
 parameter_ix :: Parameter -> U24
 parameter_ix (ix,_,_,_,_) = ix
 
 parameter_name :: Parameter -> String
 parameter_name (_,nm,_,_,_) = nm
+
+parameter_user_offset :: Parameter -> Int
+parameter_user_offset (_,_,_,o,_) = o
 
 -- | (GROUP-NAME,PARAMETER-NAME-SEQ,PARAMETER-IX-SEQ)
 type PARAM_GROUP = (String,String,[Int])
@@ -399,7 +415,7 @@ named_parameter_to_address =
 
 -}
 patch_memory_base :: U8 -> ADDRESS
-patch_memory_base n = 32768 + (448 * n)
+patch_memory_base n = 32768 + (448 * u8_to_u24 n)
 
 {- | Base address for reverb memory /n/ (0,15)
 
@@ -411,7 +427,7 @@ patch_memory_base n = 32768 + (448 * n)
 
 -}
 reverb_memory_base :: U8 -> ADDRESS
-reverb_memory_base n = 61440 + (376 * n)
+reverb_memory_base n = 61440 + (376 * u8_to_u24 n)
 
 -- * CHAR
 
@@ -455,10 +471,10 @@ wg_pitch_kf_rat :: Fractional n => ([n],[String])
 wg_pitch_kf_rat = ([-1,1/2,-1/4,0,1/8,1/4,3/8,1/2,5/6,3/4,7/8,1,5/4,3/2,2],["S1","S2"])
 
 -- > mapMaybe wg_pitch_kf_to_enum [1/8,1/4,1] == [4,5,11]
-wg_pitch_kf_to_enum :: (Eq n,Fractional n) => n -> Maybe Int
-wg_pitch_kf_to_enum n = findIndex (== n) (fst wg_pitch_kf_rat)
+wg_pitch_kf_to_enum :: (Eq n,Fractional n) => n -> Maybe U8
+wg_pitch_kf_to_enum n = fmap int_to_u8 (findIndex (== n) (fst wg_pitch_kf_rat))
 
-wg_pitch_kf_to_enum_err :: (Eq n,Fractional n) => n -> Int
+wg_pitch_kf_to_enum_err :: (Eq n,Fractional n) => n -> U8
 wg_pitch_kf_to_enum_err = fromMaybe (error "wg_pitch_kf_to_enum") . wg_pitch_kf_to_enum
 
 tvf_kf_usr :: String
@@ -721,6 +737,7 @@ d50_patch_parameters =
 -- | Complete set of /used/ 'Parameter's.
 --
 -- > length d50_parameters == 352
+-- > nub $ sort $ map parameter_user_offset d50_parameters
 -- > putStrLn $ unlines $ map show d50_parameters
 d50_parameters :: [Parameter]
 d50_parameters =
@@ -760,8 +777,8 @@ d50_unused_parameter ix = (ix,"UNUSED",1,0,"")
 parameter_range :: Parameter -> (U8,U8)
 parameter_range (_,_,stp,_,_) = (0,stp - 1)
 
-parameter_range_usr :: Parameter -> (U8,U8)
-parameter_range_usr (_,_,stp,diff,_) = (diff,diff + stp - 1)
+parameter_range_usr :: Parameter -> (I8,I8)
+parameter_range_usr (_,_,stp,diff,_) = (diff,diff + u8_to_i8 stp - 1)
 
 parameter_value_verify :: Parameter -> U8 -> U8
 parameter_value_verify (_,_,stp,_,_) x =
@@ -775,10 +792,10 @@ parameter_value_usr p x =
     in if x < 0 || x > stp
        then error (show ("parameter_value_usr",p,x))
        else case splitOn ";" usr_str of
-              [_] -> show (x + usr_diff)
+              [_] -> show (u8_to_i8 x + usr_diff)
               e -> e `genericIndex` x
 
-parameter_csv :: (U8,U8) -> (Parameter_Type,Parameter) -> String
+parameter_csv :: (ADDRESS,U8) -> (Parameter_Type,Parameter) -> String
 parameter_csv (a,x) (ty,p) =
     let (ix,nm,_,_,_usr_str) = p
         x' = parameter_value_verify p x
