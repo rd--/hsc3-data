@@ -72,22 +72,28 @@ md = mode
 -}
 enc_cm_set :: U8 -> (U8,U8,(U8,U8),U8) -> [SYSEX]
 enc_cm_set k (ch,cc,(l,r),md) =
-  [set_sysex 0x01 k 0x01
-  ,set_sysex 0x02 k ch
-  ,set_sysex 0x03 k cc
-  ,set_sysex 0x04 k l
-  ,set_sysex 0x05 k r -- absolute mode only
+  [set_sysex 0x01 k 0x01 -- control-change-mode
+  ,set_sysex 0x02 k ch -- channel
+  ,set_sysex 0x03 k cc -- control-change-number
+  ,set_sysex 0x04 k l -- absolute mode only
   ,set_sysex 0x05 k r -- absolute mode only
   ,set_sysex 0x06 k md -- 0=absolute-value 1-3=relative
   ]
 
-enc_cm_set_16 :: (U8,U8,(U8,U8),U8) -> [SYSEX]
-enc_cm_set_16 (ch,cc0,rng,md) =
-  let f k = enc_cm_set (0x20 + k) (ch,cc0 + k,rng,md)
-  in concatMap f [0 .. 15]
+-- | Set 16 encoders, only CC value differs per encoder.
+enc_cm_set_16 :: (U8,[U8],(U8,U8),U8) -> [SYSEX]
+enc_cm_set_16 (ch,cc_seq,rng,md) =
+  let f k cc = enc_cm_set (0x20 + k) (ch,cc,rng,md)
+  in concat (zipWith f [0 .. 15] cc_seq)
 
+-- | Set only CC value.
 enc_cm_set_cc :: U8 -> U8 -> SYSEX
 enc_cm_set_cc k cc = set_sysex 0x03 k cc
+
+enc_cm_set_cc_16 :: [U8] -> [SYSEX]
+enc_cm_set_cc_16 =
+  let f k cc = enc_cm_set_cc (0x20 + k) cc
+  in zipWith f [0 .. 15]
 
 enc_cm_set_ch :: U8 -> U8 -> SYSEX
 enc_cm_set_ch k ch = set_sysex 0x02 k ch
@@ -104,10 +110,10 @@ pad_nm_set k (ch,mnn,md) =
   ,set_sysex 0x06 k md -- 0=toggle,1=gate
   ]
 
-pad_nm_set_16 :: (U8, U8, U8) -> [SYSEX]
-pad_nm_set_16 (ch,mnn0,md) =
-  let f k = pad_nm_set (0x70 + k) (ch,mnn0 + k,md)
-  in concatMap f [0 .. 15]
+pad_nm_set_16 :: (U8, [U8], U8) -> [SYSEX]
+pad_nm_set_16 (ch,mnn_seq,md) =
+  let f k mnn = pad_nm_set (0x70 + k) (ch,mnn,md)
+  in concat (zipWith f [0 .. 15] mnn_seq)
 
 pad_cm_set :: U8 -> (U8, U8, (U8, U8), U8) -> [SYSEX]
 pad_cm_set k (ch,cc,(off,on),md) =
@@ -119,10 +125,10 @@ pad_cm_set k (ch,cc,(off,on),md) =
   ,set_sysex 0x06 k md -- 0=toggle,1=gate
   ]
 
-pad_cm_set_16 :: (U8, U8, (U8, U8), U8) -> [SYSEX]
-pad_cm_set_16 (ch,cc0,off_on,md) =
-  let f k = pad_cm_set (0x70 + k) (ch,cc0 + k,off_on,md)
-  in concatMap f [0 .. 15]
+pad_cm_set_16 :: (U8, [U8], (U8, U8), U8) -> [SYSEX]
+pad_cm_set_16 (ch,cc_seq,off_on,md) =
+  let f k cc = pad_cm_set (0x70 + k) (ch,cc,off_on,md)
+  in concat (zipWith f [0 .. 15] cc_seq)
 
 -- * DSC = description
 
@@ -201,18 +207,19 @@ import qualified Sound.Midi.PM as PM
 k <- PM.pm_output_by_name "Arturia BeatStep MIDI 1"
 run = PM.pm_with_output_device k
 
-run (\fd -> PM.pm_sysex_write fd (set_encoder_acceleration (enum_to_u8 Slow)))
+run (\fd -> PM.pm_sysex_write fd (set_encoder_acceleration (enum_to_u8 Medium)))
 
 run (\fd -> PM.pm_sysex_write fd (enc_cm_set_ch 0x20 0x00))
 run (\fd -> PM.pm_sysex_write fd (enc_cm_set_cc 0x20 0x00))
 
-run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set 0x20 (0x00,0x00,(0x00,0x7F),0x01)))
+run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set 0x21 (0x00,0x00,(0x00,0x7F),0x00)))
 
-run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_16 (0,0,(0,127),0x01)))
+run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_16 (0,[0 .. 15],(0,127),0x00)))
+run (\fd -> PM.pm_sysex_write_set fd (enc_cm_set_cc_16 [0 .. 15]))
 
-run (\fd -> PM.pm_sysex_write_set fd (pad_nm_set_16 (0,0,enum_to_u8 Toggle)))
+run (\fd -> PM.pm_sysex_write_set fd (pad_nm_set_16 (0,[60 .. ],enum_to_u8 Toggle)))
 
-run (\fd -> PM.pm_sysex_write_set fd (pad_cm_set_16 (0,0,(0,127),enum_to_u8 Toggle)))
+run (\fd -> PM.pm_sysex_write_set fd (pad_cm_set_16 (0,[0 .. 16],(0,127),enum_to_u8 Toggle)))
 
 PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x00,0x7F))
 PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x00,0x00))

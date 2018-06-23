@@ -77,6 +77,7 @@ Library
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
                    Sound.SC3.Data.Math.Weaire_Phelan
+                   Sound.SC3.Data.Midi.Arturia.BS
                    Sound.SC3.Data.Midi.Plain
                    Sound.SC3.Data.Modal
                    Sound.SC3.Data.PVOC
