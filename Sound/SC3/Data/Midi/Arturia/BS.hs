@@ -98,6 +98,9 @@ enc_cm_set_cc_16 =
 enc_cm_set_ch :: U8 -> U8 -> SYSEX
 enc_cm_set_ch k ch = set_sysex 0x02 k ch
 
+enc_cm_set_value :: U8 -> U8 -> SYSEX
+enc_cm_set_value k n = set_sysex 0x00 k n
+
 -- * PAD, nm = note-mode
 
 data Switch_Mode = Toggle | Gate deriving (Eq,Enum,Show)
@@ -207,7 +210,7 @@ import qualified Sound.Midi.PM as PM
 k <- PM.pm_output_by_name "Arturia BeatStep MIDI 1"
 run = PM.pm_with_output_device k
 
-run (\fd -> PM.pm_sysex_write fd (set_encoder_acceleration (enum_to_u8 Medium)))
+run (\fd -> PM.pm_sysex_write fd (set_encoder_acceleration (enum_to_u8 Slow)))
 
 run (\fd -> PM.pm_sysex_write fd (enc_cm_set_ch 0x20 0x00))
 run (\fd -> PM.pm_sysex_write fd (enc_cm_set_cc 0x20 0x00))

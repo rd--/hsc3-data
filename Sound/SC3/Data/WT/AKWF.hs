@@ -1,3 +1,4 @@
+-- | <https://www.adventurekid.se/AKRTfiles/AKWF/view/waveforms_index.html>
 module Sound.SC3.Data.WT.AKWF where
 
 import Control.Monad {- base -}
@@ -18,11 +19,15 @@ import qualified Sound.File.WAVE as SF {- hsc3-sf -}
 -- | (CATEGORY,[ENTRIES])
 type AKWF_GRP = (String, [String])
 
-akwf_fn :: String -> String -> String -> FilePath
+type Extension = String
+type Directory = FilePath
+type Name = String
+
+akwf_fn :: Extension -> Directory -> Name -> FilePath
 akwf_fn ext dir k = concat ["AKWF_",dir,"/AKWF_",k,ext]
 
 -- > mapM_ putStrLn $ concatMap (akwf_gen_fn ".wav") akwf_grp
-akwf_gen_fn :: String -> AKWF_GRP -> [FilePath]
+akwf_gen_fn :: Extension -> AKWF_GRP -> [FilePath]
 akwf_gen_fn ext (dir,sq) = map (akwf_fn ext dir) sq
 
 -- > map (\k -> show_int_k k 5) [2,4]
@@ -48,20 +53,21 @@ akwf_gen_ntables n =
   in (show_int_k 4 n,gen_nseq 4 (lhs,lhs + 99) [])
 
 -- > akwf_lookup "bw_sawrounded"
-akwf_lookup :: String -> Maybe AKWF_GRP
+akwf_lookup :: Name -> Maybe AKWF_GRP
 akwf_lookup nm = find ((== nm) . fst) akwf_grp
 
-akwf_lookup_err :: String -> AKWF_GRP
+akwf_lookup_err :: Name -> AKWF_GRP
 akwf_lookup_err = fromMaybe (error "akwf_lookup") . akwf_lookup
 
 -- > akwf_filenames ".wav" "bw_sawrounded"
-akwf_filenames :: String -> String -> [FilePath]
+akwf_filenames :: Extension -> Name -> [FilePath]
 akwf_filenames ext = akwf_gen_fn ext . akwf_lookup_err
 
-akwf_filepaths_grp :: String -> FilePath -> AKWF_GRP -> [FilePath]
+akwf_filepaths_grp :: Extension -> Directory -> AKWF_GRP -> [FilePath]
 akwf_filepaths_grp ext dir = map (dir </>) . akwf_gen_fn ext
 
-akwf_filepaths :: String -> FilePath -> String -> [FilePath]
+-- > akwf_filepaths ".wav" "." "bw_sawrounded"
+akwf_filepaths :: Extension -> Directory -> Name -> [FilePath]
 akwf_filepaths ext dir = akwf_filepaths_grp ext dir . akwf_lookup_err
 
 akfw_get_png_cmd :: FilePath -> AKWF_GRP -> [(String,String,Maybe String)]
@@ -79,17 +85,18 @@ akfw_png_ix_grp dir (cat,sq) =
 akfw_png_ix_all :: FilePath -> [String]
 akfw_png_ix_all dir = concatMap (akfw_png_ix_grp dir) akwf_grp
 
-akwf_load_to_sc3_cmd :: FilePath -> String -> SC3.Buffer_Id -> IO [O.Message]
-akwf_load_to_sc3_cmd dir nm k = do
-  let fn_set = akwf_filepaths ".wav" dir nm
-      alloc_f ix = SC3.b_alloc_setn1 ix 0
+akwf_load_to_sc3_cmd :: [FilePath] -> SC3.Buffer_Id -> IO [O.Message]
+akwf_load_to_sc3_cmd fn_set k = do
+  let alloc_f ix = SC3.b_alloc_setn1 ix 0
   fn_dat <- mapM akwf_load_512 fn_set
   return (zipWith alloc_f [k ..] (map SC3.to_wavetable fn_dat))
 
-akwf_load_to_sc3 :: FilePath -> String -> SC3.Buffer_Id -> IO ()
-akwf_load_to_sc3 dir nm k = do
-  m <- akwf_load_to_sc3_cmd dir nm k
+akwf_load_to_sc3 :: Directory -> [Name] -> SC3.Buffer_Id -> IO Int
+akwf_load_to_sc3 dir nm_seq k = do
+  let fn_set = concatMap (akwf_filepaths ".wav" dir) nm_seq
+  m <- akwf_load_to_sc3_cmd fn_set k
   SC3.withSC3 (mapM_ SC3.async m)
+  return (length fn_set)
 
 akwf_load :: FilePath -> IO [Double]
 akwf_load nm = do
