@@ -91,9 +91,10 @@ akwf_load_to_sc3_cmd fn_set k = do
   fn_dat <- mapM akwf_load_512 fn_set
   return (zipWith alloc_f [k ..] (map SC3.to_wavetable fn_dat))
 
-akwf_load_to_sc3 :: Directory -> [Name] -> SC3.Buffer_Id -> IO Int
+akwf_load_to_sc3 :: Directory -> [(Name,[Int])] -> SC3.Buffer_Id -> IO Int
 akwf_load_to_sc3 dir nm_seq k = do
-  let fn_set = concatMap (akwf_filepaths ".wav" dir) nm_seq
+  let sel l u = map fst (filter (\(_,n) -> n `elem` u) (zip l [0..]))
+      fn_set = concatMap (\(nm,u) -> sel (akwf_filepaths ".wav" dir nm) u) nm_seq
   m <- akwf_load_to_sc3_cmd fn_set k
   SC3.withSC3 (mapM_ SC3.async m)
   return (length fn_set)
