@@ -16,12 +16,15 @@ import qualified Sound.SC3.Server.Transport.Monad as SC3 {- hsc3 -}
 import qualified Sound.File.Header as SF {- hsc3-sf -}
 import qualified Sound.File.WAVE as SF {- hsc3-sf -}
 
--- | (CATEGORY,[ENTRIES])
-type AKWF_GRP = (String, [String])
-
-type Extension = String
-type Directory = FilePath
 type Name = String
+
+-- | (NAME,[ENTRIES])
+type AKWF_GRP = (Name, [String])
+
+-- | Extension, ie. ".wav".
+type Extension = String
+
+type Directory = FilePath
 
 akwf_fn :: Extension -> Directory -> Name -> FilePath
 akwf_fn ext dir k = concat ["AKWF_",dir,"/AKWF_",k,ext]
@@ -85,28 +88,43 @@ akfw_png_ix_grp dir (cat,sq) =
 akfw_png_ix_all :: FilePath -> [String]
 akfw_png_ix_all dir = concatMap (akfw_png_ix_grp dir) akwf_grp
 
+-- | Load file-set to SC3, at consecutive buffers from /k/, resampling to 512 elements.
 akwf_load_to_sc3_cmd :: [FilePath] -> SC3.Buffer_Id -> IO [O.Message]
 akwf_load_to_sc3_cmd fn_set k = do
   let alloc_f ix = SC3.b_alloc_setn1 ix 0
   fn_dat <- mapM akwf_load_512 fn_set
   return (zipWith alloc_f [k ..] (map SC3.to_wavetable fn_dat))
 
-akwf_load_to_sc3 :: Directory -> [(Name,[Int])] -> SC3.Buffer_Id -> IO Int
-akwf_load_to_sc3 dir nm_seq k = do
+akwf_resolve_grp_set :: Directory -> [(Name,Maybe [Int])] -> [FilePath]
+akwf_resolve_grp_set dir nm_seq =
   let sel l u = map fst (filter (\(_,n) -> n `elem` u) (zip l [0..]))
-      fn_set = concatMap (\(nm,u) -> sel (akwf_filepaths ".wav" dir nm) u) nm_seq
+  in concatMap (\(nm,u) -> let sq = akwf_filepaths ".wav" dir nm
+                           in case u of
+                                Nothing -> sq
+                                Just u' -> sel sq u') nm_seq
+
+akwf_load_to_sc3 :: Directory -> [(Name,Maybe [Int])] -> SC3.Buffer_Id -> IO Int
+akwf_load_to_sc3 dir nm_seq k = do
+  let fn_set = akwf_resolve_grp_set dir nm_seq
   m <- akwf_load_to_sc3_cmd fn_set k
   SC3.withSC3 (mapM_ SC3.async m)
   return (length fn_set)
 
+-- | Plain load function, check file is mono and frame count is 600.
 akwf_load :: FilePath -> IO [Double]
 akwf_load nm = do
   (hdr,dat) <- SF.wave_load nm
   when (SF.frameCount hdr /= 600 || SF.channelCount hdr /= 1) (error "akwf_load")
   return (dat !! 0)
 
+-- | Resampling variant of 'akwf_load'.
 akwf_load_512 :: FilePath -> IO [Double]
 akwf_load_512 = fmap (SC3.resamp1 512) . akwf_load
+
+akwf_load_grp_set :: Directory -> [(Name,Maybe [Int])] -> IO [[Double]]
+akwf_load_grp_set dir nm_seq = do
+  let fn_set = akwf_resolve_grp_set dir nm_seq
+  mapM akwf_load_512 fn_set
 
 akwf_grp :: [AKWF_GRP]
 akwf_grp = concat [akwf_ntables,akwf_instr,akwf_bw,akwf_misc]
