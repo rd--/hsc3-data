@@ -1,3 +1,4 @@
+-- | SVL files are produced by <https://www.sonicvisualiser.org/>.
 module Sound.SC3.Data.XML.SVL where
 
 import Data.List {- base -}
@@ -15,17 +16,21 @@ import qualified Sound.SC3.Data.XML as XML {- hsc3-data -}
 
 -- * GENERA
 
+-- | SVL DOCTYPE.
 svl_doctype :: String
 svl_doctype = "sonic-visualiser"
 
+-- | The /model/ is an empty element with the following attributes.
 svl_model_attr :: [String]
 svl_model_attr =
   ["id","name","sampleRate","start","end","type","dimensions","resolution"
   ,"notifyOnAdd","dataset","subtype","valueQuantization","minimum","maximum","units"]
 
+-- | The /sv.data.dataset/ element contains a sequence of /point/ elements.
 svl_dataset_attr :: [String]
 svl_dataset_attr = ["id","dimensions"]
 
+-- | The /sv.data.model/ element.
 svl_get_model :: X.Element -> X.Element
 svl_get_model = XML.x_get_elem_path ["data","model"]
 
@@ -36,6 +41,7 @@ svl_model_type m =
     then error "svl_model_ty"
     else (XML.x_get_attr "type" m,XML.x_get_attr "subtype" m)
 
+-- | Get /model/ and ensure it has the indicated type and sub-type.
 svl_get_model_of_type :: (String, String) -> X.Element -> X.Element
 svl_get_model_of_type ty e =
     let m = svl_get_model e
@@ -43,28 +49,34 @@ svl_get_model_of_type ty e =
        then m
        else error "svl_get_model_of_type"
 
+-- | The /sv.data.dataset/ element.
 svl_get_dataset :: X.Element -> X.Element
 svl_get_dataset = XML.x_get_elem_path ["data","dataset"]
 
+-- | Load the /sv/ element from an SVL file.
 svl_load :: FilePath -> IO (Maybe X.Element)
 svl_load fn = do
   b <- B.readFile fn
   return (X.parseXMLDoc b)
 
--- | SN = SPARSE-NOTE
+-- * SN = SPARSE-NOTE
 
 -- | SR = sample rate
 type SR = Double
 
+-- | Times and durations are given as frame counts.
 type FRAME = Int
 
 svl_model_sample_rate :: X.Element -> SR
 svl_model_sample_rate = read . XML.x_get_attr "sampleRate"
 
--- | ((frame,duration),(value,level,label))
+-- | (value,level,label)
 type SVL_SN_PT_DATA = (Int,Double,String)
+
+-- | ((frame,duration),data)
 type SVL_SN_PT = ((FRAME,FRAME),SVL_SN_PT_DATA)
 
+-- | Parse /point/ element.
 svl_parse_point :: X.Element -> SVL_SN_PT
 svl_parse_point e =
     ((read (XML.x_get_attr "frame" e)
