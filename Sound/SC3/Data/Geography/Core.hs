@@ -1,11 +1,8 @@
-module Sound.SC3.Data.Geography where
+module Sound.SC3.Data.Geography.Core where
 
 import Control.Monad {- base -}
-import Data.List {- base -}
 
 import qualified Text.ParserCombinators.Parsec as C {- parsec -}
-
-import qualified Music.Theory.IO as IO {- hmt -}
 
 -- * TYPES
 
@@ -23,9 +20,6 @@ type QDEG = (Char,R)
 
 -- | Cartesian point, here (phi,lambda).
 type PT = (R,R)
-
--- | Geographical location.
-type G = (PT,[String])
 
 -- | Parser.
 type P a = C.GenParser Char () a
@@ -103,6 +97,7 @@ p_location = do
   C.optional (C.char ' ')
   C.sepEndBy1 p_phrase skp
 
+-- | Parser for 'QDMS' with unicode characters @°@, @′@ and @″@.
 p_qdms_unicode :: P QDMS
 p_qdms_unicode = do
   d <- p_int
@@ -114,8 +109,9 @@ p_qdms_unicode = do
   q <- C.oneOf "NSEW"
   return (q,d,m,s)
 
-p_qdms :: P QDMS
-p_qdms = do
+-- | Parser for 'QDMS' with leading direction and whitespace.
+p_qdms_ws :: P QDMS
+p_qdms_ws = do
   q <- C.oneOf "NSEW"
   _ <- C.char ' '
   d <- p_int
@@ -133,61 +129,47 @@ p_coord_by p = do
   return (phi,lambda)
 
 p_coord :: P PT
-p_coord = p_coord_by p_qdms
+p_coord = p_coord_by p_qdms_ws
 
-p_geography_by :: P QDMS -> P G
-p_geography_by p = do
-  nm <- p_location
-  _ <- C.char ':'
-  _ <- C.char ' '
-  (lambda, phi) <- p_coord_by p
-  return ((lambda, phi),map unwords nm)
-
-p_geography :: P G
-p_geography = p_geography_by p_qdms
-
-p_geographies :: P [G]
-p_geographies = do
-  xs <- C.sepEndBy1 p_geography C.newline
-  _ <- C.eof
-  return xs
-
+-- | Run 'p_qdms_unicode'.
+--
 -- > parse_qdms_unicode "34°16′32″N" == Right ('N',34,16,32)
 -- > parse_qdms_unicode "132°18′28″E" == Right ('E',132,18,28)
 parse_qdms_unicode :: String -> Either C.ParseError QDMS
 parse_qdms_unicode = C.parse p_qdms_unicode "parse_qdms_unicode"
 
--- > parse_qdms "N 34 16 32" == Just ('N',34,16,32)
-parse_qdms :: Monad m => String -> m QDMS
-parse_qdms s =
-  case C.parse p_qdms "parse_qdms" s of
+-- | Run 'p_qdms_ws'.
+--
+-- > parse_qdms_ws "N 34 16 32" == Right ('N',34,16,32)
+parse_qdms_ws :: String -> Either C.ParseError QDMS
+parse_qdms_ws s =
+  case C.parse p_qdms_ws "parse_qdms_ws" s of
     Left err -> fail (show err)
     Right g -> return g
 
+parse_qdms_ws_err :: Monad m => String -> m QDMS
+parse_qdms_ws_err s =
+  case parse_qdms_ws s of
+    Left err -> fail (show err)
+    Right g -> return g
+
+-- | Run 'p_coord'
+--
 -- > parse_coord "N 34 16 32 E 132 18 28" == Right (34.275555555555556,132.30777777777777)
-parse_coord :: Monad m => String -> m PT
-parse_coord s =
-  case C.parse p_coord "parse_coord" s of
+parse_coord :: String -> Either C.ParseError PT
+parse_coord s = C.parse p_coord "parse_coord" s
+
+parse_coord_err :: Monad m => String -> m PT
+parse_coord_err s =
+  case parse_coord s of
     Left err -> fail (show err)
     Right g -> return g
 
+-- | Run 'p_coord_by' of 'p_qdms_unicode'.
+--
 -- > parse_coord_unicode "34°16′32″N 132°18′28″E"
 parse_coord_unicode :: String -> Either C.ParseError PT
 parse_coord_unicode = C.parse (p_coord_by p_qdms_unicode) "parse_coord_unicode"
-
--- > parse_geography "_" "Melbourne, Victoria, AU: S 37 48 50 E 144 57 47"
-parse_geography :: C.SourceName -> String -> Either C.ParseError G
-parse_geography src = C.parse p_geography src
-
-parse_geographies :: C.SourceName -> String -> Either C.ParseError [G]
-parse_geographies src = C.parse p_geographies src
-
--- * EQ
-
-g_match :: [String] -> G -> Bool
-g_match q (_,l) =
-    let f a = any (\x -> a `isInfixOf` x) l
-    in all f q
 
 -- * PP
 
@@ -199,16 +181,3 @@ coord_pp (phi,lambda) =
     let phi' = latitude_to_qdms phi
         lambda' = longitude_to_qdms lambda
     in qdms_pp phi' ++ " " ++ qdms_pp lambda'
-
-g_pp :: G -> String
-g_pp (coord,name) = intercalate ", " name ++ coord_pp coord
-
--- * IO
-
--- | Read set of 'G' from named @UTF-8@ encoded file.
-load_geographies :: String -> IO [G]
-load_geographies fn = do
-  s <- IO.read_file_utf8 fn
-  case parse_geographies fn s of
-    (Left err) -> error (show err)
-    (Right g) -> return g

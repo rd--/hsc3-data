@@ -63,7 +63,8 @@ Library
                    Sound.SC3.Data.Buffer
                    Sound.SC3.Data.CMUdict
                    Sound.SC3.Data.Colour
-                   Sound.SC3.Data.Geography
+                   Sound.SC3.Data.Geography.Core
+                   Sound.SC3.Data.Geography.G
                    Sound.SC3.Data.Gnus
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
