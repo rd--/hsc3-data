@@ -50,6 +50,8 @@ g_match q (_,l) =
 -- * IO
 
 -- | Read set of 'G' from named @UTF-8@ encoded file.
+--
+-- > load_geographies "/home/rohan/rf/pp/geography.text"
 load_geographies :: String -> IO [G]
 load_geographies fn = do
   s <- IO.read_file_utf8 fn

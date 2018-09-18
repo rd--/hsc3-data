@@ -2,10 +2,12 @@ import Control.Monad {- base -}
 import Data.List {- base -}
 import System.Environment {- base -}
 
+import qualified Sound.PortMidi as M {- portmidi -}
+
 import Sound.OSC {- hosc -}
 
-import qualified Sound.PortMidi as M {- portmidi -}
 import qualified Sound.Midi.PM as M {- midi-osc -}
+import qualified Sound.Midi.Type as M {- midi-osc -}
 
 import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
 
