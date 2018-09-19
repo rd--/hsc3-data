@@ -28,10 +28,10 @@ Data functions for [SC3][sc3] related work in [hsc3][hsc3] ([haskell][hs] superc
 
 [hs]: http://haskell.org/
 [sc3]: http://audiosynth.com/
-[hsc3]: http://rd.slavepianos.org/?t=hsc3
-[hsc3-data]: http://rd.slavepianos.org/?t=hsc3-data
+[hsc3]: http://rohandrape.net/?t=hsc3
+[hsc3-data]: http://rohandrape.net/?t=hsc3-data
 
 © [rohan drape][rd], 2013-2018, [gpl]
 
-[rd]: http://rd.slavepianos.org/
+[rd]: http://rohandrape.net/
 [gpl]: http://gnu.org/copyleft/

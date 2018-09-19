@@ -6,16 +6,11 @@ import qualified Data.ByteString.Lazy as B {- bytestring -}
 import Data.List {- base -}
 import System.IO {- base -}
 
-import Sound.OSC.Coding.Byte {- hosc -}
-
--- | LPC analysis data.
-data LPC = LPC { lpcHeader :: LPCHeader
-               , lpcFrames :: [LPCFrame] }
-           deriving (Eq, Show)
+import qualified Sound.OSC.Coding.Byte as O {- hosc -}
 
 -- | LPC analysis meta-data.
-data LPCHeader = LPCHeader { lpcHeaderSize :: Int
-                           , lpcMagic :: Int
+data LPCHeader = LPCHeader { lpcHeaderSize :: Int -- ^ 28 (0x001C)
+                           , lpcMagic :: Int -- ^ 999 (0x03E7)
                            , lpcNPoles :: Int
                            , lpcFrameSize :: Int
                            , lpcFrameRate :: Float
@@ -25,7 +20,14 @@ data LPCHeader = LPCHeader { lpcHeaderSize :: Int
                            } deriving (Eq, Show)
 
 -- | LPC analysis frame data.
+--   A frame consists of RMS2 (residual), RMS1 (input), ERRN, and CPS fields,
+--   followed by /n/ filter co-efficients.
 type LPCFrame = [Float]
+
+-- | LPC analysis data.
+data LPC = LPC { lpcHeader :: LPCHeader
+               , lpcFrames :: [LPCFrame] }
+           deriving (Eq, Show)
 
 -- | Read an lpanal format LPC data file.
 lpcRead :: FilePath -> IO LPC
@@ -43,16 +45,20 @@ lpcRead fn = do
   hClose h
   return (LPC hdr d)
 
--- | Analysis data in format required by the sc3 LPC UGens.
+-- | Analysis data in format required by the SC3 LPC UGens.
 lpcSC3 :: LPC -> [Float]
-lpcSC3 (LPC h d) = let f = fromIntegral
-                       np = f (lpcNPoles h)
-                       nf = f (lpcNFrames h)
-                       fs = f (lpcFrameSize h)
-                   in np : nf : fs : concat (transpose d)
+lpcSC3 (LPC h d) =
+  let f = fromIntegral
+      np = f (lpcNPoles h)
+      nf = f (lpcNFrames h)
+      fs = f (lpcFrameSize h)
+  in np : nf : fs : concat (transpose d)
+
+read_decode :: Int -> (B.ByteString -> t) -> Handle -> IO t
+read_decode n f h = liftM f (B.hGet h n)
 
 read_i32 :: Handle -> IO Int
-read_i32 h = liftM decode_i32 (B.hGet h 4)
+read_i32 = read_decode 4 O.decode_i32
 
 read_f32 :: Handle -> IO Float
-read_f32 h = liftM decode_f32 (B.hGet h 4)
+read_f32 = read_decode 4 O.decode_f32

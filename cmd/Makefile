@@ -4,6 +4,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 	hex \
 	img-edit img-query img-to-pbm img-to-pgm img-to-sf \
 	kml-to-csv \
+	lpc \
 	midi-to-csv-mnd midi-to-text \
 	pbm-indices pbm-to-csv-mnd pbm-to-tbl pbm-trace \
 	pgm-to-au \

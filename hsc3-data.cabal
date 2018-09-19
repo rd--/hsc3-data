@@ -6,10 +6,10 @@ License:           GPL
 Category:          Sound
 Copyright:         (c) Rohan Drape, 2013-2018
 Author:            Rohan Drape
-Maintainer:        rd@slavepianos.org
+Maintainer:        rd@rohandrape.net
 Stability:         Experimental
-Homepage:          http://rd.slavepianos.org/t/hsc3-data
-Tested-With:       GHC == 8.0.1
+Homepage:          http://rohandrape.net/t/hsc3-data
+Tested-With:       GHC == 8.2.2
 Build-Type:        Simple
 Cabal-Version:     >= 1.8
 
@@ -100,4 +100,4 @@ Library
 
 Source-Repository  head
   Type:            darcs
-  Location:        http://rd.slavepianos.org/sw/hsc3-data
+  Location:        http://rohandrape.net/sw/hsc3-data
