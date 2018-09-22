@@ -10,7 +10,6 @@ import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
 import qualified Data.CG.Minus as CG {- hcg-minus -}
 import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
-import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
 import qualified Music.Theory.List as T {- hmt -}
 
 type Pt = (Int,Int)
@@ -98,6 +97,7 @@ sq_ascii (w,h) sq =
 -- * PDF
 
 import qualified Render.CG.Minus.Picture as CG {- hcg-minus-cairo -}
+import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
 
 to_pt :: Int -> Pt -> CG.Pt Double
 to_pt h (x,y) = CG.Pt (fromIntegral x) (fromIntegral (h - y))
@@ -247,4 +247,3 @@ bc_connection_graph_dot_wr :: Bool -> [D.Statement] -> FilePath -> [Sq] -> IO ()
 bc_connection_graph_dot_wr opt x fn sq = do
   let (n,e) = bc_connection_graph_dot opt sq
   writeFile fn (D.renderDot (dot_ugraph (x ++ n ++ e)))
-

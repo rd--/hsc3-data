@@ -1,15 +1,16 @@
 module Sound.SC3.Data.Trace where
 
 import Control.Monad {- base -}
-import Data.Bifunctor {- bifunctor -}
+import Data.Bifunctor {- base -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
 import Safe {- safe -}
 import System.FilePath.Glob {- glob -}
 
+import Data.CG.Minus.Core {- hcg-minus -}
+import Data.CG.Minus.Plain (R) {- hcg-minus -}
 import Data.CG.Minus.Types {- hcg-minus -}
-import qualified Data.CG.Minus.Core as CG {- hcg-minus -}
 
 import qualified Music.Theory.Array.CSV as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
@@ -280,7 +281,7 @@ lerpd = lerp_pw lerpn
 -- | Transform 'Ls' to 'Trace', /t/ is distance along line.
 ls_with_distance :: Floating t => Ls t -> Trace t (Pt t)
 ls_with_distance (Ls p) =
-    let d = T.dx_d 0 (zipWith CG.pt_distance p (tail p))
+    let d = T.dx_d 0 (zipWith pt_distance p (tail p))
     in zip d p
 
 -- * List

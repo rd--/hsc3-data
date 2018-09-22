@@ -19,7 +19,6 @@ Library
   Build-Depends:   aeson,
                    array,
                    base >= 4.8,
-                   bifunctors,
                    binary,
                    bitwise,
                    bytestring,
