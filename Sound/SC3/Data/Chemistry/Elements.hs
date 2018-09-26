@@ -2,6 +2,12 @@ module Sound.SC3.Data.Chemistry.Elements where
 
 import Data.Maybe {- base -}
 
+picometres_to_angstroms :: Fractional n => n -> n
+picometres_to_angstroms = (/ 100)
+
+angstroms_to_picometres :: Num n => n -> n
+angstroms_to_picometres = (* 100)
+
 -- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
 periodic_table :: [(Int,String,String,Double)]
 periodic_table =
@@ -132,7 +138,7 @@ atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
 atomic_number_err :: String -> Int
 atomic_number_err = fromMaybe (error "atomic_number") . atomic_number
 
--- | (atomic-number,covalent-radius)
+-- | (atomic-number,covalent-radius:picometres)
 covalent_radii_table :: Num n => [(Int,n)]
 covalent_radii_table =
   [(001,31)
@@ -238,6 +244,7 @@ covalent_radii k = lookup k covalent_radii_table
 covalent_radii_err :: Num n => Int -> n
 covalent_radii_err = fromMaybe (error "covalent_radii") . covalent_radii
 
+-- | (atomic-number,cpk-colour:rgb24)
 cpk_color_table :: Num n => [(Int,n)]
 cpk_color_table =
   [(001,0xFFFFFF)
@@ -355,4 +362,3 @@ cpk_color k = lookup k cpk_color_table
 
 cpk_color_err :: Num n => Int -> n
 cpk_color_err = fromMaybe (error "cpk_color") . cpk_color
-
