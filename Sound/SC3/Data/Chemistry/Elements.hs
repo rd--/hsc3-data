@@ -139,6 +139,8 @@ atomic_number_err :: String -> Int
 atomic_number_err = fromMaybe (error "atomic_number") . atomic_number
 
 -- | (atomic-number,covalent-radius:picometres)
+--
+-- Cordero et al. (2008), and Pyykkö and Atsumi (2009)
 covalent_radii_table :: Num n => [(Int,n)]
 covalent_radii_table =
   [(001,31)
@@ -238,11 +240,133 @@ covalent_radii_table =
   ,(095,180)
   ,(096,169)]
 
-covalent_radii :: Num n => Int -> Maybe n
-covalent_radii k = lookup k covalent_radii_table
+covalent_radius :: Num n => Int -> Maybe n
+covalent_radius k = lookup k covalent_radii_table
 
-covalent_radii_err :: Num n => Int -> n
-covalent_radii_err = fromMaybe (error "covalent_radii") . covalent_radii
+covalent_radius_err :: Num n => Int -> n
+covalent_radius_err = fromMaybe (error "covalent_radii") . covalent_radius
+
+-- | (atomic-number,covalent-radius:picometres)
+--
+-- <https://www.ccdc.cam.ac.uk/support-and-resources/ccdcresources/Elemental_Radii.xlsx>
+covalent_radii_csd_table :: Fractional n => [(Int,n)]
+covalent_radii_csd_table =
+  [(89,2.15)
+  ,(13,1.21)
+  ,(95,1.8)
+  ,(51,1.39)
+  ,(18,1.51)
+  ,(33,1.21)
+  ,(85,1.21)
+  ,(56,2.15)
+  ,(97,1.54)
+  ,(4,0.96)
+  ,(83,1.48)
+  ,(107,1.5)
+  ,(5,0.83)
+  ,(35,1.21)
+  ,(48,1.54)
+  ,(55,2.44)
+  ,(20,1.76)
+  ,(98,1.83)
+  ,(6,0.68)
+  ,(58,2.04)
+  ,(17,0.99)
+  ,(24,1.39)
+  ,(27,1.26)
+  ,(29,1.32)
+  ,(96,1.69)
+  ,(110,1.5)
+  ,(105,1.5)
+  ,(66,1.92)
+  ,(99,1.5)
+  ,(68,1.89)
+  ,(63,1.98)
+  ,(100,1.5)
+  ,(9,0.64)
+  ,(87,2.6)
+  ,(64,1.96)
+  ,(31,1.22)
+  ,(32,1.17)
+  ,(79,1.36)
+  ,(72,1.75)
+  ,(108,1.5)
+  ,(2,1.5)
+  ,(67,1.92)
+  ,(1,0.23)
+  ,(49,1.42)
+  ,(53,1.4)
+  ,(77,1.41)
+  ,(26,1.52)
+  ,(36,1.5)
+  ,(57,2.07)
+  ,(103,1.5)
+  ,(82,1.46)
+  ,(3,1.28)
+  ,(71,1.87)
+  ,(12,1.41)
+  ,(25,1.61)
+  ,(109,1.5)
+  ,(101,1.5)
+  ,(80,1.32)
+  ,(42,1.54)
+  ,(60,2.01)
+  ,(10,1.5)
+  ,(93,1.9)
+  ,(28,1.24)
+  ,(41,1.64)
+  ,(7,0.68)
+  ,(102,1.5)
+  ,(76,1.44)
+  ,(8,0.68)
+  ,(46,1.39)
+  ,(15,1.05)
+  ,(78,1.36)
+  ,(94,1.87)
+  ,(84,1.4)
+  ,(19,2.03)
+  ,(59,2.03)
+  ,(61,1.99)
+  ,(91,2)
+  ,(88,2.21)
+  ,(86,1.5)
+  ,(75,1.51)
+  ,(45,1.42)
+  ,(37,2.2)
+  ,(44,1.46)
+  ,(104,1.5)
+  ,(62,1.98)
+  ,(21,1.7)
+  ,(106,1.5)
+  ,(34,1.22)
+  ,(14,1.2)
+  ,(47,1.45)
+  ,(11,1.66)
+  ,(38,1.95)
+  ,(16,1.02)
+  ,(73,1.7)
+  ,(43,1.47)
+  ,(52,1.47)
+  ,(65,1.94)
+  ,(81,1.45)
+  ,(90,2.06)
+  ,(69,1.9)
+  ,(50,1.39)
+  ,(22,1.6)
+  ,(74,1.62)
+  ,(92,1.96)
+  ,(23,1.53)
+  ,(54,1.5)
+  ,(70,1.87)
+  ,(39,1.9)
+  ,(30,1.22)
+  ,(40,1.75)]
+
+covalent_radius_csd :: Fractional n => Int -> Maybe n
+covalent_radius_csd k = lookup k covalent_radii_csd_table
+
+covalent_radius_csd_err :: Fractional n => Int -> n
+covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radius_csd
 
 -- | (atomic-number,cpk-colour:rgb24)
 cpk_color_table :: Num n => [(Int,n)]
