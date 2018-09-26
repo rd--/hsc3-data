@@ -1,5 +1,7 @@
 module Sound.SC3.Data.Chemistry.Elements where
 
+import Data.Maybe {- base -}
+
 -- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
 periodic_table :: [(Int,String,String,Double)]
 periodic_table =
@@ -123,9 +125,16 @@ periodic_table =
   ,(118,"Og","Oganesson",294)
   ]
 
+atomic_number :: String -> Maybe Int
+atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
+
+-- > map atomic_number_err (words "C Sc Ag") == [6,21,47]
+atomic_number_err :: String -> Int
+atomic_number_err = fromMaybe (error "atomic_number") . atomic_number
+
 -- | (atomic-number,covalent-radius)
-covalent_radii :: Num n => [(Int,n)]
-covalent_radii =
+covalent_radii_table :: Num n => [(Int,n)]
+covalent_radii_table =
   [(001,31)
   ,(002,28)
   ,(003,128)
@@ -222,4 +231,128 @@ covalent_radii =
   ,(094,187)
   ,(095,180)
   ,(096,169)]
+
+covalent_radii :: Num n => Int -> Maybe n
+covalent_radii k = lookup k covalent_radii_table
+
+covalent_radii_err :: Num n => Int -> n
+covalent_radii_err = fromMaybe (error "covalent_radii") . covalent_radii
+
+cpk_color_table :: Num n => [(Int,n)]
+cpk_color_table =
+  [(001,0xFFFFFF)
+  ,(002,0xD9FFFF)
+  ,(003,0xCC80FF)
+  ,(004,0xC2FF00)
+  ,(005,0xFFB5B5)
+  ,(006,0x909090)
+  ,(007,0x3050F8)
+  ,(008,0xFF0D0D)
+  ,(009,0x90E050)
+  ,(010,0xB3E3F5)
+  ,(011,0xAB5CF2)
+  ,(012,0x8AFF00)
+  ,(013,0xBFA6A6)
+  ,(014,0xF0C8A0)
+  ,(015,0xFF8000)
+  ,(016,0xFFFF30)
+  ,(017,0x1FF01F)
+  ,(018,0x80D1E3)
+  ,(019,0x8F40D4)
+  ,(020,0x3DFF00)
+  ,(021,0xE6E6E6)
+  ,(022,0xBFC2C7)
+  ,(023,0xA6A6AB)
+  ,(024,0x8A99C7)
+  ,(025,0x9C7AC7)
+  ,(026,0xE06633)
+  ,(027,0xF090A0)
+  ,(028,0x50D050)
+  ,(029,0xC88033)
+  ,(030,0x7D80B0)
+  ,(031,0xC28F8F)
+  ,(032,0x668F8F)
+  ,(033,0xBD80E3)
+  ,(034,0xFFA100)
+  ,(035,0xA62929)
+  ,(036,0x5CB8D1)
+  ,(037,0x702EB0)
+  ,(038,0x00FF00)
+  ,(039,0x94FFFF)
+  ,(040,0x94E0E0)
+  ,(041,0x73C2C9)
+  ,(042,0x54B5B5)
+  ,(043,0x3B9E9E)
+  ,(044,0x248F8F)
+  ,(045,0x0A7D8C)
+  ,(046,0x006985)
+  ,(047,0xC0C0C0)
+  ,(048,0xFFD98F)
+  ,(049,0xA67573)
+  ,(050,0x668080)
+  ,(051,0x9E63B5)
+  ,(052,0xD47A00)
+  ,(053,0x940094)
+  ,(054,0x429EB0)
+  ,(055,0x57178F)
+  ,(056,0x00C900)
+  ,(057,0x70D4FF)
+  ,(058,0xFFFFC7)
+  ,(059,0xD9FFC7)
+  ,(060,0xC7FFC7)
+  ,(061,0xA3FFC7)
+  ,(062,0x8FFFC7)
+  ,(063,0x61FFC7)
+  ,(064,0x45FFC7)
+  ,(065,0x30FFC7)
+  ,(066,0x1FFFC7)
+  ,(067,0x00FF9C)
+  ,(068,0x000000)
+  ,(069,0x00D452)
+  ,(070,0x00BF38)
+  ,(071,0x00AB24)
+  ,(072,0x4DC2FF)
+  ,(073,0x4DA6FF)
+  ,(074,0x2194D6)
+  ,(075,0x267DAB)
+  ,(076,0x266696)
+  ,(077,0x175487)
+  ,(078,0xD0D0E0)
+  ,(079,0xFFD123)
+  ,(080,0xB8B8D0)
+  ,(081,0xA6544D)
+  ,(082,0x575961)
+  ,(083,0x9E4FB5)
+  ,(084,0xAB5C00)
+  ,(085,0x754F45)
+  ,(086,0x428296)
+  ,(087,0x420066)
+  ,(088,0x007D00)
+  ,(089,0x70ABFA)
+  ,(090,0x00BAFF)
+  ,(091,0x00A1FF)
+  ,(092,0x008FFF)
+  ,(093,0x0080FF)
+  ,(094,0x006BFF)
+  ,(095,0x545CF2)
+  ,(096,0x785CE3)
+  ,(097,0x8A4FE3)
+  ,(098,0xA136D4)
+  ,(099,0xB31FD4)
+  ,(100,0xB31FBA)
+  ,(101,0xB30DA6)
+  ,(102,0xBD0D87)
+  ,(103,0xC70066)
+  ,(104,0xCC0059)
+  ,(105,0xD1004F)
+  ,(106,0xD90045)
+  ,(107,0xE00038)
+  ,(108,0xE6002E)
+  ,(109,0xEB0026)]
+
+cpk_color :: Num n => Int -> Maybe n
+cpk_color k = lookup k cpk_color_table
+
+cpk_color_err :: Num n => Int -> n
+cpk_color_err = fromMaybe (error "cpk_color") . cpk_color
 
