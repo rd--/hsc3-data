@@ -136,7 +136,7 @@ atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
 
 -- > map atomic_number_err (words "C Sc Ag") == [6,21,47]
 atomic_number_err :: String -> Int
-atomic_number_err = fromMaybe (error "atomic_number") . atomic_number
+atomic_number_err sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number sym)
 
 -- | (atomic-number,covalent-radius:picometres)
 --
