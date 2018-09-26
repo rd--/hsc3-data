@@ -246,7 +246,7 @@ covalent_radius k = lookup k covalent_radii_table
 covalent_radius_err :: Num n => Int -> n
 covalent_radius_err = fromMaybe (error "covalent_radii") . covalent_radius
 
--- | (atomic-number,covalent-radius:picometres)
+-- | (atomic-number,covalent-radius:angstroms)
 --
 -- <https://www.ccdc.cam.ac.uk/support-and-resources/ccdcresources/Elemental_Radii.xlsx>
 covalent_radii_csd_table :: Fractional n => [(Int,n)]
