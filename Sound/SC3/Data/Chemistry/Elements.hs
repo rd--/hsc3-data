@@ -2,6 +2,8 @@ module Sound.SC3.Data.Chemistry.Elements where
 
 import Data.Maybe {- base -}
 
+import Data.CG.Minus.Plain {- hcg-minus -}
+
 picometres_to_angstroms :: Fractional n => n -> n
 picometres_to_angstroms = (/ 100)
 
@@ -369,6 +371,24 @@ covalent_radius_csd k = lookup k covalent_radii_csd_table
 
 covalent_radius_csd_err :: Fractional n => Int -> n
 covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radius_csd
+
+-- | Given a radius function (atomic-symbol -> covalent radius)
+-- calculate bonds for a set of atoms.
+--
+-- The rule is: if the distance between two atoms is within a
+-- tolerance of the sum of their covalent radii, they are considered
+-- bonded.
+calculate_bonds :: (Floating n,Ord n) => (String -> n) -> n -> [(String,V3 n)] -> [(V3 n,V3 n)]
+calculate_bonds rad_f t e =
+  let f (a0,p0) (a1,p1) =
+        let r0 = rad_f a0
+            r1 = rad_f a1
+            r2 = r0 + r1
+            d = v3_distance p0 p1
+        in if d > (r2 - t) && d < (r2 + t)
+           then Just (p0,p1)
+           else Nothing
+  in catMaybes [f i j | i <- e, j <- e, i /= j]
 
 -- | (atomic-number,cpk-colour:rgb24)
 cpk_color_table :: Num n => [(Int,n)]
