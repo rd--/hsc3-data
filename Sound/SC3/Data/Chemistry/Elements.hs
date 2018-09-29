@@ -385,11 +385,11 @@ calculate_bonds rad_f t e =
             r1 = rad_f a1
             r2 = r0 + r1
             d = v3_distance p0 p1
-        in if d > (r2 - t) && d < (r2 + t)
+        in if k0 < k1 && d > (r2 - t) && d < (r2 + t)
            then Just ((k0,k1),(p0,p1))
            else Nothing
       e_ix = zip [0..] e
-  in catMaybes [f i j | i <- e_ix, j <- e_ix, i /= j]
+  in catMaybes [f i j | i <- e_ix, j <- e_ix]
 
 -- | (atomic-number,cpk-colour:rgb24)
 cpk_color_table :: Num n => [(Int,n)]
