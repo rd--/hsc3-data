@@ -378,14 +378,14 @@ covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radi
 -- The rule is: if the distance between two atoms is within a
 -- tolerance of the sum of their covalent radii, they are considered
 -- bonded.
-calculate_bonds :: (Floating n,Ord n) => (String -> n) -> n -> [(String,V3 n)] -> [((Int,Int),(V3 n,V3 n))]
-calculate_bonds rad_f t e =
+calculate_bonds :: (Floating n,Ord n) => (String -> n) -> (n,n) -> [(String,V3 n)] -> [((Int,Int),(V3 n,V3 n))]
+calculate_bonds rad_f (t_min,t_max) e =
   let f (k0,(a0,p0)) (k1,(a1,p1)) =
         let r0 = rad_f a0
             r1 = rad_f a1
             r2 = r0 + r1
             d = v3_distance p0 p1
-        in if k0 < k1 && d > (r2 - t) && d < (r2 + t)
+        in if k0 < k1 && d > (r2 - t_min) && d < (r2 + t_max)
            then Just ((k0,k1),(p0,p1))
            else Nothing
       e_ix = zip [0..] e
