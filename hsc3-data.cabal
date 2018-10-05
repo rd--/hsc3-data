@@ -28,6 +28,7 @@ Library
                    filepath,
                    Glob,
                    hcg-minus == 0.17.*,
+                   hcg-minus-cairo == 0.17.*,
                    HCodecs,
                    hmt == 0.17.*,
                    hosc == 0.17.*,

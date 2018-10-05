@@ -10,6 +10,10 @@ import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
 import qualified Data.CG.Minus as CG {- hcg-minus -}
 import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
+import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
+
+import qualified Render.CG.Minus.Picture as CG {- hcg-minus-cairo -}
+
 import qualified Music.Theory.List as T {- hmt -}
 
 type Pt = (Int,Int)
@@ -93,11 +97,7 @@ sq_ascii (w,h) sq =
         g r = map (f r) [0 .. w]
     in map g [0 .. h]
 
-{-
 -- * PDF
-
-import qualified Render.CG.Minus.Picture as CG {- hcg-minus-cairo -}
-import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
 
 to_pt :: Int -> Pt -> CG.Pt Double
 to_pt h (x,y) = CG.Pt (fromIntegral x) (fromIntegral (h - y))
@@ -116,7 +116,6 @@ gen_pdf m_clr sz nm sq = do
             Just clr_seq -> zipWith (CG.polygon_f) clr_seq p
             Nothing -> map (CG.polygon_l black_pen) p
   CG.picture_to_pdf_and_svg 4 nm i
--}
 
 -- * CSV
 
