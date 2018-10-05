@@ -1,3 +1,11 @@
+{- | <http://mathworld.wolfram.com/PerfectSquareDissection.html>
+
+There is a simple notation (sometimes called Bouwkamp code) that can
+be used to describe perfect squares. In this notation, brackets are
+used to group adjacent squares with flush tops, and then the groups
+are sequentially placed in the highest (and leftmost) possible slots.
+
+-}
 module Sound.SC3.Data.Math.Bouwkamp where
 
 import Control.Monad {- base -}
