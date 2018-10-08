@@ -140,9 +140,15 @@ atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
 atomic_number_err :: String -> Int
 atomic_number_err sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number sym)
 
--- | (atomic-number,covalent-radius:picometres)
---
--- Cordero et al. (2008), and Pyykkö and Atsumi (2009)
+{- | (atomic-number,covalent-radius:picometres)
+
+Cordero et al. (2008), and Pyykkö and Atsumi (2009)
+
+> let average x = sum x / fromIntegral (length x)
+> let r = map snd covalent_radii_table
+> (minimum r,average r,maximum r) == (28,152,260)
+
+-}
 covalent_radii_table :: Num n => [(Int,n)]
 covalent_radii_table =
   [(001,31)
@@ -248,11 +254,15 @@ covalent_radius k = lookup k covalent_radii_table
 covalent_radius_err :: Num n => Int -> n
 covalent_radius_err = fromMaybe (error "covalent_radii") . covalent_radius
 
--- | (atomic-number,covalent-radius:angstroms)
---
--- <https://www.ccdc.cam.ac.uk/support-and-resources/ccdcresources/Elemental_Radii.xlsx>
---
--- > map (\(k,r) -> (k,round (angstroms_to_picometres r))) covalent_radii_csd_table
+{- | (atomic-number,covalent-radius:angstroms)
+
+<https://www.ccdc.cam.ac.uk/support-and-resources/ccdcresources/Elemental_Radii.xlsx>
+
+> let round_f = fromIntegral . round
+> let r = map (round_f . angstroms_to_picometres. snd) covalent_radii_csd_table
+> (minimum r,round (average r),maximum r) == (23,155,260)
+
+-}
 covalent_radii_csd_table :: Fractional n => [(Int,n)]
 covalent_radii_csd_table =
   [(001,0.23)

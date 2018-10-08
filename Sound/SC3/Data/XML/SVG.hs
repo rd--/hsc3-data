@@ -57,8 +57,23 @@ svg_load_ls rs fn = do
 plot_ls :: Plot.PNum t => [Ls t] -> IO ()
 plot_ls = Plot.plotCoord . map (map pt_xy . ls_elem)
 
--- | Convert a relative 'P.PathCommand' to the absolute form, giving
--- also the absolute end point.
+{- | Convert a relative 'P.PathCommand' to the absolute form, giving also the absolute end point.
+
+In SVG absolute commands are upper case letters and relative commands are lower case.
+
+Commands are:
+M = move-to,
+Z = close (line-to-initial-point),
+L = line-to,
+H = horizontal-line,
+V = vertical-line,
+C = cubic-bézier-curve,
+S = C-reflected
+Q = quadratic-curve
+T = Q-reflected
+A = elliptic-arc
+
+-}
 pathcommand_to_abs :: (R,R) -> P.PathCommand -> ((R,R),P.PathCommand)
 pathcommand_to_abs (x,y) cmd =
     case cmd of
