@@ -62,6 +62,9 @@ Library
                    Sound.SC3.Data.Bitmap.Type
                    Sound.SC3.Data.Buffer
                    Sound.SC3.Data.Chemistry.Elements
+                   Sound.SC3.Data.Chemistry.MOL
+                   Sound.SC3.Data.Chemistry.POSCAR
+                   Sound.SC3.Data.Chemistry.XYZ
                    Sound.SC3.Data.CMUdict
                    Sound.SC3.Data.Colour
                    Sound.SC3.Data.Geography.Core
