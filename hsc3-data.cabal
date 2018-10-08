@@ -27,6 +27,7 @@ Library
                    directory,
                    filepath,
                    Glob,
+                   graphviz,
                    hcg-minus == 0.17.*,
                    hcg-minus-cairo == 0.17.*,
                    HCodecs,
@@ -67,6 +68,7 @@ Library
                    Sound.SC3.Data.Geography.Core
                    Sound.SC3.Data.Geography.G
                    Sound.SC3.Data.Gnus
+                   Sound.SC3.Data.Graph.Dot
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Image.Type
