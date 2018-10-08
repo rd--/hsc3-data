@@ -1,5 +1,5 @@
 -- | Load linearised path data from SVG files.
-module Sound.SC3.Data.SVG where
+module Sound.SC3.Data.XML.SVG where
 
 import Data.List {- base -}
 import Data.Maybe {- base -}

@@ -33,7 +33,6 @@ Library
                    HCodecs,
                    hmt == 0.17.*,
                    hosc == 0.17.*,
-                   hps == 0.17.*,
                    hsc3 == 0.17.*,
                    hsc3-lang == 0.17.*,
                    hsc3-plot == 0.17.*,
@@ -86,7 +85,6 @@ Library
                    Sound.SC3.Data.Modal
                    Sound.SC3.Data.PVOC
                    Sound.SC3.Data.Roland.D50
-                   Sound.SC3.Data.SVG
                    Sound.SC3.Data.Timestamp
                    Sound.SC3.Data.Trace
                    Sound.SC3.Data.URandom
@@ -95,6 +93,7 @@ Library
                    Sound.SC3.Data.X11.Ptr
                    Sound.SC3.Data.XML
                    Sound.SC3.Data.XML.KML
+                   Sound.SC3.Data.XML.SVG
                    Sound.SC3.Data.XML.SVL
                    Sound.SC3.Data.Yamaha.DX7
                    Sound.SC3.Data.Yamaha.DX7.AFX
