@@ -2,6 +2,7 @@ module Sound.SC3.Data.Graph.Dot where
 
 import qualified Data.Foldable as F {- base -}
 import Data.Maybe {- base -}
+import System.Process {- process -}
 
 import qualified Data.Text.Lazy as T {- text -}
 import qualified Data.Text.Lazy.IO as T {- text -}
@@ -10,11 +11,26 @@ import Data.GraphViz {- graphviz -}
 import Data.GraphViz.Attributes.Complete {- graphviz -}
 import qualified Data.GraphViz.Types.Generalised as G {- graphviz -}
 
--- | 'parseDotGraph' of 'readFile'.
+-- | Run dot to insert layout information into graph.
+--
+-- > g = "graph g {graph[layout=neato]; node[shape=point]; 0 -- 1; 0 -- 2; 0 -- 3;}"
+-- > r <- fmap dg_parse (dot_run_layout g)
+-- > dg_to_gr_pos r
+-- > putStrLn (dg_print r)
+dot_run_layout :: String -> IO String
+dot_run_layout = readProcess "dot" ["-T","dot"]
+
+-- | 'parseDotGraph' of 'T.pack'.
+dg_parse :: (Ord t,ParseDot t) => String -> G.DotGraph t
+dg_parse = parseDotGraph . T.pack
+
+-- | 'T.unpack' of 'printDotGraph'.
+dg_print :: (Ord t,PrintDot t) => G.DotGraph t -> String
+dg_print = T.unpack . printDotGraph
+
+-- | 'parseDotGraph' of 'T.readFile'.
 dg_load :: (Ord t,ParseDot t) => FilePath -> IO (G.DotGraph t)
-dg_load fn = do
-  t <- T.readFile fn
-  return (parseDotGraph t) -- parseDotGraph parseDotGraphLiberally
+dg_load = fmap parseDotGraph . T.readFile
 
 -- | Type specialised.
 dg_load_int :: FilePath -> IO (G.DotGraph Int)
