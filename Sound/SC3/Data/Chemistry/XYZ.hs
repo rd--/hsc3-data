@@ -1,4 +1,4 @@
--- | XYZ file format.
+-- | XYZ file format.  Coordinates are ordinarily Angstroms.
 module Sound.SC3.Data.Chemistry.XYZ where
 
 import Data.List {- base -}
@@ -59,7 +59,18 @@ xyz_parse fn s =
     k:dsc:ent -> (xyz_parse_cnt k,dsc,map (xyz_parse_entry fn) ent)
     _ -> error ("xyz_parse: " ++ fn)
 
+-- | (minima,maxima) for each dimension.
+xyz_bounds :: XYZ -> (V3 (R,R))
+xyz_bounds (_,_,a) =
+  let c = map snd a
+      (x,y,z) = unzip3 c
+      min_max l = (minimum l,maximum l)
+  in (min_max x,min_max y,min_max z)
+
 -- | Load ".xyz" file.
+--
+-- > xyz <- xyz_load "/home/rohan/data/chemistry/cls/xyz/Al12W.xyz"
+-- > xyz_bounds xyz == ((0.0,7.5803),(0.0,7.5803),(0.0,7.5803))
 xyz_load :: FilePath -> IO XYZ
 xyz_load fn = fmap (xyz_parse fn) (readFile fn)
 

@@ -1,4 +1,4 @@
--- | POSCAR file format.
+-- | POSCAR file format.  Coordinates are in Angstroms.
 module Sound.SC3.Data.Chemistry.POSCAR where
 
 import System.Directory {- directory -}
@@ -6,20 +6,24 @@ import System.FilePath {- filepath -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
+-- | Parse three-element vector.
 poscar_parse_r3 :: String -> (V3 R)
 poscar_parse_r3 s =
   case words s of
     [i,j,k] -> (read i,read j,read k)
     _ -> error "poscar_parse_r3"
 
+-- | Parse co-ordinate and atomic-symbol.
 poscar_parse_atom :: String -> (V3 R,String)
 poscar_parse_atom s =
   case words s of
     i:j:k:sym:_ -> ((read i,read j,read k),sym)
     _ -> error "poscar_parse_atom"
 
+-- | 3×3 lattice.
 type LATTICE = V3 (V3 R)
 
+-- | Convert DIRECT coordinate to cartesian.
 poscar_direct_to_cartesian :: LATTICE -> V3 R -> V3 R
 poscar_direct_to_cartesian (a1,a2,a3) (i,j,k) =
   (v3_scale i a1) `v3_add` (v3_scale j a2) `v3_add` (v3_scale k a3)
@@ -70,6 +74,18 @@ poscar_parse s =
          ,map poscar_parse_atom (take (sum a_cnt') dat))
     _ -> error "poscar_parse"
 
+-- | (minima,maxima) for each dimension.
+poscar_bounds :: POSCAR -> (V3 (R,R))
+poscar_bounds p =
+  let c = map fst (poscar_atoms_cartesian p)
+      (x,y,z) = unzip3 c
+      min_max l = (minimum l,maximum l)
+  in (min_max x,min_max y,min_max z)
+
+-- | Load ".poscar" file.
+--
+-- > p <- poscar_load "/home/rohan/data/chemistry/aflow/poscar/A3B_cI32_204_g_c.poscar"
+-- > poscar_bounds p == let r = (-1.895,4.979302000000001) in (r,r,r)
 poscar_load :: FilePath -> IO POSCAR
 poscar_load = fmap poscar_parse . readFile
 

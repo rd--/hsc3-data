@@ -4,6 +4,8 @@ import Data.Maybe {- base -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
+data E_Length_Unit = Angstroms | Picometres
+
 picometres_to_angstroms :: Fractional n => n -> n
 picometres_to_angstroms = (/ 100)
 
