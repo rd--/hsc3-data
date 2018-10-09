@@ -24,6 +24,7 @@ poscar_direct_to_cartesian :: LATTICE -> V3 R -> V3 R
 poscar_direct_to_cartesian (a1,a2,a3) (i,j,k) =
   (v3_scale i a1) `v3_add` (v3_scale j a2) `v3_add` (v3_scale k a3)
 
+-- | Direct or caretsian co-ordinates.
 data POSCAR_TY = POSCAR_D | POSCAR_C
 
 -- | (description,u,lattice,atom-histogram,atom-data)
@@ -56,24 +57,26 @@ poscar_atoms ty =
     POSCAR_D -> poscar_atoms_direct
     POSCAR_C -> poscar_atoms_cartesian
 
-poscar_direct_parse :: String -> POSCAR
-poscar_direct_parse s =
-  let dsc:u:l0:l1:l2:a_nm:a_cnt:"Direct":dat = lines s
-      a_cnt' = map read (words a_cnt)
-  in (dsc
-     ,read u
-     ,(poscar_parse_r3 l0,poscar_parse_r3 l1,poscar_parse_r3 l2)
-     ,zip (words a_nm) a_cnt'
-     ,POSCAR_D
-     ,map poscar_parse_atom (take (sum a_cnt') dat))
+poscar_parse :: String -> POSCAR
+poscar_parse s =
+  case lines s of
+    dsc:u:l0:l1:l2:a_nm:a_cnt:"Direct":dat ->
+      let a_cnt' = map read (words a_cnt)
+      in (dsc
+         ,read u
+         ,(poscar_parse_r3 l0,poscar_parse_r3 l1,poscar_parse_r3 l2)
+         ,zip (words a_nm) a_cnt'
+         ,POSCAR_D
+         ,map poscar_parse_atom (take (sum a_cnt') dat))
+    _ -> error "poscar_parse"
 
-poscar_direct_load :: FilePath -> IO POSCAR
-poscar_direct_load fn = readFile fn >>= return . poscar_direct_parse
+poscar_load :: FilePath -> IO POSCAR
+poscar_load = fmap poscar_parse . readFile
 
-poscar_direct_load_dir :: FilePath -> IO [(String, POSCAR)]
-poscar_direct_load_dir dir = do
+poscar_load_dir :: FilePath -> IO [(String, POSCAR)]
+poscar_load_dir dir = do
   l <- listDirectory dir
   let fn = filter ((==) ".poscar" . takeExtension) l
       nm = map takeBaseName fn
-  dat <- mapM (poscar_direct_load . (</>) dir) fn
+  dat <- mapM (poscar_load . (</>) dir) fn
   return (zip nm dat)

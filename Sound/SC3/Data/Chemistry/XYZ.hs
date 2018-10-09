@@ -23,30 +23,47 @@ type ATOM = (String,V3 R)
 -- | (k = n-atoms,d = description,e = [atom]
 type XYZ = (Int,String,[ATOM])
 
+-- | Numbner of atoms.
 xyz_degree :: XYZ -> Int
 xyz_degree (k,_,_) = k
 
--- | k == |e|
+-- | k == |atoms|
 xyz_is_valid :: XYZ -> Bool
 xyz_is_valid (k,_dsc,ent) = k == length ent
 
 -- | Set of atoms present.
-xyz_atoms :: XYZ -> [String]
-xyz_atoms (_,_,ent) = nub (sort (map fst ent))
+xyz_atom_set :: XYZ -> [String]
+xyz_atom_set (_,_,ent) = nub (sort (map fst ent))
 
+{- | The first line is the number of atoms.  This may be preceded by
+whitespace and anything following is ignored. -}
+xyz_parse_cnt :: String -> Int
+xyz_parse_cnt s =
+  case words s of
+    k:_ -> read k
+    _ -> error ("xyz_parse_cnt: " ++ s)
+
+{- | Each entry describing an atom must contain at least four fields of
+information separated by whitespace: the atom's type and its X, Y, and
+Z positions. -}
 xyz_parse_entry :: String -> String -> (String,(R,R,R))
 xyz_parse_entry fn s =
   case words s of
-    [a,x,y,z] -> (a,(read_r x,read_r y,read_r z))
+    a:x:y:z:_ -> (a,(read_r x,read_r y,read_r z))
     _ -> error ("xyz_parse_entry: " ++ fn)
 
-xyz_load :: FilePath -> IO XYZ
-xyz_load fn = do
-  s <- readFile fn
+-- | Parse ".xyz" file.
+xyz_parse :: FilePath -> String -> XYZ
+xyz_parse fn s =
   case lines s of
-    k:dsc:ent -> return (read k,dsc,map (xyz_parse_entry fn) ent)
-    _ -> error ("xyz_load: " ++ fn)
+    k:dsc:ent -> (xyz_parse_cnt k,dsc,map (xyz_parse_entry fn) ent)
+    _ -> error ("xyz_parse: " ++ fn)
 
+-- | Load ".xyz" file.
+xyz_load :: FilePath -> IO XYZ
+xyz_load fn = fmap (xyz_parse fn) (readFile fn)
+
+-- | Load all ".xyz" files at /dir/.
 xyz_load_dir :: FilePath -> IO [(String, XYZ)]
 xyz_load_dir dir = do
   l <- listDirectory dir
@@ -54,9 +71,3 @@ xyz_load_dir dir = do
       nm = map takeBaseName fn
   dat <- mapM (xyz_load . (</>) dir) fn
   return (zip nm dat)
-
-xyz_map :: (V3 R -> V3 R) -> XYZ -> XYZ
-xyz_map f (k,dsc,ent) = (k,dsc,map (\(a,pt) -> (a,f pt)) ent)
-
-xyz_rotate_y :: R -> XYZ -> XYZ
-xyz_rotate_y ph = xyz_map (v3_rotate_y ph)
