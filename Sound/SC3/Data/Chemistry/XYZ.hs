@@ -59,13 +59,12 @@ xyz_parse fn s =
     k:dsc:ent -> (xyz_parse_cnt k,dsc,map (xyz_parse_entry fn) ent)
     _ -> error ("xyz_parse: " ++ fn)
 
--- | (minima,maxima) for each dimension.
-xyz_bounds :: XYZ -> (V3 (R,R))
+-- | (minima,maxima) of atoms.
+xyz_bounds :: XYZ -> V2 (V3 R)
 xyz_bounds (_,_,a) =
   let c = map snd a
-      (x,y,z) = unzip3 c
-      min_max l = (minimum l,maximum l)
-  in (min_max x,min_max y,min_max z)
+      r = unzip3 c
+  in (v3_uop minimum r,v3_uop maximum r)
 
 -- | Load ".xyz" file.
 --

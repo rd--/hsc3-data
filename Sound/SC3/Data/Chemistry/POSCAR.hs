@@ -74,13 +74,12 @@ poscar_parse s =
          ,map poscar_parse_atom (take (sum a_cnt') dat))
     _ -> error "poscar_parse"
 
--- | (minima,maxima) for each dimension.
-poscar_bounds :: POSCAR -> (V3 (R,R))
+-- | (minima,maxima) of atoms.
+poscar_bounds :: POSCAR -> V2 (V3 R)
 poscar_bounds p =
   let c = map fst (poscar_atoms_cartesian p)
-      (x,y,z) = unzip3 c
-      min_max l = (minimum l,maximum l)
-  in (min_max x,min_max y,min_max z)
+      r = unzip3 c
+  in (v3_uop minimum r,v3_uop maximum r)
 
 -- | Load ".poscar" file.
 --
