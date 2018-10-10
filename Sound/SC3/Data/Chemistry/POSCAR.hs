@@ -89,6 +89,7 @@ poscar_bounds p =
 poscar_load :: FilePath -> IO POSCAR
 poscar_load = fmap poscar_parse . readFile
 
+-- | Load all ".poscar" files at directory.
 poscar_load_dir :: FilePath -> IO [(String, POSCAR)]
 poscar_load_dir dir = do
   l <- listDirectory dir
