@@ -1,6 +1,7 @@
 -- | POSCAR file format.  Coordinates are in Angstroms.
 module Sound.SC3.Data.Chemistry.POSCAR where
 
+import Data.Char {- base -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
@@ -64,13 +65,14 @@ poscar_atoms ty =
 poscar_parse :: String -> POSCAR
 poscar_parse s =
   case lines s of
-    dsc:u:l0:l1:l2:a_nm:a_cnt:"Direct":dat ->
+    dsc:u:l0:l1:l2:a_nm:a_cnt:ty:dat ->
       let a_cnt' = map read (words a_cnt)
+          ty' = if map toLower ty == "direct" then POSCAR_D else error "poscar_parse"
       in (dsc
          ,read u
          ,(poscar_parse_r3 l0,poscar_parse_r3 l1,poscar_parse_r3 l2)
          ,zip (words a_nm) a_cnt'
-         ,POSCAR_D
+         ,ty'
          ,map poscar_parse_atom (take (sum a_cnt') dat))
     _ -> error "poscar_parse"
 
