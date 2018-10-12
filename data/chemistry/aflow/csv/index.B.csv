@@ -1,0 +1,264 @@
+ 1,α-Al2 S3,A2B3_hP30_169_2a_3a
+ 2,α-CuAlCl4,AB4C_tP12_112_b_n_e
+ 3,α-FeSe,AB_oC8_67_a_g
+ 4,α-Naumannite,A2B_oP12_17_abe_e
+ 5,α-NbO2,AB2_tI96_88_2f_4f
+ 6,α-P3 N5,A5B3_mC32_9_5a_3a
+ 7,α-PbO,AB_oC8_67_a_g
+ 8,α-PdCl2,A2B_oP6_58_g_a
+ 9,α-RbPr[MoO4]2,A2B8CD_oP24_48_k_2m_d_b
+10,α-Sm3 Ge5,A5B3_hP16_190_bdh_g
+11,α-ThSi2,A2B_tI12_141_e_a
+12,α-Tl2 TeO3,A3BC2_oP48_50_3m_m_2m
+13,α-Toluene,A7B8_mP120_14_14e_16e
+14,β-Bi2 O3,A2B3_tP20_117_i_adgh
+15,β-CuI,AB_hP4_156_ac_ac
+16,β-Hg4 Pt,A4B_cI10_229_c_a
+17,β-NbO2,AB2_tI48_80_2b_4b
+18,β-PdCl2,A2B_hR18_148_2f_f
+19,β-RuCl3,A3B_hP8_158_d_a
+20,β-RuCl3,A3B_hP8_185_c_a
+21,β-SeO2,A2B_oP12_26_abc_ab
+22,β-Si3 N4,A4B3_hP14_173_bc_c
+23,β-SiO2,A2B_hP9_181_j_c
+24,β-Ta2 O5,A5B2_oP14_49_dehq_ab
+25,β-ThI3,A3B_oC64_66_kl2m_bdl
+26,β-Toluene,A7B8_oP120_60_7d_8d
+27,β-V3 S,AB3_tP32_133_h_i2j
+28,δ-PdCl2,A2B_mP6_10_mn_bg
+29,δII H -NW2,AB2_hP9_164_bd_c2d
+30,-NiAl3,A3B_oP16_62_cd_c
+31,-WO3,A3B_mP16_7_6a_2a
+32,γ-Ag3 SI,A3BC_hR5_146_b_a_a
+33,γ-MgNiSn,A7B7C2_tP32_101_bde_ade_d
+34,γ-PdCl2,A2B_mP6_14_e_a
+35,γ-brass,A4B9_cP52_215_ei_3efgi
+36,γ-brass,A3B10_cI52_229_e_fh
+37,κ-alumina,A2B3_oP40_33_4a_6a
+38,π-FeMg3 Al8 Si6,A8BC3D6_hP18_189_bfh_a_g_i
+39,π-FeMg3 Al9 Si5,A9BC3D5_hP18_189_fi_a_g_bh
+40,Ag3 [PO4],A3B4C_cP16_218_c_e_a
+41,Ag5 Pb2 O6,A5B6C2_hP13_157_2ac_2c_b
+42,AgUF6,AB6C_tP16_132_d_io_a
+43,Akermanite,A2BC7D2_tP24_113_e_a_cef_e
+44,Al2 CuIr§,A2BC_oC16_67_ag_b_g
+45,Al2 S3,A2B3_hP30_170_2a_3a
+46,Al4 C3,A4B3_hR7_166_2c_ac
+47,Al4 U,A4B_oI20_74_beh_e
+48,Al8 Cr5,A8B5_hR26_160_a3bc_a3b
+49,Al9 Mn3 Si,A9B3C_hP26_194_hk_h_a
+50,AlLi3 N2,AB3C2_cI96_206_c_e_ad
+51,AlPO4,AB2_hP72_192_m_j2kl
+52,Al[PO4],AB4C_hP72_168_2d_8d_2d
+53,Al[PO4],AB4C_hP72_184_d_4d_d
+54,Anhydrite,AB4C_oC24_63_c_fg_c
+55,As2 Ba,A2B_mP18_7_6a_3a
+56,AsPh4 CeS8 P4 Me8,AB32CD4E8_tP184_93_i_16p_af_2p_4p
+57,AuCN,ABC_hP3_183_a_a_a
+58,AuF3,AB3_hP24_178_b_ac
+59,AuF3,AB3_hP24_179_b_ac
+60,BN,AB_oF8_42_a_a
+61,BPS4,ABC4_oI12_23_a_b_k
+62,Ba5 In4 Bi5,A5B5C4_tP28_104_ac_ac_c
+63,Ba5 Si3,A5B3_tP32_130_cg_cf
+64,BaCr2 Ru4 O12,AB2C12D4_tP76_75_2a2b_2d_12d_4d
+65,BaCu4 [VO][PO4]4,AB4C17D4E_tP54_90_a_g_c4g_g_c
+66,BaGe2 As2,A2BC2_tP20_105_f_ac_2e
+67,BaSi4 O9,AB9C4_hP28_188_e_kl_ak
+68,Barite,AB4C_oP24_62_c_2cd_c
+69,Be[BH4]2,A2BC8_tI176_110_2b_b_8b
+70,Benzene,AB_oP48_61_3c_3c
+71,Beryl,A2B3C18D6_hP58_192_c_f_lm_l
+72,Bi2 O3,A2B3_hP20_159_bc_2c
+73,Bi5 Nb3 O15,A5B3C15_oP46_30_a2c_bc_a7c
+74,BiAl2 S4,A2BC4_tP28_126_cd_e_k
+75,BiGaO3,ABC3_oP20_54_e_d_cf
+76,Boracite,A7BC3D13_cF192_219_de_b_c_ah
+77,C,A_tP12_138_bi
+78,C17 FeO4 Pt,A17BC4D_tP184_89_17p_p_4p_io
+79,Ca3 Al2 O6,A2B3C6_cP264_205_2d_ab2c2d_6d
+80,Ca3 Al2 O6,A2B3C6_cP33_221_cd_ag_fh
+81,Ca3 PI3,A3B3C_cI56_214_g_h_a
+82,Ca4 Al6 O16 S,   A6B4C16D_oP108_27_abcd4e_4e_16e_e
+83,CaRbFe4 As4,A4BC4D_tP10_123_gh_a_i_d
+84,Calomel,AB_tI8_139_e_e
+85,Carbonyl Sulphide,ABC_hR3_160_a_a_a
+ 86,CdAs2,A2B_tI12_98_f_a
+ 87,CdI2,AB2_hP9_156_b2c_3a2bc
+ 88,Ce3 Si6 N11,A3B11C6_tP40_100_ac_bc2d_cd
+ 89,Ce5 Mo3 O16,A5B3C16_cP96_222_ce_d_fi
+ 90,CeCo4 B4,A4BC4_tP18_137_g_b_g
+ 91,CeRu2 B2,A2BC2_oF40_22_fi_ad_gh
+ 92,CeTe3,AB3_oC16_40_b_3b
+ 93,Co2 Al5,A5B2_hP28_194_ahk_ch
+ 94,Co5 Ge7,A5B7_tI24_107_ac_abd
+ 95,Cobaltite,ABC_oP12_29_a_a_a
+ 96,Cr5 B3,A3B5_tI32_140_ah_cl
+ 97,CrCl3,A3B_hP24_153_3c_2b
+ 98,CrFe3 NiSn5,AB_hP6_183_c_ab
+ 99,Cs2 ZnFe[CN]6,A6B2CD6E_cP64_208_m_ad_b_m_c
+100,Cs3 P7,A3B7_tP40_76_3a_7a
+101,CsPr[MoO4]2,AB2C8D_oP24_49_g_q_2qr_e
+102,Cu15 Si4,A15B4_cI76_220_ae_c
+103,Cu2 Fe[CN]6,A12B2C_cF60_196_h_bc_a
+104,Cu3 P,A3B_hP24_165_bdg_f
+105,Cu3 Pk,A3B_hP24_185_ab2c_c
+106,CuBi2 O4,A2BC4_tP28_130_f_c_g
+107,CuBrSe3,ABC3_oP20_30_2a_c_3c
+108,CuBrSe3,ABC3_oP20_53_e_g_hi
+109,CuCrCl5 [NH3]6,A5BCD6_cF416_228_eg_c_b_h
+110,CuI,AB_hP12_156_2ab3c_2ab3c
+111,CuNiSb2,ABC2_hP4_164_a_b_d
+112,Cubanite,AB2C3_oP24_62_c_d_cd
+113,Downeyite,A2B_tP24_135_gh_h
+114,Er3 Ru2,A3B2_hP10_176_h_bd
+115,F6 KP,A24BC_cF104_209_j_a_b
+116,FCC C60 Buckminsterfullerine,A_cF240_202_h2i
+117,Fe12 Zr2 P7,A12B7C2_hP21_174_2j2k_ajk_cf
+118,Fe3 Te3 Tl,A3B3C_hP14_176_h_h_d
+119,Fe3 Th7,A3B7_hP20_186_c_b2c
+120,FeCu2 Al7,A7B2C_tP40_128_egi_h_e
+121,FeNi,AB_mP4_6_2b_2a
+122,FeOCl,ABC_oP6_59_a_b_a
+123,FePSe3,ABC3_hR10_146_2a_2a_2b
+124,FeS,AB_oF8_22_a_c
+125,FeSb2,AB2_oP6_34_a_c
+126,Forsterite,A2B4C_oP28_62_ac_2cd_c
+127,Fresnoite,A2B8C2D_tP26_100_c_abcd_c_a
+128,GaCl2,A2B_oP24_52_2e_cd
+129,GaSb,AB_tI4_119_c_a
+130,Garnet,A2B3C12D3_cI160_230_a_c_h_d
+131,Gd3 Al2,A2B3_tP20_102_2c_b2c
+132,GdSI,ABC_hP12_174_cj_fk_aj
+133,GeAs2,A2B_oP24_55_2g2h_gh
+134,GeP,AB_tI4_107_a_a
+135,GeSe2,AB2_tP12_81_adg_2h
+136,H2 S,A2B_aP6_2_aei_i
+137,H2 S,A2B_mP12_13_2g_ef
+138,H2 S,A2B_oP12_26_abc_ab
+139,H2 S,A2B_oC24_64_2f_f
+140,H2 S III,A2B_tP48_77_8d_4d
+141,H2 S IV,A2B_mP12_7_4a_2a
+142,H3 Cl,AB3_mC16_9_a_3a
+143,H3 Cl,AB3_mP16_10_mn_3m3n
+144,H3 Cl,AB3_mC16_15_e_cf
+145,H3 Cl,AB3_oP16_19_a_3a
+146,H3 S,A3B_oI32_23_ij2k_k
+147,H3 S,A3B_oC64_66_gi2lm_2l
+148,H3 S,A3B_hR4_160_b_a
+149,H-III,A_mC24_15_2e2f
+150,HCl,AB_oC8_36_a_a
+151,HgI2,AB2_tP12_115_j_egi
+152,HgI2,AB2_tP6_137_a_d
+153,HoCuP2 §,ABC2_oC16_67_b_g_ag
+154,Ir3 Ga5,A5B3_tP32_118_g2i_aceh
+155,Ir3 Ge7,A7B3_cI40_229_df_e
+156,IrGe4,A4B_hP15_144_4a_a
+157,K2 CdPb,AB2C_oC16_40_a_2b_b
+158,K2 PtCl6,A6B2C_cF36_225_e_c_a
+159,K2 SnCl6,A6B2C_tP18_128_eh_d_b
+160,K2 Ta4 O9 F4,A2B13C4_hP57_168_d_c6d_2d
+161,KAg[CO3],ABCD3_oI48_73_d_e_e_ef
+162,KAu4 Sn2,A4BC2_tI28_120_i_d_e
+163,KB6 H6,A6B6C_cF104_202_h_h_c
+164,KBO2,ABC2_hR24_167_e_e_2e
+165,KCeSe4,ABC4_tP12_125_a_b_m
+166,KHg2,A2B_oI12_74_h_e
+167,KNiCl3,A3BC_hP30_185_cd_c_ab
+168,KSbO3,AB3C_cP60_201_ce_fh_g
+169,La2 NiO4,A2BC4_oP28_50_ij_ac_ijm
+170,La2 O3,A2B3_hP5_164_d_ad
+171,La43 Ni17 Mg5,A43B5C17_oC260_63_c8fg6h_cfg_ce3f2h
+172,LaPtSi,ABC_tI12_109_a_a_a
+173,LaRhC2,A2BC_tP16_76_2a_a_a
+174,Li2 MoF6,A6B2C_tP18_94_eg_c_a
+175,Li2 Sb,A2B_hP18_190_gh_bf
+176,Li2 Si2 O5,A2B5C2_oC36_37_d_c2d_d
+177,LiScI3,A3BC_hP10_188_k_a_e
+178,LiSn,AB_mP6_10_en_am
+179,M-carbon,A_mC16_12_4i
+180,Mavlyanovite,A5B3_hP16_193_dg_g
+181,Mg2 Zn11,A2B11_cP39_200_f_aghij
+182,MgB12 H12 [H2 O]12,A12B36CD12_cF488_196_2h_6h_ac_fgh
+183,MgSO4,AB4C_oC24_63_a_fg_c
+184,Mg[NH],ABC_hP36_175_jk_jk_jk
+185,Mn2 B,AB2_oF48_70_f_fg
+186,MnAl6,A6B_oC28_63_efg_c
+187,MnF2,A2B_tP12_111_2n_adf
+188,MnGa2 Sb2,A2BC2_oI20_45_c_b_c
+189,Mo8 P5,A8B5_mP13_6_a7b_3a2b
+190,MoS2,AB2_hP12_143_cd_ab2d
+191,Moissanite-15R,AB_hR10_160_5a_5a
+192,Molybdite,AB3_oP16_62_c_3c
+193,Muthmannite,ABC2_mP8_10_ac_eh_mn
+194,NV,AB_tP8_111_n_n
+195,Na3 Ask,AB3_hP24_185_c_ab2c
+196,Na4 Ti2 Si8 O22 [H2 O]4,A4B2C13D_tP40_90_g_d_cef2g_c
+197,Na5 Fe3 F14,A14B3C5_tP44_94_c3g_ad_bg
+198,NaFeS2,ABC2_oI16_23_ab_i_k
+199,NaGdCu2 F8,A2B8CD_tI24_97_d_k_a_b
+200,NaZn13,AB13_cF112_226_a_bi
+201,NaZn[OH]3,A3BC3D_tP64_106_3c_c_3c_c
+202,Nb4 CoSi,AB4C_tP12_124_a_m_c
+203,Nb7 Ru6 B8,A8B7C6_hP21_175_ck_aj_k
+204,NbAs,AB_tI8_109_a_a
+205,NbPS,ABC_oI12_71_h_j_g
+206,NbTe4,AB4_tP10_103_a_d
+207,NbTe4,AB4_tP10_124_a_m
+208,Ni3 P,A3B_tI32_82_3g_g
+209,Ni3 Ti,A3B_hP16_194_gh_ac
+210,Nierite,A4B3_hP28_159_ab2c_2c
+211,PH3,A3B_cP16_208_j_b
+212,PI3,A3B_hP8_173_c_b
+213,Pd17 Se15,A17B15_cP64_207_acfk_eij
+214,Pd4 Se,A4B_tP10_114_e_a
+215,PdSn4,AB4_oC20_68_a_i
+216,Petzite,A3BC2_cI48_214_f_a_e
+217,Phenakite,A2B4C_hR42_148_2f_4f_f
+218,Pinnoite,A2B6CD7_tP64_77_2d_6d_d_ab6d
+219,Post-perovskite,AB3C_oC20_63_a_cf_c
+220,PrNiO3,AB3C_hR10_167_b_e_a
+221,PrRu4 P12,A12BC4_cP34_195_2j_ab_2e
+222,PtPb4,A4B_tP10_125_m_a
+223,Pyrite‡,AB2_oP12_29_a_2a
+224,Pyrochlore,A2BCD3E6_cF208_203_e_c_d_f_g
+225,Pyrochlore Iridate,A2B2C7_cF88_227_c_d_af
+226,Quartenary Heusler,ABCD_cF16_216_c_d_b_a
+227,R-carbon,A_oP16_55_2g2h
+228,Rasvumite,A2BC3_oC24_63_e_c_cg
+229,Rb2 TiCu2 S4,A2B2C4D_tP18_132_e_i_o_d
+230,Rb3 AsSe16,AB3C16_cF160_203_b_ad_eg
+231,RbGa3,A3B_tI24_119_b2i_af
+232,Re2 O5 [SO4]2,A13B2C2_oP34_32_a6c_c_c
+233,Re3 N,AB3_hP4_187_e_fh
+234,Rh2 Ga9,A9B2_mP22_7_9a_2a
+235,Rh2 S3,A2B3_oP20_60_d_cd
+236,Rh3 P2,A2B3_tP5_115_g_ag
+237,Rh5 Ge3,A3B5_oP16_55_ch_agh
+238,Ru2 Sn3,A2B3_tP20_116_bci_fj
+239,RuIn3,A3B_tP16_118_ei_f
+240,S-II,A_hP9_154_bc
+241,S-III,A_tI16_142_f
+242,S-carbon,A_mP8_10_2m2n
+243,Sc-V,A_hP6_178_a
+244,ScRh6 P4,A4B6C_hP11_143_bd_2d_a
+245,SeO3,A3B_tP32_114_3e_e
+246,Sheldrickite,A2B3C3DE7_hP48_145_2a_3a_3a_a_7a
+247,SiO2,A2B_hP36_177_j2lm_n
+248,SiO2,A2B_cI72_211_hi_i
+249,Simple Cubic C60 Buckminsterfullerine,A_cP240_205_10d
+250,Simpsonite,A4B14C3_hP21_143_bd_ac4d_d
+251,SmSI,ABC_hR6_166_c_c_c
+252,Sodium Chlorate,ABC3_cP20_198_a_a_b
+253,Spinel,A3B4_cF56_227_ad_e
+254,Sr2 As2 O7,A2B7C2_tP88_78_4a_14a_4a
+255,Sr2 Bi3,A3B2_oP20_52_de_cd
+256,Sr5 Si3,A3B5_tI32_108_ac_a2c
+257,SrAl2 Se4,A2B4C_oC28_66_l_kl_a
+258,SrBr2,A2B_tP30_85_ab2g_cg
+259,SrH2,A2B_oP12_62_2c_c
+260,SrSi2,A2B_cP12_212_c_a
+261,Sr[S2 O6][H2 O]4,A10B2C_hP39_171_5c_c_a
+262,Sr[S2 O6][H2 O]4,A10B2C_hP39_172_5c_c_a
+263,Stannoidite,A8B2C12D2E_oI50_23_bcfk_i_3k_j_a
+264,Ta2 H,AB2_oC6_21_a_k

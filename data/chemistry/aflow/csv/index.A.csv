@@ -1,0 +1,288 @@
+1,ST12 of Si,A_tP12_96_ab
+2,α-Ask,A_hR2_166_c
+3,α-B,A_hR12_166_2h
+4,α-CO,AB_cP8_198_a_a
+5,α-Cristobalite,A2B_tP12_92_b_a
+6,α-Ga,A_oC8_64_f
+7,α-Hg,A_hR1_166_a
+8,α-IrV,AB_oC8_65_j_g
+9,α-La,A_hP4_194_ac
+10,α-Mn,A_cI58_217_ac2g
+11,α-N,A_cP8_198_2a
+12,α-N,A_cP8_205_c
+13,α-Np,A_oP8_62_2c
+14,α-O,A_mC4_12_i
+15,α-Pa,A_tI2_139_a
+16,α-Po,A_cP1_221_a
+17,α-Pu,A_mP16_11_8e
+18,α-Quartz,A2B_hP9_152_c_a
+19,α-ReO3,A3B_cP4_221_d_a
+20,α-S,A_oF128_70_4h
+21,α-Sm,A_hR3_166_ac
+22,α-U,A_oC4_63_c
+23,β-B,A_hR105_166_bc9h4i
+24,β-BeO,AB_tP8_136_g_f
+25,β-In2 S3,A2B3_tI80_141_ceh_3h
+26,β-Mn,A_cP20_213_cd
+27,β-Np,A_tP4_129_ac
+28,β-Ok,A_hR2_166_c
+29,β-Po,A_hR1_166_a
+30,β-Pu,A_mC34_12_ah3i2j
+31,β-Quartz,A2B_hP9_180_j_c
+32,β-Se,A_mP32_14_8e
+33,β-Sn,A_tI4_141_a
+34,β-TiCu3,A3B_oP8_59_bf_a
+35,β-Tridymite,A2B_hP12_194_cg_f
+36,β-U,A_tP30_136_bf2ij
+37,β-V2 N,AB2_hP9_162_ad_k
+38,β0 -AuCd,AB_oP4_51_e_f
+39,η-Fe2 C,AB2_oP6_58_a_g
+40,γ-Brass,A5B8_cI52_217_ce_cg
+41,γ-CuTi,AB_tP4_129_c_c
+42,γ-N,A_tP4_136_f
+43,γ-Pu,A_oF8_70_a
+44,γ-Se,A_hP3_152_a
+45,ω Phase,AB2_hP3_164_a_d
+46,σ-CrFe,sigma_tP30_136_bf2ij
+47,ζ-AgZn,A2B_hP9_147_g_ad
+48,"0201 [(La,Ba)2 CuO4]",AB2C4_tI14_139_a_e_ce
+49,1212C [YBa2 Cu3 O7−x],A2B3C7D_oP13_47_t_aq_eqrs_h
+50,Al12 W,A12B_cI26_204_g_a
+51,Al3 Ni2,A3B2_hP5_164_ad_d
+52,Al3 Ti,A3B_tI8_139_bd_a
+53,Al3 Zr,A3B_tI16_139_cde_e
+54,Al4 Ba,A4B_tI10_139_de_a
+55,Al5 C3 N,A5B3C_hP18_186_2a3b_2ab_b
+56,AlB4 Mg,AB4C_hP6_191_a_h_b
+57,AlCCr2,ABC2_hP8_194_d_a_f
+58,AlCl3,AB3_mC16_12_g_ij
+59,AlF3,AB3_hR8_155_c_de
+60,AlN3 Ti4,AB3C4_hP16_194_c_af_ef
+61,AlPS4,ABC4_oP12_16_ag_cd_2u
+62,Ammonia,A3B_cP16_198_b_a
+63,Anatase,A2B_tI12_141_e_a
+64,AsCuSiZr,ABCD_tP8_129_c_b_a_c
+65,AsK3 S4,AB3C4_oP32_33_a_3a_4a
+66,AsKSe2,ABC2_aP16_1_4a_4a_8a
+67,AsTi,AB_hP8_194_ad_f
+68,Au2 V,A2B_oC12_38_de_ab
+69,Au5 Mn2,A5B2_mC14_12_a2i_i
+70,AuBe5,AB5_cF24_216_a_ce
+71,B2 Pd5,A2B5_mC28_15_f_e2f
+72,BC8,A_cI16_206_c
+73,BN,AB_hP4_194_c_d
+74,BPO4,AB4C_tI12_82_c_g_a
+75,BaHg11,AB11_cP36_221_c_agij
+76,BaPtSb,ABC_hP3_187_a_d_f
+77,BaS3,AB3_oP16_18_ab_3c
+78,BaS3,AB3_tP8_113_a_ce
+79,Baddeleyite,A2B_mP12_14_2e_e
+80,Bainite,AB3_hP8_182_c_g
+81,"Bergman [Mg32 (Al,Zn)49]",AB32C48_cI162_204_a_2efg_2gh
+82,Bi2 Te3,A2B3_hR5_166_c_ac
+83,BiF3,AB3_cF16_225_a_bc
+84,BiI3,AB3_hR8_148_c_f
+85,Bixbyite,AB3C6_cI80_206_a_d_e
+86,Black Phosphorus,A_oC8_64_f
+87,Body-Centered Cubic,A_cI2_229_a
+88,Brookite,A2B_oP24_61_2c_c
+89,Buckled Graphite,A_hP4_186_ab
+90,C2 CeNi,A2BC_oC8_38_e_a_b
+91,C3 Cr7,A3B7_oP40_62_cd_3c2d
+92,CMo,AB_hP12_194_af_bf
+93,CNCl,ABC_oP6_59_a_a_a
+94,CTi2,AB2_cF48_227_c_e
+95,Ca7 Ge,A7B_cF32_225_bd_a
+96,CaB6,A6B_cP7_221_f_a
+97,CaC6,A6B_hR7_166_g_a
+98,CaCu5,AB5_hP6_191_a_cg
+99,CaCuO2,ABC2_tP4_123_d_a_f
+100,CaIn2,AB2_hP6_194_b_f
+101,CaTiO3 Pnma Perovskite,AB3C_oP20_62_c_cd_a
+102,Calaverite,AB2_mC6_12_a_i
+103,Calcite,ABC3_hR10_167_a_b_e
+104,Caswellsilverite,ABC2_hR4_166_a_b_c
+105,CdAl2 S4,A2BC4_tI14_82_bc_a_g
+106,CdSb,AB_oP16_61_c_c
+107,Cementite,AB3_oP16_62_c_cd
+108,Cf,A_aP4_2_aci
+109,Chalcopyrite,ABC2_tI16_122_a_b_d
+110,Chalcostibite,AB2C_oP16_62_c_2c_c
+111,Cinnabar,AB_hP6_154_a_b
+112,Cl,A_tP16_138_j
+113,Co2 Si,A2B_oP12_62_2c_c
+114,CoSn,AB_hP6_191_f_ad
+115,CoU,AB_cI16_199_a_a
+116,Coesite,A2B_mC48_15_ae3f_2f
+117,Corundum,A2B3_hR10_167_c_e
+118,Cotunnite,A2B_oP12_62_2c_c
+119,Covellite,AB_hP12_194_df_ce
+120,Cr23 C6,A6B23_cF116_225_e_acfh
+121,Cr3 Si,A3B_cP8_223_c_a
+122,CrB,AB_oC8_63_c_c
+123,CrCl3,A3B_hP24_151_3c_2a
+124,CrSi2,AB2_hP9_180_d_j
+125,CsCl,AB_cP2_221_b_a
+126,Cu2 Mg Cubic Laves,A2B_cF24_227_d_a
+127,Cu2 Sb,A2B_tP6_129_ac_c
+128,Cu2 Te,A2B_hP6_191_h_e
+129,Cu3 Au,AB3_cP4_221_a_c
+130,CuAu,AB_tP2_123_a_d
+131,CuPt,AB_hR2_166_a_b
+132,CuTi3,AB3_tP4_123_a_ce
+133,Cubic Lazarevićite,AB3C4_cP8_215_a_c_e
+134,Cubic Perovskite,AB3C_cP5_221_a_c_b
+135,Cuprite,A2B_cP6_224_b_a
+136,Diamond,A_cF8_227_a
+137,Enargite,AB3C4_oP16_31_a_ab_2ab
+138,Esseneite,ABC6D2_mC40_15_e_e_3f_f
+139,Face-Centered Cubic,A_cF4_225_a
+140,Fe3 W3 C,AB3C3_cF112_227_c_de_f
+141,Fe4 C,AB4_cP5_215_a_e
+142,Fe7 W6 µ-phase,A7B6_hR13_166_ah_3c
+143,FeB,AB_oP8_62_c_c
+144,FeS2,AB2_aP12_1_4a_8a
+145,FeSi,AB_cP8_198_a_a
+146,Ferroelectric LiNbO3,ABC3_hR10_161_a_a_b
+147,Fluorite,AB2_cF12_225_a_c
+148,Ga2 Hf,A2B_tI24_141_2e_e
+149,Ga3 Pt5,A3B5_oC16_65_ah_bej
+150,Ga4 Ni,A4B_cI40_197_cde_c
+151,Ga4 Ni3,A4B3_cI112_230_af_g
+152,GeS,AB_oP8_62_c_c
+153,GeS2,AB2_oF72_43_ab_3b
+154,H3 Ho,A3B_hP24_165_adg_f
+155,Half-Heusler,ABC_cF12_216_b_c_a
+156,Hausmannite,A3B4_tI28_141_ad_h
+157,Hazelwoodite,A3B2_hR5_155_e_c
+158,Heusler,AB2C_cF16_225_a_c_b
+159,Hexagonal ω,AB2_hP3_191_a_d
+160,Hexagonal Close Packed,A_hP2_194_c
+161,Hexagonal Graphite,A_hP4_194_bc
+162,HgBr2,A2B_oC12_36_2a_a
+163,HgCl2,A2B_oP12_62_2c_c
+164,High-Pressure cI16 Li,A_cI16_220_c
+165,High-Pressure CdTe,AB_oP2_25_b_a
+166,High-Pressure H3 S,A3B_cI8_229_b_a
+167,High-Pressure Te,A_mP4_4_2a
+168,High-pressure GaAs,AB_oI4_44_a_b
+169,HoCoGa5,AB5C_tP7_123_b_ci_a
+170,Hydrophilite,AB2_oP6_58_a_g
+171,Hypothetical BCT5 Si,A_tI4_139_e
+172,Hypothetical Tetrahedrally Bonded Carbon with 3-Member Rings,A_hP6_194_h
+173,Hypothetical Tetrahedrally Bonded Carbon with 4-Member Rings,A_tI8_139_h
+174,Ideal β-Cristobalite,A2B_cF24_227_c_a
+175,Ilmenite,AB3C_hR10_148_c_f_c
+176,In¶,A_tI2_139_a
+177,KAg(CN)2,AB2CD2_hP36_163_h_i_bf_i
+178,KCNS,ABCD_oP16_57_d_c_d_d
+179,KClO3,ABC3_mP10_11_e_e_ef
+180,Keatite,A2B_tP36_96_3b_ab
+181,Khatyrkite,A2B_tI12_140_h_a
+182,Krennerite,AB2_oP24_28_acd_2c3d
+183,Li3 N,A3B_hP4_191_bc_a
+184,LiBC,ABC_hP6_194_c_d_a
+185,Lonsdaleite,A_hP4_194_f
+186,Marcasite,AB2_oP6_58_a_g
+187,Matlockite,ABC_tP6_129_c_a_c
+188,Mg2 Ni,A2B_hP18_180_fi_bd
+189,MgB2 C2,A2B2C_oC80_64_efg_efg_df
+190,MgB4,A4B_oP20_62_2cd_c
+191,MgNi2 Hexagonal Laves,AB2_hP24_194_ef_fgh
+192,MgZn2 Hexagonal Laves,AB2_hP12_194_f_ah
+193,Millerite,AB_hR6_160_b_b
+194,Mn12 Th,A12B_tI26_139_fij_a
+195,MnP,AB_oP8_62_c_c
+196,Mo2 B5,A5B2_hR7_166_a2c_c
+197,MoB,AB_tI16_141_e_e
+198,Model of Austenite,AB12C3_cI32_229_a_h_b
+199,Model of Austenite,AB18C8_cF108_225_a_eh_f
+200,Model of Austenite,AB27CD3_cP32_221_a_dij_b_c
+201,Model of Ferrite,A9B16C7_cF128_225_acd_2f_be
+202,Model of Ferrite,AB4C3_cI16_229_a_c_b
+203,Model of Ferrite,AB11CD3_cP16_221_a_dg_b_c
+204,MoPt2,AB2_oI6_71_a_g
+205,MoSi2,AB2_tI6_139_a_e
+206,Modderite,AB_oP8_33_a_a
+207,Moissanite 9R,AB_hR6_160_3a_3a
+208,Moissanite-4H SiC,AB_hP8_186_ab_ab
+209,Moissanite-6H SiC,AB_hP12_186_a2b_a2b
+210,Molecular Iodine,A_oC8_64_f
+211,Molybdenite,AB2_hP6_194_c_f
+212,Monoclinic Low Tridymite,A2B_mC144_9_24a_12a
+213,Monoclinic PZT [Pb(Zr x Ti1−x)O3],A3BC_tP5_99_bc_a_b
+214,Monoclinic Phosphorus,A_mP84_13_21g
+215,Na3 As,AB3_hP8_194_c_bf
+216,NaTl,AB_cF16_227_a_b
+217,Naumannite,A2B_oP12_19_2a_a
+218,NbO,AB_cP6_221_c_d
+219,NbP,AB_tI8_141_a_b
+220,Ni2 In,AB2_hP6_194_c_ad
+221,Ni3 Sn,A3B_hP8_194_h_c
+222,Ni4 Mo,AB4_tI10_87_a_h
+223,NiAs,AB_hP4_194_c_a
+224,NiTi,AB_mP4_11_e_e
+225,NiTi2,AB2_cF96_227_e_cf
+226,Original BN,AB_hP4_186_b_a
+227,Original Fe2 P,A2B_hP9_150_ef_bd
+228,Orthorhombic Tridymite,A2B_oC24_20_abc_c
+229,P2 I4,A2B_aP6_2_2i_i
+230,PPrS4,ABC4_tI96_142_e_ab_2g
+231,Paraelectric LiNbO3 ,ABC3_hR10_167_a_b_e
+232,PbO,AB_tP4_129_a_c
+233,PdAl,AB_hR26_148_b2f_a2f
+234,PdS,AB_tP16_84_cej_k
+235,PdSn2,AB2_oC24_41_2a_2b
+236,Po,A_mC12_5_3c
+237,Predicted CdPt3,AB3_oC8_65_a_bf
+238,Pt3 O4,A4B3_cI14_229_c_b
+239,Pt8 Ti,A8B_tI18_139_hi_a
+240,PtS,AB_tP4_131_c_e
+241,PtSn4,AB4_oC20_41_a_2b
+242,Pu2 C3,A3B2_cI40_220_d_c
+243,Pyrite,AB2_cP12_205_a_c
+244,ReSi2,AB2_oI6_71_a_i
+245,Revised Fe2 P,A2B_hP9_189_fg_bc
+246,Rhombohedral Graphitek,A_hR2_166_c
+247,Rock Salt,AB_cF8_225_a_b
+248,Rutile,A2B_tP6_136_f_a
+249,SC16,AB_cP16_205_c_c
+250,Sb2 O3,A3B2_oP20_56_ce_e
+251,Sb2 Tl7,A2B7_cI54_229_e_afh
+252,Se,A_mP64_14_16e
+253,SeTl,AB_tI16_140_ab_h
+254,Si2 U3,A2B3_tP10_127_g_ah
+255,Si34 Clathrate,A_cF136_227_aeg
+256,Si46 Clathrate,A_cP46_223_dik
+257,SiF4,A4B_cI10_217_c_a
+258,SiO2,A2B_mP12_3_bc3e_2e
+259,SiS2,A2B_oI12_72_j_a
+260,SiU3,AB3_tI16_140_b_ah
+261,Simple Hexagonal Lattice,A_hP1_191_a
+262,Skutterudite,A3B_cI32_204_g_c
+263,SnS,AB_oP8_62_c_c
+264,Solid Cubane,AB_hR16_148_cf_cf
+265,Spinel,A2BC4_cF56_227_d_a_e
+266,SrCuO2,AB2C_oC16_63_c_2c_c
+267,Stannite,A2BC4D_tI16_121_d_a_i_b
+268,Stibnite,A3B2_oP20_62_3c_2c
+269,Sulvanite,A3B4C_cP8_215_d_e_a
+270,Sylvanite,ABC4_mP12_13_e_a_2g
+271,T-50 B,A_tP50_134_b2m2n
+272,Tenorite,AB_mC8_15_c_e
+273,Tetragonal PZT [Pb(Zr x Ti1−x)O3],A3BC_mC10_8_ab_a_a
+274,ThH2,A2B_tI6_139_d_a
+275,Ti5 Te4,A4B5_tI18_87_h_ah
+276,TiSi2,A2B_oF24_70_e_a
+277,TlF,AB_oF8_69_a_b
+278,TlF-II,AB_oP8_57_d_d
+279,Tungsten Carbide,AB_hP2_187_d_a
+280,UB12,A12B_cF52_225_i_a
+281,Ullmanite,ABC_cP12_198_a_a_a
+282,V4 Zn5,A4B5_tI18_139_i_ah
+283,Vulcanite,AB_oP4_59_a_b
+284,W2 B5,A5B2_hP14_194_abdf_f
+285,Wurtzite,AB_hP4_186_b_b
+286,Zincblende,AB_cF8_216_c_a
+287,Zircon,A4BC_tI24_141_h_b_a
+288,ZrSi2,A2B_oC12_63_2c_c
