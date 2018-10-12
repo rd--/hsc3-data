@@ -73,11 +73,14 @@ xyz_bounds (_,_,a) =
 xyz_load :: FilePath -> IO XYZ
 xyz_load fn = fmap (xyz_parse fn) (readFile fn)
 
+-- | List of all ".xyz" files at /dir/.
+xyz_dir_entries :: FilePath -> IO [FilePath]
+xyz_dir_entries = fmap (filter ((==) ".xyz" . takeExtension)) . listDirectory
+
 -- | Load all ".xyz" files at /dir/.
 xyz_load_dir :: FilePath -> IO [(String, XYZ)]
 xyz_load_dir dir = do
-  l <- listDirectory dir
-  let fn = filter ((==) ".xyz" . takeExtension) l
-      nm = map takeBaseName fn
+  fn <- xyz_dir_entries dir
+  let nm = map takeBaseName fn
   dat <- mapM (xyz_load . (</>) dir) fn
   return (zip nm dat)

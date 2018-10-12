@@ -42,11 +42,14 @@ mol_parse s =
 mol_load :: FilePath -> IO MOL
 mol_load fn = readFile fn >>= return . mol_parse
 
+-- | List of all ".mol" files at /dir/.
+mol_dir_entries :: FilePath -> IO [FilePath]
+mol_dir_entries = fmap (filter ((==) ".mol" . takeExtension)) . listDirectory
+
 -- | Load all ".mol" files at directory.
 mol_load_dir :: FilePath -> IO [(String, MOL)]
 mol_load_dir dir = do
-  l <- listDirectory dir
-  let fn = filter ((==) ".mol" . takeExtension) l
-      nm = map takeBaseName fn
+  fn <- mol_dir_entries dir
+  let nm = map takeBaseName fn
   dat <- mapM (mol_load . (</>) dir) fn
   return (zip nm dat)

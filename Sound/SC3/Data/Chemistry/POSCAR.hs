@@ -90,11 +90,14 @@ poscar_bounds p =
 poscar_load :: FilePath -> IO POSCAR
 poscar_load = fmap poscar_parse . readFile
 
+-- | List of all ".poscar" files at /dir/.
+poscar_dir_entries :: FilePath -> IO [FilePath]
+poscar_dir_entries = fmap (filter ((==) ".poscar" . takeExtension)) . listDirectory
+
 -- | Load all ".poscar" files at directory.
 poscar_load_dir :: FilePath -> IO [(String, POSCAR)]
 poscar_load_dir dir = do
-  l <- listDirectory dir
-  let fn = filter ((==) ".poscar" . takeExtension) l
-      nm = map takeBaseName fn
+  fn <- poscar_dir_entries dir
+  let nm = map takeBaseName fn
   dat <- mapM (poscar_load . (</>) dir) fn
   return (zip nm dat)
