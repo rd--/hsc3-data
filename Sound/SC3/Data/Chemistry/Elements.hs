@@ -386,6 +386,8 @@ covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radi
 
 type DIST_MSR t = (((Int,Int),(V3 t,V3 t)),t,t,t,Bool,Bool)
 
+-- | /rad_f/ is the atomic symbol to covalent radius function.
+-- /(t_min,t_max)/ are the tolerance values, /t_min/ is ordinarily negative.
 calculate_distance_set :: (Ord t,Floating t) => (String -> t) -> (t,t) -> [(String, V3 t)] -> [DIST_MSR t]
 calculate_distance_set rad_f (t_min,t_max) e =
   let f (k0,(a0,p0)) (k1,(a1,p1)) =
@@ -396,7 +398,7 @@ calculate_distance_set rad_f (t_min,t_max) e =
                  d = v3_distance p0 p1
              in Just (((k0,k1),(p0,p1))
                      ,r1,r2,d
-                     ,d > (r2 - t_min),d < (r2 + t_max))
+                     ,d > (r2 + t_min),d < (r2 + t_max))
         else Nothing
       e_ix = zip [0..] e
   in catMaybes [f i j | i <- e_ix, j <- e_ix]
