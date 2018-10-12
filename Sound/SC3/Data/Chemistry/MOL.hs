@@ -1,6 +1,9 @@
 -- | MOL file format.
 module Sound.SC3.Data.Chemistry.MOL where
 
+import System.Directory {- directory -}
+import System.FilePath {- filepath -}
+
 import Data.CG.Minus.Plain {- hcg-minus -}
 
 mol_read_counts :: String -> (Int,Int)
@@ -21,7 +24,11 @@ mol_read_bond s =
     [a0,a1,ty,_,_,_,_] -> ((read a0,read a1),read ty)
     _ -> error "mol_read_bond"
 
-type MOL = (String, String, Int, Int, [(V3 R, String)], [(V2 Int, Int)])
+type ATOM = (V3 R, String)
+type BOND = (V2 Int, Int)
+
+-- | (name,description,atom-count,bond-count,atoms,bonds)
+type MOL = (String, String, Int, Int, [ATOM], [BOND])
 
 mol_parse :: String -> MOL
 mol_parse s =
@@ -33,3 +40,12 @@ mol_parse s =
 
 mol_load :: FilePath -> IO MOL
 mol_load fn = readFile fn >>= return . mol_parse
+
+-- | Load all ".mol" files at directory.
+mol_load_dir :: FilePath -> IO [(String, MOL)]
+mol_load_dir dir = do
+  l <- listDirectory dir
+  let fn = filter ((==) ".mol" . takeExtension) l
+      nm = map takeBaseName fn
+  dat <- mapM (mol_load . (</>) dir) fn
+  return (zip nm dat)

@@ -30,7 +30,7 @@ poscar_direct_to_cartesian (a1,a2,a3) (i,j,k) =
   (v3_scale i a1) `v3_add` (v3_scale j a2) `v3_add` (v3_scale k a3)
 
 -- | Direct or caretsian co-ordinates.
-data POSCAR_TY = POSCAR_D | POSCAR_C
+data POSCAR_TY = POSCAR_D | POSCAR_C deriving (Eq,Enum,Show)
 
 -- | (description,u,lattice,atom-histogram,atom-data)
 type POSCAR = (String,R,LATTICE,[(String,Int)],POSCAR_TY,[(V3 R,String)])
