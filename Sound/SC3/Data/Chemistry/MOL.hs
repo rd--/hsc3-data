@@ -9,7 +9,7 @@ import Data.CG.Minus.Plain {- hcg-minus -}
 mol_read_counts :: String -> (Int,Int)
 mol_read_counts s =
   case words s of
-    [a,b,"0","0","0","0","0","0","0999","V2000"] -> (read a,read b)
+    [a,b,"0",_d,"0","0","0","0","0999","V2000"] -> (read a,read b)
     [a,b,"0","0","0","0","0","0","0","0999","V2000"] -> (read a,read b)
     _ -> error ("mol_read_counts: " ++ s)
 
