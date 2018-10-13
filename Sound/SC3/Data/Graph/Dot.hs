@@ -24,6 +24,10 @@ dot_run_layout = readProcess "dot" ["-T","dot"]
 dg_parse :: (Ord t,ParseDot t) => String -> G.DotGraph t
 dg_parse = parseDotGraph . T.pack
 
+-- | Type specialised.
+dg_parse_int :: String -> G.DotGraph Int
+dg_parse_int = parseDotGraph . T.pack
+
 -- | 'T.unpack' of 'printDotGraph'.
 dg_print :: (Ord t,PrintDot t) => G.DotGraph t -> String
 dg_print = T.unpack . printDotGraph
