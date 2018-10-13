@@ -73,6 +73,9 @@ type E t = (t, t)
 -- | 'V' with position.
 type V_pos t = (t, (Double, Double))
 
+-- | Graph of 'V_pos'.
+type GR_pos t = ([V_pos t], [E t])
+
 -- | 'V' with label and position.
 type V_lbl_pos t = (t, (String, (Double, Double)))
 
@@ -98,8 +101,22 @@ dg_to_gr_lbl_pos g =
   in (map dn_to_v_lbl_pos n,map de_to_e e)
 
 -- | 'DotGraph' to 'V_pos' graph.
-dg_to_gr_pos :: G.DotGraph t -> ([V_pos t], [E t])
+dg_to_gr_pos :: G.DotGraph t -> GR_pos t
 dg_to_gr_pos g =
   let (n,e) = dg_to_gr_lbl_pos g
       f (k,(_,p)) = (k,p)
   in (map f n,e)
+
+-- | (min,max) bounds of graph.
+gr_pos_bounds :: GR_pos t -> ((Double,Double),(Double,Double))
+gr_pos_bounds (v,_) =
+  let r = unzip (map snd v)
+      bimap f (i,j) = (f i,f j)
+  in (bimap minimum r,bimap maximum r)
+
+gr_pos_scale :: Double -> GR_pos t -> GR_pos t
+gr_pos_scale mul (v,e) =
+  let bimap f (i,j) = (f i,f j)
+      v' = map (\(k,p) -> (k,bimap (* mul) p)) v
+  in (v',e)
+
