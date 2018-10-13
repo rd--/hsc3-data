@@ -59,6 +59,18 @@ struct_bounds (_,_,_,atm,_) =
       r = unzip3 c
   in (v3_uop minimum r,v3_uop maximum r)
 
+-- | Apply /f/ at all atom positions.
+struct_v3_map :: (V3 R -> V3 R) -> STRUCT -> STRUCT
+struct_v3_map f (nm,k,dsc,a,b) =
+  let (sym,pt) = unzip a
+  in (nm,k,dsc,zip sym (map f pt),b)
+
+-- | Translate atom positions so structure is centered at /c/.
+struct_center :: V3 R -> STRUCT -> STRUCT
+struct_center c (nm,k,dsc,a,b) =
+  let (sym,pt) = unzip a
+  in (nm,k,dsc,zip sym (v3_center_at c pt),b)
+
 -- * Convert
 
 mol_to_struct :: (String,MOL.MOL) -> STRUCT
