@@ -36,14 +36,14 @@ svl_get_model :: X.Element -> X.Element
 svl_get_model = XML.x_get_elem_path ["data","model"]
 
 -- | Get model type and sub-type.
-svl_model_type :: X.Element -> (String,String)
+svl_model_type :: X.Element -> (String,Maybe String)
 svl_model_type m =
     if XML.x_elem_name m /= "model"
     then error "svl_model_ty"
-    else (XML.x_get_attr "type" m,XML.x_get_attr "subtype" m)
+    else (XML.x_get_attr "type" m,X.findAttr (X.unqual "subtype") m)
 
 -- | Get /model/ and ensure it has the indicated type and sub-type.
-svl_get_model_of_type :: (String, String) -> X.Element -> X.Element
+svl_get_model_of_type :: (String, Maybe String) -> X.Element -> X.Element
 svl_get_model_of_type ty e =
     let m = svl_get_model e
     in if svl_model_type m == ty
@@ -61,7 +61,7 @@ svl_load = fmap X.parseXMLDoc . B.readFile
 svl_load_err :: FilePath -> IO X.Element
 svl_load_err = fmap (fromMaybe (error "svl_load")) . svl_load
 
--- * SN = SPARSE-NOTE
+-- * NOTES-LAYER, TIME-INSTANTS-LAYER
 
 -- | SR = sample rate
 type SR = Double
@@ -72,30 +72,40 @@ type FRAME = Int
 svl_model_sample_rate :: X.Element -> SR
 svl_model_sample_rate = read . XML.x_get_attr "sampleRate"
 
+svl_model_dimenions :: X.Element -> Int
+svl_model_dimenions = read . XML.x_get_attr "dimenions"
+
 -- | (value,level,label)
-type SVL_SN_PT_DATA = (Int,Double,String)
+type SVL_NOTE = (Int,Double,String)
 
 -- | ((frame,duration),data)
-type SVL_SN_PT = ((FRAME,FRAME),SVL_SN_PT_DATA)
+type SVL_PT t = ((FRAME,FRAME),t)
 
--- | Parse /point/ element.
-svl_parse_point :: X.Element -> SVL_SN_PT
-svl_parse_point e =
+-- | Parse dimensions=1=time-instant /point/ element.
+svl_parse_point_d1 :: X.Element -> SVL_PT ()
+svl_parse_point_d1 e = ((read (XML.x_get_attr "frame" e),0),())
+
+-- | Parse dimensions=3=note /point/ element.
+svl_parse_point_d3 :: X.Element -> SVL_PT SVL_NOTE
+svl_parse_point_d3 e =
     ((read (XML.x_get_attr "frame" e)
      ,read (XML.x_get_attr "duration" e))
     ,(read (XML.x_get_attr "value" e)
      ,read (XML.x_get_attr "level" e)
      ,XML.x_get_attr "label" e))
 
-svl_parse_sparse_note :: X.Element -> (SR, T.Wseq FRAME SVL_SN_PT_DATA)
-svl_parse_sparse_note e =
-  let md = svl_get_model_of_type ("sparse","note") e
+svl_parse_sparse :: Maybe String -> (X.Element -> ((FRAME, FRAME), t)) -> X.Element -> (SR, T.Wseq FRAME t)
+svl_parse_sparse st f e =
+  let md = svl_get_model_of_type ("sparse",st) e
       sr = svl_model_sample_rate md
       pt = XML.x_get_elem_set "point" (svl_get_dataset e)
-  in (sr,map svl_parse_point pt)
+  in (sr,map f pt)
 
-svl_load_sparse_note :: FilePath -> IO (SR,T.Wseq FRAME SVL_SN_PT_DATA)
-svl_load_sparse_note = fmap svl_parse_sparse_note . svl_load_err
+svl_load_sparse_note :: FilePath -> IO (SR,T.Wseq FRAME SVL_NOTE)
+svl_load_sparse_note = fmap (svl_parse_sparse (Just "note") svl_parse_point_d3) . svl_load_err
+
+svl_load_sparse_time_instant :: FilePath -> IO (SR,T.Wseq FRAME ())
+svl_load_sparse_time_instant = fmap (svl_parse_sparse Nothing svl_parse_point_d1) . svl_load_err
 
 -- * CSEC/SEC
 
@@ -115,19 +125,21 @@ quantise k n =
 svl_frame_to_csec :: Int -> SR -> Int -> T.CSEC
 svl_frame_to_csec q sr x = quantise q (round (100 * fromIntegral x / sr))
 
-svl_load_sparse_note_tm :: (SR -> FRAME -> t) -> FilePath -> IO (T.Wseq t SVL_SN_PT_DATA)
-svl_load_sparse_note_tm tm_f fn = do
-  (sr,sq) <- svl_load_sparse_note fn
+svl_wseq_to_tm :: (SR -> FRAME -> t) -> (SR,T.Wseq FRAME u) -> T.Wseq t u
+svl_wseq_to_tm tm_f (sr,sq) =
   let bimap1 f (t,u) = (f t,f u)
-  return (T.wseq_tmap (bimap1 (tm_f sr)) sq)
+  in T.wseq_tmap (bimap1 (tm_f sr)) sq
 
-svl_load_sparse_note_csec :: Int -> FilePath -> IO (T.Wseq T.CSEC SVL_SN_PT_DATA)
+svl_load_sparse_note_tm :: (SR -> FRAME -> t) -> FilePath -> IO (T.Wseq t SVL_NOTE)
+svl_load_sparse_note_tm tm_f fn = fmap (svl_wseq_to_tm tm_f) (svl_load_sparse_note fn)
+
+svl_load_sparse_note_csec :: Int -> FilePath -> IO (T.Wseq T.CSEC SVL_NOTE)
 svl_load_sparse_note_csec q = svl_load_sparse_note_tm (svl_frame_to_csec q)
 
 svl_frame_to_sec :: SR -> Int -> T.SEC
 svl_frame_to_sec sr x = round (fromIntegral x / sr)
 
-svl_load_sparse_note_sec :: FilePath -> IO (T.Wseq T.SEC SVL_SN_PT_DATA)
+svl_load_sparse_note_sec :: FilePath -> IO (T.Wseq T.SEC SVL_NOTE)
 svl_load_sparse_note_sec = svl_load_sparse_note_tm svl_frame_to_sec
 
 svl_load_sparse_note_mnn_accum :: (Ord t,Num t) => (SR -> FRAME -> t) -> FilePath -> IO (Bool,T.Tseq t ([Int], [Int], [Int]))
