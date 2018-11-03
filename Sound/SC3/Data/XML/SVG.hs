@@ -8,11 +8,13 @@ import qualified Text.XML.Light as X {- xml -}
 
 import qualified Graphics.SVG.ReadPath as P {- SVGPath -}
 
-import Data.CG.Minus.Plain (R) {- hcg-minus -}
 import Data.CG.Minus.Types {- hcg-minus -}
 import Data.CG.Minus.Core {- hcg-minus -}
 
 import qualified Sound.SC3.Plot as Plot {- hsc3-plot -}
+
+-- | Real number, synonym for 'Double'.
+type R = Double
 
 -- | Make 'X.QName' with @svg@ 'X.qURI'.
 --

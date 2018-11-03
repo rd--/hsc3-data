@@ -11,7 +11,7 @@ import qualified Sound.SC3.Data.Chemistry.POSCAR as POSCAR {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
 
 -- | (atomic-symbol,xyz-coordinate)
-type ATOM = (String,V3 R)
+type ATOM = (String,V3 Double)
 
 -- | (i,j), indicies into ATOM sequence.
 type BOND = (Int,Int)
@@ -48,25 +48,27 @@ sym_radius sym =
   let r = E.covalent_radius (E.atomic_number_err sym)
   in E.picometres_to_angstroms (fromMaybe 250 r)
 
-struct_calculate_bonds :: (R,R) -> STRUCT -> STRUCT
+type TOLERANCE = (Double,Double)
+
+struct_calculate_bonds :: TOLERANCE -> STRUCT -> STRUCT
 struct_calculate_bonds tol (nm,k,dsc,a,_b) =
   (nm,k,dsc,a,map fst (E.calculate_bonds sym_radius tol a))
 
 -- | (minima,maxima) of atoms.
-struct_bounds :: STRUCT -> V2 (V3 R)
+struct_bounds :: STRUCT -> V2 (V3 Double)
 struct_bounds (_,_,_,atm,_) =
   let c = map snd atm
       r = unzip3 c
   in (v3_uop minimum r,v3_uop maximum r)
 
 -- | Apply /f/ at all atom positions.
-struct_v3_map :: (V3 R -> V3 R) -> STRUCT -> STRUCT
+struct_v3_map :: (V3 Double -> V3 Double) -> STRUCT -> STRUCT
 struct_v3_map f (nm,k,dsc,a,b) =
   let (sym,pt) = unzip a
   in (nm,k,dsc,zip sym (map f pt),b)
 
 -- | Translate atom positions so structure is centered at /c/.
-struct_center :: V3 R -> STRUCT -> STRUCT
+struct_center :: V3 Double -> STRUCT -> STRUCT
 struct_center c (nm,k,dsc,a,b) =
   let (sym,pt) = unzip a
   in (nm,k,dsc,zip sym (v3_center_at c pt),b)

@@ -9,7 +9,6 @@ import Safe {- safe -}
 import System.FilePath.Glob {- glob -}
 
 import Data.CG.Minus.Core {- hcg-minus -}
-import Data.CG.Minus.Plain (R) {- hcg-minus -}
 import Data.CG.Minus.Types {- hcg-minus -}
 
 import qualified Music.Theory.Array.CSV as T {- hmt -}
@@ -18,7 +17,7 @@ import qualified Music.Theory.Tuple as T {- hmt -}
 
 import qualified Sound.File.HSndFile as F {- hsc3-sf-hsndfile -}
 
-import Sound.SC3.Lang.Core {- hsc3-lang -}
+import qualified Sound.SC3.Lang.Core as L {- hsc3-lang -}
 
 import qualified Sound.SC3.Plot as P {- hsc3-plot -}
 
@@ -67,7 +66,7 @@ trace_window t = (trace_start_time t,trace_end_time t)
 type Lerp_F t a b = (t -> a -> a -> b)
 
 -- | Synonym for real valued time point.
-type Time = R
+type Time = Double
 
 -- * IO
 
@@ -82,7 +81,7 @@ precisely the indicated number of _data_ channels, ie. /nc/ does not
 include the _temporal_ channel.
 
 -}
-trace_load_sf :: Maybe Int -> FilePath -> IO (Trace Time [R])
+trace_load_sf :: Maybe Int -> FilePath -> IO (Trace Time [Double])
 trace_load_sf nc fn = do
   (h,t:d) <- F.read fn
   trace_assert_nc nc (F.channelCount h - 1)
@@ -92,21 +91,21 @@ trace_to_t2 :: Trace t [n] -> Trace t (n,n)
 trace_to_t2 = map (bimap id T.t2_from_list)
 
 -- | Variant for loading two-channel trace file.
-trace_load_sf2 :: FilePath -> IO (Trace Time (R,R))
+trace_load_sf2 :: FilePath -> IO (Trace Time (Double,Double))
 trace_load_sf2 = fmap trace_to_t2 . trace_load_sf (Just 2)
 
 -- | Variant for set of traces given by 'glob' pattern'.
-trace_load_sf_dir :: Maybe Int -> String -> IO [Trace Time [R]]
+trace_load_sf_dir :: Maybe Int -> String -> IO [Trace Time [Double]]
 trace_load_sf_dir n p = do
   nm <- glob p
   mapM (trace_load_sf n) nm
 
-trace_load_sf2_dir :: String -> IO [Trace Time (R,R)]
+trace_load_sf2_dir :: String -> IO [Trace Time (Double,Double)]
 trace_load_sf2_dir p = do
   nm <- glob p
   mapM trace_load_sf2 nm
 
-trace_load_csv :: Maybe Int -> FilePath -> IO (Trace Time [R])
+trace_load_csv :: Maybe Int -> FilePath -> IO (Trace Time [Double])
 trace_load_csv nc fn = do
   (_,tbl) <- T.csv_table_read (True,',',False,T.CSV_No_Align) read fn
   when (null tbl) (error "trace_load_csv: empty tbl")
@@ -115,7 +114,7 @@ trace_load_csv nc fn = do
   return (zip t (transpose d))
 
 -- > t <- trace_load_csv2 "/home/rohan/sw/hsc3-data/data/csv/trace/b.csv"
-trace_load_csv2 :: FilePath -> IO (Trace Time (R,R))
+trace_load_csv2 :: FilePath -> IO (Trace Time (Double,Double))
 trace_load_csv2 = fmap trace_to_t2 . trace_load_csv (Just 2)
 
 -- * Functor
@@ -149,11 +148,11 @@ trace_locate tr tm =
 --
 -- > trace_neighbours (zip [0..9] ['a'..]) 3.5 == Just ((3.0,'d'),(4.0,'e'))
 trace_neighbours :: (Ord t,Fractional t) => Trace t a -> t -> Maybe ((t,a),(t,a))
-trace_neighbours = either (const Nothing) (Just . fst) .: trace_locate
+trace_neighbours = either (const Nothing) (Just . fst) L..: trace_locate
 
 -- | 'fromJust' of 'trace_neighbours'.
 trace_neighbours_err :: (Fractional t,Ord t) => Trace t a -> t -> ((t,a),(t,a))
-trace_neighbours_err = fromJust .: trace_neighbours
+trace_neighbours_err = fromJust L..: trace_neighbours
 
 -- | Interpolate between to trace points using given interpolation function.
 trace_lerp :: Fractional t => Lerp_F t a b -> t -> (t,a) -> (t,a) -> (t,b)
@@ -176,7 +175,7 @@ trace_lookup_def def lerp_f t n = maybe (n,def) id (trace_lookup lerp_f t n)
 
 -- | 'fromJust' of 'trace_lookup'.
 trace_lookup_err :: (Ord t,Fractional t) => Lerp_F t a b -> Trace t a -> t -> (t,b)
-trace_lookup_err = fromJust .:: trace_lookup
+trace_lookup_err = fromJust L..:: trace_lookup
 
 trace_lookup_seq_asc :: (Ord t,Fractional t) => Lerp_F t a b -> Trace t a -> [t] -> Trace t b
 trace_lookup_seq_asc lerp_f =
@@ -220,7 +219,7 @@ trace_linearise_w n lerp_f t = trace_linearise n lerp_f t (trace_window t)
 --
 -- > plotTable (map (trace_table 1024 lerpn . trace_map fst) t)
 trace_table :: (Ord t,Fractional t) => Int -> Lerp_F t a b -> Trace t a -> [b]
-trace_table = map snd .:: trace_linearise_w
+trace_table = map snd L..:: trace_linearise_w
 
 -- | Variant of 'trace_linearize' assuming /t/ is normalised.
 --
@@ -324,17 +323,17 @@ deinterleave2 = T.t2_from_list . transpose . chunksOf 2
 --
 -- > t <- trace_load_csv2 "/home/rohan/sw/hsc3-data/data/csv/trace/b.csv"
 -- > trace2_plot_3d [t]
-trace2_plot_3d :: [Trace R (R,R)] -> IO ()
+trace2_plot_3d :: P.PNum t => [Trace t (t,t)] -> IO ()
 trace2_plot_3d = P.plotPath . map (map (\(t,(p,q)) -> (t,p,q)))
 
 -- | Two-dimensional plot of two-dimensional traces (/time/ not drawn), ie. 'plotCoord'.
 --
 -- > trace2_plot_2d [t]
-trace2_plot_2d :: [Trace R (R,R)] -> IO ()
+trace2_plot_2d :: P.PNum t => [Trace t (t,t)] -> IO ()
 trace2_plot_2d = P.plotCoord . map (map snd)
 
 -- > trace2_plot_tbl [t]
-trace2_plot_tbl :: [Trace R (R,R)] -> IO ()
+trace2_plot_tbl :: P.PNum t => [Trace t (t,t)] -> IO ()
 trace2_plot_tbl =
     let f t = [trace_map fst t,trace_map snd t]
     in P.plotCoord . concatMap f

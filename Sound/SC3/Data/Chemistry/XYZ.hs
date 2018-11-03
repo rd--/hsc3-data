@@ -10,7 +10,7 @@ import Data.CG.Minus.Plain {- hcg-minus -}
 -- | Allow elided 0 before decimal place.
 --
 -- > map read_r ["-.5",".5"]
-read_r :: String -> R
+read_r :: String -> Double
 read_r s =
   case s of
     '-':'.':s' -> read ('-':'0':'.':s')
@@ -18,7 +18,7 @@ read_r s =
     _ -> read s
 
 -- | (atomic-symbol,xyz-coordinate)
-type ATOM = (String,V3 R)
+type ATOM = (String,V3 Double)
 
 -- | (k = n-atoms,d = description,e = [atom]
 type XYZ = (Int,String,[ATOM])
@@ -46,7 +46,7 @@ xyz_parse_cnt s =
 {- | Each entry describing an atom must contain at least four fields of
 information separated by whitespace: the atom's type and its X, Y, and
 Z positions. -}
-xyz_parse_entry :: String -> String -> (String,(R,R,R))
+xyz_parse_entry :: String -> String -> (String,V3 Double)
 xyz_parse_entry fn s =
   case words s of
     a:x:y:z:_ -> (a,(read_r x,read_r y,read_r z))
@@ -60,7 +60,7 @@ xyz_parse fn s =
     _ -> error ("xyz_parse: " ++ fn)
 
 -- | (minima,maxima) of atoms.
-xyz_bounds :: XYZ -> V2 (V3 R)
+xyz_bounds :: XYZ -> V2 (V3 Double)
 xyz_bounds (_,_,a) =
   let c = map snd a
       r = unzip3 c

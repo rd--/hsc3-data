@@ -13,7 +13,7 @@ mol_read_counts s =
     [a,b,"0","0","0","0","0","0","0","0999","V2000"] -> (read a,read b)
     _ -> error ("mol_read_counts: " ++ s)
 
-mol_read_atom :: String -> (V3 R,String)
+mol_read_atom :: String -> (V3 Double,String)
 mol_read_atom s =
   case words s of
     [x,y,z,a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),a)
@@ -25,7 +25,7 @@ mol_read_bond s =
     [a0,a1,ty,_,_,_,_] -> ((read a0,read a1),read ty)
     _ -> error "mol_read_bond"
 
-type ATOM = (V3 R, String)
+type ATOM = (V3 Double, String)
 type BOND = (V2 Int, Int)
 
 -- | (name,description,atom-count,bond-count,atoms,bonds)
