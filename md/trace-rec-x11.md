@@ -2,11 +2,16 @@
 
 Record trace of X mouse cursor as a three column `CSV` file.  The time
 is in seconds, and the `x` and `y` values are normalised in (0,1).
-The normalisation is _not_ per dimension, so the maximum value will
-not be (1,1) unless the screen is square.
+
+The normalisation is can be:
+
+u = uniform, ie. _not_ per dimension, so the maximum value will not be
+(1,1) unless the screen is square.
+
+n = non-uniform, ie. per dimension, so that the maximum value is (1,1).
 
 ~~~~
-$ hsc3-trace-rec-x11
+$ hsc3-trace-rec-x11 n
 tm,x,y
 0.000,0.398,0.601
 0.007,0.394,0.594

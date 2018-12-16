@@ -4,7 +4,9 @@ import Data.Word {- base -}
 import System.Environment {- base -}
 
 import Sound.OSC.FD {- hosc -}
+
 import Sound.SC3.Data.X11.Ptr {- hsc3-data -}
+
 import qualified Sound.Midi.Type as M {- midi-osc -}
 import qualified Sound.Midi.OSC as M {- midi-osc -}
 
@@ -19,7 +21,7 @@ x11_ptr_to_midi_osc (dt,x_ch,x_cc,y_ch,y_cc) = do
   x11 <- x11_init ":0"
   fd <- openUDP "127.0.0.1" 57150 -- midi-osc
   let recur (rx',ry') = do
-        (rx,ry,x,y,_) <- x11_ptr_raw x11
+        ((rx,ry),_,(x,y),_) <- x11_ptr_raw x11
         when (rx /= rx') (sendMessage fd (to_cc_msg x_ch x_cc x))
         when (ry /= ry') (sendMessage fd (to_cc_msg y_ch y_cc y))
         pauseThread dt
