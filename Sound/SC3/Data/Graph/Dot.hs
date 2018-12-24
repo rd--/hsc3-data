@@ -1,3 +1,4 @@
+-- | DOT/Graph functions.
 module Sound.SC3.Data.Graph.Dot where
 
 import qualified Data.Foldable as F {- base -}
@@ -11,7 +12,7 @@ import qualified Data.GraphViz as GV {- graphviz -}
 import qualified Data.GraphViz.Attributes.Complete as GV {- graphviz -}
 import qualified Data.GraphViz.Types.Generalised as G {- graphviz -}
 
--- | Run dot to insert layout information into graph.
+-- | Run @dot@ to insert layout information into graph.
 --
 -- > g = "graph g {graph[layout=neato]; node[shape=point]; 0 -- 1; 0 -- 2; 0 -- 3;}"
 -- > r <- fmap dg_parse (dot_run_layout g)
@@ -20,23 +21,23 @@ import qualified Data.GraphViz.Types.Generalised as G {- graphviz -}
 dot_run_layout :: String -> IO String
 dot_run_layout = readProcess "dot" ["-T","dot"]
 
--- | 'parseGV.DotGraph' of 'T.pack'.
+-- | 'GV.parseDotGraph' of 'T.pack'.
 dg_parse :: (Ord t,GV.ParseDot t) => String -> G.DotGraph t
 dg_parse = GV.parseDotGraph . T.pack
 
--- | Type specialised.
+-- | Type specialised to 'Int'.
 dg_parse_int :: String -> G.DotGraph Int
 dg_parse_int = GV.parseDotGraph . T.pack
 
--- | 'T.unpack' of 'printGV.DotGraph'.
+-- | 'T.unpack' of 'GV.printDotGraph'.
 dg_print :: (Ord t,GV.PrintDot t) => G.DotGraph t -> String
 dg_print = T.unpack . GV.printDotGraph
 
--- | 'parseGV.DotGraph' of 'T.readFile'.
+-- | 'GV.parseDotGraph' of 'T.readFile'.
 dg_load :: (Ord t,GV.ParseDot t) => FilePath -> IO (G.DotGraph t)
 dg_load = fmap GV.parseDotGraph . T.readFile
 
--- | Type specialised.
+-- | Type specialised to 'Int'.
 dg_load_int :: FilePath -> IO (G.DotGraph Int)
 dg_load_int = dg_load
 
@@ -54,8 +55,11 @@ ds_to_de st =
     G.DE e -> Just e
     _ -> Nothing
 
+-- | Position as (x,y) pair.
+type POS = (Double, Double)
+
 -- | 'Attribute' to position.
-attr_to_pos :: GV.Attribute -> Maybe (Double, Double)
+attr_to_pos :: GV.Attribute -> Maybe POS
 attr_to_pos a =
   case a of
     GV.Pos (GV.PointPos (GV.Point x y _ _)) -> Just (x,y)
@@ -75,13 +79,13 @@ type V t = t
 type E t = (t, t)
 
 -- | 'V' with position.
-type V_pos t = (t, (Double, Double))
+type V_pos t = (t, POS)
 
 -- | Graph of 'V_pos'.
 type GR_pos t = ([V_pos t], [E t])
 
 -- | 'V' with label and position.
-type V_lbl_pos t = (t, (String, (Double, Double)))
+type V_lbl_pos t = (t, (String, POS))
 
 -- | 'GV.DotNode' to 'V_lbl_pos'.
 dn_to_v_lbl_pos :: GV.DotNode t -> V_lbl_pos t
@@ -96,13 +100,19 @@ dn_to_v_lbl_pos n =
 de_to_e :: GV.DotEdge t -> E t
 de_to_e e = (G.fromNode e,G.toNode e)
 
--- | 'GV.DotGraph' to 'V_lbl_pos' graph.
-dg_to_gr_lbl_pos  :: G.DotGraph t -> ([V_lbl_pos t], [E t])
-dg_to_gr_lbl_pos g =
+dg_to_gr_f :: (G.DotNode t -> v) -> G.DotGraph t -> ([v], [E t])
+dg_to_gr_f f g =
   let st = F.toList (G.graphStatements g)
       n = mapMaybe ds_to_dn st
       e = mapMaybe ds_to_de st
-  in (map dn_to_v_lbl_pos n,map de_to_e e)
+  in (map f n,map de_to_e e)
+
+dg_to_gr :: G.DotGraph v -> ([v], [E v])
+dg_to_gr = dg_to_gr_f G.nodeID
+
+-- | 'GV.DotGraph' to 'V_lbl_pos' graph.
+dg_to_gr_lbl_pos  :: G.DotGraph t -> ([V_lbl_pos t], [E t])
+dg_to_gr_lbl_pos = dg_to_gr_f dn_to_v_lbl_pos
 
 -- | 'GV.DotGraph' to 'V_pos' graph.
 dg_to_gr_pos :: G.DotGraph t -> GR_pos t
@@ -112,7 +122,7 @@ dg_to_gr_pos g =
   in (map f n,e)
 
 -- | (min,max) bounds of graph.
-gr_pos_bounds :: GR_pos t -> ((Double,Double),(Double,Double))
+gr_pos_bounds :: GR_pos t -> (POS,POS)
 gr_pos_bounds (v,_) =
   let r = unzip (map snd v)
       bimap f (i,j) = (f i,f j)
