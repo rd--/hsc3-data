@@ -12,16 +12,21 @@ import qualified Data.GraphViz as GV {- graphviz -}
 import qualified Data.GraphViz.Attributes.Complete as GV {- graphviz -}
 import qualified Data.GraphViz.Types.Generalised as G {- graphviz -}
 
--- | Run @dot@ to insert layout information into graph.
---
--- > g = "graph g {graph[layout=neato]; node[shape=point]; 0 -- 1; 0 -- 2; 0 -- 3;}"
--- > r <- fmap dg_parse (dot_run_layout g)
--- > dg_to_gr_pos r
--- > putStrLn (dg_print r)
+{- | Run @dot@ to insert layout information into graph.
+
+> g = "graph g {graph[layout=neato]; node[shape=point]; 0 -- 1; 0 -- 2; 0 -- 3;}"
+> r <- fmap dg_parse (dot_run_layout g)
+> dg_to_gr_pos r
+> putStrLn (dg_print r)
+
+-}
 dot_run_layout :: String -> IO String
 dot_run_layout = readProcess "dot" ["-T","dot"]
 
 -- | 'GV.parseDotGraph' of 'T.pack'.
+--
+-- > let st = [G.DE (G.DotEdge 1 2 []),G.DE (G.DotEdge 2 3 [])]
+-- > F.toList (G.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
 dg_parse :: (Ord t,GV.ParseDot t) => String -> G.DotGraph t
 dg_parse = GV.parseDotGraph . T.pack
 
@@ -78,6 +83,9 @@ type V t = t
 -- | Edge.
 type E t = (t, t)
 
+-- | Graph of 'V' and 'E'.
+type GR t = ([V t],[E t])
+
 -- | 'V' with position.
 type V_pos t = (t, POS)
 
@@ -100,6 +108,9 @@ dn_to_v_lbl_pos n =
 de_to_e :: GV.DotEdge t -> E t
 de_to_e e = (G.fromNode e,G.toNode e)
 
+-- | 'GV.DotGraph' to graph given node to vertex function.
+-- Dot graphs need not contain any node statements.
+-- However graphs that have been annotated with position data have a complete set.
 dg_to_gr_f :: (G.DotNode t -> v) -> G.DotGraph t -> ([v], [E t])
 dg_to_gr_f f g =
   let st = F.toList (G.graphStatements g)
@@ -107,8 +118,11 @@ dg_to_gr_f f g =
       e = mapMaybe ds_to_de st
   in (map f n,map de_to_e e)
 
-dg_to_gr :: G.DotGraph v -> ([v], [E v])
-dg_to_gr = dg_to_gr_f G.nodeID
+-- | 'GV.DotGraph' to 'E' set.
+--
+-- > dg_to_eset (dg_parse "graph {1 -- 2 -- 3}") == [(1,2),(2,3)]
+dg_to_eset :: (Ord t,Eq t) => G.DotGraph t -> [E t]
+dg_to_eset = snd . dg_to_gr_f G.nodeID
 
 -- | 'GV.DotGraph' to 'V_lbl_pos' graph.
 dg_to_gr_lbl_pos  :: G.DotGraph t -> ([V_lbl_pos t], [E t])
