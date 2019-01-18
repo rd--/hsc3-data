@@ -34,12 +34,12 @@ lpcRead :: FilePath -> IO LPC
 lpcRead fn = do
   h <- openFile fn ReadMode
   l <- hFileSize h
-  [hs, lm, np, fs] <- replicateM 4 (read_i32 h)
-  [fr, sr, fd] <- replicateM 3 (read_f32 h)
+  [hs, lm, np, fs] <- replicateM 4 (O.read_i32 h)
+  [fr, sr, fd] <- replicateM 3 (O.read_f32 h)
   let nf = ((fromIntegral l - hs) `div` 4) `div` fs
       hdr = LPCHeader hs lm np fs fr sr fd nf
       hc = hs - (7 * 4)
-      get_f = replicateM fs (read_f32 h)
+      get_f = replicateM fs (O.read_f32 h)
   _ <- B.hGet h hc
   d <- replicateM nf get_f
   hClose h
@@ -53,12 +53,3 @@ lpcSC3 (LPC h d) =
       nf = f (lpcNFrames h)
       fs = f (lpcFrameSize h)
   in np : nf : fs : concat (transpose d)
-
-read_decode :: Int -> (B.ByteString -> t) -> Handle -> IO t
-read_decode n f h = liftM f (B.hGet h n)
-
-read_i32 :: Handle -> IO Int
-read_i32 = read_decode 4 O.decode_i32
-
-read_f32 :: Handle -> IO Float
-read_f32 = read_decode 4 O.decode_f32
