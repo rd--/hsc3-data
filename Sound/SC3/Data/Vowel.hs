@@ -32,7 +32,7 @@ fdata v i =
 
 -}
 formants :: Fdata n -> [(n,n,n)]
-formants (_,_,f,a,bw) = map triple' (transpose [f,a,bw])
+formants (_,_,f,a,bw) = map t3_from_list (transpose [f,a,bw])
 
 -- * Data types
 
@@ -188,17 +188,5 @@ fdata_table_sz = length (fdata_table :: [Fdata Int])
 
 -- * Tuple/List functions
 
--- | Construct a triple from a three element list.
---
--- > triple [1..3] == Just (1,2,3)
-triple :: [a] -> Maybe (a,a,a)
-triple x =
-    case x of
-      [p,q,r] -> Just (p,q,r)
-      _ -> Nothing
-
--- | Partial variant of 'triple'.
---
--- > triple' [1..3] == (1,2,3)
-triple' :: [a] -> (a,a,a)
-triple' = fromJust . triple
+t3_from_list :: [a] -> (a,a,a)
+t3_from_list l = case l of {[p,q,r] -> (p,q,r);_ -> error "t3_from_list"}

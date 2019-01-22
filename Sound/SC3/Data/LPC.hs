@@ -9,14 +9,14 @@ import System.IO {- base -}
 import qualified Sound.OSC.Coding.Byte as O {- hosc -}
 
 -- | LPC analysis meta-data.
-data LPCHeader = LPCHeader { lpcHeaderSize :: Int -- ^ 28 (0x001C)
-                           , lpcMagic :: Int -- ^ 999 (0x03E7)
-                           , lpcNPoles :: Int
-                           , lpcFrameSize :: Int
-                           , lpcFrameRate :: Float
-                           , lpcSampleRate :: Float
-                           , lpcAnalysisDuration :: Float
-                           , lpcNFrames :: Int
+data LPCHeader = LPCHeader { lpcHeaderSize :: Int -- ^ bytes, 28 (0x001C)
+                           , lpcMagic :: Int -- ^ uid, 999 (0x03E7)
+                           , lpcNPoles :: Int -- ^ number of filter poles
+                           , lpcFrameSize :: Int -- ^ element count (4 + nPoles)
+                           , lpcFrameRate :: Float -- ^ frames-per-second
+                           , lpcSampleRate :: Float -- ^ samples-per-second
+                           , lpcAnalysisDuration :: Float -- ^ seconds
+                           , lpcNFrames :: Int -- ^ frame-count (ie. duration * frame-rate)
                            } deriving (Eq, Show)
 
 -- | LPC analysis frame data.
@@ -36,6 +36,7 @@ lpcRead fn = do
   l <- hFileSize h
   [hs, lm, np, fs] <- replicateM 4 (O.read_i32 h)
   [fr, sr, fd] <- replicateM 3 (O.read_f32 h)
+  when (fs /= 4 + np) (error "lpcRead: illegal frame-size")
   let nf = ((fromIntegral l - hs) `div` 4) `div` fs
       hdr = LPCHeader hs lm np fs fr sr fd nf
       hc = hs - (7 * 4)
