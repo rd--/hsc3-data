@@ -1,8 +1,16 @@
+J=$(HOME)/rd/j
 P=$(HOME)/data/chemistry
 Q=$(HOME)/sw/hsc3-data/data/chemistry
 
-ln-local:
-	rm -f $(Q)/aflow/poscar $(Q)/cls/xyz $(Q)/mp/poscar
+ln-cls:
+	mkdir -p $(Q)/cls
+	rm -f $(Q)/cls/xyz
+	ln -s $(J)/2018-09-26/xyz $(Q)/cls/xyz
+
+ln-aflow:
+	rm -f $(Q)/aflow/poscar
 	ln -s $(P)/aflow/poscar $(Q)/aflow
-	ln -s $(P)/cls/xyz $(Q)/cls
+
+ln-mp:
+	rm -f $(Q)/mp/poscar
 	ln -s $(P)/mp/poscar $(Q)/mp
