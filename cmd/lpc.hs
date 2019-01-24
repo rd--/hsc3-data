@@ -3,7 +3,7 @@ import Data.List {- base -}
 import System.Environment {- base -}
 import Numeric {- base -}
 
-import Sound.SC3.Data.LPC {- hsc3-data -}
+import qualified Sound.SC3.Data.LPC as LPC {- hsc3-data -}
 
 help :: [String]
 help =
@@ -24,27 +24,27 @@ float_pp k n = showFFloat (Just k) n ""
 
 lpc_print_header :: FilePath -> IO ()
 lpc_print_header fn = do
-  lpc <- lpcRead fn
-  let hdr = lpcHeader lpc
+  lpc <- LPC.lpcRead fn
+  let hdr = LPC.lpcHeader lpc
   putStrLn (record_pp hdr)
 
 lpc_print_frame_csv :: Int -> FilePath -> Int -> IO ()
 lpc_print_frame_csv k fn n = do
-  lpc <- lpcRead fn
-  let hdr = lpcHeader lpc
-  when (n >= lpcNFrames hdr) (error "lpc: n > nframes")
-  let frm = lpcFrames lpc !! n
-  when (length frm /= lpcFrameSize hdr) (error "lpc: framesize?")
+  lpc <- LPC.lpcRead fn
+  let hdr = LPC.lpcHeader lpc
+  when (n >= LPC.lpcNFrames hdr) (error "lpc: n > nframes")
+  let frm = LPC.lpcFrames lpc !! n
+  when (length frm /= LPC.lpcFrameSize hdr) (error "lpc: framesize?")
   putStrLn (intercalate "," (map (float_pp k) frm))
 
 lpc_print_column_csv :: Int -> FilePath -> Int -> IO ()
 lpc_print_column_csv k fn n = do
-  lpc <- lpcRead fn
-  let hdr = lpcHeader lpc
-      frm = lpcFrames lpc
-  when (n >= lpcFrameSize hdr) (error "lpc: n > frame_size")
+  lpc <- LPC.lpcRead fn
+  let hdr = LPC.lpcHeader lpc
+      frm = LPC.lpcFrames lpc
+  when (n >= LPC.lpcFrameSize hdr) (error "lpc: n > frame_size")
   let col = transpose frm !! n
-  when (length col /= lpcNFrames hdr) (error "lpc: n_frames?")
+  when (length col /= LPC.lpcNFrames hdr) (error "lpc: n_frames?")
   putStrLn (intercalate "," (map (float_pp k) col))
 
 main :: IO ()

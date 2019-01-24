@@ -1,4 +1,6 @@
 -- | Reader for LPC analysis data files.
+--
+-- <http://www.csounds.com/manual/html/lpanal.html>
 module Sound.SC3.Data.LPC where
 
 import Control.Monad {- base -}
@@ -29,7 +31,7 @@ data LPC = LPC { lpcHeader :: LPCHeader
                , lpcFrames :: [LPCFrame] }
            deriving (Eq, Show)
 
--- | Read an lpanal format LPC data file.
+-- | Read a lpanal binary format LPC data file.
 lpcRead :: FilePath -> IO LPC
 lpcRead fn = do
   h <- openFile fn ReadMode
