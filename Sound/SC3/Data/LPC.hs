@@ -32,6 +32,7 @@ data LPC = LPC { lpcHeader :: LPCHeader
            deriving (Eq, Show)
 
 -- | Read a lpanal binary format LPC data file.
+--   rms2 and rms2 are /not/ normalised.
 lpcRead :: FilePath -> IO LPC
 lpcRead fn = do
   h <- openFile fn ReadMode
@@ -48,11 +49,26 @@ lpcRead fn = do
   hClose h
   return (LPC hdr d)
 
+-- | Normalise rms2 signal.
+rms2_normalise :: [Float] -> [Float]
+rms2_normalise x = let m = recip (maximum x) in map (* m) x
+
+-- | Normalise rms1 signal.
+rms1_normalise :: Int -> [Float] -> [Float]
+rms1_normalise nPoles x = let m = recip (maximum x * fromIntegral nPoles) in map (* m) x
+
+-- | Transpose and normalise LPC frame data.
+lpc_sc3_data :: Int -> [[Float]] -> [[Float]]
+lpc_sc3_data np d =
+  let rms2:rms1:rest = transpose d
+  in rms2_normalise rms2 : rms1_normalise np rms1 : rest
+
 -- | Analysis data in format required by the SC3 LPC UGens.
+--   Normalises rms2 and rms1 before packing.
 lpcSC3 :: LPC -> [Float]
 lpcSC3 (LPC h d) =
-  let f = fromIntegral
-      np = f (lpcNPoles h)
-      nf = f (lpcNFrames h)
-      fs = f (lpcFrameSize h)
-  in np : nf : fs : concat (transpose d)
+  let flt = fromIntegral
+      np = lpcNPoles h
+      nf = lpcNFrames h
+      fs = lpcFrameSize h
+  in flt np : flt nf : flt fs : concat (lpc_sc3_data np d)
