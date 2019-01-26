@@ -152,16 +152,17 @@ pvoc_vec_f32_bin (hdr,(_,nf,vec)) (ch,bin) =
 
 {-
 
-import Sound.SC3.Plot {- hsc3-plot -}
-
-let fn = "/home/rohan/data/audio/pf-c5.pvx"
+let fn = "/home/rohan/uc/invisible/clarity/pvx/z.01.pvx"
 
 pv <- pvoc_load_vec_f32 fn
+((hdr1,hdr2),(n,nf,v)) = pv
+putStrLn (fmt_pvoc_80_pp hdr2)
 
-let f b = let p = V.toList (pvoc_vec_f32_bin pv (0,b))
-          in map (\((a,f),i) -> (f,fromIntegral i,a)) (zip p [0..])
+fmt ((a,f),i) = (f,fromIntegral i,a)
+gen b = let p = V.toList (pvoc_vec_f32_bin pv (0,b)) in map fmt (zip p [0..])
 
-plot_p3_ln (map f [12 .. 36])
+import Sound.SC3.Plot {- hsc3-plot -}
+plot_p3_ln (map gen [12 .. 24])
 
 -}
 

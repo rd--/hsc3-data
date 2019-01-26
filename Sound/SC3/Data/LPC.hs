@@ -72,7 +72,7 @@ endian_to_readers e =
     BigEndian -> (O.read_i32,O.read_f32)
 
 -- | Read a lpanal binary format LPC data file.
---   rms2 and rms2 are /not/ normalised.
+--   RMS2 and RMS1 are /not/ normalised.
 lpc_read_binary :: Endian -> FilePath -> IO LPC
 lpc_read_binary e fn = do
   let (read_i32,read_f32) = endian_to_readers e
@@ -93,32 +93,32 @@ lpc_read_binary e fn = do
 
 -- * SC3
 
--- | Normalise rms2 signal.
-rms2_normalise :: [Float] -> [Float]
-rms2_normalise x = let m = recip (maximum x) in map (* m) x
-
--- | Normalise rms1 signal.
-rms1_normalise :: Int -> [Float] -> [Float]
-rms1_normalise nPoles x = let m = recip (maximum x * fromIntegral nPoles) in map (* m) x
+-- | Normalise Float signal.
+f32_normalise :: [Float] -> [Float]
+f32_normalise x = let m = recip (maximum x) in map (* m) x
 
 -- | Transpose and normalise LPC frame data.
-lpc_sc3_data :: Int -> [[Float]] -> [[Float]]
-lpc_sc3_data np d =
+lpc_sc3_data :: [[Float]] -> [[Float]]
+lpc_sc3_data d =
   let rms2:rms1:rest = transpose d
-  in rms2_normalise rms2 : rms1_normalise np rms1 : rest
+  in f32_normalise rms2 : f32_normalise rms1 : rest
 
 -- | Analysis data in format required by the SC3 LPC UGens.
 --   Normalises rms2 and rms1 before packing.
 lpcSC3 :: LPC -> [Float]
 lpcSC3 (LPC h d) =
-  let flt = fromIntegral
+  let to_f32 = fromIntegral
       np = lpcNPoles h
       nf = lpcNFrames h
       fs = lpcFrameSize h
-  in flt np : flt nf : flt fs : concat (lpc_sc3_data np d)
+  in to_f32 np : to_f32 nf : to_f32 fs : concat (lpc_sc3_data d)
 
 {-
-fn = "/home/rohan/uc/invisible/clarity/flac/z.01.lpc"
+fn = "/home/rohan/uc/invisible/clarity/lpc/z.01.lpc"
 lpc <- lpc_read_text fn
-lpcHeader lpc
+hdr = lpcHeader lpc
+rms2:rms1:errn:cps:_ = transpose (lpcFrames lpc)
+rms2:rms1:errn:cps:_ = lpc_sc3_data (lpcFrames lpc)
+import qualified Music.Theory.List as T
+map T.minmax [rms2,rms1,errn,cps]
 -}
