@@ -26,6 +26,7 @@ Library
                    containers,
                    directory,
                    filepath,
+                   FloatingHex,
                    Glob,
                    graphviz,
                    hcg-minus == 0.18.*,
