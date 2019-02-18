@@ -53,7 +53,8 @@ Library
                    unordered-containers,
                    vector,
                    X11,
-                   xml
+                   xml,
+                   zmidi-core
   GHC-Options:     -Wall -fwarn-tabs
   Exposed-modules: Sound.SC3.Data.Array.CSV
                    Sound.SC3.Data.ATS
@@ -89,6 +90,8 @@ Library
                    Sound.SC3.Data.Math.Sprott_1993a
                    Sound.SC3.Data.Math.Weaire_Phelan
                    Sound.SC3.Data.Midi.Arturia.BS
+                   Sound.SC3.Data.Midi.File.C
+                   Sound.SC3.Data.Midi.File.Z
                    Sound.SC3.Data.Midi.Plain
                    Sound.SC3.Data.Modal
                    Sound.SC3.Data.PVOC

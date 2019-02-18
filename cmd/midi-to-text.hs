@@ -58,15 +58,19 @@ gen_csv tbl =
 load_midi :: FilePath -> IO C.Midi
 load_midi m_fn = do
   r <- C.importFile m_fn
-  return (either (error "midi_to_text: read failed") id r)
+  return (either (\err -> error ("midi_to_text: read failed: " ++ err)) id r)
 
--- > let m_fn = "/home/rohan/sw/rsc3-midi/help/1080-C01.midi" in midi_to_csv m_fn
+-- > fn = "/home/rohan/sw/rsc3-midi/help/1080-C01.midi"
+-- > fn = "/home/rohan/k175.midi"
+-- > fn = "/home/rohan/bwv-1080-1.midi"
+-- > midi_to_csv fn
 midi_to_csv :: FilePath -> IO ()
 midi_to_csv m_fn = do
   m <- load_midi m_fn
   let tbl = concatMap (track_to_text) (zip [0..] (map C.toAbsTime (C.tracks m)))
   putStrLn (gen_csv tbl)
 
+-- > midi_header fn
 midi_header :: FilePath -> IO ()
 midi_header m_fn = do
   m <- load_midi m_fn
