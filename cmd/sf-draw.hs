@@ -30,7 +30,7 @@ vec_ix sym h ch nc vec i =
 
 sf_draw_plain :: (Bool,Bool,Bool,Bool,Bool) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
-  (hdr,vec') <- SF.read_vec' sf_fn
+  (hdr,vec') <- SF.read_vec_f64 sf_fn
   let vec = ((if sym then V.map abs else id) .
              (if inv then id else V.map negate) .
              (if nrm then vec_normalise_h hlf else id) .
@@ -44,7 +44,7 @@ sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
 
 sf_draw_table :: (Double,Double) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_table (l,r) h ch sf_fn pbm_fn = do
-  (hdr,vec') <- SF.read_vec' sf_fn
+  (hdr,vec') <- SF.read_vec_f64 sf_fn
   let vec = V.map (M.linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
       nc = SF.channelCount hdr
       nf = SF.frameCount hdr

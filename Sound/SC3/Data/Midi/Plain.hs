@@ -44,7 +44,7 @@ add_track_end :: T.Tseq t C.Message -> T.Tseq t C.Message
 add_track_end tr = tr ++ [(fst (last tr),C.TrackEnd)]
 
 write_midi0_opt :: Maybe Int -> Maybe (Int,Int) -> FilePath -> [SEQ] -> IO ()
-write_midi0_opt m_tc m_ts fn = File.C.write_midi0_opt m_tc m_ts fn . map (concatMap note_to_midi)
+write_midi0_opt m_tc m_ts fn = File.C.c_write_midi0_opt m_tc m_ts fn . map (concatMap note_to_midi)
 
 -- | Write Type-0 midi file, tempo is 60, time signature is 4/4.
 write_midi0 :: FilePath -> [SEQ] -> IO ()
@@ -68,7 +68,7 @@ track_to_wseq =
 -- everything except note on and off messages.
 read_midi :: FilePath -> IO [SEQ]
 read_midi fn = do
-  m <- File.C.read_midi fn
+  m <- File.C.c_read_midi fn
   return (filter (not . null) (map track_to_wseq m))
 
 -- * CSV

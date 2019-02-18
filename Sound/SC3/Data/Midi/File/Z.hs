@@ -17,7 +17,7 @@ import qualified ZMidi.Core as Z {- zmidi-core -}
 z_load_midi :: FilePath -> IO Z.MidiFile
 z_load_midi fn = do
   r <- Z.readMidi fn
-  return (either (\err -> error ("load_midi: read failed: " ++ show err)) Z.canonical r)
+  return (either (\err -> error ("z_load_midi: read failed: " ++ show err)) Z.canonical r)
 
 -- | 'Z.DeltaTime' to 'Word32'
 z_delta_time_to_word32 :: Z.DeltaTime -> Word32
