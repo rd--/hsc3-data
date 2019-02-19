@@ -1,6 +1,6 @@
 /*
 
-DX7 SYSEX files have some fields bit-packed.
+DX7 FORMAT=9 SYSEX files have some fields bit-packed.
 
 dx7-unpack can unpack and repack files.
 
@@ -10,6 +10,8 @@ dx7-unpack repack reads text input as written by unpack and writes binary sysex 
 
 http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt
 http://sourceforge.net/u/tedfelix/dx7dump/
+
+gcc-8.2.0 -O3 : unpack->repack is not identity, -O works
 
 */
 
@@ -22,6 +24,7 @@ http://sourceforge.net/u/tedfelix/dx7dump/
 typedef unsigned char u8;
 typedef uint64_t u64;
 
+/* 21 operator parameters (0 - 20) packed into 17 bytes */
 struct operator_packed
 {
     u8 op_00_10[11];
@@ -33,6 +36,7 @@ struct operator_packed
     u8 op_19;
 };
 
+/* (17 * 6) + 16 + 10 = 128 ; 19 shared parameters (126 - 144) packed into 16 bytes */
 struct voice_packed
 {
     struct operator_packed op[6];
@@ -45,6 +49,7 @@ struct voice_packed
     u8 vc_145_154[10];
 };
 
+/* DX7 FORMAT=9 SYSEX ; 6 + (32 * 128) + 2 = 4104 */
 struct dx7_sysex
 {
     u8 sy_begin[6];
@@ -57,9 +62,9 @@ u8 dx7_sy_begin[6] = {0xF0,0x43,0x00,0x09,0x20,0x00};
 u8 dx7_checksum(u8 *p)
 {
     u8 sum = 0;
-    for (int i = 0; i < (4104 - 8); ++i) {
+    for (int i = 0; i < 4096; ++i) {
         sum += (p[i] & 0x7F);
-   }
+    }
     sum = (~sum) + 1;
     sum &= 0x7F;
     return sum;
@@ -83,13 +88,13 @@ void dx7_verify(struct dx7_sysex *sysex)
     verify_eq_u8("09",sysex->sy_begin[3],0x09);
     verify_eq_u8("20",sysex->sy_begin[4],0x20);
     verify_eq_u8("00",sysex->sy_begin[5],0x00);
-    verify_eq_u8("CS",dx7_checksum((u8 *)sysex->vc),sysex->sy_end[0]);
+    verify_eq_u8("CS",sysex->sy_end[0],dx7_checksum((u8 *)sysex->vc));
     verify_eq_u8("F7",sysex->sy_end[1],0xF7);
 }
 
 void unpack_operator(struct operator_packed o,u8 *b)
 {
-    memcpy(b,o.op_00_10,11);
+    memcpy(b,o.op_00_10,11); /* b[0-10] are copied directly */
     b[11] = o.op_11;
     b[12] = o.op_12;
     b[13] = o.op_13;
@@ -105,7 +110,7 @@ void unpack_operator(struct operator_packed o,u8 *b)
 struct operator_packed pack_operator(u8 *b)
 {
     struct operator_packed o;
-    memcpy(&(o.op_00_10),b,11);
+    memcpy(&(o.op_00_10),b,11); /* b[0-10] are copied directly */
     o.op_11 = b[11];
     o.op_12 = b[12];
     o.op_13 = b[13];
@@ -119,7 +124,7 @@ struct operator_packed pack_operator(u8 *b)
     return o;
 }
 
-/* 155 = 6 * 21 + 29 ; 6 * 21 = 126 */
+/* 6 * 21 = 126 ; 126 + 29 = 155 */
 void unpack_voice(struct voice_packed v,u8 *b)
 {
     for (int i = 0;i < 6;i ++) {
@@ -176,10 +181,10 @@ struct dx7_sysex pack_dx7_sysex(u8 *b)
     return s;
 }
 
-void print_u8_as_hex(u8 *b,int n)
+void print_u8_as_hex(FILE *fp,u8 *b,int n)
 {
     for(int i = 0;i < n;i ++) {
-	printf("%02X%c",b[i],i % 16 == 15 ? '\n' : ' ');
+	fprintf(fp,"%02X%c",b[i],i % 16 == 15 ? '\n' : ' ');
     }
 }
 
@@ -218,7 +223,7 @@ void do_unpack(char *fn,bool opt_in_binary,bool opt_out_binary)
     if(opt_out_binary) {
         fwrite(data,1,4960,stdout);
     } else {
-        print_u8_as_hex(data,4960);
+        print_u8_as_hex(stdout,data,4960);
     }
 }
 
@@ -239,13 +244,13 @@ void do_repack(char *fn,bool opt_in_binary,bool opt_out_binary)
         size_t err = fwrite(&sysex, 1, 4104, stdout);
         fail_if(err != 4104,"FWRITE");
     } else {
-        print_u8_as_hex((u8*)&sysex,4104);
+        print_u8_as_hex(stdout,(u8*)&sysex,4104);
     }
 }
 
 int main(int argc, char *argv[])
 {
-    fail_if(argc < 4 || argc > 5,"dx7-unpack pack|unpack text|binary text|binary [sysex-file]");
+    fail_if(argc < 4 || argc > 5,"dx7-unpack unpack|repack text|binary text|binary [sysex-file]");
     verify_eq("OP",sizeof(struct operator_packed),17);
     verify_eq("VC",sizeof(struct voice_packed),128);
     verify_eq("SYSEX",sizeof(struct dx7_sysex),4104);

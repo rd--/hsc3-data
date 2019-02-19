@@ -16,8 +16,9 @@ cmd =	ats au-to-pbm au-to-pgm \
 
 include ~/sw/hsc3/mk/cmd.mk
 
+# gcc-8.2.0 -O3 indicates no errors but unpack -> repack is not identity, -O works
 dx7-unpack: dx7-unpack.c
-	gcc -Wall -std=c99 -O3 -o dx7-unpack dx7-unpack.c
+	gcc -Wall -std=c99 -O -o dx7-unpack dx7-unpack.c
 
 # VST
 

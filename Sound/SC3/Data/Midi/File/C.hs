@@ -17,22 +17,22 @@ import qualified Sound.Midi.Type as M {- midi-osc -}
 -- | Translate pulses per minute to micro seconds per quarter note.
 --
 -- > map ppm_to_mspqn [60,120,240] == [10^6,5*10^5,25*10^4]
-ppm_to_mspqn :: Int -> Int
+ppm_to_mspqn :: Integral t => t -> t
 ppm_to_mspqn ppm =
     let microseconds_per_minute = 60000000
     in microseconds_per_minute `div` ppm
 
 -- | Table mapping time signature denominator to MIDI notation.
-ts_denominator_tbl :: [(Int,Int)]
+ts_denominator_tbl :: Num t => [(t,t)]
 ts_denominator_tbl = [(1,0),(2,1),(4,2),(8,3),(16,4),(32,5),(64,6)]
 
-mk_denominator :: Int -> Int
+mk_denominator :: (Num t,Eq t) => t -> t
 mk_denominator d = T.lookup_err d ts_denominator_tbl
 
 -- | Tempo change, given in pulses per minute.
 --
 -- > mk_tempo_change 60 == C.TempoChange (10^6)
-mk_tempo_change :: Int -> C.Message
+mk_tempo_change :: C.Tempo -> C.Message
 mk_tempo_change = C.TempoChange . ppm_to_mspqn
 
 -- | Make time signature with default values for ticks-per-pulse and 1/32-per-1/4.
@@ -51,6 +51,8 @@ mk_time_signature (nn,d) =
 add_track_end :: T.Tseq t C.Message -> T.Tseq t C.Message
 add_track_end tr = tr ++ [(fst (last tr),C.TrackEnd)]
 
+-- | Write FMT-0 midi file.  The time-division is 1024.  Initial
+-- tempo-change and time-signature meta data can be written.
 c_write_midi0_opt :: Maybe Int -> Maybe (Int,Int) -> FilePath -> [T.Tseq C.Time C.Message] -> IO ()
 c_write_midi0_opt m_tc m_ts fn sq =
     let ft = C.SingleTrack
@@ -58,9 +60,11 @@ c_write_midi0_opt m_tc m_ts fn sq =
         pre = catMaybes [fmap mk_tempo_change m_tc
                         ,fmap mk_time_signature m_ts]
         m = map (\x -> (0,x)) pre ++ concat sq
-        t = C.fromRealTime tf . C.fromAbsTime . add_track_end . sortOn fst $ m
-    in C.exportFile fn (C.Midi ft tf [t])
+        mk_t = C.fromRealTime tf . C.fromAbsTime . add_track_end . sortOn fst
+    in C.exportFile fn (C.Midi ft tf [mk_t m])
 
+-- | Erroring variant of 'C.importFile'.
+--
 -- > fn = "/home/rohan/sw/hsc3-data/data/midi/BWV-1080-1.midi"
 -- > m <- c_load_midi fn
 c_load_midi :: FilePath -> IO C.Midi
@@ -85,6 +89,7 @@ c_read_midi fn = do
 
 -- * HEADER
 
+-- | MIDI header, (file-type, time-div, track-count).
 c_midi_header :: C.Midi -> (Int,Int,Int)
 c_midi_header m =
   (c_file_type (C.fileType m)
