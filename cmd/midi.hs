@@ -9,6 +9,7 @@ import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
 import qualified Sound.SC3.Data.Midi.File.C as File.C {- hsc3-data -}
+import qualified Sound.SC3.Data.Midi.Plain as Plain {- hsc3-data -}
 
 node_to_text :: Int -> (Int,C.Message) -> [String]
 node_to_text n (t,m) =
@@ -29,15 +30,12 @@ gen_csv tbl =
       tbl' = map (pad_right "" w) tbl
   in T.csv_table_pp id (False,',',False,T.CSV_Align_Right) (Nothing,tbl')
 
--- > fn = "/home/rohan/sw/hsc3-data/data/midi/BWV-1080-1.midi"
--- > midi_to_csv fn
-midi_to_csv :: FilePath -> IO ()
-midi_to_csv m_fn = do
+midi_to_csv_text :: FilePath -> IO ()
+midi_to_csv_text m_fn = do
   m <- File.C.c_load_midi m_fn
   let tbl = concatMap (track_to_text) (zip [0..] (map C.toAbsTime (C.tracks m)))
   putStrLn (gen_csv tbl)
 
--- > midi_header fn
 midi_header :: FilePath -> IO ()
 midi_header m_fn = do
   m <- File.C.c_load_midi m_fn
@@ -46,10 +44,39 @@ midi_header m_fn = do
   print ("time-div",t_div)
   print ("number-of-tracks",n)
 
+midi_to_csv_mnd :: FilePath -> FilePath -> IO ()
+midi_to_csv_mnd midi_fn csv_fn = do
+  sq <- Plain.read_midi midi_fn
+  Plain.write_csv_mnd csv_fn sq
+
+usage :: [String]
+usage =
+  ["hsc3-midi"
+  ,""
+  ,"  midi-header midi-file"
+  ,"  midi-to-csv-mnd midi-file csv-file"
+  ,"  midi-to-csv-text midi-file"
+  ]
+
 main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["header",m_fn] -> midi_header m_fn
-    ["csv",m_fn] -> midi_to_csv m_fn
-    _ -> putStrLn "midi-to-text {header | csv} midi-file"
+    ["midi-header",midi_fn] -> midi_header midi_fn
+    ["midi-to-csv-mnd",midi_fn,csv_fn] -> midi_to_csv_mnd midi_fn csv_fn
+    ["midi-to-csv-text",midi_fn] -> midi_to_csv_text midi_fn
+    _ -> putStrLn (unlines usage)
+
+{-
+
+let midi_fn = "/home/rohan/data/midi/scarlatti/sankey/K175.MID"
+midi_to_csv midi_fn
+midi_header midi_fn
+
+let midi_fn = "/home/rohan/sw/hsc3-data/data/midi/BWV-1080-1.midi"
+let csv_fn = "/home/rohan/sw/hmt/data/csv/mnd/1080-C01.csv"
+midi_to_csv_mnd midi_fn csv_fn
+
+midi_to_csv_mnd "/home/rohan/data/midi/scarlatti/sankey/K175.MID" "/dev/stdout"
+
+-}
