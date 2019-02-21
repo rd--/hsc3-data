@@ -281,7 +281,7 @@ dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 
 dx7_voice_pp :: DX7_Voice -> [String]
 dx7_voice_pp p =
-  let p_ix = concat [replicate 6 dx7_op_nparam
+  let p_ix = concat [replicate 6 dx7_op_nparam :: [Int]
                     ,[dx7_sh_nparam,dx7_name_nchar]]
       p_grp = Split.splitPlaces p_ix p
   in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (u8_at p_grp 6)

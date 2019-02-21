@@ -10,17 +10,23 @@ import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7
 
 -- * UTIL
 
+digit_to_u8 :: Char -> U8
+digit_to_u8 = fromIntegral . digitToInt
+
+u8_to_digit :: U8 -> Char
+u8_to_digit = intToDigit . fromIntegral
+
 -- | Parse two digit number, ie. in 0-99.
 --
 -- > u8_parse_c2 ('3','2') == 32
 u8_parse_c2 :: (Char,Char) -> U8
-u8_parse_c2 (c1,c2) = digitToInt c1 * 10 + digitToInt c2
+u8_parse_c2 (c1,c2) = digit_to_u8 c1 * 10 + digit_to_u8 c2
 
 -- | Inverse of 'u8_parse_c2'.
 --
 -- > map (u8_parse_c2 . u8_pp_c2) [0 .. 99] == [0 .. 99]
 u8_pp_c2 :: U8 -> (Char, Char)
-u8_pp_c2 n = let (p,q) = n `divMod` 10 in (intToDigit p,intToDigit q)
+u8_pp_c2 n = let (p,q) = n `divMod` 10 in (u8_to_digit p,u8_to_digit q)
 
 -- * AFX
 
