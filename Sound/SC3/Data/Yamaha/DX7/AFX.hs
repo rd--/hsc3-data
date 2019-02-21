@@ -5,8 +5,8 @@ import Data.Char {- base -}
 
 import qualified Data.ByteString.Char8 as B {- bytestring -}
 
-import Sound.SC3.Data.Yamaha.DX7
-import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7
+import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
+import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7 {- hsc3-data -}
 
 -- * UTIL
 
@@ -75,7 +75,7 @@ afx_store fn = writeFile fn . unlines . map afx_pp
 
 > import qualified Music.Theory.List as T {- hmt -}
 > let n = dx7_parameter_index "ALGORITHM #"
-> T.histogram (map (!! n) d)
+> T.histogram (map (`u8_at` n) d)
 
 -}
 afx_load_dx7 :: FilePath -> IO [DX7_Voice]
