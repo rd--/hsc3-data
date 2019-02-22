@@ -40,8 +40,8 @@ z_to_rq t_div t =
 
 -- * VOICE
 
--- | Translate from 'Z.MidiVoiceEvent' to 'M.Midi_Message'.
-z_parse_midi_voice_event :: Z.MidiVoiceEvent -> M.Midi_Message Word8
+-- | Translate from 'Z.MidiVoiceEvent' to 'M.Channel_Voice_Message'.
+z_parse_midi_voice_event :: Z.MidiVoiceEvent -> M.Channel_Voice_Message Word8
 z_parse_midi_voice_event e =
   case e of
     Z.NoteOff st d1 d2 -> M.Note_Off (M.status_ch st) d1 d2
@@ -54,23 +54,23 @@ z_parse_midi_voice_event e =
       let (d1,d2) = M.bits_14_sep (z_word14_to_word16 d)
       in M.Pitch_Bend (M.status_ch st) d1 d2
 
--- | Parse voice message at 'Z.MidiMessage' to 'M.Midi_Message'.
-z_parse_midi_message :: Z.MidiMessage -> Maybe (Z.DeltaTime,M.Midi_Message Word8)
+-- | Parse voice message at 'Z.MidiMessage' to 'M.Channel_Voice_Message'.
+z_parse_midi_message :: Z.MidiMessage -> Maybe (Z.DeltaTime,M.Channel_Voice_Message Word8)
 z_parse_midi_message (t,e) =
   case e of
     Z.VoiceEvent _ v -> Just (t,z_parse_midi_voice_event v)
     _ -> Nothing
 
 -- | Parse voice messages at 'Z.MidiTrack'.
-z_parse_midi_track :: Z.MidiTrack -> T.Iseq Z.DeltaTime (M.Midi_Message Word8)
+z_parse_midi_track :: Z.MidiTrack -> T.Iseq Z.DeltaTime (M.Channel_Voice_Message Word8)
 z_parse_midi_track = mapMaybe z_parse_midi_message . Z.getTrackMessages
 
 -- | 'z_parse_midi_track' Voice messages per-track.
-z_parse_midi_file :: Z.MidiFile -> [T.Iseq Z.DeltaTime (M.Midi_Message Word8)]
+z_parse_midi_file :: Z.MidiFile -> [T.Iseq Z.DeltaTime (M.Channel_Voice_Message Word8)]
 z_parse_midi_file = map z_parse_midi_track . Z.mf_tracks
 
 -- | 'T.iseq_to_tseq' of 'z_parse_midi_file'
-z_parse_midi_file_abs :: Z.MidiFile -> [T.Tseq Word64 (M.Midi_Message Word8)]
+z_parse_midi_file_abs :: Z.MidiFile -> [T.Tseq Word64 (M.Channel_Voice_Message Word8)]
 z_parse_midi_file_abs = map (T.iseq_to_tseq 0 . T.seq_tmap z_delta_time_to_word64) . z_parse_midi_file
 
 -- * META

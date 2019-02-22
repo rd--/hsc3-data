@@ -52,6 +52,8 @@ dx7_name_nchar :: Num n => n
 dx7_name_nchar = 10
 
 -- | Number of voice parameters.
+--
+-- > dx7_nparam - dx7_name_nchar == 145
 dx7_nparam :: Num n => n
 dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam + dx7_name_nchar
 

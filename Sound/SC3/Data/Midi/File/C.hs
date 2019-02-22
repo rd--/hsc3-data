@@ -112,7 +112,7 @@ c_time_div td =
       _ -> error "c_time_div"
 
 -- | Channel Messages
-c_parse_channel_message :: C.Message -> Maybe (M.Midi_Message Int)
+c_parse_channel_message :: C.Message -> Maybe (M.Channel_Voice_Message Int)
 c_parse_channel_message c =
   case c of
     C.NoteOff ch mnn vel -> Just (M.Note_Off (T.int_to_word8 ch) mnn vel)
@@ -138,7 +138,7 @@ c_parse_meta_message c =
     C.SMPTEOffset b0 b1 b2 b3 b4 -> Just ("smpte-offset" : map show [b0,b1,b2,b3,b4])
     _ -> Nothing
 
-c_parse_message :: C.Message -> Either [String] (M.Midi_Message Int)
+c_parse_message :: C.Message -> Either [String] (M.Channel_Voice_Message Int)
 c_parse_message c =
   case c_parse_channel_message c of
     Just m -> Right m

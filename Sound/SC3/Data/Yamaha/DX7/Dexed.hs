@@ -3,6 +3,7 @@ module Sound.SC3.Data.Yamaha.DX7.Dexed where
 
 import Data.List {- base -}
 import Data.Maybe {- base -}
+import Data.Word {- base -}
 
 import qualified Data.Map as M {- containers -}
 
@@ -15,19 +16,23 @@ data Ctrl =
 
 {- | Dexed control parameters.
 
+The first four param (0-3) are not DX7 parameters, as are the six operator "SWITCH" parameters.
+
 > > for(i=0;i < ctrl.size(); i++) {
 > >   printf("Ctrl {label=\"%s\", idx=%d}\n",
 > >     ctrl[i]->label.toStdString().c_str(),
 > >     ctrl[i]->idx);
 > > }
 
+> map idx dexed_param == [0 .. 154]
+> 155 - (4 + 6) == 145
 -}
 dexed_param :: [Ctrl]
 dexed_param =
-    [Ctrl {label="Cutoff", idx=0}
-    ,Ctrl {label="Resonance", idx=1}
-    ,Ctrl {label="Output", idx=2}
-    ,Ctrl {label="MASTER TUNE ADJ", idx=3}
+    [Ctrl {label="Cutoff", idx=0} -- non-DX7
+    ,Ctrl {label="Resonance", idx=1} -- non-DX7
+    ,Ctrl {label="Output", idx=2} -- non-DX7
+    ,Ctrl {label="MASTER TUNE ADJ", idx=3} -- non-DX7
     ,Ctrl {label="ALGORITHM", idx=4}
     ,Ctrl {label="FEEDBACK", idx=5}
     ,Ctrl {label="OSC KEY SYNC", idx=6}
@@ -68,7 +73,7 @@ dexed_param =
     ,Ctrl {label="OP1 RATE SCALING", idx=41}
     ,Ctrl {label="OP1 A MOD SENS.", idx=42}
     ,Ctrl {label="OP1 KEY VELOCITY", idx=43}
-    ,Ctrl {label="OP1 SWITCH", idx=44}
+    ,Ctrl {label="OP1 SWITCH", idx=44} -- non-DX7
     ,Ctrl {label="OP2 EG RATE 1", idx=45}
     ,Ctrl {label="OP2 EG RATE 2", idx=46}
     ,Ctrl {label="OP2 EG RATE 3", idx=47}
@@ -90,7 +95,7 @@ dexed_param =
     ,Ctrl {label="OP2 RATE SCALING", idx=63}
     ,Ctrl {label="OP2 A MOD SENS.", idx=64}
     ,Ctrl {label="OP2 KEY VELOCITY", idx=65}
-    ,Ctrl {label="OP2 SWITCH", idx=66}
+    ,Ctrl {label="OP2 SWITCH", idx=66} -- non-DX7
     ,Ctrl {label="OP3 EG RATE 1", idx=67}
     ,Ctrl {label="OP3 EG RATE 2", idx=68}
     ,Ctrl {label="OP3 EG RATE 3", idx=69}
@@ -112,7 +117,7 @@ dexed_param =
     ,Ctrl {label="OP3 RATE SCALING", idx=85}
     ,Ctrl {label="OP3 A MOD SENS.", idx=86}
     ,Ctrl {label="OP3 KEY VELOCITY", idx=87}
-    ,Ctrl {label="OP3 SWITCH", idx=88}
+    ,Ctrl {label="OP3 SWITCH", idx=88} -- non-DX7
     ,Ctrl {label="OP4 EG RATE 1", idx=89}
     ,Ctrl {label="OP4 EG RATE 2", idx=90}
     ,Ctrl {label="OP4 EG RATE 3", idx=91}
@@ -134,7 +139,7 @@ dexed_param =
     ,Ctrl {label="OP4 RATE SCALING", idx=107}
     ,Ctrl {label="OP4 A MOD SENS.", idx=108}
     ,Ctrl {label="OP4 KEY VELOCITY", idx=109}
-    ,Ctrl {label="OP4 SWITCH", idx=110}
+    ,Ctrl {label="OP4 SWITCH", idx=110} -- non-DX7
     ,Ctrl {label="OP5 EG RATE 1", idx=111}
     ,Ctrl {label="OP5 EG RATE 2", idx=112}
     ,Ctrl {label="OP5 EG RATE 3", idx=113}
@@ -156,7 +161,7 @@ dexed_param =
     ,Ctrl {label="OP5 RATE SCALING", idx=129}
     ,Ctrl {label="OP5 A MOD SENS.", idx=130}
     ,Ctrl {label="OP5 KEY VELOCITY", idx=131}
-    ,Ctrl {label="OP5 SWITCH", idx=132}
+    ,Ctrl {label="OP5 SWITCH", idx=132} -- non-DX7
     ,Ctrl {label="OP6 EG RATE 1", idx=133}
     ,Ctrl {label="OP6 EG RATE 2", idx=134}
     ,Ctrl {label="OP6 EG RATE 3", idx=135}
@@ -178,16 +183,18 @@ dexed_param =
     ,Ctrl {label="OP6 RATE SCALING", idx=151}
     ,Ctrl {label="OP6 A MOD SENS.", idx=152}
     ,Ctrl {label="OP6 KEY VELOCITY", idx=153}
-    ,Ctrl {label="OP6 SWITCH", idx=154}]
+    ,Ctrl {label="OP6 SWITCH", idx=154} -- non-DX7
+    ]
 
 -- * CTRLDX
 
 -- | Dexed data for DX7 parameter.
 data CtrlDX =
-  CtrlDX {name :: String
-         ,steps :: Int
-         ,offset :: Int
-         ,display_value :: Int}
+  CtrlDX {name :: String -- ^ Name
+         ,steps :: Int -- ^ Resolution
+         ,offset :: Word8 -- ^ DX7 index offset (?)
+         ,display_value :: Int -- ^ Display value
+         }
   deriving (Eq,Show)
 
 {- | Dexed DX7 parameters.
@@ -358,7 +365,7 @@ dexed_dx7_param_by_name nm = find ((== nm) . name) dexed_dx7_param
 --
 -- > import qualified Sound.SC3.Data.Yamaha.DX7 as DX7
 -- > mapM_ print $ zip dexed_dx7_param_dx7 DX7.dx7_parameter_tbl
-dexed_dx7_param_dx7 :: [(Int, Int, String)]
+dexed_dx7_param_dx7 :: [(Word8, Int, String)]
 dexed_dx7_param_dx7 =
     let f (i,c) = case c of
                     Nothing -> Nothing
@@ -366,15 +373,29 @@ dexed_dx7_param_dx7 =
         p = mapMaybe (\c -> f (idx c,dexed_dx7_param_by_name (label c))) dexed_param
     in sortOn (\(i,_,_) -> i) p
 
--- | 'M.Map' from DX7 parameter index to DEXED parameter index.
-dx7_to_dexed_tbl :: M.Map Int Int
-dx7_to_dexed_tbl = M.fromList (map (\(i,j,_) -> (i,j)) dexed_dx7_param_dx7)
+-- | Table from DX7 parameter index to DEXED parameter index.
+--
+-- > sort (map fst dx7_to_dexed_tbl) == [0 .. 144]
+-- > sort (map snd dx7_to_dexed_tbl) == [4 .. 153] \\ [44,66,88,110,132]
+dx7_to_dexed_tbl :: [(Word8, Int)]
+dx7_to_dexed_tbl = map (\(i,j,_) -> (i,j)) dexed_dx7_param_dx7
+
+-- | 'M.fromList' of 'dx7_to_dexed_tbl'.
+dx7_to_dexed_map :: M.Map Word8 Int
+dx7_to_dexed_map = M.fromList dx7_to_dexed_tbl
 
 -- | 'M.lookup' of 'dx7_to_dexed_tbl'.
 --
 -- > map dx7_to_dexed [123,125,134,144] == [33,35,4,13]
-dx7_to_dexed :: Int -> Int
-dx7_to_dexed = fromMaybe (error "dx7_to_dexed") . flip M.lookup dx7_to_dexed_tbl
+-- > dx7_to_dexed (DX7.dx7_parameter_index "ALGORITHM #") == 4
+dx7_to_dexed :: Word8 -> Int
+dx7_to_dexed = fromMaybe (error "dx7_to_dexed") . flip M.lookup dx7_to_dexed_map
+
+-- | Reverse lookup of 'dx7_to_dexed_tbl'.
+--
+-- > map dexed_to_dx7 [4]
+dexed_to_dx7 :: Int -> Word8
+dexed_to_dx7 x = fst (fromMaybe (error "dexed_to_dx7") (find ((== x) . snd) dx7_to_dexed_tbl))
 
 -- * NON-DX7
 
