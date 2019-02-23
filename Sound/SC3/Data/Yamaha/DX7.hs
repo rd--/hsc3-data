@@ -13,7 +13,7 @@ import Data.Maybe {- base -}
 import Data.Word {- base -}
 import Text.Printf {- base -}
 
-import qualified Data.ByteString as Char8 {- bytestring -}
+import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
@@ -111,7 +111,7 @@ yamaha_id = 0x43
 
 -- | DX7 checksum function.
 dx7_checksum :: [U8] -> U8
-dx7_checksum d = complement (sum (map ((.&.) 0x7F) d)) .&. 0x7F
+dx7_checksum d = (complement (sum (map ((.&.) 0x7F) d)) + 1) .&. 0x7F
 
 usr_str_tbl :: [(String,String)]
 usr_str_tbl =
@@ -474,7 +474,7 @@ dx7_algorithm_dot (e,o) =
      0ddddddd  **   DATA BYTE 1
      ...
      0ddddddd  **   DATA BYTE 155
-     0eeeeeee  **   CHECKSUM
+     0eeeeeee  **   CHECKSUM (OF 155 DATA BYTES)
      11110111  F7   STATUS - END SYSEX
 -}
 
@@ -497,9 +497,32 @@ dx7_voice_sysex ch d =
      0ddddddd  **   DATA BYTE 1
      ....
      0ddddddd  **   DATA BYTE 4096
-     0eeeeeee  **   CHECKSUM
+     0eeeeeee  **   CHECKSUM (OF 4096 DATA BYTES)
      11110111  F7   STATUS - END SYSEX
 -}
+
+-- | 6-byte header sequence for FORMAT=9 DX7 sysex data.
+dx7_sysex_fmt_9_hdr :: [U8]
+dx7_sysex_fmt_9_hdr = [0xF0,0x43,0x00,0x09,0x20,0x00]
+
+-- | Load FORMAT=9 sysex file as U8 sequence.
+--
+-- > d <- dx7_load_sysex_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+-- > dx7_sysex_u8_verify d == (True,True,True,True)
+dx7_load_sysex_u8 :: FilePath -> IO [U8]
+dx7_load_sysex_u8 = fmap B.unpack . B.readFile
+
+-- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
+dx7_sysex_u8_verify :: [U8] -> (Bool, Bool, Bool, Bool)
+dx7_sysex_u8_verify d =
+  let hdr = take 6 d
+      dat = take 4096 (drop 6 d)
+      chk = d !! (6 + 4096)
+      eof = d !! (6 + 4096 + 1)
+  in (length d == 6 + 4096 + 2
+     ,hdr == dx7_sysex_fmt_9_hdr
+     ,chk == dx7_checksum dat
+     ,eof == 0xF7)
 
 -- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
 dx7_load_sysex_hex :: FilePath -> IO DX7_Bank
@@ -552,7 +575,7 @@ dx7_store_sysex fn b = do
       d_str = Byte.byte_seq_hex_pp d ++ "\n"
   when (length d /= 4960) (error "dx7_store_sysex")
   syx <- Process.readProcess "hsc3-dx7-unpack" ["repack","text","text"] d_str
-  Char8.writeFile fn (Char8.pack (Byte.read_hex_byte_seq syx))
+  B.writeFile fn (B.pack (Byte.read_hex_byte_seq syx))
 
 -- * C: SYSEX MESSAGE: Parameter Change
 
