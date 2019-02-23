@@ -6,15 +6,17 @@ module Sound.SC3.Data.Yamaha.DX7 where
 
 import Control.Monad {- base -}
 import Data.Bits {- base -}
-import qualified Data.ByteString as Char8 {- bytestring -}
+import Data.Char {- base -}
 import Data.Int {- base -}
 import Data.List {- base -}
-import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
+import Text.Printf {- base -}
+
+import qualified Data.ByteString as Char8 {- bytestring -}
+import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
-import Text.Printf {- base -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
 
@@ -27,14 +29,29 @@ type I8 = Int8
 u8_to_int :: U8 -> Int
 u8_to_int = fromIntegral
 
+int_to_u8 :: Int -> U8
+int_to_u8 = fromIntegral
+
 u8_to_float :: U8 -> Float
 u8_to_float = fromIntegral
 
 u8_to_i8 :: U8 -> I8
 u8_to_i8 = fromIntegral
 
+digit_to_u8 :: Char -> U8
+digit_to_u8 = fromIntegral . digitToInt
+
+u8_to_digit :: U8 -> Char
+u8_to_digit = intToDigit . fromIntegral
+
 u8_to_enum :: Enum e => U8 -> e
 u8_to_enum = toEnum . u8_to_int
+
+u8_to_char :: U8 -> Char
+u8_to_char = u8_to_enum
+
+char_to_u8 :: Char -> U8
+char_to_u8 = int_to_u8 . fromEnum
 
 u8_at :: [t] -> U8 -> t
 u8_at l n = Safe.at l (u8_to_int n)
@@ -47,22 +64,33 @@ dx7_op_nparam = 21
 dx7_sh_nparam :: Num n => n
 dx7_sh_nparam = 19
 
+-- | Number of voice parameters.
+--
+-- > dx7_nparam == 145
+-- > dx7_nparam + dx7_name_nchar == 155
+dx7_nparam :: Num n => n
+dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam
+
+-- | Voice parameter data (# = 145 = dx7_nparam)
+type DX7_Param = [U8]
+
 -- | Number of bytes for voice name.
 dx7_name_nchar :: Num n => n
 dx7_name_nchar = 10
 
 -- | Number of voice parameters.
 --
--- > dx7_nparam - dx7_name_nchar == 145
-dx7_nparam :: Num n => n
-dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam + dx7_name_nchar
+-- > dx7_nvoice == 155
+-- > dx7_nvoice - dx7_name_nchar == 145
+dx7_nvoice :: Num n => n
+dx7_nvoice = dx7_nparam + dx7_name_nchar
 
--- | Voice data (# = 155 = dx7_nparam)
+-- | Voice data (# = 155 = dx7_nvoice)
 type DX7_Voice = [U8]
 
--- | Check the voice has 'dx7_nparam' bytes.
+-- | Check the voice has 'dx7_nvoice' bytes.
 dx7_voice_verify :: DX7_Voice -> Bool
-dx7_voice_verify = (==) dx7_nparam . length
+dx7_voice_verify = (==) dx7_nvoice . length
 
 -- | Sequence of 32 voices (32 * 155 = 4960)
 type DX7_Bank = [DX7_Voice]
@@ -195,6 +223,7 @@ dx7_sh_parameter_tbl =
     ,(143,"PITCH MOD SENSITIVITY",8,0,"")
     ,(144,"TRANSPOSE",49,0,"12=C2")]
 
+-- | Voice name data is ASCII.
 dx7_name_dx7_parameter_tbl :: [DX7_Parameter]
 dx7_name_dx7_parameter_tbl =
     [(145,"VOICE NAME CHAR 01",128,0,"ASCII")
@@ -221,7 +250,7 @@ rem_group_structure =
 
 -- | All DX7 parameters.
 --
--- > length dx7_parameter_tbl == dx7_nparam
+-- > length dx7_parameter_tbl == dx7_nvoice
 -- > map dx7_parameter_range_usr dx7_parameter_tbl
 dx7_parameter_tbl :: [DX7_Parameter]
 dx7_parameter_tbl =
@@ -308,6 +337,7 @@ dx7_function_parameters_tbl =
 
 -- * Voice
 
+-- | Extract 10 character voice name from 'DX7_Voice'.
 dx7_voice_name :: DX7_Voice -> String
 dx7_voice_name v = map (u8_to_enum . u8_at v) [145 .. 154]
 
@@ -450,7 +480,10 @@ dx7_algorithm_dot (e,o) =
 
 -- | Generate DX7 VOICE sysex message.
 dx7_voice_sysex :: U8 -> DX7_Voice -> [U8]
-dx7_voice_sysex ch d = [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b] ++ d ++ [dx7_checksum d,0xF7]
+dx7_voice_sysex ch d =
+  if dx7_voice_verify d
+  then [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b] ++ d ++ [dx7_checksum d,0xF7]
+  else error "dx7_voice_sysex?"
 
 -- * B: SYSEX Message: Bulk Data for 32 Voices
 

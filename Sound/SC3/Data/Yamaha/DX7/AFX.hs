@@ -1,20 +1,12 @@
 -- | <​https://github.com/everythingwillbetakenaway/DX7-Supercollider>
 module Sound.SC3.Data.Yamaha.DX7.AFX where
 
-import Data.Char {- base -}
-
 import qualified Data.ByteString.Char8 as B {- bytestring -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7 {- hsc3-data -}
 
 -- * UTIL
-
-digit_to_u8 :: Char -> U8
-digit_to_u8 = fromIntegral . digitToInt
-
-u8_to_digit :: U8 -> Char
-u8_to_digit = intToDigit . fromIntegral
 
 -- | Parse two digit number, ie. in 0-99.
 --
@@ -34,17 +26,20 @@ u8_pp_c2 n = let (p,q) = n `divMod` 10 in (u8_to_digit p,u8_to_digit q)
 afx_entry_verify :: B.ByteString -> Bool
 afx_entry_verify = (\n -> n == 290 || n == 310) . B.length
 
+-- | AFX data is a sequence of 145 U8 in PX7 order.
+type AFX = [U8]
+
 -- | Each entry is 145 two digit decimal numbers with no spaces.
 --   The data is in PX7 patch file sequence.
-afx_parse_line :: B.ByteString -> [U8]
+afx_parse_line :: B.ByteString -> AFX
 afx_parse_line s =
   let f k = u8_parse_c2 (B.index s (k * 2),B.index s (k * 2 + 1))
   in if afx_entry_verify s then map f [0 .. 144] else error "afx_parse_line"
 
-afx_parse :: B.ByteString -> [[U8]]
+afx_parse :: B.ByteString -> [AFX]
 afx_parse = map afx_parse_line . B.lines
 
-{- | Load AFX file in PX7 order.
+{- | Load AFX file (in PX7 order).
 
 > d <- afx_load "/home/rohan/opt/src/DX7-Supercollider/DX7.afx"
 > length d == 16384
@@ -55,22 +50,26 @@ afx_parse = map afx_parse_line . B.lines
 > afx_pp d0
 
 -}
-afx_load :: FilePath -> IO [[U8]]
+afx_load :: FilePath -> IO [AFX]
 afx_load = fmap afx_parse . B.readFile
 
 -- | AFX pretty printer (inverse of 'afx_parse_line').
-afx_pp :: [U8] -> String
+afx_pp :: AFX -> String
 afx_pp = concatMap ((\(p,q) -> [p,q]) . u8_pp_c2)
 
-afx_store :: FilePath -> [[U8]] -> IO ()
+-- | Write AFX file (in PX7 order).
+afx_store :: FilePath -> [AFX] -> IO ()
 afx_store fn = writeFile fn . unlines . map afx_pp
 
 -- * DX7
 
 {- | Load AFX file in DX7 order, ie. run 'PX7.px7_param_data_to_dx7' at each entry.
 
+Note that the AFX data does not include a voice name, so these result is not a 'DX7_Voice'.
+
 > d <- afx_load_dx7 "/home/rohan/opt/src/DX7-Supercollider/DX7.afx"
 > let d0:_ = d
+> length d0 == 145
 > putStrLn$unlines$ dx7_parameter_seq_pp d0
 
 > import qualified Music.Theory.List as T {- hmt -}
@@ -78,11 +77,17 @@ afx_store fn = writeFile fn . unlines . map afx_pp
 > T.histogram (map (`u8_at` n) d)
 
 -}
-afx_load_dx7 :: FilePath -> IO [DX7_Voice]
+afx_load_dx7 :: FilePath -> IO [[U8]]
 afx_load_dx7 = fmap (map PX7.px7_param_data_to_dx7) . afx_load
 
-afx_dx7_pp :: DX7_Voice -> String
+afx_dx7_pp :: [U8] -> String
 afx_dx7_pp = afx_pp . PX7.px7_param_data_from_dx7
 
-afx_store_dx7 :: FilePath -> [DX7_Voice] -> IO ()
+afx_store_dx7 :: FilePath -> [[U8]] -> IO ()
 afx_store_dx7 fn = writeFile fn . unlines . map afx_dx7_pp
+
+afx_dx7_to_dx7_voice :: String -> [U8] -> DX7_Voice
+afx_dx7_to_dx7_voice nm =
+  if length nm /= 10
+  then error "afx_dx7_to_dx7_voice"
+  else flip (++) (map char_to_u8 nm)
