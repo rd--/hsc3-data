@@ -1,4 +1,6 @@
-# dx7 sysex print
+# dx7
+
+## sysex print
 
 ~~~~
 $ cd ~/sw/hsc3-data/data/yamaha/dx7/
@@ -50,5 +52,13 @@ EG
   L3=91,98,98,98,96,96
   L4=00,00,00,00,00,00
 ...
+$
+~~~~
+
+## sysex verify
+
+~~~~
+$ hsc3-dx7 sysex verify ~/.local/share/DigitalSuburban/Dexed/Cartridges/Dexed_01.syx
+TRUE
 $
 ~~~~

@@ -474,10 +474,13 @@ dx7_voice_sysex ch d =
 dx7_sysex_fmt_9_hdr :: [U8]
 dx7_sysex_fmt_9_hdr = [0xF0,0x43,0x00,0x09,0x20,0x00]
 
--- | Load FORMAT=9 sysex file as 4104-element U8 sequence.
---
--- > d <- dx7_load_sysex_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
--- > dx7_sysex_u8_verify d == (True,True,True,True)
+{- | Load FORMAT=9 sysex file as 4104-element U8 sequence.
+     This function simply loads the data, it does not run any verification.
+     See 'dx7_sysex_u8_verify'.
+
+> d <- dx7_load_sysex_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> dx7_sysex_u8_verify d == (True,True,True,True)
+-}
 dx7_load_sysex_u8 :: FilePath -> IO [U8]
 dx7_load_sysex_u8 = fmap B.unpack . B.readFile
 
@@ -493,6 +496,10 @@ dx7_sysex_u8_verify d =
      ,hdr == dx7_sysex_fmt_9_hdr
      ,chk == dx7_checksum dat
      ,eof == 0xF7)
+
+-- | Write FORMAT=9 4104-element U8 sequence to file.
+dx7_store_sysex_u8 :: FilePath -> [U8] -> IO ()
+dx7_store_sysex_u8 fn = B.writeFile fn . B.pack
 
 -- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
 dx7_load_sysex_hex :: FilePath -> IO DX7_Bank
