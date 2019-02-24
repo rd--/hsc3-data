@@ -110,6 +110,7 @@ Library
                    Sound.SC3.Data.Yamaha.DX7.AFX
                    Sound.SC3.Data.Yamaha.DX7.Dexed
                    Sound.SC3.Data.Yamaha.DX7.PX7
+                   Sound.SC3.Data.Yamaha.TX816
 
 Source-Repository  head
   Type:            darcs

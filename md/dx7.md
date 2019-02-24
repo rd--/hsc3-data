@@ -1,8 +1,8 @@
-# dx7-hex
+# dx7 sysex print
 
 ~~~~
 $ cd ~/sw/hsc3-data/data/yamaha/dx7/
-$ hsc3-dx7-hex print-voice-names ROM1A.syx.text
+$ hsc3-dx7 sysex print voice-names ROM1A.syx
 BRASS   1
 BRASS   2
 BRASS   3
@@ -10,7 +10,7 @@ STRINGS 1
 STRINGS 2
 STRINGS 3
 ...
-$ hsc3-dx7-hex print-parameters ROM1A.syx.text
+$ hsc3-dx7 sysex print parameters ROM1A.syx
 000: OP 6 EG RATE 1 = 49
 001: OP 6 EG RATE 2 = 99
 002: OP 6 EG RATE 3 = 28
@@ -20,7 +20,7 @@ $ hsc3-dx7-hex print-parameters ROM1A.syx.text
 006: OP 6 EG LEVEL 3 = 91
 007: OP 6 EG LEVEL 4 = 0
 ...
-$ hsc3-dx7-hex print-voice-data-list ROM1A.syx.text
+$ hsc3-dx7 sysex print voice-data-list ROM1A.syx
 NAME=BRASS   1
 ALGORITHM=22
 FEEDBACK=07

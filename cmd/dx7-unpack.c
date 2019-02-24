@@ -11,7 +11,7 @@ dx7-unpack repack reads text input as written by unpack and writes binary sysex 
 http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt
 http://sourceforge.net/u/tedfelix/dx7dump/
 
-gcc-8.2.0 -O3 : unpack->repack is not identity, -O works
+gcc-8.2.0 -O3 : unpack->repack is not identity, -O0 works
 
 */
 
@@ -248,20 +248,34 @@ void do_repack(char *fn,bool opt_in_binary,bool opt_out_binary)
     }
 }
 
+struct dx7_unpack_opt
+{
+    bool repack;
+    bool in_binary;
+    bool out_binary;
+    char *fn;
+};
+
+void dx7_unpack(struct dx7_unpack_opt opt)
+{
+    if(opt.repack) {
+        do_repack(opt.fn,opt.in_binary,opt.out_binary);
+    } else {
+        do_unpack(opt.fn,opt.in_binary,opt.out_binary);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     fail_if(argc < 4 || argc > 5,"dx7-unpack unpack|repack text|binary text|binary [sysex-file]");
     verify_eq("OP",sizeof(struct operator_packed),17);
     verify_eq("VC",sizeof(struct voice_packed),128);
     verify_eq("SYSEX",sizeof(struct dx7_sysex),4104);
-    bool opt_repack = strncmp(argv[1],"repack",4) == 0;
-    bool opt_in_binary = strncmp(argv[2],"binary",4) == 0;
-    bool opt_out_binary = strncmp(argv[3],"binary",4) == 0;
-    char *opt_fn = argc == 5 ? argv[4] : NULL;
-    if(opt_repack) {
-        do_repack(opt_fn,opt_in_binary,opt_out_binary);
-    } else {
-        do_unpack(opt_fn,opt_in_binary,opt_out_binary);
-    }
+    struct dx7_unpack_opt opt;
+    opt.repack = strncmp(argv[1],"repack",6) == 0;
+    opt.in_binary = strncmp(argv[2],"binary",6) == 0;
+    opt.out_binary = strncmp(argv[3],"binary",6) == 0;
+    opt.fn = argc == 5 ? argv[4] : NULL;
+    dx7_unpack(opt);
     return 0;
 }

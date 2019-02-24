@@ -3,6 +3,8 @@ module Sound.SC3.Data.Yamaha.DX7.AFX where
 
 import qualified Data.ByteString.Char8 as B {- bytestring -}
 
+import qualified Music.Theory.Byte as Byte {- hmt -}
+
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7 {- hsc3-data -}
 
@@ -12,13 +14,13 @@ import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7 {- hsc3-data -}
 --
 -- > u8_parse_c2 ('3','2') == 32
 u8_parse_c2 :: (Char,Char) -> U8
-u8_parse_c2 (c1,c2) = digit_to_u8 c1 * 10 + digit_to_u8 c2
+u8_parse_c2 (c1,c2) = Byte.digit_to_word8 c1 * 10 + Byte.digit_to_word8 c2
 
 -- | Inverse of 'u8_parse_c2'.
 --
 -- > map (u8_parse_c2 . u8_pp_c2) [0 .. 99] == [0 .. 99]
 u8_pp_c2 :: U8 -> (Char, Char)
-u8_pp_c2 n = let (p,q) = n `divMod` 10 in (u8_to_digit p,u8_to_digit q)
+u8_pp_c2 n = let (p,q) = n `divMod` 10 in (Byte.word8_to_digit p,Byte.word8_to_digit q)
 
 -- * AFX
 
@@ -90,4 +92,4 @@ afx_dx7_to_dx7_voice :: String -> [U8] -> DX7_Voice
 afx_dx7_to_dx7_voice nm =
   if length nm /= 10
   then error "afx_dx7_to_dx7_voice"
-  else flip (++) (map char_to_u8 nm)
+  else flip (++) (map Byte.char_to_word8 nm)

@@ -6,7 +6,6 @@ module Sound.SC3.Data.Yamaha.DX7 where
 
 import Control.Monad {- base -}
 import Data.Bits {- base -}
-import Data.Char {- base -}
 import Data.Int {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
@@ -15,46 +14,16 @@ import Text.Printf {- base -}
 
 import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
-import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
+import qualified Music.Theory.Math.Convert as T {- hmt -}
 
 -- | Unsigned 8-bit word.
 type U8 = Word8
 
 -- | Signed 8-bit integer.
 type I8 = Int8
-
-u8_to_int :: U8 -> Int
-u8_to_int = fromIntegral
-
-int_to_u8 :: Int -> U8
-int_to_u8 = fromIntegral
-
-u8_to_float :: U8 -> Float
-u8_to_float = fromIntegral
-
-u8_to_i8 :: U8 -> I8
-u8_to_i8 = fromIntegral
-
-digit_to_u8 :: Char -> U8
-digit_to_u8 = fromIntegral . digitToInt
-
-u8_to_digit :: U8 -> Char
-u8_to_digit = intToDigit . fromIntegral
-
-u8_to_enum :: Enum e => U8 -> e
-u8_to_enum = toEnum . u8_to_int
-
-u8_to_char :: U8 -> Char
-u8_to_char = u8_to_enum
-
-char_to_u8 :: Char -> U8
-char_to_u8 = int_to_u8 . fromEnum
-
-u8_at :: [t] -> U8 -> t
-u8_at l n = Safe.at l (u8_to_int n)
 
 -- | Number of operator parameters.
 dx7_op_nparam :: Num n => n
@@ -133,7 +102,7 @@ dx7_parameter_range :: DX7_Parameter -> (U8,U8)
 dx7_parameter_range (_,_,n,_,_) = (0,n - 1)
 
 dx7_parameter_range_usr :: DX7_Parameter -> (I8,I8)
-dx7_parameter_range_usr (_,_,n,d,_) = (d,d + u8_to_i8 n - 1)
+dx7_parameter_range_usr (_,_,n,d,_) = (d,d + T.word8_to_int8 n - 1)
 
 -- | Normalise parameter value to be in (0,1).
 -- Parameter values are at most in 0-99, excepting characters in voice name data.
@@ -141,7 +110,7 @@ dx7_parameter_range_usr (_,_,n,d,_) = (d,d + u8_to_i8 n - 1)
 -- > let p = dx7_op_parameter_tbl !! 20
 -- > map (dx7_parameter_value_normalise p) [0 .. 14]
 dx7_parameter_value_normalise :: DX7_Parameter -> U8 -> Float
-dx7_parameter_value_normalise (_,_,n,_,_) x = u8_to_float x / u8_to_float (n - 1)
+dx7_parameter_value_normalise (_,_,n,_,_) x = T.word8_to_float x / T.word8_to_float (n - 1)
 
 -- | Template for six FM operators.
 --
@@ -288,10 +257,10 @@ dx7_parameter_value_pp p x =
                      then (stp - 1,printf "(ERROR BYTE=0x%02X)" x)
                      else (x,"")
       r = if u == "ASCII"
-          then ['\'',u8_to_enum x_clip,'\'']
+          then ['\'',Byte.word8_to_enum x_clip,'\'']
           else case Split.splitOn ";" u of
-                 [_] -> printf "%02d" (u8_to_i8 x_clip + d)
-                 e -> u8_at e x_clip
+                 [_] -> printf "%02d" (T.word8_to_int8 x_clip + d)
+                 e -> Byte.word8_at e x_clip
   in r ++ err
 
 dx7_parameter_pp :: Bool -> DX7_Parameter -> U8 -> String
@@ -315,7 +284,7 @@ dx7_voice_pp p =
   let p_ix = concat [replicate 6 dx7_op_nparam :: [Int]
                     ,[dx7_sh_nparam,dx7_name_nchar]]
       p_grp = Split.splitPlaces p_ix p
-  in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (u8_at p_grp 6)
+  in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (Byte.word8_at p_grp 6)
             ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
 
 dx7_function_parameters_tbl :: [DX7_Parameter]
@@ -339,7 +308,7 @@ dx7_function_parameters_tbl =
 
 -- | Extract 10 character voice name from 'DX7_Voice'.
 dx7_voice_name :: DX7_Voice -> String
-dx7_voice_name v = map (u8_to_enum . u8_at v) [145 .. 154]
+dx7_voice_name v = map (Byte.word8_to_enum . Byte.word8_at v) [145 .. 154]
 
 -- * DX7 VOICE DATA LIST
 
@@ -377,13 +346,13 @@ dx7_voice_data_list_pp :: DX7_Voice -> [String]
 dx7_voice_data_list_pp d =
   let op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
       op_ix_pp n = map
-                   (dx7_parameter_value_pp (u8_at dx7_op_parameter_tbl n))
-                   (map (u8_at d) (op_ix_set n))
+                   (dx7_parameter_value_pp (Byte.word8_at dx7_op_parameter_tbl n))
+                   (map (Byte.word8_at d) (op_ix_set n))
       is_op_ix n = n < 126
       ix_val n =
         if is_op_ix n
         then intercalate "," (op_ix_pp n)
-        else dx7_parameter_value_pp (u8_at dx7_sh_parameter_tbl (n - 126)) (u8_at d n)
+        else dx7_parameter_value_pp (Byte.word8_at dx7_sh_parameter_tbl (n - 126)) (Byte.word8_at d n)
       pp z nm ix = concat [z,nm,"=",ix_val ix]
       f (grp,nm,ix) =
         if null grp
@@ -505,7 +474,7 @@ dx7_voice_sysex ch d =
 dx7_sysex_fmt_9_hdr :: [U8]
 dx7_sysex_fmt_9_hdr = [0xF0,0x43,0x00,0x09,0x20,0x00]
 
--- | Load FORMAT=9 sysex file as U8 sequence.
+-- | Load FORMAT=9 sysex file as 4104-element U8 sequence.
 --
 -- > d <- dx7_load_sysex_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
 -- > dx7_sysex_u8_verify d == (True,True,True,True)
@@ -513,6 +482,7 @@ dx7_load_sysex_u8 :: FilePath -> IO [U8]
 dx7_load_sysex_u8 = fmap B.unpack . B.readFile
 
 -- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
+--   Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 dx7_sysex_u8_verify :: [U8] -> (Bool, Bool, Bool, Bool)
 dx7_sysex_u8_verify d =
   let hdr = take 6 d

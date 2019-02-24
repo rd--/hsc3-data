@@ -1,6 +1,6 @@
 cmd =	ats au-to-pbm au-to-pgm \
 	csv-mnd-to-pgm csv-plot csv-to-img \
-	d50-sysex dx7-hex dx7-unpack \
+	d50-sysex dx7 dx7-unpack \
 	hex \
 	img-edit img-query img-to-pbm img-to-pgm img-to-sf \
 	kml-to-csv \
@@ -16,9 +16,9 @@ cmd =	ats au-to-pbm au-to-pgm \
 
 include ~/sw/hsc3/mk/cmd.mk
 
-# gcc-8.2.0 -O3 indicates no errors but unpack -> repack is not identity, -O works
+# gcc-8.2.0 -O3 indicates no errors but unpack -> repack is not identity, -O0 works
 dx7-unpack: dx7-unpack.c
-	gcc -Wall -std=c99 -O -o dx7-unpack dx7-unpack.c
+	gcc -Wall -std=c99 -O0 -o dx7-unpack dx7-unpack.c
 
 # VST
 
