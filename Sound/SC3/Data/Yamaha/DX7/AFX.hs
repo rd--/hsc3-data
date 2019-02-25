@@ -76,7 +76,15 @@ Note that the AFX data does not include a voice name, so these result is not a '
 
 > import qualified Music.Theory.List as T {- hmt -}
 > let n = dx7_parameter_index "ALGORITHM #"
-> T.histogram (map (`u8_at` n) d)
+> h = T.histogram (map (`Byte.word8_at` n) d)
+
+> import Sound.SC3.Plot {- hsc3-plot -}
+> plotImpulses [map snd h]
+
+> import Data.Bifunctor {- base -}
+> import qualified Music.Theory.Math.Convert as T {- hmt -}
+> import Sound.SC3.Plot {- hsc3-plot -}
+> plot_p2_stp [map (bimap T.word8_to_int id) h]
 
 -}
 afx_load_dx7 :: FilePath -> IO [[U8]]

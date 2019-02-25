@@ -403,6 +403,17 @@ dx7_algorithms =
   ,([(4,5),(5,5)],[0,1,2,3,4])
   ,([(5,5)],[0,1,2,3,4,5])]
 
+-- | The group structure of the DX7 algorithms, as drawn on the case.
+--   Four lines, the first divided into two parts, algorithms grouped by spacing.
+--
+-- > sum (concat (concat dx7_algorithm_group_structure)) == 32
+dx7_algorithm_group_structure :: Num t => [[[t]]]
+dx7_algorithm_group_structure =
+  [[[2,2,2],[3]]
+  ,[[2,2,2,3]]
+  ,[[1,1,1,1,1,1,1]]
+  ,[[2,1,2,2]]]
+
 {- | Simple dot graph of algorithm.
 
 > let ad = unlines . dx7_algorithm_dot . (!!) dx7_algorithms

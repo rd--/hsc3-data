@@ -384,14 +384,14 @@ dx7_to_dexed_tbl = map (\(i,j,_) -> (i,j)) dexed_dx7_param_dx7
 dx7_to_dexed_map :: M.Map Word8 Int
 dx7_to_dexed_map = M.fromList dx7_to_dexed_tbl
 
--- | 'M.lookup' of 'dx7_to_dexed_tbl'.
+-- | 'M.lookup' of 'dx7_to_dexed_tbl', ie. given DX7 index lookup DEXED index.
 --
 -- > map dx7_to_dexed [123,125,134,144] == [33,35,4,13]
 -- > dx7_to_dexed (DX7.dx7_parameter_index "ALGORITHM #") == 4
 dx7_to_dexed :: Word8 -> Int
 dx7_to_dexed = fromMaybe (error "dx7_to_dexed") . flip M.lookup dx7_to_dexed_map
 
--- | Reverse lookup of 'dx7_to_dexed_tbl'.
+-- | Reverse lookup of 'dx7_to_dexed_tbl', ie. given DEXED index lookup DX7 index.
 --
 -- > map dexed_to_dx7 [4]
 dexed_to_dx7 :: Int -> Word8
@@ -409,6 +409,24 @@ non_dx7_param =
                     Nothing -> Just c
                     Just _ -> Nothing
     in mapMaybe (\c -> f (c,dexed_dx7_param_by_name (label c))) dexed_param
+
+-- * INIT
+
+-- | INIT data from <DexedAudioProcessor::resetToInitVoice>.
+--   This is in DX7 parameter seqeuence.
+--
+-- > length dexed_init_voice == 155
+-- > map toEnum (drop 145 dexed_init_voice) == "INIT VOICE"
+dexed_init_voice :: Num t => [t]
+dexed_init_voice =
+  [99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
+  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
+  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
+  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
+  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
+  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0, 99, 0, 1, 0, 7
+  ,99, 99, 99, 99, 50, 50, 50, 50, 0, 0, 1, 35, 0, 0, 0, 1, 0, 3, 24
+  ,73, 78, 73, 84, 32, 86, 79, 73, 67, 69]
 
 {-
 
