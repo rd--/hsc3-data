@@ -89,11 +89,11 @@ Note that the AFX data does not include a voice name, so these result is not a '
 > plot_p2_stp [map (bimap T.word8_to_int id) h]
 
 -}
-afx_load_dx7 :: FilePath -> IO [[U8]]
+afx_load_dx7 :: FilePath -> IO [DX7_Param]
 afx_load_dx7 = fmap (map PX7.px7_param_data_to_dx7) . afx_load
 
-afx_dx7_pp :: [U8] -> String
+afx_dx7_pp :: DX7_Param -> String
 afx_dx7_pp = afx_pp . PX7.px7_param_data_from_dx7
 
-afx_store_dx7 :: FilePath -> [[U8]] -> IO ()
+afx_store_dx7 :: FilePath -> [DX7_Param] -> IO ()
 afx_store_dx7 fn = writeFile fn . unlines . map afx_dx7_pp

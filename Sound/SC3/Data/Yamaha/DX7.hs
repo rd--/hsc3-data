@@ -633,6 +633,28 @@ dx7_param_change_sysex ch grp param_ix param_data =
   ,param_data
   ,0xF7]
 
+-- * ROM
+
+-- | DX7 ROM cartridges as (cartridge-number,bank-letter,description)
+dx7_rom_tbl :: [(Int,Char,String)]
+dx7_rom_tbl =
+  [(1,'A',"MASTER")
+  ,(1,'B',"KEYBOARD AND PLUCKED SOUNDS")
+  ,(2,'A',"ORCHESTRAL & PERCUSSIVE SOUNDS")
+  ,(2,'B',"SYNTH, COMPLEX & EFFECTS SOUNDS")
+  ,(3,'A',"MASTER")
+  ,(3,'B',"KEYBOARD & PLUCKED SOUNDS")
+  ,(4,'A',"ORCHESTRAL & PERCUSSIVE SOUNDS")
+  ,(4,'B',"COMPLEX SOUND & EFFECTS")]
+
+-- | DX7 ROM cartridge to SYSEX file name.
+--
+-- > let r = ["ROM1A","ROM1B","ROM2A","ROM2B","ROM3A","ROM3B","ROM4A","ROM4B"]
+-- > map dx7_rom_syx_name dx7_rom_tbl == r
+dx7_rom_syx_name :: (Int,Char,String) -> String
+dx7_rom_syx_name (p,q,_) = "ROM" ++ show p ++ [q]
+
+
 -- * E: Function Parameters: (GROUP=2)
 
 {-
