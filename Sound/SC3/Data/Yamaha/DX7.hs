@@ -17,6 +17,7 @@ import qualified Data.List.Split as Split {- split -}
 import qualified System.Process as Process {- process -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
+import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Math.Convert as T {- hmt -}
 
 -- | Unsigned 8-bit word.
@@ -25,7 +26,7 @@ type U8 = Word8
 -- | Signed 8-bit integer.
 type I8 = Int8
 
--- | Number of operator parameters.
+-- | Number of per-operator parameters.  The DX7 has six operators.
 dx7_op_nparam :: Num n => n
 dx7_op_nparam = 21
 
@@ -42,6 +43,18 @@ dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam
 
 -- | Voice parameter data (# = 145 = dx7_nparam)
 type DX7_Param = [U8]
+
+-- | Equality ignoring indicated indices.
+dx7_param_eq_ignoring :: [U8] -> DX7_Param -> DX7_Param -> Bool
+dx7_param_eq_ignoring = T.list_eq_ignoring_indices
+
+-- | Replace each (ix,value) at 'DX7_Param'.
+dx7_param_set :: [(U8,U8)] -> DX7_Param -> DX7_Param
+dx7_param_set = T.list_set_indices
+
+-- | Type-specialised 'Byte.word8_at'.
+dx7_param_at :: DX7_Param -> U8 -> U8
+dx7_param_at = Byte.word8_at
 
 -- | Number of bytes for voice name.
 dx7_name_nchar :: Num n => n

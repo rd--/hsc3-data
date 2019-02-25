@@ -67,10 +67,11 @@ afx_store fn = writeFile fn . unlines . map afx_pp
 
 {- | Load AFX file in DX7 order, ie. run 'PX7.px7_param_data_to_dx7' at each entry.
 
-Note that the AFX data does not include a voice name, so these result is not a 'DX7_Voice'.
+Note that the AFX data does not include a voice name, hence 'DX7_Param' and not 'DX7_Voice'.
 
-> d <- afx_load_dx7 "/home/rohan/opt/src/DX7-Supercollider/DX7.afx"
-> length d == 2 ^ 14
+> d <- afx_load_dx7 "/home/rohan/opt/src/DX7-Supercollider/DX7.uniq.afx"
+> length d /= 2 ^ 14
+> length d == 9606
 > let d0:_ = d
 > length d0 == 145
 > putStrLn$unlines$ dx7_parameter_seq_pp d0
