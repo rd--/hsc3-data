@@ -511,18 +511,20 @@ dx7_voice_sysex ch d =
 dx7_sysex_fmt_9_hdr :: [U8]
 dx7_sysex_fmt_9_hdr = [0xF0,0x43,0x00,0x09,0x20,0x00]
 
-{- | Load FORMAT=9 sysex file as 4104-element U8 sequence.
-     This function simply loads the data, it does not run any verification.
-     See 'dx7_sysex_u8_verify'.
+-- | Given 4096-element packed data seqeunce, generate 4104-element FORMAT=9 sysex message data.
+dx7_sysex_fmt_9_gen :: [U8] -> [U8]
+dx7_sysex_fmt_9_gen dat = dx7_sysex_fmt_9_hdr ++ dat ++ [dx7_checksum dat,0xF7]
 
-> d <- dx7_load_sysex_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+-- | 'B.unpack' of 'B.readFile'.
+dx7_load_u8 :: FilePath -> IO [U8]
+dx7_load_u8 = fmap B.unpack . B.readFile
+
+{- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
+--   Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
+
+> d <- dx7_load_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
 > dx7_sysex_u8_verify d == (True,True,True,True)
 -}
-dx7_load_sysex_u8 :: FilePath -> IO DX7_SYSEX
-dx7_load_sysex_u8 = fmap B.unpack . B.readFile
-
--- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
---   Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 dx7_sysex_u8_verify :: DX7_SYSEX -> (Bool, Bool, Bool, Bool)
 dx7_sysex_u8_verify d =
   let hdr = take 6 d
@@ -533,6 +535,15 @@ dx7_sysex_u8_verify d =
      ,hdr == dx7_sysex_fmt_9_hdr
      ,chk == dx7_checksum dat
      ,eof == 0xF7)
+
+{- | Load FORMAT=9 sysex file as 4104-element U8 sequence and run verification.
+     See 'dx7_sysex_u8_verify'.
+-}
+dx7_load_sysex_u8 :: FilePath -> IO DX7_SYSEX
+dx7_load_sysex_u8 fn = do
+  syx <- dx7_load_u8 fn
+  when (dx7_sysex_u8_verify syx /= (True,True,True,True)) (error "dx7_load_sysex_u8?")
+  return syx
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_store_sysex_u8 :: FilePath -> DX7_SYSEX -> IO ()

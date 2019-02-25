@@ -8,8 +8,9 @@ usage =
     let h = ["hex|sysex print parameters file-name..."
             ,"hex|sysex print voice-names file-name..."
             ,"hex|sysex print voice-data-list file-name..."
-            ,"sysex verify file-name..."
-            ,"sysex rewrite input-file output-file"]
+            ,"sysex add input-file output-file"
+            ,"sysex rewrite input-file output-file"
+            ,"sysex verify file-name..."]
     in putStrLn (unlines h)
 
 dx7_hex_print :: (DX7.DX7_Bank -> [String]) -> [FilePath] -> IO ()
@@ -32,12 +33,16 @@ dx7_sysex_verify_1 fn = do
 dx7_sysex_verify :: [FilePath] -> IO ()
 dx7_sysex_verify = mapM_ dx7_sysex_verify_1
 
+dx7_sysex_add :: FilePath -> FilePath -> IO ()
+dx7_sysex_add fn1 fn2 = do
+  dat <- DX7.dx7_load_u8 fn1
+  DX7.dx7_store_sysex_u8 fn2 (DX7.dx7_sysex_fmt_9_gen dat)
+
 dx7_sysex_rewrite :: FilePath -> FilePath -> IO ()
 dx7_sysex_rewrite fn1 fn2 = do
   src <- DX7.dx7_load_sysex_u8 fn1
   let dat = take 4096 (drop 6 src)
-      dst = DX7.dx7_sysex_fmt_9_hdr ++ dat ++ [DX7.dx7_checksum dat,0xF7]
-  DX7.dx7_store_sysex_u8 fn2 dst
+  DX7.dx7_store_sysex_u8 fn2 (DX7.dx7_sysex_fmt_9_gen dat)
 
 main :: IO ()
 main = do
@@ -53,6 +58,7 @@ main = do
     "sysex":"print":"parameters":fn -> dx7_sysex_print print_parameters fn
     "sysex":"print":"voice-names":fn -> dx7_sysex_print print_voice_names fn
     "sysex":"print":"voice-data-list":fn -> dx7_sysex_print print_voice_data_list fn
+    ["sysex","add",fn1,fn2] -> dx7_sysex_add fn1 fn2
     "sysex":"verify":fn -> dx7_sysex_verify fn
     ["sysex","rewrite",fn1,fn2] -> dx7_sysex_rewrite fn1 fn2
     _ -> usage
