@@ -61,6 +61,10 @@ dx7_param_to_dx7_voice nm =
   then error "dx7_param_to_dx7_voice"
   else flip (++) (map Byte.char_to_word8 nm)
 
+-- | Delete the 10 ASCII character voice-name 155-byte at 'DX7_Voice' to make 'DX7_Param'.
+dx7_voice_to_dx7_param :: DX7_Voice -> DX7_Param
+dx7_voice_to_dx7_param = take 145
+
 -- | Voice data (# = 155 = dx7_nvoice)
 type DX7_Voice = [U8]
 
@@ -454,7 +458,7 @@ dx7_algorithm_dot (e,o) =
 {-
      11110000  F0   STATUS BYTE - START SYSEX
      0iiiiiii  43   YAMAHA
-     0sssnnnn  00   SUB-STATUS 0 & CHANNEL NUMBER
+     0sssnnnn  00   SUB-STATUS = 0 & CHANNEL NUMBER
      0fffffff  00   FORMAT NUMBER = 0
      0bbbbbbb  01   BYTE COUNT MS
      0bbbbbbb  1B   BYTE COUNT LS = 155
@@ -465,8 +469,10 @@ dx7_algorithm_dot (e,o) =
      11110111  F7   STATUS - END SYSEX
 -}
 
--- | Generate DX7 VOICE sysex message.
-dx7_voice_sysex :: U8 -> DX7_Voice -> [U8]
+type DX7_SYSEX = [U8]
+
+-- | Generate DX7 VOICE (FORMAT=0) sysex message.
+dx7_voice_sysex :: U8 -> DX7_Voice -> DX7_SYSEX
 dx7_voice_sysex ch d =
   if dx7_voice_verify d
   then [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b] ++ d ++ [dx7_checksum d,0xF7]
@@ -499,12 +505,12 @@ dx7_sysex_fmt_9_hdr = [0xF0,0x43,0x00,0x09,0x20,0x00]
 > d <- dx7_load_sysex_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
 > dx7_sysex_u8_verify d == (True,True,True,True)
 -}
-dx7_load_sysex_u8 :: FilePath -> IO [U8]
+dx7_load_sysex_u8 :: FilePath -> IO DX7_SYSEX
 dx7_load_sysex_u8 = fmap B.unpack . B.readFile
 
 -- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
 --   Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
-dx7_sysex_u8_verify :: [U8] -> (Bool, Bool, Bool, Bool)
+dx7_sysex_u8_verify :: DX7_SYSEX -> (Bool, Bool, Bool, Bool)
 dx7_sysex_u8_verify d =
   let hdr = take 6 d
       dat = take 4096 (drop 6 d)
@@ -516,7 +522,7 @@ dx7_sysex_u8_verify d =
      ,eof == 0xF7)
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
-dx7_store_sysex_u8 :: FilePath -> [U8] -> IO ()
+dx7_store_sysex_u8 :: FilePath -> DX7_SYSEX -> IO ()
 dx7_store_sysex_u8 fn = B.writeFile fn . B.pack
 
 -- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
@@ -577,7 +583,7 @@ dx7_store_sysex fn b = do
 {-
      11110000  F0   STATUS BYTE = START SYSEX
      0iiiiiii  43   ID = YAMAHA
-     0sssnnnn  10   SUB-STATUS & CHANNEL NUMBER
+     0sssnnnn  10   SUB-STATUS = 0x10 & CHANNEL NUMBER
      0gggggpp  **   PARAMETER GROUP (0=VOICE, 2=FUNCTION)
      0ppppppp  **   PARAMETER #
      0ddddddd  **   DATA BYTE
@@ -617,7 +623,7 @@ In the latter case you parameter-byte holds the parameter-index minus 0x80.
 > dx7_param_change_sysex 0x00 0x00 (ix "ALGORITHM #") 0x18 == [0xF0,0x43,0x10,0x01,0x06,0x18,0xF7]
 > dx7_param_change_sysex 0x00 0x00 (ix "OP 6 OSC DETUNE") 0x07 == [0xF0,0x43,0x10,0x00,0x14,0x07,0xF7]
 -}
-dx7_param_change_sysex :: U8 -> U8 -> U8 -> U8 -> [U8]
+dx7_param_change_sysex :: U8 -> U8 -> U8 -> U8 -> DX7_SYSEX
 dx7_param_change_sysex ch grp param_ix param_data =
   [0xF0
   ,0x43
