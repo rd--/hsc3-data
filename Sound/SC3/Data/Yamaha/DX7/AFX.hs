@@ -70,6 +70,7 @@ afx_store fn = writeFile fn . unlines . map afx_pp
 Note that the AFX data does not include a voice name, so these result is not a 'DX7_Voice'.
 
 > d <- afx_load_dx7 "/home/rohan/opt/src/DX7-Supercollider/DX7.afx"
+> length d == 2 ^ 14
 > let d0:_ = d
 > length d0 == 145
 > putStrLn$unlines$ dx7_parameter_seq_pp d0
@@ -77,6 +78,7 @@ Note that the AFX data does not include a voice name, so these result is not a '
 > import qualified Music.Theory.List as T {- hmt -}
 > let n = dx7_parameter_index "ALGORITHM #"
 > h = T.histogram (map (`Byte.word8_at` n) d)
+> map snd h
 
 > import Sound.SC3.Plot {- hsc3-plot -}
 > plotImpulses [map snd h]
@@ -95,9 +97,3 @@ afx_dx7_pp = afx_pp . PX7.px7_param_data_from_dx7
 
 afx_store_dx7 :: FilePath -> [[U8]] -> IO ()
 afx_store_dx7 fn = writeFile fn . unlines . map afx_dx7_pp
-
-afx_dx7_to_dx7_voice :: String -> [U8] -> DX7_Voice
-afx_dx7_to_dx7_voice nm =
-  if length nm /= 10
-  then error "afx_dx7_to_dx7_voice"
-  else flip (++) (map Byte.char_to_word8 nm)

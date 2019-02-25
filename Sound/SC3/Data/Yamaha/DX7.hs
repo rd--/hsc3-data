@@ -54,6 +54,13 @@ dx7_name_nchar = 10
 dx7_nvoice :: Num n => n
 dx7_nvoice = dx7_nparam + dx7_name_nchar
 
+-- | Given 145-byte 'DX7_Param' sequence and a 10 ASCII character name, make 'DX7_Voice'.
+dx7_param_to_dx7_voice :: String -> DX7_Param -> DX7_Voice
+dx7_param_to_dx7_voice nm =
+  if length nm /= 10
+  then error "dx7_param_to_dx7_voice"
+  else flip (++) (map Byte.char_to_word8 nm)
+
 -- | Voice data (# = 155 = dx7_nvoice)
 type DX7_Voice = [U8]
 
