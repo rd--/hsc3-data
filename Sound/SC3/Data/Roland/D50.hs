@@ -99,11 +99,11 @@ dsc_data (_,_,_,d) = d
 
 -- | Unpack 'U24' to three 'U8'.
 u24_unpack :: U24 -> [U8]
-u24_unpack = map fromIntegral . T.t3_to_list . M.bits_21_sep . fromIntegral
+u24_unpack = map fromIntegral . T.t3_to_list . M.bits_21_sep_be . fromIntegral
 
 -- | Pack 'U24' from three 'U8'.
 u24_pack :: [U8] -> U24
-u24_pack = fromIntegral . M.bits_21_join . T.t3_from_list . map fromIntegral
+u24_pack = fromIntegral . M.bits_21_join_be . T.t3_from_list . map fromIntegral
 
 -- | Range as @p - q@.
 --
@@ -405,13 +405,13 @@ named_parameter_to_address =
 
 {- | Base address for patch memory /n/ (0,63).
 
-> M.bits_21_join (0x02,0x00,0x00) == 0x8000 -- 32768
-> M.bits_21_join (0x02,0x03,0x40) == 0x81C0 -- 33216
-> M.bits_21_join (0x03,0x60,0x00) == 0xF000 -- 61440
+> M.bits_21_join_be (0x02,0x00,0x00) == 0x8000 -- 32768
+> M.bits_21_join_be (0x02,0x03,0x40) == 0x81C0 -- 33216
+> M.bits_21_join_be (0x03,0x60,0x00) == 0xF000 -- 61440
 > 33216 - 32768 == 0x01C0 -- 448
 > 32768 + (448 * 64) == 0xF000 -- 61440
 > 61440 - 448 == 0xEE40 -- 60992
-> M.bits_21_sep 60992 == (0x03,0x5C,0x40)
+> M.bits_21_sep_be 60992 == (0x03,0x5C,0x40)
 
 -}
 patch_memory_base :: U8 -> ADDRESS

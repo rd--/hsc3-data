@@ -51,7 +51,7 @@ z_parse_midi_voice_event e =
     Z.ProgramChange st d1 -> M.Program_Change (M.status_ch st) d1
     Z.ChanAftertouch st d1 -> M.Chanel_Aftertouch (M.status_ch st) d1
     Z.PitchBend st d ->
-      let (d1,d2) = M.bits_14_sep (z_word14_to_word16 d)
+      let (d1,d2) = M.bits_14_sep_le (z_word14_to_word16 d)
       in M.Pitch_Bend (M.status_ch st) d1 d2
 
 -- | Parse voice message at 'Z.MidiMessage' to 'M.Channel_Voice_Message'.

@@ -122,7 +122,7 @@ c_parse_channel_message c =
     C.ProgramChange ch pc -> Just (M.Program_Change (T.int_to_word8 ch) pc)
     C.ChannelPressure ch d1 -> Just (M.Chanel_Aftertouch (T.int_to_word8 ch) d1)
     C.PitchWheel ch d ->
-      let (d1,d2) = M.bits_14_sep (T.int_to_word16 d)
+      let (d1,d2) = M.bits_14_sep_le (T.int_to_word16 d)
       in Just (M.Pitch_Bend (T.int_to_word8 ch) (T.word8_to_int d1) (T.word8_to_int d2))
     _ -> Nothing
 
