@@ -620,15 +620,14 @@ dx7_store_sysex fn b = do
 dx7_param_change_sysex_n :: Num n => n
 dx7_param_change_sysex_n = 7
 
--- | DX7 group number to bit-pattern.
+-- | DX7 (group,sub-group) to byte.
 --
--- > map (gen_bitseq_pp 8 . dx7_group_byte) ([0,2]::[U8]) == ["00000000","00001000"]
-dx7_group_byte :: (Eq n, Num n) => n -> n
-dx7_group_byte grp =
-  case grp of
-    0 -> 0x00
-    2 -> 0x08
-    _ -> error "dx7_group_byte: grp /= 0|2"
+-- > gen_bitseq_pp 8 (dx7_group_pack (0,0)) == "00000000"
+-- > gen_bitseq_pp 8 (dx7_group_pack (2,0)) == "00001000"
+-- > gen_bitseq_pp 8 (dx7_group_pack (6,0)) == "00011000"
+-- > dx7_group_pack (6,0) == 0x18
+dx7_group_pack :: (U8,U8) -> U8
+dx7_group_pack (g1,g2) = shiftL g1 2 + g2
 
 {- | Construct DX7 param change sysex.
 
@@ -649,13 +648,9 @@ In the latter case you parameter-byte holds the parameter-index minus 0x80.
 -}
 dx7_param_change_sysex :: U8 -> U8 -> U8 -> U8 -> DX7_SYSEX
 dx7_param_change_sysex ch grp param_ix param_data =
-  [0xF0
-  ,0x43
-  ,0x10 + ch
-  ,dx7_group_byte grp + if param_ix >= 0x80 then 0x01 else 0x00
-  ,param_ix - if param_ix >= 0x80 then 0x80 else 0x00
-  ,param_data
-  ,0xF7]
+  let sub = if param_ix >= 0x80 then 0x01 else 0x00
+      num = param_ix - if param_ix >= 0x80 then 0x80 else 0x00
+  in dx7s_parameter_change_sysex ch (grp,sub) num [param_data]
 
 -- * ROM
 
@@ -718,3 +713,56 @@ dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
 76         AFTERTOUCH RANGE       0-99
 77             "      ASSIGN      0-7           "
 -}
+
+-- * Microtune Parameter Change Message
+
+-- | Constant for per-octave mode (ie. tune all pitch-classes equally).
+--
+-- > gen_bitseq_pp 8 dx7s_microtune_octave == "01111101"
+dx7s_microtune_octave :: U8
+dx7s_microtune_octave = 0x7D
+
+-- | Constant for full gamut mode (ie. tune all notes distinctly).
+--
+-- > gen_bitseq_pp 8 dx7s_microtune_full == "01111110"
+dx7s_microtune_full :: U8
+dx7s_microtune_full = 0x7E
+
+-- | Generate DX7s parameter change sysex.
+--
+-- > dx7s_parameter_change_sysex 0 (0x06,0) dx7s_microtune_octave [1,2,3]
+dx7s_parameter_change_sysex :: U8 -> (U8,U8) -> U8 -> [U8] -> [U8]
+dx7s_parameter_change_sysex ch grp p d = [0xF0,0x43,0x10 + ch,dx7_group_pack grp,p] ++ d ++ [0xF7]
+
+-- | DX7s tuning units are 64 steps per semi-tone.
+--
+-- > map dx7s_tuning_units_to_cents [0,16,32,48,64] == [0,25,50,75,100]
+dx7s_tuning_units_to_cents :: U8 -> U8
+dx7s_tuning_units_to_cents x = floor (T.word8_to_double x * (100 / 64))
+
+{- | Microtune parameter change sysex
+
+md = 0x7D | 0x7E
+d1 = key number (0-11 for Octave, 0-127 for Full)
+d2 = midi note number (13 - 108)
+d3 = fine tuning (0 - 63)
+
+The fine tuning parameter is in Yamaha tuning units away from note d2 in 12 ET.
+There are 64 tuning units per half step, 12 * 64 = 768 per octave.
+
+If d3 < 33, it is displayed on the LCD as a positive offset from note d2.
+Otherwise, it is be displayed as a negative offset -31 to -1 from note d2 + 1.
+
+> let r = [0xF0,0x43,0x10,0x18,0x7E,0x3C,0x3C,0x00,0xF7]
+> dx7s_microtune_parameter_change_sysex 0 dx7s_microtune_full 60 60 0 == r
+
+-}
+dx7s_microtune_parameter_change_sysex :: U8 -> U8 -> U8 -> U8 -> U8 -> [U8]
+dx7s_microtune_parameter_change_sysex ch md d1 d2 d3 =
+  dx7s_parameter_change_sysex ch (6,0) md [d1,d2,d3]
+
+-- | Shift right by four places.
+--
+-- > dx7_substatus 0x10 == 0x01
+dx7_substatus :: U8 -> U8
+dx7_substatus = flip shiftR 4
