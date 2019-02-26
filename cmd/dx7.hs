@@ -40,7 +40,7 @@ dx7_sysex_add fn1 fn2 = do
 
 dx7_sysex_rewrite :: FilePath -> FilePath -> IO ()
 dx7_sysex_rewrite fn1 fn2 = do
-  src <- DX7.dx7_load_sysex_u8 fn1
+  src <- DX7.dx7_load_u8 fn1 -- ie. do not verify
   let dat = take 4096 (drop 6 src)
   DX7.dx7_store_sysex_u8 fn2 (DX7.dx7_sysex_fmt_9_gen dat)
 
