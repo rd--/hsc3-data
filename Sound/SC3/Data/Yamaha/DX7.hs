@@ -1,5 +1,7 @@
 -- | Yamaha DX7
 --
+--  GS-1 FM = 1981, DX7 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
+--
 -- <http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt>
 -- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
 module Sound.SC3.Data.Yamaha.DX7 where
@@ -629,28 +631,32 @@ dx7_param_change_sysex_n = 7
 dx7_group_pack :: (U8,U8) -> U8
 dx7_group_pack (g1,g2) = shiftL g1 2 + g2
 
-{- | Construct DX7 param change sysex.
+-- | Generate DX7 parameter change sysex.
+--
+-- > dx7_parameter_change_sysex 0 (0x06,0) dx7_microtune_octave [1,2,3]
+dx7_parameter_change_sysex :: U8 -> (U8,U8) -> U8 -> [U8] -> [U8]
+dx7_parameter_change_sysex ch grp p d = [0xF0,0x43,0x10 + ch,dx7_group_pack grp,p] ++ d ++ [0xF7]
+
+{- | Construct DX7 param change sysex.  Variant of 'dx7_parameter_change_sysex'.
 
 Arguments are:
 channel (0 indexed),
-group (0|2),
 parameter-index (0-155),
 parameter-value (ix dependent, 0-127)
 
-The parameter-index is partly encoded in the group-byte.
-The two least significant bits indicate the range of the parameter-index.
-If the parameter-index is below 0x80, they are 0x00, else they are 0x01.
+The parameter-index is partly encoded in the sub-group.
+If the parameter-index is below 0x80, the sub-group is 0x00, else it is 0x01.
 In the latter case you parameter-byte holds the parameter-index minus 0x80.
 
 > let ix = dx7_parameter_index
-> dx7_param_change_sysex 0x00 0x00 (ix "ALGORITHM #") 0x18 == [0xF0,0x43,0x10,0x01,0x06,0x18,0xF7]
-> dx7_param_change_sysex 0x00 0x00 (ix "OP 6 OSC DETUNE") 0x07 == [0xF0,0x43,0x10,0x00,0x14,0x07,0xF7]
+> dx7_param_change_sysex 0x00 (ix "ALGORITHM #") 0x18 == [0xF0,0x43,0x10,0x01,0x06,0x18,0xF7]
+> dx7_param_change_sysex 0x00 (ix "OP 6 OSC DETUNE") 0x07 == [0xF0,0x43,0x10,0x00,0x14,0x07,0xF7]
 -}
-dx7_param_change_sysex :: U8 -> U8 -> U8 -> U8 -> DX7_SYSEX
-dx7_param_change_sysex ch grp param_ix param_data =
+dx7_param_change_sysex :: U8 -> U8 -> U8 -> DX7_SYSEX
+dx7_param_change_sysex ch param_ix param_data =
   let sub = if param_ix >= 0x80 then 0x01 else 0x00
       num = param_ix - if param_ix >= 0x80 then 0x80 else 0x00
-  in dx7s_parameter_change_sysex ch (grp,sub) num [param_data]
+  in dx7_parameter_change_sysex ch (0x00,sub) num [param_data]
 
 -- * ROM
 
@@ -714,31 +720,25 @@ dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
 77             "      ASSIGN      0-7           "
 -}
 
--- * Microtune Parameter Change Message
+-- * Microtune Parameter Change Message (DX7s DX7II)
 
 -- | Constant for per-octave mode (ie. tune all pitch-classes equally).
 --
--- > gen_bitseq_pp 8 dx7s_microtune_octave == "01111101"
-dx7s_microtune_octave :: U8
-dx7s_microtune_octave = 0x7D
+-- > gen_bitseq_pp 8 dx7_microtune_octave == "01111101"
+dx7_microtune_octave :: U8
+dx7_microtune_octave = 0x7D
 
 -- | Constant for full gamut mode (ie. tune all notes distinctly).
 --
--- > gen_bitseq_pp 8 dx7s_microtune_full == "01111110"
-dx7s_microtune_full :: U8
-dx7s_microtune_full = 0x7E
+-- > gen_bitseq_pp 8 dx7_microtune_full == "01111110"
+dx7_microtune_full :: U8
+dx7_microtune_full = 0x7E
 
--- | Generate DX7s parameter change sysex.
+-- | DX7 tuning units are 64 steps per semi-tone.
 --
--- > dx7s_parameter_change_sysex 0 (0x06,0) dx7s_microtune_octave [1,2,3]
-dx7s_parameter_change_sysex :: U8 -> (U8,U8) -> U8 -> [U8] -> [U8]
-dx7s_parameter_change_sysex ch grp p d = [0xF0,0x43,0x10 + ch,dx7_group_pack grp,p] ++ d ++ [0xF7]
-
--- | DX7s tuning units are 64 steps per semi-tone.
---
--- > map dx7s_tuning_units_to_cents [0,16,32,48,64] == [0,25,50,75,100]
-dx7s_tuning_units_to_cents :: U8 -> U8
-dx7s_tuning_units_to_cents x = floor (T.word8_to_double x * (100 / 64))
+-- > map dx7_tuning_units_to_cents [0,16,32,48,64] == [0,25,50,75,100]
+dx7_tuning_units_to_cents :: U8 -> U8
+dx7_tuning_units_to_cents x = floor (T.word8_to_double x * (100 / 64))
 
 {- | Microtune parameter change sysex
 
@@ -754,12 +754,12 @@ If d3 < 33, it is displayed on the LCD as a positive offset from note d2.
 Otherwise, it is be displayed as a negative offset -31 to -1 from note d2 + 1.
 
 > let r = [0xF0,0x43,0x10,0x18,0x7E,0x3C,0x3C,0x00,0xF7]
-> dx7s_microtune_parameter_change_sysex 0 dx7s_microtune_full 60 60 0 == r
+> dx7_microtune_parameter_change_sysex 0 dx7_microtune_full 60 60 0 == r
 
 -}
-dx7s_microtune_parameter_change_sysex :: U8 -> U8 -> U8 -> U8 -> U8 -> [U8]
-dx7s_microtune_parameter_change_sysex ch md d1 d2 d3 =
-  dx7s_parameter_change_sysex ch (6,0) md [d1,d2,d3]
+dx7_microtune_parameter_change_sysex :: U8 -> U8 -> U8 -> U8 -> U8 -> [U8]
+dx7_microtune_parameter_change_sysex ch md d1 d2 d3 =
+  dx7_parameter_change_sysex ch (6,0) md [d1,d2,d3]
 
 -- | Shift right by four places.
 --
