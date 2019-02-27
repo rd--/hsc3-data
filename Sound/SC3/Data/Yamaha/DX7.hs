@@ -1,4 +1,4 @@
--- | Yamaha DX7
+ -- | Yamaha DX7
 --
 --  GS-1 FM = 1981, DX7 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
 --
@@ -658,49 +658,6 @@ dx7_param_change_sysex ch param_ix param_data =
       num = param_ix - if param_ix >= 0x80 then 0x80 else 0x00
   in dx7_parameter_change_sysex ch (0x00,sub) num [param_data]
 
--- * ROM
-
--- | DX7 ROM cartridges as (cartridge-number,bank-letter,description)
-dx7_rom_tbl :: [(Int,Char,String)]
-dx7_rom_tbl =
-  [(1,'A',"MASTER")
-  ,(1,'B',"KEYBOARD AND PLUCKED SOUNDS")
-  ,(2,'A',"ORCHESTRAL & PERCUSSIVE SOUNDS")
-  ,(2,'B',"SYNTH, COMPLEX & EFFECTS SOUNDS")
-  ,(3,'A',"MASTER")
-  ,(3,'B',"KEYBOARD & PLUCKED SOUNDS")
-  ,(4,'A',"ORCHESTRAL & PERCUSSIVE SOUNDS")
-  ,(4,'B',"COMPLEX SOUND & EFFECTS")]
-
--- | DX7 ROM cartridge to SYSEX file name.
---
--- > let r = ["ROM1A","ROM1B","ROM2A","ROM2B","ROM3A","ROM3B","ROM4A","ROM4B"]
--- > map dx7_rom_syx_name dx7_rom_tbl == r
-dx7_rom_syx_name :: (Int,Char,String) -> String
-dx7_rom_syx_name (p,q,_) = "ROM" ++ show p ++ [q]
-
--- | DX7 VRC-Series cartridges
-dx7_vrc_tbl :: [(Int,String)]
-dx7_vrc_tbl =
-  [(101,"Keyboard, Plucked & Tuned Percussion Group")
-  ,(102,"Wind Instrument Group")
-  ,(103,"Sustain Group")
-  ,(104,"Percussion Group")
-  ,(105,"Sound Effect Group")
-  ,(106,"Synthesizer Group")
-  ,(107,"Special Selection - David Bristow")
-  ,(108,"Special Selection - Gary Leuenberger")
-  ,(109,"Studio 64")
-  ,(110,"Special Selection - Bo Tomlyn")
-  ,(111,"Special Selection - Bo Tomlyn II")
-  ,(112,"Live 64")]
-
--- | DX7 VRC cartridge to SYSEX file name.
---
--- > concatMap dx7_vrc_syx_name dx7_vrc_tbl
-dx7_vrc_syx_name :: (Int,String) -> [String]
-dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
-
 -- * E: Function Parameters: (GROUP=2)
 
 {-
@@ -766,3 +723,46 @@ dx7_microtune_parameter_change_sysex ch md d1 d2 d3 =
 -- > dx7_substatus 0x10 == 0x01
 dx7_substatus :: U8 -> U8
 dx7_substatus = flip shiftR 4
+
+-- * CARTS
+
+-- | DX7 ROM cartridges as (cartridge-number,bank-letter,description)
+dx7_rom_tbl :: [(Int,Char,String)]
+dx7_rom_tbl =
+  [(1,'A',"MASTER")
+  ,(1,'B',"KEYBOARD AND PLUCKED SOUNDS")
+  ,(2,'A',"ORCHESTRAL & PERCUSSIVE SOUNDS")
+  ,(2,'B',"SYNTH, COMPLEX & EFFECTS SOUNDS")
+  ,(3,'A',"MASTER")
+  ,(3,'B',"KEYBOARD & PLUCKED SOUNDS")
+  ,(4,'A',"ORCHESTRAL & PERCUSSIVE SOUNDS")
+  ,(4,'B',"COMPLEX SOUND & EFFECTS")]
+
+-- | DX7 ROM cartridge to SYSEX file name.
+--
+-- > let r = ["ROM1A","ROM1B","ROM2A","ROM2B","ROM3A","ROM3B","ROM4A","ROM4B"]
+-- > map dx7_rom_syx_name dx7_rom_tbl == r
+dx7_rom_syx_name :: (Int,Char,String) -> String
+dx7_rom_syx_name (p,q,_) = "ROM" ++ show p ++ [q]
+
+-- | DX7 VRC-Series cartridges
+dx7_vrc_tbl :: [(Int,String)]
+dx7_vrc_tbl =
+  [(101,"Keyboard, Plucked & Tuned Percussion Group")
+  ,(102,"Wind Instrument Group")
+  ,(103,"Sustain Group")
+  ,(104,"Percussion Group")
+  ,(105,"Sound Effect Group")
+  ,(106,"Synthesizer Group")
+  ,(107,"Special Selection - David Bristow")
+  ,(108,"Special Selection - Gary Leuenberger")
+  ,(109,"Studio 64")
+  ,(110,"Special Selection - Bo Tomlyn")
+  ,(111,"Special Selection - Bo Tomlyn II")
+  ,(112,"Live 64")]
+
+-- | DX7 VRC cartridge to SYSEX file name.
+--
+-- > concatMap dx7_vrc_syx_name dx7_vrc_tbl
+dx7_vrc_syx_name :: (Int,String) -> [String]
+dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
