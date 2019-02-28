@@ -518,6 +518,9 @@ dx7_sysex_fmt_9_hdr = [0xF0,0x43,0x00,0x09,0x20,0x00]
 dx7_sysex_fmt_9_gen :: [U8] -> [U8]
 dx7_sysex_fmt_9_gen dat = dx7_sysex_fmt_9_hdr ++ dat ++ [dx7_checksum dat,0xF7]
 
+dx7_sysex_fmt_9_dat :: [U8] -> [U8]
+dx7_sysex_fmt_9_dat = take 4096 . drop 6
+
 -- | 'B.unpack' of 'B.readFile'.
 dx7_load_u8 :: FilePath -> IO [U8]
 dx7_load_u8 = fmap B.unpack . B.readFile
@@ -558,7 +561,8 @@ dx7_store_sysex_u8 fn = B.writeFile fn . B.pack . dx7_sysex_u8_validate "dx7_sto
 
 {- | Read unpacked 4960 parameter sequence from binary FORMAT=9 sysex file (see cmd/dx7-unpack.c).
 
-> d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
+> d <- dx7_load_sysex fn
 > dx7_bank_verify d
 > mapM_ (putStrLn . dx7_voice_name) d
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
@@ -568,12 +572,14 @@ dx7_store_sysex_u8 fn = B.writeFile fn . B.pack . dx7_sysex_u8_validate "dx7_sto
 -}
 dx7_load_sysex :: String -> IO DX7_Bank
 dx7_load_sysex fn = do
-  s <- Process.readProcess "hsc3-dx7-unpack" ["unpack","binary","text",fn] ""
-  return (Split.chunksOf 155 (Byte.read_hex_byte_seq s))
+  sysex <- dx7_load_sysex_u8 fn
+  let dat = dx7_sysex_fmt_9_dat sysex
+  bnk <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp dat ++ "\n")
+  return (Split.chunksOf 155 (Byte.read_hex_byte_seq bnk))
 
 {- | Write binary DX7 FORMAT=9 sysex file.
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
 > d <- dx7_load_sysex fn
 > dx7_store_sysex "/tmp/ROM1A.syx" d
 > Process.rawSystem "cmp" ["-l",fn,"/tmp/ROM1A.syx"]
@@ -584,8 +590,8 @@ dx7_store_sysex fn b = do
   let d = concat b
       d_str = Byte.byte_seq_hex_pp d ++ "\n"
   when (length d /= 4960) (error "dx7_store_sysex")
-  syx <- Process.readProcess "hsc3-dx7-unpack" ["repack","text","text"] d_str
-  B.writeFile fn (B.pack (Byte.read_hex_byte_seq syx))
+  syx <- Process.readProcess "hsc3-dx7-unpack" ["pack"] d_str
+  B.writeFile fn (B.pack (dx7_sysex_fmt_9_gen (Byte.read_hex_byte_seq syx)))
 
 -- * C: SYSEX MESSAGE: Parameter Change
 

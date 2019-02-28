@@ -16,11 +16,8 @@ cmd =	ats au-to-pbm au-to-pgm \
 
 include ~/sw/hsc3/mk/cmd.mk
 
-LDLIBS=c-common/lib-c-common.a
-
-# gcc-8.2.0 -O3 indicates no errors but unpack -> repack is not identity, -O0 works
 dx7-unpack: dx7-unpack.c
-	gcc -Wall -std=c99 -O0 -o dx7-unpack dx7-unpack.c $(LDLIBS)
+	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c c-common/lib-c-common.a
 
 # VST
 
