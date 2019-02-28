@@ -469,7 +469,7 @@ dx7_algorithm_dot (e,o) =
      ,map o_f o
      ,["}"]]
 
--- * SYSEX Message: Bulk Data for 1 Voice
+-- * SYSEX Message: Bulk Data for 1 Voice (163-BYTES)
 
 {-
      11110000  F0   STATUS BYTE - START SYSEX
@@ -488,11 +488,17 @@ dx7_algorithm_dot (e,o) =
 type DX7_SYSEX = [U8]
 
 -- | Generate DX7 VOICE (FORMAT=0) sysex message.
+--
+-- > 6 + 155 + 2 == 163
 dx7_voice_sysex :: U8 -> DX7_Voice -> DX7_SYSEX
 dx7_voice_sysex ch d =
   if dx7_voice_verify d
   then [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b] ++ d ++ [dx7_checksum d,0xF7]
   else error "dx7_voice_sysex?"
+
+-- | Select 155-element sub-sequence (6 - 161)
+dx7_voice_sysex_decode :: DX7_SYSEX -> DX7_Voice
+dx7_voice_sysex_decode = take 155 . drop 6
 
 -- * B: SYSEX Message: Bulk Data for 32 Voices
 
@@ -514,10 +520,11 @@ dx7_voice_sysex ch d =
 dx7_sysex_fmt_9_hdr :: [U8]
 dx7_sysex_fmt_9_hdr = [0xF0,0x43,0x00,0x09,0x20,0x00]
 
--- | Given 4096-element packed data seqeunce, generate 4104-element FORMAT=9 sysex message data.
+-- | Given 4096-element packed data sequence, generate 4104-element FORMAT=9 sysex message data.
 dx7_sysex_fmt_9_gen :: [U8] -> [U8]
 dx7_sysex_fmt_9_gen dat = dx7_sysex_fmt_9_hdr ++ dat ++ [dx7_checksum dat,0xF7]
 
+-- | Select bytes (6 - 4102) of 'U8' sequence.
 dx7_sysex_fmt_9_dat :: [U8] -> [U8]
 dx7_sysex_fmt_9_dat = take 4096 . drop 6
 
@@ -559,7 +566,15 @@ dx7_load_sysex_u8 = fmap (dx7_sysex_u8_validate "dx7_load_sysex_u8?")  . dx7_loa
 dx7_store_sysex_u8 :: FilePath -> DX7_SYSEX -> IO ()
 dx7_store_sysex_u8 fn = B.writeFile fn . B.pack . dx7_sysex_u8_validate "dx7_store_sysex_u8?"
 
-{- | Read unpacked 4960 parameter sequence from binary FORMAT=9 sysex file (see cmd/dx7-unpack.c).
+-- | Unpack 4096-element 'U8' sequence to 'DX7_Bank' (see cmd/dx7-unpack.c).
+dx7_unpack_u8 :: [U8] -> IO DX7_Bank
+dx7_unpack_u8 p = do
+  q <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp p)
+  let r = Byte.read_hex_byte_seq q
+  when (length r /= 4960) (error ("dx7_unpack_u8: " ++ q))
+  return (Split.chunksOf 155 r)
+
+{- | Read binary FORMAT=9 sysex file.
 
 > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
 > d <- dx7_load_sysex fn
@@ -569,13 +584,29 @@ dx7_store_sysex_u8 fn = B.writeFile fn . B.pack . dx7_sysex_u8_validate "dx7_sto
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
 
+> dx7_voice_sysex 0x00 (d !! 0)
+
 -}
 dx7_load_sysex :: String -> IO DX7_Bank
 dx7_load_sysex fn = do
   sysex <- dx7_load_sysex_u8 fn
-  let dat = dx7_sysex_fmt_9_dat sysex
-  bnk <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp dat ++ "\n")
-  return (Split.chunksOf 155 (Byte.read_hex_byte_seq bnk))
+  dx7_unpack_u8 (dx7_sysex_fmt_9_dat sysex)
+
+-- | Try and load 'DX7_Voice' data from named file.
+--   Will read 163, 4096, 4104, 4960 and 8208 element data files,
+--   to load either 1 or 32 or 64 voices.
+dx7_load_sysex_try :: FilePath -> IO (Maybe [DX7_Voice])
+dx7_load_sysex_try fn = do
+  x <- dx7_load_u8 fn
+  let decode_syx = dx7_unpack_u8 . dx7_sysex_fmt_9_dat
+  case length x of
+    163 -> return (Just [dx7_voice_sysex_decode x])
+    1650 -> return Nothing -- DX7-II PERF SYSEX
+    4096 -> fmap Just (dx7_unpack_u8 x)
+    4104 -> fmap Just (decode_syx x)
+    4960 -> return (Just (Split.chunksOf 155 x))
+    8208 -> fmap (Just . concat) (mapM decode_syx [take 4104 x,drop 4104 x])
+    _ -> return Nothing
 
 {- | Write binary DX7 FORMAT=9 sysex file.
 

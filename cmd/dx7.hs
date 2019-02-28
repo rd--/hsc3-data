@@ -1,15 +1,18 @@
 import Control.Monad {- base -}
 import Data.List {- base -}
 import System.Environment {- base -}
+import System.IO {- base -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
 
 import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
 
-dx7_sysex_print :: (DX7.DX7_Bank -> [String]) -> [FilePath] -> IO ()
+dx7_sysex_print :: ([DX7.DX7_Voice] -> [String]) -> [FilePath] -> IO ()
 dx7_sysex_print op =
-  let wr = putStrLn . unlines
-  in mapM_ (\fn -> DX7.dx7_load_sysex fn >>= wr . op)
+  let wr fn x = case x of
+                  Just bnk -> putStr (unlines (op bnk))
+                  Nothing -> hPutStrLn stderr ("ERROR: dx7_sysex_print: " ++ fn)
+  in mapM_ (\fn -> DX7.dx7_load_sysex_try fn >>= wr fn)
 
 dx7_sysex_verify_1 :: FilePath -> IO ()
 dx7_sysex_verify_1 fn = do
@@ -46,7 +49,7 @@ main :: IO ()
 main = do
   a <- getArgs
   let ic = intercalate [""]
-      print_hex = map (unwords . map Byte.byte_hex_pp_err)
+      print_hex = map Byte.byte_seq_hex_pp
       print_parameters = ic . map DX7.dx7_parameter_seq_pp
       print_voice_names = map DX7.dx7_voice_name
       print_voice_data_list = ic . map DX7.dx7_voice_data_list_pp
