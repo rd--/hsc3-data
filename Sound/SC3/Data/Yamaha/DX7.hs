@@ -66,6 +66,7 @@ dx7_name_nchar = 10
 --
 -- > dx7_nvoice == 155
 -- > dx7_nvoice - dx7_name_nchar == 145
+-- > dx7_nvoice * 32 == 4960
 dx7_nvoice :: Num n => n
 dx7_nvoice = dx7_nparam + dx7_name_nchar
 
@@ -567,7 +568,7 @@ dx7_store_sysex_u8 fn = B.writeFile fn . B.pack . dx7_sysex_u8_validate "dx7_sto
 -}
 dx7_load_sysex :: String -> IO DX7_Bank
 dx7_load_sysex fn = do
-  s <- Process.readProcess "hsc3-dx7-unpack" ["unpack","binary","",fn] ""
+  s <- Process.readProcess "hsc3-dx7-unpack" ["unpack","binary","text",fn] ""
   return (Split.chunksOf 155 (Byte.read_hex_byte_seq s))
 
 {- | Write binary DX7 FORMAT=9 sysex file.

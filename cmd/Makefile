@@ -16,9 +16,11 @@ cmd =	ats au-to-pbm au-to-pgm \
 
 include ~/sw/hsc3/mk/cmd.mk
 
+LDLIBS=c-common/lib-c-common.a
+
 # gcc-8.2.0 -O3 indicates no errors but unpack -> repack is not identity, -O0 works
 dx7-unpack: dx7-unpack.c
-	gcc -Wall -std=c99 -O0 -o dx7-unpack dx7-unpack.c
+	gcc -Wall -std=c99 -O0 -o dx7-unpack dx7-unpack.c $(LDLIBS)
 
 # VST
 
@@ -26,3 +28,10 @@ VST_SDK = $(HOME)/opt/src/vstsdk2.4
 
 lxvst-stat: lxvst-stat.cpp
 	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
+
+ln-local-c-common:
+	rm -f c-common
+	ln -s $(HOME)/sw/c-common c-common
+
+mk-local-c-common:
+	(cd c-common ; make)
