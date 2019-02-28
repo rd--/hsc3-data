@@ -763,8 +763,8 @@ dx7_load_hex :: FilePath -> IO [DX7_Voice]
 dx7_load_hex fn = do
   d <- Byte.load_hex_byte_seq fn
   let n = length d
-  when ((n `rem` 155) /= 0) (error ("dx7_load_hex: " ++ show n))
-  return (Split.chunksOf 155 d)
+  when (n /= 32) (error ("dx7_load_hex: " ++ show n))
+  return d
 
 {- | Write sequence of unpacked 155 voice-data parameters to text file.
 
@@ -772,10 +772,10 @@ dx7_load_hex fn = do
 > dx7_store_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.text" d
 
 > t <- dx7_load_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.text"
-> (length d,length t,d == t)
+> (length d,length t,d == t) == (32,32,True)
 
 -}
 dx7_store_hex :: FilePath -> [DX7_Voice] -> IO ()
 dx7_store_hex fn v = do
   when (any not (map dx7_voice_verify v)) (error "dx7_store_hex")
-  Byte.store_hex_byte_seq 155 fn (concat v)
+  Byte.store_hex_byte_seq fn v

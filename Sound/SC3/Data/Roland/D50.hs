@@ -867,8 +867,8 @@ d50_wg_pitch_kf_dti r =
 
 -- * I/O
 
--- | Load text file consisting of 448 (0x1C0) white-space separated
--- two-character hexidecimal byte values, ie. a D50 patch.
+-- | Load text file consisting of 448 (0x1C0) two-character
+-- hexidecimal byte values, ie. a D50 patch.
 --
 -- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 -- > let p' = unlines (filter (not . null) (d50_patch_csv p))
@@ -876,9 +876,9 @@ d50_wg_pitch_kf_dti r =
 load_d50_text :: FilePath -> IO [U8]
 load_d50_text fn = do
   b <- T.load_hex_byte_seq fn
-  case splitAt 448 b of
-    (h,[]) -> return h
-    _ -> error "load_d50_text"
+  case b of
+    [] -> error "load_d50_text?"
+    x:_ -> if length x /= 448 then error "load_d50_text: 448?" else return x
 
 -- | Load binary 'U8' sequence from file.
 load_byte_seq :: FilePath -> IO [U8]

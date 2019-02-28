@@ -7,7 +7,7 @@ UNPACKED DATA : 155 * 32 = 4960
 
 dx7-unpack unpacks and repacks this data structure
 
-data is read and written in plain-text format as sequences of hexadecimal numbers
+data is read and written in plain-text format as sequences of hexadecimal numbers (00 - FF)
 
 http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt
 http://sourceforge.net/u/tedfelix/dx7dump/
@@ -35,9 +35,6 @@ void print_u8_as_hex(u8 *b,int n)
 {
     for(int i = 0;i < n;i ++) {
 	printf("%02X",b[i]);
-        if (i < n - 1) {
-            putchar(' ');
-        }
     }
 }
 
@@ -45,10 +42,8 @@ void read_u8_as_hex(u8 *b,int n)
 {
     for(int i = 0;i < n;i++) {
         unsigned int x;
-        char c;
-	int err = scanf("%02X%c",&x,&c);
-        fail_if(err == 0,"SCANF?");
-        fail_if(err == 1 && i != n - 1,"EOF?");
+	int err = scanf("%02X",&x);
+        fail_if(err != 1,"SCANF?");
         b[i] = (u8)x;
     }
 }
