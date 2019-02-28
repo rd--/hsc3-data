@@ -2,7 +2,7 @@
 
 DX7 FORMAT=9 SYSEX files have some fields bit-packed.
 
-dx7-unpack can unpack and repack files.
+dx7-unpack can unpack and repack files in either binary or text (hexadecimal) formats
 
 dx7-unpack unpack prints the 4960 element unpacked sysex data as plain text (310 * 16)
 

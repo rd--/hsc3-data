@@ -524,7 +524,7 @@ dx7_load_u8 = fmap B.unpack . B.readFile
 {- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
 --   Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 
-> d <- dx7_load_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> d <- dx7_load_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
 > dx7_sysex_u8_verify d == (True,True,True,True)
 -}
 dx7_sysex_u8_verify :: DX7_SYSEX -> (Bool, Bool, Bool, Bool)
@@ -538,49 +538,31 @@ dx7_sysex_u8_verify d =
      ,chk == dx7_checksum dat
      ,eof == 0xF7)
 
+-- | 'error' if /syx/ is not valid, else 'id'.
+dx7_sysex_u8_validate :: String -> DX7_SYSEX -> DX7_SYSEX
+dx7_sysex_u8_validate err syx =
+  if dx7_sysex_u8_verify syx /= (True,True,True,True)
+  then error ("dx7_sysex_u8_validate: " ++ err)
+  else syx
+
 {- | Load FORMAT=9 sysex file as 4104-element U8 sequence and run verification.
      See 'dx7_sysex_u8_verify'.
 -}
 dx7_load_sysex_u8 :: FilePath -> IO DX7_SYSEX
-dx7_load_sysex_u8 fn = do
-  syx <- dx7_load_u8 fn
-  when (dx7_sysex_u8_verify syx /= (True,True,True,True)) (error "dx7_load_sysex_u8?")
-  return syx
+dx7_load_sysex_u8 = fmap (dx7_sysex_u8_validate "dx7_load_sysex_u8?")  . dx7_load_u8
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_store_sysex_u8 :: FilePath -> DX7_SYSEX -> IO ()
-dx7_store_sysex_u8 fn = B.writeFile fn . B.pack
-
--- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
-dx7_load_sysex_hex :: FilePath -> IO DX7_Bank
-dx7_load_sysex_hex fn = do
-  d <- Byte.load_hex_byte_seq fn
-  when (length d /= 4960) (error "dx7_load_sysex_hex")
-  return (Split.chunksOf 155 d)
-
-{- | Write unpacked 4960 parameter sequence to text sysex file (see cmd/dx7-unpack.c).
-
-> d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
-> dx7_store_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text" d
-
--}
-dx7_store_sysex_hex :: FilePath -> DX7_Bank -> IO ()
-dx7_store_sysex_hex fn b = do
-  let d = concat b
-  when (length d /= 4960) (error "dx7_store_sysex_hex")
-  Byte.store_hex_byte_seq fn d
+dx7_store_sysex_u8 fn = B.writeFile fn . B.pack . dx7_sysex_u8_validate "dx7_store_sysex_u8?"
 
 {- | Read unpacked 4960 parameter sequence from binary FORMAT=9 sysex file (see cmd/dx7-unpack.c).
 
-> d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx"
+> d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
 > dx7_bank_verify d
 > mapM_ (putStrLn . dx7_voice_name) d
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
-
-> t <- dx7_load_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/ROM1A.syx.text"
-> (length d,length t,d == t)
 
 -}
 dx7_load_sysex :: String -> IO DX7_Bank
@@ -766,3 +748,27 @@ dx7_vrc_tbl =
 -- > concatMap dx7_vrc_syx_name dx7_vrc_tbl
 dx7_vrc_syx_name :: (Int,String) -> [String]
 dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
+
+-- * TEXT/HEX
+
+-- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
+dx7_load_sysex_hex :: FilePath -> IO DX7_Bank
+dx7_load_sysex_hex fn = do
+  d <- Byte.load_hex_byte_seq fn
+  when (length d /= 4960) (error "dx7_load_sysex_hex")
+  return (Split.chunksOf 155 d)
+
+{- | Write unpacked 4960 parameter sequence to text sysex file (see cmd/dx7-unpack.c).
+
+> d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
+> dx7_store_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx.text" d
+
+> t <- dx7_load_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx.text"
+> (length d,length t,d == t)
+
+-}
+dx7_store_sysex_hex :: FilePath -> DX7_Bank -> IO ()
+dx7_store_sysex_hex fn b = do
+  let d = concat b
+  when (length d /= 4960) (error "dx7_store_sysex_hex")
+  Byte.store_hex_byte_seq fn d
