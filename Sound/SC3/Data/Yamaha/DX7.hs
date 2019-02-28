@@ -793,8 +793,7 @@ dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
 dx7_load_hex :: FilePath -> IO [DX7_Voice]
 dx7_load_hex fn = do
   d <- Byte.load_hex_byte_seq fn
-  let n = length d
-  when (n /= 32) (error ("dx7_load_hex: " ++ show n))
+  when (any (not . dx7_voice_verify) d) (error ("dx7_load_hex?"))
   return d
 
 {- | Write sequence of unpacked 155 voice-data parameters to text file.
