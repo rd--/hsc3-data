@@ -1,6 +1,6 @@
  -- | Yamaha DX7
 --
---  GS-1 FM = 1981, DX7 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
+--  GS-1 FM = 1981, DX1 & DX7 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
 --
 -- <http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt>
 -- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
@@ -567,7 +567,7 @@ dx7_store_sysex_u8 fn = B.writeFile fn . B.pack . dx7_sysex_u8_validate "dx7_sto
 -}
 dx7_load_sysex :: String -> IO DX7_Bank
 dx7_load_sysex fn = do
-  s <- Process.readProcess "hsc3-dx7-unpack" ["unpack","binary","text",fn] ""
+  s <- Process.readProcess "hsc3-dx7-unpack" ["unpack","binary","",fn] ""
   return (Split.chunksOf 155 (Byte.read_hex_byte_seq s))
 
 {- | Write binary DX7 FORMAT=9 sysex file.
@@ -751,24 +751,24 @@ dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
 
 -- * TEXT/HEX
 
--- | Read unpacked 4960 parameter sequence from text sysex file (see cmd/dx7-unpack.c).
-dx7_load_sysex_hex :: FilePath -> IO DX7_Bank
-dx7_load_sysex_hex fn = do
+-- | Read sequence of unpacked 155 voice-data parameters from text file.
+dx7_load_hex :: FilePath -> IO [DX7_Voice]
+dx7_load_hex fn = do
   d <- Byte.load_hex_byte_seq fn
-  when (length d /= 4960) (error "dx7_load_sysex_hex")
+  let n = length d
+  when ((n `rem` 155) /= 0) (error ("dx7_load_hex: " ++ show n))
   return (Split.chunksOf 155 d)
 
-{- | Write unpacked 4960 parameter sequence to text sysex file (see cmd/dx7-unpack.c).
+{- | Write sequence of unpacked 155 voice-data parameters to text file.
 
 > d <- dx7_load_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
-> dx7_store_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx.text" d
+> dx7_store_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.text" d
 
-> t <- dx7_load_sysex_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx.text"
+> t <- dx7_load_hex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.text"
 > (length d,length t,d == t)
 
 -}
-dx7_store_sysex_hex :: FilePath -> DX7_Bank -> IO ()
-dx7_store_sysex_hex fn b = do
-  let d = concat b
-  when (length d /= 4960) (error "dx7_store_sysex_hex")
-  Byte.store_hex_byte_seq fn d
+dx7_store_hex :: FilePath -> [DX7_Voice] -> IO ()
+dx7_store_hex fn v = do
+  when (any not (map dx7_voice_verify v)) (error "dx7_store_hex")
+  Byte.store_hex_byte_seq 155 fn (concat v)

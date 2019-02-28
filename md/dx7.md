@@ -1,5 +1,9 @@
 # dx7
 
+## sysex add
+
+Add a DX7 sysex containter to a 4096 byte-sequence DX7 packed voice-bank data chunk.
+
 ## sysex print
 
 ~~~~

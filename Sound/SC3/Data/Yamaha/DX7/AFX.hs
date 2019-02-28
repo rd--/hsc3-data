@@ -38,6 +38,7 @@ afx_parse_line s =
   let f k = u8_parse_c2 (B.index s (k * 2),B.index s (k * 2 + 1))
   in if afx_entry_verify s then map f [0 .. 144] else error "afx_parse_line"
 
+-- | 'afx_parse_line' of 'B.lines'.
 afx_parse :: B.ByteString -> [AFX]
 afx_parse = map afx_parse_line . B.lines
 
