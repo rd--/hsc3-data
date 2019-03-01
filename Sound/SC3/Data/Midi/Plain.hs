@@ -50,6 +50,25 @@ write_midi0_opt m_tc m_ts fn = File.C.c_write_midi0_opt m_tc m_ts fn . map (conc
 write_midi0 :: FilePath -> [SEQ] -> IO ()
 write_midi0 = write_midi0_opt (Just 60) (Just (4,4))
 
+-- * TRANSLATE
+
+-- | Read 'T.Event' as real and quantize.
+event_fmidi_to_midi :: Integral t => (Double -> t) -> T.Event Double -> T.Event t
+event_fmidi_to_midi f (mnn,vel,ch,param) = (f mnn,f vel,ch,param)
+
+-- | 'T.Event' 'T.Wseq' node to 'Note'.
+mnd_to_note :: ((Double,Double),T.Event Int) -> Note
+mnd_to_note ((st,du),(mnn,vel,ch,_param)) = ((st,du),(mnn,vel,T.word8_to_int ch))
+
+-- | Read either MND or MNDD CSV file and write FORMAT-0 midi file.
+--
+-- > let csv_fn = "/home/rohan/sw/hmt/data/csv/mnd/1080-C01.csv"
+-- > cvs_mnd_to_midi0 75 (2,2) csv_fn "/tmp/1080-C01.midi"
+cvs_mnd_to_midi0 :: Int -> (Int, Int) -> FilePath -> FilePath -> IO ()
+cvs_mnd_to_midi0 tc ts fn1 fn2 = do
+  sq <- T.csv_midi_read_wseq fn1
+  write_midi0_opt (Just tc) (Just ts) fn2 [map mnd_to_note (T.wseq_map (event_fmidi_to_midi round) sq)]
+
 -- * Read
 
 track_to_wseq :: [(C.Time,C.Message)] -> SEQ

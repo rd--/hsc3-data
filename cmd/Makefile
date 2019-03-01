@@ -1,5 +1,5 @@
 cmd =	ats au-to-pbm au-to-pgm \
-	csv-mnd-to-pgm csv-plot csv-to-img \
+	csv-mnd-to-midi csv-mnd-to-pgm csv-plot csv-to-img \
 	d50-sysex dx7 dx7-unpack \
 	hex \
 	img-edit img-query img-to-pbm img-to-pgm img-to-sf \
