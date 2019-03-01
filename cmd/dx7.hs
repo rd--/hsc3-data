@@ -33,7 +33,8 @@ dx7_sysex_add fn1 fn2 = do
 dx7_sysex_rewrite :: FilePath -> FilePath -> IO ()
 dx7_sysex_rewrite fn1 fn2 = do
   src <- DX7.dx7_load_u8 fn1 -- ie. do not verify
-  let dat = take 4096 (drop 6 src)
+  let dat = DX7.dx7_sysex_fmt_9_dat src
+  when (length dat /= 4096) (error "dx7_sysex_rewrite?")
   DX7.dx7_store_sysex_u8 fn2 (DX7.dx7_sysex_fmt_9_gen dat)
 
 usage :: IO ()
@@ -59,6 +60,6 @@ main = do
     "sysex":"print":"parameters":fn -> dx7_sysex_print print_parameters fn
     "sysex":"print":"voice-names":fn -> dx7_sysex_print print_voice_names fn
     "sysex":"print":"voice-data-list":fn -> dx7_sysex_print print_voice_data_list fn
-    "sysex":"verify":fn -> dx7_sysex_verify fn
     ["sysex","rewrite",fn1,fn2] -> dx7_sysex_rewrite fn1 fn2
+    "sysex":"verify":fn -> dx7_sysex_verify fn
     _ -> usage

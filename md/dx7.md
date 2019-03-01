@@ -7,7 +7,7 @@ Add a DX7 sysex containter to a 4096 byte-sequence DX7 packed voice-bank data ch
 ## sysex print
 
 ~~~~
-$ cd ~/sw/hsc3-data/data/yamaha/dx7/
+$ cd ~/sw/hsc3-data/data/yamaha/dx7/rom/
 $ hsc3-dx7 sysex print voice-names ROM1A.syx
 BRASS   1
 BRASS   2
@@ -59,10 +59,15 @@ EG
 $
 ~~~~
 
+## sysex rewrite
+
+This command ignores the existing SYSEX container, which may contain
+errors, and makes a new SYSEX container for the packed data sequence.
+
 ## sysex verify
 
 ~~~~
-$ hsc3-dx7 sysex verify ~/.local/share/DigitalSuburban/Dexed/Cartridges/Dexed_01.syx
+$ hsc3-dx7 sysex verify ROM1A.syx
 TRUE
 $
 ~~~~

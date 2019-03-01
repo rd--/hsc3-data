@@ -593,7 +593,7 @@ dx7_load_sysex fn = do
   dx7_unpack_u8 (dx7_sysex_fmt_9_dat sysex)
 
 -- | Try and load 'DX7_Voice' data from named file.
---   Will read 163, 4096, 4104, 4960 and 8208 element data files,
+--   Will read 163, 4096, 4104, 4960 and exact multiples of 4104 element data files,
 --   to load either 1 or 32 or 64 voices.
 dx7_load_sysex_try :: FilePath -> IO (Maybe [DX7_Voice])
 dx7_load_sysex_try fn = do
@@ -605,8 +605,9 @@ dx7_load_sysex_try fn = do
     4096 -> fmap Just (dx7_unpack_u8 x)
     4104 -> fmap Just (decode_syx x)
     4960 -> return (Just (Split.chunksOf 155 x))
-    8208 -> fmap (Just . concat) (mapM decode_syx [take 4104 x,drop 4104 x])
-    _ -> return Nothing
+    n -> if n `rem` 4104 == 0
+         then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
+         else return Nothing
 
 {- | Write binary DX7 FORMAT=9 sysex file.
 
