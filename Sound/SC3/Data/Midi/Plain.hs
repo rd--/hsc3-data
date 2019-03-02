@@ -63,11 +63,15 @@ mnd_to_note ((st,du),(mnn,vel,ch,_param)) = ((st,du),(mnn,vel,T.word8_to_int ch)
 -- | Read either MND or MNDD CSV file and write FORMAT-0 midi file.
 --
 -- > let csv_fn = "/home/rohan/sw/hmt/data/csv/mnd/1080-C01.csv"
--- > cvs_mnd_to_midi0 75 (2,2) csv_fn "/tmp/1080-C01.midi"
-cvs_mnd_to_midi0 :: Int -> (Int, Int) -> FilePath -> FilePath -> IO ()
-cvs_mnd_to_midi0 tc ts fn1 fn2 = do
+-- > cvs_mnd_to_midi0 False 60 (4,4) csv_fn "/tmp/1080-C01.midi"
+cvs_mnd_to_midi0 :: Bool -> Int -> (Int, Int) -> FilePath -> FilePath -> IO ()
+cvs_mnd_to_midi0 rw tc ts fn1 fn2 = do
   sq <- T.csv_midi_read_wseq fn1
-  write_midi0_opt (Just tc) (Just ts) fn2 [map mnd_to_note (T.wseq_map (event_fmidi_to_midi round) sq)]
+  let f1 = T.wseq_map (event_fmidi_to_midi round)
+      f2 = if rw then T.wseq_remove_overlaps_rw (==) id else id
+      sq_n = map mnd_to_note (f2 (f1 sq))
+  print ("cvs_mnd_to_midi0","#",length sq,"o/l",T.wseq_has_overlaps (==) sq_n)
+  write_midi0_opt (Just tc) (Just ts) fn2 [sq_n]
 
 -- * Read
 
