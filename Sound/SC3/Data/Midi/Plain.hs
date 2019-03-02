@@ -3,6 +3,7 @@
 -- Simpler than MusicXML transfer for cases where durations are straightforward.
 module Sound.SC3.Data.Midi.Plain where
 
+import Data.Function {- base -}
 import Data.Maybe {- base -}
 
 import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
@@ -15,24 +16,25 @@ import qualified Sound.SC3.Data.Midi.File.C as File.C {- hsc3-data -}
 
 -- * Types
 
--- | The first value encodes non-note data as negative numbers.
+-- | ((start-time,duration),note-event)
+--
+--   The T.Event type is re-purposed a little.
+--   The first value encodes non-note data as negative numbers.
 --
 --   0-127 = (midi-note-number,midi-velocity,midi-channel)
 --   -1 = (-1:time-signature,numerator,denominator)
-type Event = (Int,Int,Int)
-
--- | ((start-time,duration),note-event)
-type Note = ((C.Time,C.Time),Event)
+type Note = ((C.Time,C.Time),T.Event Int)
 
 -- | 'T.Wseq' of 'Event'.
-type SEQ = T.Wseq C.Time Event
+type SEQ = [Note]
 
 -- * Write
 
 -- | Translate 'Note' to on & off messages or time-signature message.
 note_to_midi :: Note -> [(C.Time,C.Message)]
-note_to_midi ((st,dur),(msg,d1,d2)) =
-    let n_on = (st, C.NoteOn d2 msg d1)
+note_to_midi ((st,dur),(msg,d1,d2_u8,_)) =
+    let d2 = T.word8_to_int d2_u8
+        n_on = (st,C.NoteOn d2 msg d1)
         n_off = (st + dur, C.NoteOff d2 msg 0)
         ts = (st,File.C.mk_time_signature (d1,d2))
     in case msg of
@@ -56,9 +58,18 @@ write_midi0 = write_midi0_opt (Just 60) (Just (4,4))
 event_fmidi_to_midi :: Integral t => (Double -> t) -> T.Event Double -> T.Event t
 event_fmidi_to_midi f (mnn,vel,ch,param) = (f mnn,f vel,ch,param)
 
+event_mnn :: T.Event t -> t
+event_mnn (mnn,_,_,_) = mnn
+
+event_ch :: T.Event t -> T.Channel
+event_ch (_,_,ch,_) = ch
+
+event_eq :: Eq t => T.Event t -> T.Event t -> Bool
+event_eq = ((==) `on` (\(mnn,_,ch,_) -> (mnn,ch)))
+
 -- | 'T.Event' 'T.Wseq' node to 'Note'.
 mnd_to_note :: ((Double,Double),T.Event Int) -> Note
-mnd_to_note ((st,du),(mnn,vel,ch,_param)) = ((st,du),(mnn,vel,T.word8_to_int ch))
+mnd_to_note = id -- ((st,du),(mnn,vel,ch,param)) = ((st,du),(mnn,vel,T.word8_to_int ch,param))
 
 -- | Read either MND or MNDD CSV file and write FORMAT-0 midi file.
 --
@@ -68,9 +79,9 @@ cvs_mnd_to_midi0 :: Bool -> Int -> (Int, Int) -> FilePath -> FilePath -> IO ()
 cvs_mnd_to_midi0 rw tc ts fn1 fn2 = do
   sq <- T.csv_midi_read_wseq fn1
   let f1 = T.wseq_map (event_fmidi_to_midi round)
-      f2 = if rw then T.wseq_remove_overlaps_rw (==) id else id
+      f2 = if rw then T.wseq_remove_overlaps_rw event_eq id else id
       sq_n = map mnd_to_note (f2 (f1 sq))
-  print ("cvs_mnd_to_midi0","#",length sq,"o/l",T.wseq_has_overlaps (==) sq_n)
+  print ("cvs_mnd_to_midi0","#",length sq,"o/l",T.wseq_has_overlaps event_eq sq)
   write_midi0_opt (Just tc) (Just ts) fn2 [sq_n]
 
 -- * Read
@@ -80,11 +91,10 @@ track_to_wseq =
     let f (tm,msg) = case msg of
                        C.NoteOn ch mnn vel ->
                            let ty = if vel == 0 then T.End else T.Begin
-                           in Just (tm,ty (mnn,vel,ch))
+                           in Just (tm,ty (mnn,vel,T.int_to_word8 ch,[]))
                        C.NoteOff ch mnn vel ->
-                           Just (tm,T.End (mnn,vel,ch))
+                           Just (tm,T.End (mnn,vel,T.int_to_word8 ch,[]))
                        _ -> Nothing
-        event_eq (n0,_,c0) (n1,_,c1) = n0 == n1 && c0 == c1
     in T.tseq_begin_end_to_wseq event_eq . mapMaybe f
 
 -- | Load Type-0 or Type-1 MIDI file as 'SEQ' data.  Ignores
@@ -104,5 +114,4 @@ write_csv_mnd :: FilePath -> [SEQ] -> IO ()
 write_csv_mnd fn =
     T.csv_mnd_write_tseq 4 fn .
     T.midi_wseq_to_midi_tseq .
-    T.tseq_map (\(mn,vel,ch) -> (mn,vel,T.int_to_word8 ch,[])) .
     seq_merge
