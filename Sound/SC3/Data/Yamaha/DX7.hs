@@ -89,6 +89,27 @@ type DX7_Voice = [U8]
 dx7_voice_verify :: DX7_Voice -> Bool
 dx7_voice_verify = (==) dx7_nvoice . length
 
+-- | Voice operators, in sequence 6,5,4,3,2,1.
+dx7_voice_op_params :: DX7_Voice -> [[U8]]
+dx7_voice_op_params = Split.chunksOf dx7_op_nparam . take (dx7_op_nparam * 6)
+
+-- | Voice shared parameters.
+dx7_voice_sh_params :: DX7_Voice -> [U8]
+dx7_voice_sh_params = take dx7_sh_nparam . drop (dx7_op_nparam * 6)
+
+-- | DX7 INIT VOICE, from DX7-II CART 64-B.
+--
+-- > dx7_voice_verify dx7_init_voice == True
+-- > dx7_voice_name dx7_init_voice == "INIT VOICE"
+dx7_init_voice :: DX7_Voice
+dx7_init_voice =
+  let mk_op x = [99,99,99,99,99,99,99,0,39,0,0,0,0,0,0,0,x,0,1,0,7]
+      op_6_2 = concat (replicate 5 (mk_op 0))
+      op_1 = mk_op 99
+      sh = [99,99,99,99,50,50,50,50,0,0,1,35,0,0,0,1,0,3,24]
+      nm = dx7_name_encode "INIT VOICE"
+  in concat [op_6_2,op_1,sh,nm]
+
 -- | Sequence of 32 voices (32 * 155 = 4960)
 type DX7_Bank = [DX7_Voice]
 
@@ -337,6 +358,9 @@ dx7_function_parameters_tbl =
 -- | Extract 10 character voice name from 'DX7_Voice'.
 dx7_voice_name :: DX7_Voice -> String
 dx7_voice_name v = map (Byte.word8_to_enum . Byte.word8_at v) [145 .. 154]
+
+dx7_name_encode :: String -> [U8]
+dx7_name_encode = map Byte.char_to_word8
 
 -- * DX7 VOICE DATA LIST
 
