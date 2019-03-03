@@ -1,4 +1,9 @@
--- | <​https://github.com/everythingwillbetakenaway/DX7-Supercollider>
+{- | <​https://github.com/everythingwillbetakenaway/DX7-Supercollider>
+
+AFX files are text files with one 145-element PX7.PX7_Param listing per line.
+Data is written as two-digit decimal numbers (00-99).
+
+-}
 module Sound.SC3.Data.Yamaha.DX7.AFX where
 
 import qualified Data.ByteString.Char8 as B {- bytestring -}
@@ -10,17 +15,17 @@ import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7 {- hsc3-data -}
 
 -- * UTIL
 
--- | Parse two digit number, ie. in 0-99.
+-- | Parse two digit decimal number, ie. in 0-99.
 --
--- > u8_parse_c2 ('3','2') == 32
-u8_parse_c2 :: (Char,Char) -> U8
-u8_parse_c2 (c1,c2) = Byte.digit_to_word8 c1 * 10 + Byte.digit_to_word8 c2
+-- > afx_parse_u8 ('3','2') == 32
+afx_parse_u8 :: (Char,Char) -> U8
+afx_parse_u8 (c1,c2) = Byte.digit_to_word8 c1 * 10 + Byte.digit_to_word8 c2
 
--- | Inverse of 'u8_parse_c2'.
+-- | Inverse of 'afx_parse_u8'.
 --
--- > map (u8_parse_c2 . u8_pp_c2) [0 .. 99] == [0 .. 99]
-u8_pp_c2 :: U8 -> (Char, Char)
-u8_pp_c2 n = let (p,q) = n `divMod` 10 in (Byte.word8_to_digit p,Byte.word8_to_digit q)
+-- > map (afx_parse_u8 . afx_encode_u8) [0 .. 99] == [0 .. 99]
+afx_encode_u8 :: U8 -> (Char, Char)
+afx_encode_u8 n = let (p,q) = n `divMod` 10 in (Byte.word8_to_digit p,Byte.word8_to_digit q)
 
 -- * AFX
 
@@ -28,18 +33,15 @@ u8_pp_c2 n = let (p,q) = n `divMod` 10 in (Byte.word8_to_digit p,Byte.word8_to_d
 afx_entry_verify :: B.ByteString -> Bool
 afx_entry_verify = (\n -> n == 290 || n == 310) . B.length
 
--- | AFX data is a sequence of 145 U8 in PX7 order.
-type AFX = [U8]
-
 -- | Each entry is 145 two digit decimal numbers with no spaces.
 --   The data is in PX7 patch file sequence.
-afx_parse_line :: B.ByteString -> AFX
+afx_parse_line :: B.ByteString -> PX7.PX7_Param
 afx_parse_line s =
-  let f k = u8_parse_c2 (B.index s (k * 2),B.index s (k * 2 + 1))
+  let f k = afx_parse_u8 (B.index s (k * 2),B.index s (k * 2 + 1))
   in if afx_entry_verify s then map f [0 .. 144] else error "afx_parse_line"
 
 -- | 'afx_parse_line' of 'B.lines'.
-afx_parse :: B.ByteString -> [AFX]
+afx_parse :: B.ByteString -> [PX7.PX7_Param]
 afx_parse = map afx_parse_line . B.lines
 
 {- | Load AFX file (in PX7 order).
@@ -50,19 +52,19 @@ afx_parse = map afx_parse_line . B.lines
 > let d0:_ = d
 > let d0_dx7 = PX7.px7_param_data_to_dx7 d0
 > d0 == PX7.px7_param_data_from_dx7 d0_dx7
-> afx_pp d0
+> afx_encode d0
 
 -}
-afx_load :: FilePath -> IO [AFX]
+afx_load :: FilePath -> IO [PX7.PX7_Param]
 afx_load = fmap afx_parse . B.readFile
 
 -- | AFX pretty printer (inverse of 'afx_parse_line').
-afx_pp :: AFX -> String
-afx_pp = concatMap ((\(p,q) -> [p,q]) . u8_pp_c2)
+afx_encode :: PX7.PX7_Param -> String
+afx_encode = concatMap ((\(p,q) -> [p,q]) . afx_encode_u8)
 
 -- | Write AFX file (in PX7 order).
-afx_store :: FilePath -> [AFX] -> IO ()
-afx_store fn = writeFile fn . unlines . map afx_pp
+afx_store :: FilePath -> [PX7.PX7_Param] -> IO ()
+afx_store fn = writeFile fn . unlines . map afx_encode
 
 -- * DX7
 
@@ -82,9 +84,6 @@ Note that the AFX data does not include a voice name, hence 'DX7_Param' and not 
 > h = T.histogram (map (`Byte.word8_at` n) d)
 > map snd h
 
-> import Sound.SC3.Plot {- hsc3-plot -}
-> plotImpulses [map snd h]
-
 > import Data.Bifunctor {- base -}
 > import qualified Music.Theory.Math.Convert as T {- hmt -}
 > import Sound.SC3.Plot {- hsc3-plot -}
@@ -94,8 +93,10 @@ Note that the AFX data does not include a voice name, hence 'DX7_Param' and not 
 afx_load_dx7 :: FilePath -> IO [DX7_Param]
 afx_load_dx7 = fmap (map PX7.px7_param_data_to_dx7) . afx_load
 
-afx_dx7_pp :: DX7_Param -> String
-afx_dx7_pp = afx_pp . PX7.px7_param_data_from_dx7
+-- | 'afx_encode' of 'PX7.px7_param_data_from_dx7'
+afx_dx7_encode :: DX7_Param -> String
+afx_dx7_encode = afx_encode . PX7.px7_param_data_from_dx7
 
+-- | 'writeFile' of 'afx_dx7_encode'.
 afx_store_dx7 :: FilePath -> [DX7_Param] -> IO ()
-afx_store_dx7 fn = writeFile fn . unlines . map afx_dx7_pp
+afx_store_dx7 fn = writeFile fn . unlines . map afx_dx7_encode

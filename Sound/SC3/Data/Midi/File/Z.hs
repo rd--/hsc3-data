@@ -38,6 +38,10 @@ z_to_rq t_div t =
     Z.TPB n -> fromIntegral t % fromIntegral n
     _ -> error "non-TPB division"
 
+-- | Type-specialised 'z_to_rq'.
+z_delta_time_to_rq :: Z.MidiTimeDivision -> Z.DeltaTime -> T.RQ
+z_delta_time_to_rq = z_to_rq
+
 -- * VOICE
 
 -- | Translate from 'Z.MidiVoiceEvent' to 'M.Channel_Voice_Message'.
