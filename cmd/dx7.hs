@@ -1,16 +1,16 @@
 import Control.Monad {- base -}
-import Data.List {- base -}
 import System.Environment {- base -}
 import System.IO {- base -}
+import Text.Printf {- base -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
 
 import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
 
-dx7_sysex_print :: ([DX7.DX7_Voice] -> [String]) -> [FilePath] -> IO ()
+dx7_sysex_print :: ((Int,DX7.DX7_Voice) -> String) -> [FilePath] -> IO ()
 dx7_sysex_print op =
   let wr fn x = case x of
-                  Just bnk -> putStr (unlines (op bnk))
+                  Just bnk -> putStr (unlines (map op (zip [1::Int ..] bnk)))
                   Nothing -> hPutStrLn stderr ("ERROR: dx7_sysex_print: " ++ fn)
   in mapM_ (\fn -> DX7.dx7_load_sysex_try fn >>= wr fn)
 
@@ -49,16 +49,15 @@ usage =
 main :: IO ()
 main = do
   a <- getArgs
-  let ic = intercalate [""]
-      print_hex = map Byte.byte_seq_hex_pp
-      print_parameters = ic . map DX7.dx7_parameter_seq_pp
-      print_voice_names = map DX7.dx7_voice_name
-      print_voice_data_list = ic . map DX7.dx7_voice_data_list_pp
+  let print_hex = Byte.byte_seq_hex_pp . snd
+      print_parameters = unlines . DX7.dx7_parameter_seq_pp . snd
+      print_voice_data_list = unlines . DX7.dx7_voice_data_list_pp . snd
+      print_voice_name (k,v) = printf "%02d %s" k (DX7.dx7_voice_name v)
   case a of
     ["sysex","add",fn1,fn2] -> dx7_sysex_add fn1 fn2
     "sysex":"print":"hex":fn -> dx7_sysex_print print_hex fn
     "sysex":"print":"parameters":fn -> dx7_sysex_print print_parameters fn
-    "sysex":"print":"voice-names":fn -> dx7_sysex_print print_voice_names fn
+    "sysex":"print":"voice-names":fn -> dx7_sysex_print print_voice_name fn
     "sysex":"print":"voice-data-list":fn -> dx7_sysex_print print_voice_data_list fn
     ["sysex","rewrite",fn1,fn2] -> dx7_sysex_rewrite fn1 fn2
     "sysex":"verify":fn -> dx7_sysex_verify fn
