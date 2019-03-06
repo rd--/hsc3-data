@@ -1,8 +1,8 @@
 %.syx.text : %.syx
-	hsc3-dx7-unpack unpack binary text $< > $@
+	hsc3-dx7 sysex print hex $< > $@
 
-%.names.text : %.syx.text
-	hsc3-dx7-hex print-voice-names $< > $@
+%.syx.names.text : %.syx
+	hsc3-dx7 sysex print voice-names $< > $@
 
-%.param.text : %.syx.text
-	hsc3-dx7-hex print-parameters $< > $@
+%.syx.param.text : %.syx
+	hsc3-dx7 sysex print parameters $< > $@
