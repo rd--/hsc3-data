@@ -10,6 +10,7 @@ import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
+import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
 -- * MIDI arcana

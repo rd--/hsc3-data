@@ -413,20 +413,15 @@ non_dx7_param =
 -- * INIT
 
 -- | INIT data from <DexedAudioProcessor::resetToInitVoice>.
---   This is in DX7 parameter seqeuence.
+--   This differs from the dx7_init_data in one place (KBD LEV SCL BRK PT) for each operator.
 --
--- > length dexed_init_voice == 155
--- > map toEnum (drop 145 dexed_init_voice) == "INIT VOICE"
-dexed_init_voice :: Num t => [t]
+-- > map DX7.dx7_parameter_name [8,29,50,71,92,113]
+-- > dexed_init_voice DX7.dx7_init_voice
+dexed_init_voice :: Num t => [t] -> [t]
 dexed_init_voice =
-  [99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
-  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
-  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
-  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
-  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 1, 0, 7
-  ,99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0, 99, 0, 1, 0, 7
-  ,99, 99, 99, 99, 50, 50, 50, 50, 0, 0, 1, 35, 0, 0, 0, 1, 0, 3, 24
-  ,73, 78, 73, 84, 32, 86, 79, 73, 67, 69]
+  let brk_pt_set = take 6 [8,8 + 21 ..]
+      f ix p = if ix `elem` brk_pt_set then 0 else p
+  in zipWith f [0..]
 
 {-
 
@@ -434,10 +429,12 @@ http://rd.slavepianos.org/sw/rju/cmd/jack-lxvst.cpp
 
 import Sound.OSC.FD {- hosc -}
 fd <- openUDP "127.0.0.1" 57210
-let p_set ix val = sendMessage fd (Message "/p_set" [int32 (dx7_to_dexed ix),Float val])
-p_set 123 1 -- OP 1 OSC FREQ COARSE
-p_set 125 1 -- OP 1 OSC DETUNE
-p_set 134 0.5 -- ALGORITHM #
-p_set 144 1 -- TRANSPOSE
+let p_set ix val = sendMessage fd (Message "/param" [int32 ix,Float val])
+p_set 3 0.5 -- MASTER TUNE ADJ
+let p_set_dx7 ix = p_set (dx7_to_dexed ix)
+p_set_dx7 123 1 -- OP 1 OSC FREQ COARSE
+p_set_dx7 125 1 -- OP 1 OSC DETUNE
+p_set_dx7 134 0.5 -- ALGORITHM #
+p_set_dx7 144 0.5 -- TRANSPOSE
 
 -}

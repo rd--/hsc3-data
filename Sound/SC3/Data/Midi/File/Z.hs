@@ -9,6 +9,7 @@ import Data.Word {- base -}
 import qualified Music.Theory.Duration.RQ as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
+import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
 import qualified ZMidi.Core as Z {- zmidi-core -}

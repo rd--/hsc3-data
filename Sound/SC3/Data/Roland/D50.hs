@@ -25,8 +25,8 @@ import qualified Music.Theory.Byte as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Tuple as T {- hmt -}
 
+import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Constant as M {- midi-osc -}
-import qualified Sound.Midi.Type as M {- midi-osc -}
 
 -- | 8-bit unsigned integer, ie. parameter values, midi data etc.
 type U8 = Word8
