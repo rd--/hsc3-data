@@ -186,6 +186,12 @@ dexed_param =
     ,Ctrl {label="OP6 SWITCH", idx=154} -- non-DX7
     ]
 
+-- | The DEXED MASTER_TUNE_ADJ parameter maps input of (0,1) to cents re-tuning of (-50,+50).
+--
+-- > map dexed_master_tune_adj_cents [-100,-50,0,50,100] == [0,0,0.5,1,1]
+dexed_master_tune_adj_cents :: (Ord p, Fractional p) => p -> p
+dexed_master_tune_adj_cents x = if x < (-50) then 0 else if x > 50 then 1 else (x + 50) / 100
+
 -- * CTRLDX
 
 -- | Dexed data for DX7 parameter.
