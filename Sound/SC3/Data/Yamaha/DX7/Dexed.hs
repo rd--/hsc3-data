@@ -427,7 +427,7 @@ dexed_init_voice :: Num t => [t] -> [t]
 dexed_init_voice =
   let brk_pt_set = take 6 [8,8 + 21 ..]
       f ix p = if ix `elem` brk_pt_set then 0 else p
-  in zipWith f [0..]
+  in zipWith f [0::Int ..]
 
 {-
 

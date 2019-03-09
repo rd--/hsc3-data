@@ -16,12 +16,14 @@ module Sound.SC3.Data.Roland.D50 where
 import Control.Monad {- base -}
 import qualified Data.ByteString as B {- bytestring -}
 import Data.Char {- base -}
+import Data.Int {- base -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
 
 import qualified Music.Theory.Byte as T {- hmt -}
+import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Tuple as T {- hmt -}
 
@@ -32,19 +34,19 @@ import qualified Sound.Midi.Constant as M {- midi-osc -}
 type U8 = Word8
 
 -- | 8-bit signed integer, ie. USR-OFFSET
-type I8 = Int
+type I8 = Int8
 
 -- | 24-bit unsigned integer, ie. ADDRESS and related offsets and extents.
-type U24 = Int
+type U24 = Word32
 
 int_to_u8 :: Int -> U8
-int_to_u8 n = if n >= 0 && n <= 255 then fromIntegral n else error "int_to_u8"
+int_to_u8 = fromMaybe (error "int_to_u8") . T.int_to_word8_maybe
 
 u8_to_i8 :: U8 -> I8
-u8_to_i8 = fromIntegral
+u8_to_i8 = T.word8_to_int8
 
 u8_to_u24 :: U8 -> U24
-u8_to_u24 = fromIntegral
+u8_to_u24 = T.word8_to_word32
 
 -- | Parameter address.
 type ADDRESS = U24
@@ -68,11 +70,11 @@ parameter_ix (ix,_,_,_,_) = ix
 parameter_name :: Parameter -> String
 parameter_name (_,nm,_,_,_) = nm
 
-parameter_user_offset :: Parameter -> Int
+parameter_user_offset :: Parameter -> I8
 parameter_user_offset (_,_,_,o,_) = o
 
 -- | (GROUP-NAME,PARAMETER-NAME-SEQ,PARAMETER-IX-SEQ)
-type PARAM_GROUP = (String,String,[Int])
+type PARAM_GROUP = (String,String,[U24])
 
 -- | D50 SYSEX command ID.
 data D50_SYSEX_CMD = RQI_CMD -- ^ REQUEST DATA - ONE WAY
@@ -99,11 +101,11 @@ dsc_data (_,_,_,d) = d
 
 -- | Unpack 'U24' to three 'U8'.
 u24_unpack :: U24 -> [U8]
-u24_unpack = map fromIntegral . T.t3_to_list . M.bits_21_sep_be . fromIntegral
+u24_unpack = T.t3_to_list . M.bits_21_sep_be
 
 -- | Pack 'U24' from three 'U8'.
 u24_pack :: [U8] -> U24
-u24_pack = fromIntegral . M.bits_21_join_be . T.t3_from_list . map fromIntegral
+u24_pack = M.bits_21_join_be . T.t3_from_list
 
 -- | Range as @p - q@.
 --
@@ -224,8 +226,8 @@ d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]
 d50_cmd_parse :: [U8] -> Maybe (U8,U8,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
-        dat_n = length b' - 1
-        (dat,[eox]) = splitAt dat_n b'
+        dat_n = genericLength b' - 1
+        (dat,[eox]) = genericSplitAt dat_n b'
     in if any not [b0 == M.sysex_status,b1 == M.roland_id,b3 == d50_id,eox == M.sysex_end]
        then Nothing
        else Just (b2,b4,dat,dat_n)
@@ -235,7 +237,7 @@ d50_cmd_parse b =
 -- > d50_data_chk ([0,0,1,50,77],5) == Just ([0,0,1,50],4)
 d50_data_chk :: ([U8],U24) -> Maybe ([U8],U24)
 d50_data_chk (dat,dat_n) =
-    let (dat',[ch]) = splitAt (dat_n - 1) dat
+    let (dat',[ch]) = genericSplitAt (dat_n - 1) dat
     in if roland_checksum dat' == ch
        then Just (dat',dat_n - 1)
        else Nothing
@@ -364,7 +366,7 @@ parameter_type_address_segments =
 -- | Split sequence into groups based on 'Parameter_Type' sequence.
 parameter_segment :: [t] -> [(Parameter_Type,[t])]
 parameter_segment p =
-    let f (ty,(b,x)) = (ty,map (p!!) [b .. x])
+    let f (ty,(b,x)) = (ty,map (genericIndex p) [b .. x])
     in map f parameter_type_address_segments
 
 -- | 4.1 Parameter base address (Top address)
@@ -826,7 +828,7 @@ group_pp :: [(Parameter,U8)] -> PARAM_GROUP -> String
 group_pp x_seq (g_nm,p_nm_seq,ix) =
     let f p_nm (p,x) = let x' = parameter_value_usr p x
                        in if null p_nm {- ie. CHAR -} then x' else concat [p_nm,"=",x']
-        gr_p = zipWith f (splitOn ";" p_nm_seq) (map (x_seq !!) ix)
+        gr_p = zipWith f (splitOn ";" p_nm_seq) (map (genericIndex x_seq) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
 
 -- | Pretty printer for D-50 patch following group structure (ie. HW screen layout).
@@ -841,13 +843,13 @@ d50_patch_group_pp =
 
 -- | Patch name
 patch_name :: [U8] -> String
-patch_name = map d50_byte_to_char_err . take 18 . drop (parameter_type_base_address Patch)
+patch_name = map d50_byte_to_char_err . take 18 . genericDrop (parameter_type_base_address Patch)
 
 -- | Tone name
 --
 -- > tone_name Upper p
 tone_name :: Tone -> [U8] -> String
-tone_name t = map d50_byte_to_char_err . take 10 . drop (parameter_type_base_address (Common t))
+tone_name t = map d50_byte_to_char_err . take 10 . genericDrop (parameter_type_base_address (Common t))
 
 patch_name_set :: [U8] -> [String]
 patch_name_set p = [patch_name p,tone_name Upper p,tone_name Lower p]
@@ -882,11 +884,11 @@ load_d50_text fn = do
 
 -- | Load binary 'U8' sequence from file.
 load_byte_seq :: FilePath -> IO [U8]
-load_byte_seq = fmap (map fromIntegral . B.unpack) . B.readFile
+load_byte_seq = fmap B.unpack . B.readFile
 
 {-| Load DTI sequence from D-50 SYSEX file.
 
-> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+> let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > b <- load_byte_seq sysex_fn
 > let s = sysex_segment b
 > d <- d50_load_sysex_dti sysex_fn
@@ -912,7 +914,7 @@ d50_load_sysex_u8 fn = do
 
 {-| Load patch data (64 patches of 448 bytes) from D-50 SYSEX file.
 
-> let sysex_fn = "/home/rohan/data/roland-d50/PND50-00.syx"
+> let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > p <- d50_load_sysex sysex_fn
 > putStrLn$unlines$map patch_name p
 > putStrLn$unlines$concatMap d50_patch_group_pp p

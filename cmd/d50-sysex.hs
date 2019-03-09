@@ -6,8 +6,8 @@ import qualified Sound.PortMidi as M {- portmidi -}
 
 import Sound.OSC {- hosc -}
 
+import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.PM as M {- midi-osc -}
-import qualified Sound.Midi.Type as M {- midi-osc -}
 
 import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
 
@@ -39,7 +39,8 @@ send_patch_fd fd d50_ix p =
     let d = case d50_ix of
               Nothing -> D50.d50_dsc_gen_seq (D50.DTI_CMD,0,0,p)
               Just i -> let a = D50.patch_memory_base i
-                        in D50.d50_wsd_gen 0 a (length p) : D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
+                        in D50.d50_wsd_gen 0 a (genericLength p) :
+                           D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
     in void (M.pm_sysex_write_set fd d)
 
 send_patch_def :: Maybe U8 -> [U8] -> IO ()
@@ -67,7 +68,8 @@ lpc_recv_midi (p,fd) m =
       (0xC0,n,0,0) -> print n >> patch_pp (u8_index p n) >> send_patch_fd fd Nothing (u8_index p n)
       _ -> return ()
 
--- > lpc_run "/home/rohan/data/roland-d50/PND50-00.syx"
+-- > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
+-- > lpc_run fn
 lpc_run :: FilePath -> IO ()
 lpc_run fn = do
   p <- D50.d50_load_sysex fn
@@ -79,18 +81,18 @@ lpc_run fn = do
 
 -- * PRINT
 
--- > let fn = "/home/rohan/data/roland-d50/PND50-01.syx"
--- > d50_print_sysex "0" d50_patch_group_pp fn
--- > d50_print_sysex "all" (return . patch_name) fn
--- > d50_print_sysex "all" (return . intercalate "|" . patch_name_set) fn
+-- > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-01.syx"
+-- > d50_print_sysex "0" D50.d50_patch_group_pp fn
+-- > d50_print_sysex "all" (return . D50.patch_name) fn
+-- > d50_print_sysex "all" (return . intercalate " | " . D50.patch_name_set) fn
 d50_print_sysex :: String -> ([U8] -> [String]) -> FilePath -> IO ()
 d50_print_sysex ix pp fn =
     if ix == "all"
     then D50.d50_load_sysex fn >>= putStr . unlines . concatMap pp
     else D50.d50_load_sysex fn >>= putStr . unlines . pp . (!! (read ix))
 
--- > let fn = "/home/rohan/cvs/ew/ew-46/D50/FRANCIS.hex.text"
--- > d50_print_patch_text d50_patch_group_pp fn
+-- > let fn = "/home/rohan/uc/invisible/light/d50/d50.hex.text"
+-- > d50_print_patch_text D50.d50_patch_group_pp fn
 d50_print_patch_text :: ([U8] -> [String]) -> FilePath -> IO ()
 d50_print_patch_text pp fn = D50.load_d50_text fn >>= putStr . unlines . pp
 
@@ -99,8 +101,8 @@ d50_print_patch_text pp fn = D50.load_d50_text fn >>= putStr . unlines . pp
 parse_d50_ix :: String -> Maybe U8
 parse_d50_ix s = if s == "tmp" then Nothing else Just (read s)
 
--- > send_patch Nothing 0 "/home/rohan/data/roland-d50/PND50-00.syx"
--- > send_patch (Just 10) 0 "/home/rohan/data/roland-d50/PND50-00.syx"
+-- > send_patch Nothing 0 "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
+-- > send_patch (Just 10) 0 "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 send_patch :: Maybe U8 -> U8 -> FilePath -> IO ()
 send_patch d50_ix sysex_ix fn = do
   p <- D50.d50_load_sysex fn
@@ -130,7 +132,7 @@ main = do
     ["load-on-program-change",fn] -> M.pm_with_midi (lpc_run fn)
     "print-patch":"text":"csv":fn_seq -> mapM_ (d50_print_patch_text D50.d50_patch_csv) fn_seq
     "print-patch":"text":"pp-group":fn_seq -> mapM_ (d50_print_patch_text D50.d50_patch_group_pp) fn_seq
-    "print-sysex":ix:"name":fn_seq -> mapM_ (d50_print_sysex ix (return . intercalate "|" . D50.patch_name_set)) fn_seq
+    "print-sysex":ix:"name":fn_seq -> mapM_ (d50_print_sysex ix (return . intercalate " | " . D50.patch_name_set)) fn_seq
     "print-sysex":ix:"pp-group":fn_seq -> mapM_ (d50_print_sysex ix D50.d50_patch_group_pp) fn_seq
     ["send","patch",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix d50_ix) (read sysex_ix) fn
     ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
