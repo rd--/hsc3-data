@@ -97,16 +97,27 @@ dx7_voice_op_params = Split.chunksOf dx7_op_nparam . take (dx7_op_nparam * 6)
 dx7_voice_sh_params :: DX7_Voice -> [U8]
 dx7_voice_sh_params = take dx7_sh_nparam . drop (dx7_op_nparam * 6)
 
+-- | DX7 INIT operator, /x/ is the output level.
+dx7_init_op :: U8 -> [U8]
+dx7_init_op x = [99,99,99,99,99,99,99,0,39,0,0,0,0,0,0,0,x,0,1,0,7]
+
+-- | DX7 INIT PITCH EG.
+dx7_init_pitch_eg :: [U8]
+dx7_init_pitch_eg = [99,99,99,99,50,50,50,50]
+
+-- | DX7 INIT LFO.
+dx7_init_lfo :: [U8]
+dx7_init_lfo = [35,0,0,0,1,0]
+
 -- | DX7 INIT VOICE, from DX7-II CART 64-B.
 --
 -- > dx7_voice_verify dx7_init_voice == True
 -- > dx7_voice_name dx7_init_voice == "INIT VOICE"
 dx7_init_voice :: DX7_Voice
 dx7_init_voice =
-  let mk_op x = [99,99,99,99,99,99,99,0,39,0,0,0,0,0,0,0,x,0,1,0,7]
-      op_6_2 = concat (replicate 5 (mk_op 0))
-      op_1 = mk_op 99
-      sh = [99,99,99,99,50,50,50,50,0,0,1,35,0,0,0,1,0,3,24]
+  let op_6_2 = concat (replicate 5 (dx7_init_op 0))
+      op_1 = dx7_init_op 99
+      sh = dx7_init_pitch_eg ++ [0,0,1] ++ dx7_init_lfo ++ [3,24]
       nm = dx7_name_encode "INIT VOICE"
   in concat [op_6_2,op_1,sh,nm]
 
