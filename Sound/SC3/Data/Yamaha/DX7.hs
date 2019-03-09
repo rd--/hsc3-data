@@ -775,9 +775,25 @@ dx7_microtune_parameter_change_sysex ch md d1 d2 d3 =
 
 -- | Shift right by four places.
 --
--- > dx7_substatus 0x10 == 0x01
+-- > map dx7_substatus [0x10,0x20] == [0x01,0x02]
 dx7_substatus :: U8 -> U8
 dx7_substatus = flip shiftR 4
+
+-- * REQUEST SYSEX
+
+-- | Make data request sysex message, /n/ = channel, /k/ equal request type.
+dx7_data_request_sysex :: U8 -> U8 -> DX7_SYSEX
+dx7_data_request_sysex n k = [0xF0,0x43,0x20 + n,k,0xF7]
+
+-- | Request voice edit buffer as FORMAT=0 sysex.
+--
+-- > dx7_data_request_sysex_fmt0 0 == [0xF0,0x43,0x20,0x00,0xF7]
+dx7_data_request_sysex_fmt0 :: U8 -> DX7_SYSEX
+dx7_data_request_sysex_fmt0 n = dx7_data_request_sysex n 0x00
+
+-- | Request 32-voice data as FORMAT=9 sysex.
+dx7_data_request_sysex_fmt9 :: U8 -> DX7_SYSEX
+dx7_data_request_sysex_fmt9 n = dx7_data_request_sysex n 0x09
 
 -- * CARTS
 
@@ -795,10 +811,9 @@ dx7_rom_tbl =
 
 -- | DX7 ROM cartridge to SYSEX file name.
 --
--- > let r = ["ROM1A","ROM1B","ROM2A","ROM2B","ROM3A","ROM3B","ROM4A","ROM4B"]
--- > map dx7_rom_syx_name dx7_rom_tbl == r
+-- > map dx7_rom_syx_name dx7_rom_tbl
 dx7_rom_syx_name :: (Int,Char,String) -> String
-dx7_rom_syx_name (p,q,_) = "ROM" ++ show p ++ [q]
+dx7_rom_syx_name (p,q,_) = "DX7-ROM" ++ show p ++ [q]
 
 -- | DX7 VRC-Series cartridges
 dx7_vrc_tbl :: [(Int,String)]
