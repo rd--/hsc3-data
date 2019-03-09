@@ -370,6 +370,7 @@ dx7_function_parameters_tbl =
 dx7_voice_name :: DX7_Voice -> String
 dx7_voice_name v = map (Byte.word8_to_enum . Byte.word8_at v) [145 .. 154]
 
+-- | Encode ASCII name to U8 sequence.
 dx7_name_encode :: String -> [U8]
 dx7_name_encode = map Byte.char_to_word8
 
@@ -578,7 +579,7 @@ dx7_read_u8 = fmap B.unpack . B.readFile
 {- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
      Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 
-> d <- dx7_read_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
+> d <- dx7_read_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
 > dx7_fmt9_sysex_verify 0 d == (True,True,True,True)
 
 -}
@@ -618,9 +619,14 @@ dx7_unpack_u8 p = do
   when (length r /= 4960) (error ("dx7_unpack_u8: " ++ q))
   return (Split.chunksOf 155 r)
 
+-- | Decode FORMAT=9 SYSEX message.
+--   IO because the un-packing is done by an external process.
+dx7_fmt9_sysex_decode :: [U8] -> IO DX7_Bank
+dx7_fmt9_sysex_decode = dx7_unpack_u8 . dx7_fmt9_sysex_dat
+
 {- | Read binary FORMAT=9 sysex file and unpack voice data.
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
 > d <- dx7_load_fmt9_sysex fn
 > dx7_bank_verify d
 > mapM_ (putStrLn . dx7_voice_name) d
@@ -654,21 +660,26 @@ dx7_load_sysex_try fn = do
          then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
          else return Nothing
 
+dx7_fmt9_sysex_encode :: U8 -> DX7_Bank -> IO DX7_SYSEX
+dx7_fmt9_sysex_encode ch bnk = do
+  let dat = concat bnk
+      dat_str = Byte.byte_seq_hex_pp dat ++ "\n"
+  when (length dat /= 4960) (error "dx7_fmt9_sysex_encode")
+  syx <- Process.readProcess "hsc3-dx7-unpack" ["pack"] dat_str
+  return (dx7_fmt9_sysex_gen ch (Byte.read_hex_byte_seq syx))
+
 {- | Write binary DX7 FORMAT=9 sysex file.
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
 > d <- dx7_load_fmt9_sysex fn
-> dx7_store_fmt9_sysex "/tmp/ROM1A.syx" 0 d
-> Process.rawSystem "cmp" ["-l",fn,"/tmp/ROM1A.syx"]
+> dx7_store_fmt9_sysex "/tmp/DX7-ROM1A.syx" 0 d
+> Process.rawSystem "cmp" ["-l",fn,"/tmp/DX7-ROM1A.syx"]
 
 -}
 dx7_store_fmt9_sysex :: FilePath -> U8 -> DX7_Bank -> IO ()
-dx7_store_fmt9_sysex fn ch b = do
-  let d = concat b
-      d_str = Byte.byte_seq_hex_pp d ++ "\n"
-  when (length d /= 4960) (error "dx7_store_fmt9_sysex")
-  syx <- Process.readProcess "hsc3-dx7-unpack" ["pack"] d_str
-  B.writeFile fn (B.pack (dx7_fmt9_sysex_gen ch (Byte.read_hex_byte_seq syx)))
+dx7_store_fmt9_sysex fn ch bnk = do
+  syx <- dx7_fmt9_sysex_encode ch bnk
+  B.writeFile fn (B.pack syx)
 
 -- * C: SYSEX MESSAGE: Parameter Change
 
@@ -860,10 +871,10 @@ dx7_load_hex fn = do
 
 {- | Write sequence of unpacked 155 voice-data parameters to text file.
 
-> d <- dx7_load_fmt9_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/ROM1A.syx"
-> dx7_store_hex "/tmp/ROM1A.text" d
+> d <- dx7_load_fmt9_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+> dx7_store_hex "/tmp/DX7-ROM1A.text" d
 
-> t <- dx7_load_hex "/tmp/ROM1A.text"
+> t <- dx7_load_hex "/tmp/DX7-ROM1A.text"
 > (length d,length t,d == t) == (32,32,True)
 
 -}

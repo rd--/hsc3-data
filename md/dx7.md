@@ -8,7 +8,7 @@ Add a DX7 sysex containter to a 4096 byte-sequence DX7 packed voice-bank data ch
 
 ~~~~
 $ cd ~/sw/hsc3-data/data/yamaha/dx7/rom/
-$ hsc3-dx7 sysex print voice-names ROM1A.syx
+$ hsc3-dx7 sysex print voice-names DX7-ROM1A.syx
 BRASS   1
 BRASS   2
 BRASS   3
@@ -16,7 +16,7 @@ STRINGS 1
 STRINGS 2
 STRINGS 3
 ...
-$ hsc3-dx7 sysex print parameters ROM1A.syx
+$ hsc3-dx7 sysex print parameters DX7-ROM1A.syx
 000: OP 6 EG RATE 1 = 49
 001: OP 6 EG RATE 2 = 99
 002: OP 6 EG RATE 3 = 28
@@ -26,7 +26,7 @@ $ hsc3-dx7 sysex print parameters ROM1A.syx
 006: OP 6 EG LEVEL 3 = 91
 007: OP 6 EG LEVEL 4 = 0
 ...
-$ hsc3-dx7 sysex print voice-data-list ROM1A.syx
+$ hsc3-dx7 sysex print voice-data-list DX7-ROM1A.syx
 NAME=BRASS   1
 ALGORITHM=22
 FEEDBACK=07
@@ -67,7 +67,7 @@ errors, and makes a new SYSEX container for the packed data sequence.
 ## sysex verify
 
 ~~~~
-$ hsc3-dx7 sysex verify ROM1A.syx
+$ hsc3-dx7 sysex verify DX7-ROM1A.syx
 TRUE
 $
 ~~~~
