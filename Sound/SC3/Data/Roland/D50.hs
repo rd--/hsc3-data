@@ -270,8 +270,8 @@ d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
 -- | Generate DSC (DTI|DAT) SYSEX message.
 --
--- > T.byte_seq_hex_pp (d50_dsc_gen (0,1,[50])) == "F0 41 00 14 12 00 00 01 32 4D F7"
--- > T.byte_seq_hex_pp (d50_dsc_gen (0,409,[0x10])) == "F0 41 00 14 12 00 03 19 10 54 F7"
+-- > T.byte_seq_hex_pp (d50_dsc_gen (DTI_CMD,0,1,[50])) == "F041001412000001324DF7"
+-- > T.byte_seq_hex_pp (d50_dsc_gen (DTI_CMD,0,409,[0x10])) == "F0410014120003191054F7"
 d50_dsc_gen :: DSC -> [U8]
 d50_dsc_gen (cmd,ch,a,d) =
     let dat = u24_unpack a ++ d
@@ -288,9 +288,8 @@ d50_dsc_gen_seq (cmd,ch,a,d) =
          then [d50_dsc_gen (cmd,ch,a,d)]
          else d50_dsc_gen (cmd,ch,a,take 256 d) : d50_dsc_gen_seq (cmd,ch,a + 256,drop 256 d)
 
--- > let {nm = (Patch,"Lower Tone Fine Tune")
--- >     ;r = "F0 41 00 14 12 00 03 19 10 54 F7"}
--- > in fmap T.byte_seq_hex_pp (d50_gen_dti_nm 0 nm [0x10]) == Just r
+-- > let nm = (Patch,"Lower Tone Fine Tune")
+-- > fmap T.byte_seq_hex_pp (d50_gen_dti_nm 0 nm [0x10]) == Just "F0410014120003191054F7"
 d50_gen_dti_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe [U8]
 d50_gen_dti_nm ch nm d =
     let f a = d50_dsc_gen (DTI_CMD,ch,a,d)
@@ -421,9 +420,9 @@ patch_memory_base n = 32768 + (448 * u8_to_u24 n)
 
 {- | Base address for reverb memory /n/ (0,15)
 
-> M.bits_21_join (0x03,0x60,0x00) == 61440
-> M.bits_21_join (0x03,0x62,0x78) == 61816
-> M.bits_21_join (0x04,0x0C,0x08) == 67080
+> M.bits_21_join_be (0x03,0x60,0x00) == 61440
+> M.bits_21_join_be (0x03,0x62,0x78) == 61816
+> M.bits_21_join_be (0x04,0x0C,0x08) == 67080
 > 61816 - 61440 == 376
 > 61440 + (376 * (32 - 17)) == 67080
 
