@@ -85,9 +85,23 @@ dx7_voice_to_dx7_param = take 145
 -- | Voice data (# = 155 = dx7_nvoice)
 type DX7_Voice = [U8]
 
--- | Check the voice has 'dx7_nvoice' bytes.
-dx7_voice_verify :: DX7_Voice -> Bool
-dx7_voice_verify = (==) dx7_nvoice . length
+-- | Collect any out-of-range paramater data as (IX,VALUE,(MIN,MAX)) triples.
+dx7_voice_out_of_range :: DX7_Voice -> [(U8,U8,(U8,U8))]
+dx7_voice_out_of_range d =
+  let rng = map dx7_parameter_range dx7_parameter_tbl
+      chk (ix,n,(l,r)) = if n >= l && n <= r then Nothing else Just (ix,n,(l,r))
+  in mapMaybe chk (zip3 [0..154] d rng)
+
+-- | Re-write any out-of-range paramater data to be within range.
+dx7_voice_param_correct :: DX7_Voice -> DX7_Voice
+dx7_voice_param_correct d =
+  let rng = map dx7_parameter_range dx7_parameter_tbl
+      clp (n,(l,r)) = if n < l then l else if n > r then r else n
+  in map clp (zip d rng)
+
+-- | Check the voice has 'dx7_nvoice' bytes, and perhaps that all parameter data is in range.
+dx7_voice_verify :: Bool -> DX7_Voice -> Bool
+dx7_voice_verify chk_rng d = length d == dx7_nvoice && (not chk_rng || dx7_voice_out_of_range d == [])
 
 -- | Voice operators, in sequence 6,5,4,3,2,1.
 dx7_voice_op_params :: DX7_Voice -> [[U8]]
@@ -111,8 +125,9 @@ dx7_init_lfo = [35,0,0,0,1,0]
 
 -- | DX7 INIT VOICE, from DX7-II CART 64-B.
 --
--- > dx7_voice_verify dx7_init_voice == True
+-- > dx7_voice_verify True dx7_init_voice == True
 -- > dx7_voice_name dx7_init_voice == "INIT VOICE"
+-- > (minimum dx7_init_voice,maximum dx7_init_voice) == (0,99)
 dx7_init_voice :: DX7_Voice
 dx7_init_voice =
   let op_6_2 = concat (replicate 5 (dx7_init_op 0))
@@ -125,8 +140,8 @@ dx7_init_voice =
 type DX7_Bank = [DX7_Voice]
 
 -- | Check there are 32 voices and each run 'dx7_voice_verify' at each.
-dx7_bank_verify :: DX7_Bank -> Bool
-dx7_bank_verify b = length b == 32 && all id (map dx7_voice_verify b)
+dx7_bank_verify :: Bool -> DX7_Bank -> Bool
+dx7_bank_verify chk_rng b = length b == 32 && all id (map (dx7_voice_verify chk_rng) b)
 
 -- | Yamaha manufacturer ID.
 --
@@ -150,6 +165,9 @@ usr_str_tbl =
     ,("MODE","RATIO;FIXED")]
 
 -- | (DX7-IX,NAME,STEPS,USR_DIFF,USR_STR)
+--
+-- All parameters except the NAME data are in the range (0,STEPS-1).
+-- NAME data is in (32,126), ie. the ASCII printable characters.
 type DX7_Parameter = (U8,String,U8,I8,String)
 
 dx7_parameter_ix :: DX7_Parameter -> U8
@@ -159,10 +177,10 @@ dx7_parameter_nm :: DX7_Parameter -> String
 dx7_parameter_nm (_,nm,_,_,_) = nm
 
 dx7_parameter_range :: DX7_Parameter -> (U8,U8)
-dx7_parameter_range (_,_,n,_,_) = (0,n - 1)
+dx7_parameter_range (ix,_,n,_,_) = if ix < 145 then (0,n - 1) else (32,126)
 
 dx7_parameter_range_usr :: DX7_Parameter -> (I8,I8)
-dx7_parameter_range_usr (_,_,n,d,_) = (d,d + T.word8_to_int8 n - 1)
+dx7_parameter_range_usr (ix,_,n,d,_) = if ix < 125 then (d,d + T.word8_to_int8 n - 1) else (32,126)
 
 -- | Normalise parameter value to be in (0,1).
 -- Parameter values are at most in 0-99, excepting characters in voice name data.
@@ -281,6 +299,7 @@ rem_group_structure =
 --
 -- > length dx7_parameter_tbl == dx7_nvoice
 -- > map dx7_parameter_range_usr dx7_parameter_tbl
+-- > map dx7_parameter_range dx7_parameter_tbl
 dx7_parameter_tbl :: [DX7_Parameter]
 dx7_parameter_tbl =
   concat [dx7_op6_dx7_parameter_tbl
@@ -536,7 +555,7 @@ dx7_fmt0_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b]
 -- > 6 + 155 + 2 == 163
 dx7_fmt0_sysex_encode :: U8 -> DX7_Voice -> DX7_SYSEX
 dx7_fmt0_sysex_encode ch d =
-  if dx7_voice_verify d
+  if dx7_voice_verify True d
   then dx7_fmt0_sysex_hdr ch ++ d ++ [dx7_checksum d,0xF7]
   else error "dx7_fmt0_sysex_encode?"
 
@@ -866,7 +885,7 @@ dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
 dx7_load_hex :: FilePath -> IO [DX7_Voice]
 dx7_load_hex fn = do
   d <- Byte.load_hex_byte_seq fn
-  when (any (not . dx7_voice_verify) d) (error ("dx7_load_hex?"))
+  when (any (not . dx7_voice_verify False) d) (error ("dx7_load_hex?"))
   return d
 
 {- | Write sequence of unpacked 155 voice-data parameters to text file.
@@ -880,5 +899,5 @@ dx7_load_hex fn = do
 -}
 dx7_store_hex :: FilePath -> [DX7_Voice] -> IO ()
 dx7_store_hex fn v = do
-  when (any not (map dx7_voice_verify v)) (error "dx7_store_hex")
+  when (any not (map (dx7_voice_verify True) v)) (error "dx7_store_hex")
   Byte.store_hex_byte_seq fn v
