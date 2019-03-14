@@ -103,23 +103,29 @@ dx7_voice_param_correct d =
 dx7_voice_verify :: Bool -> DX7_Voice -> Bool
 dx7_voice_verify chk_rng d = length d == dx7_nvoice && (not chk_rng || dx7_voice_out_of_range d == [])
 
--- | Voice operators, in sequence 6,5,4,3,2,1.
+-- | Voice operators, in sequence 6,5,4,3,2,1 (# = 6 x 21 = 126)
 dx7_voice_op_params :: DX7_Voice -> [[U8]]
 dx7_voice_op_params = Split.chunksOf dx7_op_nparam . take (dx7_op_nparam * 6)
 
--- | Voice shared parameters.
+-- | Voice shared parameters (# = 19, IX = 126-144)
+--
+-- > putStrLn $ unlines $ map dx7_parameter_name [126 .. 144]
 dx7_voice_sh_params :: DX7_Voice -> [U8]
 dx7_voice_sh_params = take dx7_sh_nparam . drop (dx7_op_nparam * 6)
 
--- | DX7 INIT operator, /x/ is the output level.
+-- | DX7 INIT operator, /x/ is the output level (# = 21)
 dx7_init_op :: U8 -> [U8]
 dx7_init_op x = [99,99,99,99,99,99,99,0,39,0,0,0,0,0,0,0,x,0,1,0,7]
 
--- | DX7 INIT PITCH EG.
+-- | DX7 INIT PITCH EG (# = 8; IX = 126-133)
+--
+-- > putStrLn $ unlines $ map dx7_parameter_name [126 .. 133]
 dx7_init_pitch_eg :: [U8]
 dx7_init_pitch_eg = [99,99,99,99,50,50,50,50]
 
--- | DX7 INIT LFO.
+-- | DX7 INIT LFO (# = 6; IX = 137-142)
+--
+-- > putStrLn $ unlines $ map dx7_parameter_name [137 .. 142]
 dx7_init_lfo :: [U8]
 dx7_init_lfo = [35,0,0,0,1,0]
 
