@@ -77,22 +77,26 @@ fx_CcnK_FBCh_hdr_sz = sum fx_CcnK_FBCh_hdr_structure
 -- | (FX-ID,FX-VERSION,FX-BANK-SIZE,FX-DATA)
 type FX_CcnK_FBCh = (Word32, Word32, Word32, [Word8])
 
+fx_verify_word32_eq :: String -> Word32 -> Word32 -> Bool
+fx_verify_word32_eq err p q = if p /= q then error (show (err,p,q)) else True
+
 fx_verify_word32_elem :: String -> Word32 -> [Word32] -> Bool
 fx_verify_word32_elem err p q = if p `notElem` q then error (show (err,p,q)) else True
 
 fx_CcnK_FBCh_hdr_verify :: [Word8] -> FX_CcnK_FBCh
 fx_CcnK_FBCh_hdr_verify chk =
-  let no_err z = fx_verify_word32_elem ("fx_CcnK_FBCh_hdr_verify: illegal-header: " ++ z)
+  let err z = error ("fx_CcnK_FBCh_hdr_verify: " ++ z)
+      no_err z = fx_verify_word32_eq ("fx_CcnK_FBCh_hdr_verify: illegal-header: " ++ z)
       (hdr,dat) = genericSplitAt fx_CcnK_FBCh_hdr_sz chk
   in case Split.splitPlaces fx_CcnK_FBCh_hdr_structure hdr of
        [k1,c_size,k2,[0,0,0,1],fx_id,fx_version,bnk_sz,_,opq_sz] ->
-         if no_err "c_size" (pack_word32 c_size) [genericLength chk,genericLength chk - 8] &&
-            no_err "c_magic" (pack_word32 k1) [fx_c_magic] &&
-            no_err "bank_magic" (pack_word32 k2) [fx_chunk_bank_magic] &&
-            no_err "opq_sz" (pack_word32 opq_sz) [genericLength dat]
+         if no_err "c_size" (pack_word32 c_size) (genericLength chk - 8) &&
+            no_err "c_magic" (pack_word32 k1) fx_c_magic &&
+            no_err "bank_magic" (pack_word32 k2) fx_chunk_bank_magic &&
+            no_err "opq_sz" (pack_word32 opq_sz) (genericLength dat)
          then (pack_word32 fx_id,pack_word32 fx_version,pack_word32 bnk_sz,dat)
-         else error "???"
-       _ -> error "no-split?"
+         else err "?"
+       _ -> err "no-split?"
 
 fx_parse_CcnK_FBCh :: [Word8] -> FX_CcnK_FBCh
 fx_parse_CcnK_FBCh = fx_CcnK_FBCh_hdr_verify
