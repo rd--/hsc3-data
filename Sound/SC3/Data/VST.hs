@@ -77,12 +77,12 @@ fx_CcnK_FBCh_hdr_sz = sum fx_CcnK_FBCh_hdr_structure
 -- | (FX-ID,FX-VERSION,FX-BANK-SIZE,FX-DATA)
 type FX_CcnK_FBCh = (Word32, Word32, Word32, [Word8])
 
-verify_elem :: String -> Word32 -> [Word32] -> Bool
-verify_elem err p q = if p `notElem` q then error (show (err,p,q)) else True
+fx_verify_word32_elem :: String -> Word32 -> [Word32] -> Bool
+fx_verify_word32_elem err p q = if p `notElem` q then error (show (err,p,q)) else True
 
 fx_CcnK_FBCh_hdr_verify :: [Word8] -> FX_CcnK_FBCh
 fx_CcnK_FBCh_hdr_verify chk =
-  let no_err z = verify_elem ("fx_CcnK_FBCh_hdr_verify: illegal-header: " ++ z)
+  let no_err z = fx_verify_word32_elem ("fx_CcnK_FBCh_hdr_verify: illegal-header: " ++ z)
       (hdr,dat) = genericSplitAt fx_CcnK_FBCh_hdr_sz chk
   in case Split.splitPlaces fx_CcnK_FBCh_hdr_structure hdr of
        [k1,c_size,k2,[0,0,0,1],fx_id,fx_version,bnk_sz,_,opq_sz] ->

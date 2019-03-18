@@ -1,35 +1,50 @@
+-- | <http://www.csounds.com/manual/html/pvanal.html>
 module Sound.SC3.Data.PVOC where
 
-import qualified Data.ByteString.Lazy as L {- bytestring -}
 import Data.Char {- base -}
 import Data.List {- base -}
-import Data.List.Split {- split -}
-import Numeric
-import qualified Data.Vector.Unboxed as V {- vector -}
+import Numeric {- base -}
 import Data.Word {- base -}
 
-import qualified Sound.File.WAVE as W
-import qualified Sound.OSC.Coding.Byte as O
+import qualified Data.ByteString.Lazy as L {- bytestring -}
+import qualified Data.List.Split as Split {- split -}
+import qualified Data.Vector.Unboxed as V {- vector -}
 
--- | PVOC-EX files
+import qualified Sound.OSC.Coding.Byte as O {- hosc -}
+import qualified Sound.OSC.Coding.Convert as O {- hosc -}
 
-show_hex_uc :: (Show n,Integral n) => n -> String
-show_hex_uc = map toUpper . flip showHex ""
+import qualified Sound.File.WAVE as W {- hsc3-sf -}
 
+-- | RIFF
+
+-- | Hex pretty-printer, upper-case, pad-left.
+--
+-- > map (show_hex_uc 2) [0x00,0x0F,0xF0] == ["00","0F","F0"]
+show_hex_uc :: (Show n,Integral n) => Int -> n -> String
+show_hex_uc n =
+  let pad_left k l = replicate (n - length l) k ++ l
+  in pad_left '0' . map toUpper . flip showHex ""
+
+-- | Split GUID into 4-2-2-2-8 structure.
 riff_guid_segment :: [Word8] -> [[Word8]]
-riff_guid_segment = splitPlaces [4::Int,2,2,2,8]
+riff_guid_segment = Split.splitPlaces [4::Int,2,2,2,8]
 
+-- | Pretty print GUID, with grouping and byte-ordering.
+--
 -- > riff_guid_pp pvx_guid_u8 == pvx_guid_text
-riff_guid_pp :: [Word8] -> [Char]
+riff_guid_pp :: [Word8] -> String
 riff_guid_pp w =
-    let f op = concatMap show_hex_uc . op
+    let f op = concatMap (show_hex_uc 2) . op
         w' = riff_guid_segment w
         w'' = zipWith f (replicate 3 reverse ++ replicate 2 id) w'
     in intercalate "-" w''
 
+-- | PVOC-EX files
+
 pvx_guid_text :: String
 pvx_guid_text = "8312B9C2-2E6E-11D4-A824-DE5B96C3AB21"
 
+-- > map (show_hex_uc 2) pvx_guid_u8
 pvx_guid_u8 :: [Word8]
 pvx_guid_u8 = [194,185,18,131,110,46,212,17,168,36,222,91,150,195,171,33]
 
@@ -52,22 +67,28 @@ data PVOC_SAMPLETYPE =
     STYPE_16 | STYPE_24 | STYPE_32 | STYPE_IEEE_FLOAT
     deriving (Eq,Enum,Show)
 
+{- | WAVE FORMAT PVOC 80
+
+<https://docs.microsoft.com/en-us/windows/desktop/api/mmreg/ns-mmreg-twaveformatex>
+<https://docs.microsoft.com/en-us/windows/desktop/api/mmreg/ns-mmreg-waveformatextensible>
+
+-}
 data WAVE_FMT_PVOC_80 =
     WAVE_FMT_PVOC_80
-    {cbSize :: Int -- Word16
-    ,wValidBitsPerSample :: Int -- Word16
-    ,dwChannelMask :: Int -- Word32
+    {cbSize :: Word16
+    ,wValidBitsPerSample :: Word16
+    ,dwChannelMask :: Word32
     ,subFormat :: String
-    ,dwVersion :: Int -- Word32
-    ,dwDataSize :: Int -- Word32
+    ,dwVersion :: Word32
+    ,dwDataSize :: Word32
     ,wWordFormat :: PVOC_WORDFORMAT
     ,wAnalFormat :: PVOC_FRAMETYPE
     ,wSourceFormat :: W.WAVE_FORMAT
     ,wWindowType :: PVOC_WINDOWTYPE
-    ,nAnalysisBins :: Int -- Word32
-    ,dwWinlen :: Int -- Word32
-    ,dwOverlap :: Int -- Word32
-    ,dwFrameAlign :: Int -- Word32
+    ,nAnalysisBins :: Word32
+    ,dwWinlen :: Word32
+    ,dwOverlap :: Word32
+    ,dwFrameAlign :: Word32
     ,fAnalysisRate :: Float
     ,fWindowParam :: Float}
     deriving (Show)
@@ -84,20 +105,20 @@ fmt_pvoc_80_pp = plain_record_pp . show
 fmt_pvoc_80_parse_dat :: L.ByteString -> WAVE_FMT_PVOC_80
 fmt_pvoc_80_parse_dat dat =
     WAVE_FMT_PVOC_80
-    (O.decode_u16_le (W.section 16 2 dat))
-    (O.decode_u16_le (W.section 18 2 dat))
-    (O.decode_u32_le (W.section 20 4 dat))
+    (O.decode_word16_le (W.section 16 2 dat))
+    (O.decode_word16_le (W.section 18 2 dat))
+    (O.decode_word32_le (W.section 20 4 dat))
     (decode_guid (W.section 24 16 dat))
-    (O.decode_u32_le (W.section 40 4 dat))
-    (O.decode_u32_le (W.section 44 4 dat))
-    (toEnum (O.decode_u16_le (W.section 48 2 dat)))
-    (toEnum (O.decode_u16_le (W.section 50 2 dat)))
-    (toEnum (O.decode_u16_le (W.section 52 2 dat)))
-    (toEnum (O.decode_u16_le (W.section 54 2 dat)))
-    (O.decode_u32_le (W.section 56 4 dat))
-    (O.decode_u32_le (W.section 60 4 dat))
-    (O.decode_u32_le (W.section 64 4 dat))
-    (O.decode_u32_le (W.section 68 4 dat))
+    (O.decode_word32_le (W.section 40 4 dat))
+    (O.decode_word32_le (W.section 44 4 dat))
+    (O.word16_to_enum (O.decode_word16_le (W.section 48 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (W.section 50 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (W.section 52 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (W.section 54 2 dat)))
+    (O.decode_word32_le (W.section 56 4 dat))
+    (O.decode_word32_le (W.section 60 4 dat))
+    (O.decode_word32_le (W.section 64 4 dat))
+    (O.decode_word32_le (W.section 68 4 dat))
     (O.decode_f32_le (W.section 72 4 dat))
     (O.decode_f32_le (W.section 76 4 dat))
 
@@ -115,17 +136,17 @@ fmt_pvoc_80_parse ((ty,sz),dat) =
 type PVOC_RAW = (PVOC_HDR,W.CHUNK)
 
 pvoc_nc :: PVOC_HDR -> Int
-pvoc_nc = fromIntegral . W.numChannels . fst
+pvoc_nc = O.word16_to_int . W.numChannels . fst
 
 pvoc_nb :: PVOC_HDR -> Int
-pvoc_nb = fromIntegral . nAnalysisBins . snd
+pvoc_nb = O.word32_to_int . nAnalysisBins . snd
 
 -- | Data is stored in frame order, channel interleaved.
 pvoc_data_parse_f32 :: PVOC_RAW -> (Int,Int,V.Vector Float)
 pvoc_data_parse_f32 ((wv,pv),((ty,sz),dat)) =
-    let n = sz `div` 4
-        nc = fromIntegral (W.numChannels wv)
-        nb = fromIntegral (nAnalysisBins pv)
+    let n = O.word32_to_int sz `div` 4
+        nc = O.word16_to_int (W.numChannels wv)
+        nb = O.word32_to_int (nAnalysisBins pv)
         nf = n `div` (nc * nb * 2)
     in if ty /= "data" || wWordFormat pv /= PVOC_IEEE_FLOAT || dwDataSize pv /= 32
        then error "pvoc_data_parse_f32"
