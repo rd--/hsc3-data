@@ -3,7 +3,7 @@ module Sound.SC3.Data.XML.SVG where
 
 import Data.List {- base -}
 import Data.Maybe {- base -}
-import qualified System.IO.Unsafe as U {- base -}
+import qualified System.IO.Unsafe as Unsafe {- base -}
 import qualified Text.XML.Light as X {- xml -}
 
 import qualified Graphics.SVG.ReadPath as P {- SVGPath -}
@@ -26,7 +26,7 @@ svg_name nm =
          ,X.qURI = Just "http://www.w3.org/2000/svg"}
 
 pathFromString' :: String -> Either String [P.PathCommand]
-pathFromString' = Right . U.unsafePerformIO . P.pathFromString
+pathFromString' = Right . Unsafe.unsafePerformIO . P.pathFromString
 
 parse_path :: String -> [P.PathCommand]
 parse_path str =

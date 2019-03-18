@@ -101,3 +101,10 @@ fx_load_CcnK_FBCh :: FilePath -> IO FX_CcnK_FBCh
 fx_load_CcnK_FBCh fn = do
   b <- ByteString.readFile fn
   return (fx_parse_CcnK_FBCh (ByteString.unpack b))
+
+fx_CcnK_FBCh_hdr_pp :: FX_CcnK_FBCh -> IO ()
+fx_CcnK_FBCh_hdr_pp (fx_id,fx_v,fx_sz,dat) = do
+  print ("fx-id",word32_to_str fx_id)
+  print ("fx-version",fx_v)
+  print ("fx-program-count",fx_sz)
+  print ("fx-dat-size",length dat)

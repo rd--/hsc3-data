@@ -2,9 +2,7 @@
 module Sound.SC3.Data.XML.SVL where
 
 import Data.List {- base -}
-import Data.Maybe {- base -}
 
-import qualified Data.ByteString as B {- bytestring -}
 import qualified Text.XML.Light as X {- xml -}
 
 import qualified Music.Theory.List as T {- hmt -}
@@ -56,10 +54,10 @@ svl_get_dataset = XML.x_get_elem_path ["data","dataset"]
 
 -- | Load the /sv/ element from an SVL file.
 svl_load :: FilePath -> IO (Maybe X.Element)
-svl_load = fmap X.parseXMLDoc . B.readFile
+svl_load = XML.xml_load
 
 svl_load_err :: FilePath -> IO X.Element
-svl_load_err = fmap (fromMaybe (error "svl_load")) . svl_load
+svl_load_err = XML.xml_load_err
 
 -- * NOTES-LAYER, TIME-INSTANTS-LAYER
 

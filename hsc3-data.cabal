@@ -101,6 +101,7 @@ Library
                    Sound.SC3.Data.URandom
                    Sound.SC3.Data.Vowel
                    Sound.SC3.Data.VST
+                   Sound.SC3.Data.VST.Obxd
                    Sound.SC3.Data.WT.AKWF
                    Sound.SC3.Data.X11.Ptr
                    Sound.SC3.Data.XML
