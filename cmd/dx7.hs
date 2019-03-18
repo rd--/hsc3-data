@@ -41,7 +41,7 @@ dx7_sysex_verify_1 :: FilePath -> IO ()
 dx7_sysex_verify_1 fn = do
   dat <- DX7.dx7_read_fmt9_sysex fn
   bnk <- DX7.dx7_load_fmt9_sysex fn
-  let r = DX7.dx7_fmt9_sysex_verify 0 dat == (True,True,True,True) && DX7.dx7_bank_verify bnk
+  let r = DX7.dx7_fmt9_sysex_verify 0 dat == (True,True,True,True) && DX7.dx7_bank_verify True bnk
   putStrLn (if r then "TRUE" else "FALSE: " ++ show (dat,bnk))
 
 dx7_sysex_verify :: [FilePath] -> IO ()
