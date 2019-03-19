@@ -559,9 +559,9 @@ dx7_fmt0_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b]
 -- | Generate 163-element DX7 VOICE (FORMAT=0) sysex message.
 --
 -- > 6 + 155 + 2 == 163
-dx7_fmt0_sysex_encode :: U8 -> DX7_Voice -> DX7_SYSEX
-dx7_fmt0_sysex_encode ch d =
-  if dx7_voice_verify True d
+dx7_fmt0_sysex_encode :: Bool -> U8 -> DX7_Voice -> DX7_SYSEX
+dx7_fmt0_sysex_encode vfy ch d =
+  if dx7_voice_verify vfy d
   then dx7_fmt0_sysex_hdr ch ++ d ++ [dx7_checksum d,0xF7]
   else error "dx7_fmt0_sysex_encode?"
 
