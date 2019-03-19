@@ -24,6 +24,7 @@ The first four param (0-3) are not DX7 parameters, as are the six operator "SWIT
 > >     ctrl[i]->idx);
 > > }
 
+> length dexed_param == 155
 > map idx dexed_param == [0 .. 154]
 > 155 - (4 + 6) == 145
 -}
@@ -405,6 +406,12 @@ dexed_to_dx7 x = fst (fromMaybe (error "dexed_to_dx7") (find ((== x) . snd) dx7_
 
 -- * NON-DX7
 
+-- | Dexed default values for NON-DX7 parameters, as (IX,N) pairs.
+--
+-- > length non_dx7_defaults == 10
+non_dx7_defaults :: [(Int, Double)]
+non_dx7_defaults = [(0,1),(1,0),(2,1),(3,0.5),(44,1),(66,1),(88,1),(110,1),(132,1),(154,1)]
+
 -- | 'Ctrl' that are not DX7 parameters.
 --
 -- > length non_dx7_param == 10
@@ -415,6 +422,18 @@ non_dx7_param =
                     Nothing -> Just c
                     Just _ -> Nothing
     in mapMaybe (\c -> f (c,dexed_dx7_param_by_name (label c))) dexed_param
+
+-- * TRANSLATE
+
+-- | Translate 145 element DX7 parameter sequence to 155 element DEXED sequence.
+dx7_voice_to_dexed_param :: [Word8] -> [Double]
+dx7_voice_to_dexed_param vc =
+  let word8_to_double = fromIntegral
+      u8_at l n = l !! (fromIntegral n)
+      f k = case lookup k non_dx7_defaults of
+              Just v -> v
+              Nothing -> word8_to_double (vc `u8_at` dexed_to_dx7 k) / 99.0
+  in map f [0 .. 154]
 
 -- * INIT
 
