@@ -573,8 +573,8 @@ dx7_fmt0_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b]
 --
 -- > 6 + 155 + 2 == 163
 dx7_fmt0_sysex_encode :: Bool -> U8 -> DX7_Voice -> DX7_SYSEX
-dx7_fmt0_sysex_encode vfy ch d =
-  if dx7_voice_verify vfy d
+dx7_fmt0_sysex_encode chk_rng ch d =
+  if dx7_voice_verify chk_rng d
   then dx7_fmt0_sysex_hdr ch ++ d ++ [dx7_checksum d,0xF7]
   else error "dx7_fmt0_sysex_encode?"
 
@@ -636,22 +636,32 @@ dx7_fmt9_sysex_verify ch d =
      ,chk == dx7_checksum dat
      ,eof == 0xF7)
 
--- | 'error' if /syx/ is not valid, else 'id'.
-dx7_fmt9_sysex_validate :: String -> DX7_SYSEX -> DX7_SYSEX
-dx7_fmt9_sysex_validate err syx =
+-- | Run 'dx7_fmt9_sysex_verify' and lift /syx/ to 'Maybe'.
+dx7_fmt9_sysex_validate :: DX7_SYSEX -> Maybe DX7_SYSEX
+dx7_fmt9_sysex_validate syx =
   if dx7_fmt9_sysex_verify 0 syx /= (True,True,True,True)
-  then error ("dx7_fmt9_sysex_validate: " ++ err)
-  else syx
+  then Nothing
+  else Just syx
+
+-- | 'error' if /syx/ is not valid, else 'id'.
+dx7_fmt9_sysex_validate_err :: String -> DX7_SYSEX -> DX7_SYSEX
+dx7_fmt9_sysex_validate_err err =
+  fromMaybe (error ("dx7_fmt9_sysex_validate: " ++ err)) .
+  dx7_fmt9_sysex_validate
 
 {- | Load FORMAT=9 sysex file as 4104-element U8 sequence and run verification.
      See 'dx7_fmt9_sysex_verify'.
 -}
-dx7_read_fmt9_sysex :: FilePath -> IO DX7_SYSEX
-dx7_read_fmt9_sysex = fmap (dx7_fmt9_sysex_validate "dx7_read_fmt9_sysex?")  . dx7_read_u8
+dx7_read_fmt9_sysex :: FilePath -> IO (Maybe DX7_SYSEX)
+dx7_read_fmt9_sysex = fmap dx7_fmt9_sysex_validate  . dx7_read_u8
+
+-- | Erroring variant.
+dx7_read_fmt9_sysex_err :: FilePath -> IO DX7_SYSEX
+dx7_read_fmt9_sysex_err = fmap (dx7_fmt9_sysex_validate_err "dx7_read_fmt9_sysex?")  . dx7_read_u8
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_write_fmt9_sysex :: FilePath -> DX7_SYSEX -> IO ()
-dx7_write_fmt9_sysex fn = B.writeFile fn . B.pack . dx7_fmt9_sysex_validate "dx7_write_fmt9_sysex?"
+dx7_write_fmt9_sysex fn = B.writeFile fn . B.pack . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
 
 -- | Unpack 4096-element 'U8' sequence to 'DX7_Bank' (see cmd/dx7-unpack.c).
 dx7_unpack_u8 :: [U8] -> IO DX7_Bank
@@ -679,9 +689,9 @@ dx7_fmt9_sysex_decode = dx7_unpack_u8 . dx7_fmt9_sysex_dat
 > dx7_fmt0_sysex_encode 0x00 (d !! 0)
 
 -}
-dx7_load_fmt9_sysex :: String -> IO DX7_Bank
-dx7_load_fmt9_sysex fn = do
-  sysex <- dx7_read_fmt9_sysex fn
+dx7_load_fmt9_sysex_err :: FilePath -> IO DX7_Bank
+dx7_load_fmt9_sysex_err fn = do
+  sysex <- dx7_read_fmt9_sysex_err fn
   dx7_unpack_u8 (dx7_fmt9_sysex_dat sysex)
 
 -- | Try and load 'DX7_Voice' data from named file.
@@ -921,9 +931,13 @@ dx7_load_hex fn = do
 
 -}
 dx7_store_hex :: Bool -> FilePath -> [DX7_Voice] -> IO ()
-dx7_store_hex vfy fn v = do
-  when (any not (map (dx7_voice_verify vfy) v)) (error "dx7_store_hex")
+dx7_store_hex chk_rng fn v = do
+  when (any not (map (dx7_voice_verify chk_rng) v)) (error "dx7_store_hex")
   Byte.store_hex_byte_seq fn v
+
+-- | Variant that runs 'dx7_voice_param_correct' on /v/.
+dx7_store_hex_correct :: FilePath -> [DX7_Voice] -> IO ()
+dx7_store_hex_correct fn = dx7_store_hex True fn . map dx7_voice_param_correct
 
 -- * UTIL
 
