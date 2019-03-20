@@ -149,6 +149,19 @@ type DX7_Bank = [DX7_Voice]
 dx7_bank_verify :: Bool -> DX7_Bank -> Bool
 dx7_bank_verify chk_rng b = length b == 32 && all id (map (dx7_voice_verify chk_rng) b)
 
+-- | Make bank from /v/, if there are less than 32 voices extend with 'dx7_init_voice'.
+--   It is an error for there to be more than 32 voices.
+dx7_voices_to_bank :: [DX7_Voice] -> DX7_Bank
+dx7_voices_to_bank v =
+  case compare (length v) 32 of
+    LT -> take_extending_with dx7_init_voice 32 v
+    EQ -> v
+    GT -> error "dx7_voices_to_bank: >32?"
+
+-- | Make bank from /v/ starting at index /i/, extend if required, ignore trailing voices.
+dx7_bank_from :: Int -> [DX7_Voice] -> DX7_Bank
+dx7_bank_from i = take_extending_with dx7_init_voice 32 . drop i
+
 -- | Yamaha manufacturer ID.
 --
 -- > import Music.Theory.Bits {- hmt -}
@@ -536,7 +549,7 @@ dx7_algorithm_dot (e,o) =
 {-
      11110000  F0   STATUS BYTE - START SYSEX
      0iiiiiii  43   YAMAHA
-     0sssnnnn  00   SUB-STATUS = 0 & CHANNEL NUMBER
+     0sssnnnn  00   SUB-STATUS = 0x00 & CHANNEL NUMBER
      0fffffff  00   FORMAT NUMBER = 0
      0bbbbbbb  01   BYTE COUNT MS
      0bbbbbbb  1B   BYTE COUNT LS = 155
@@ -569,12 +582,16 @@ dx7_fmt0_sysex_encode vfy ch d =
 dx7_fmt0_sysex_decode :: DX7_SYSEX -> DX7_Voice
 dx7_fmt0_sysex_decode = take 155 . drop 6
 
+-- | Add nil voice-name to 'DX7_Param' and encode sysex.
+dx7_param_to_fmt0_sysex :: DX7_Param -> DX7_SYSEX
+dx7_param_to_fmt0_sysex p = dx7_fmt0_sysex_encode True 0 (dx7_param_to_dx7_voice "----------" p)
+
 -- * B: SYSEX Message: FORMAT=9: Bank Data (32 VOICES, 4104 BYTES)
 
 {-
      11110000  F0   STATUS BYTE - START SYSEX
      0iiiiiii  43   YAMAHA ID
-     0sssnnnn  00   SUB-STATUS = 0 & CHANNEL NUMBER
+     0sssnnnn  00   SUB-STATUS = 0x00 & CHANNEL NUMBER
      0fffffff  09   FORMAT NUMBER = 9
      0bbbbbbb  20   BYTE COUNT MS
      0bbbbbbb  00   BYTE COUNT LS = 4096
@@ -903,7 +920,15 @@ dx7_load_hex fn = do
 > (length d,length t,d == t) == (32,32,True)
 
 -}
-dx7_store_hex :: FilePath -> [DX7_Voice] -> IO ()
-dx7_store_hex fn v = do
-  when (any not (map (dx7_voice_verify True) v)) (error "dx7_store_hex")
+dx7_store_hex :: Bool -> FilePath -> [DX7_Voice] -> IO ()
+dx7_store_hex vfy fn v = do
+  when (any not (map (dx7_voice_verify vfy) v)) (error "dx7_store_hex")
   Byte.store_hex_byte_seq fn v
+
+-- * UTIL
+
+-- | Take /n/ from /l/ extending with /z/ if required.
+--
+-- > take_extending_with '-' 10 "string" == "string----"
+take_extending_with :: t -> Int -> [t] -> [t]
+take_extending_with z n l = take n (l ++ repeat z)
