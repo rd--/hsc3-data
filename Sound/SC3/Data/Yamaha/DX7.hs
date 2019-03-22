@@ -71,6 +71,16 @@ dx7_name_nchar = 10
 dx7_nvoice :: Num n => n
 dx7_nvoice = dx7_nparam + dx7_name_nchar
 
+-- | Is /x/ in (32,126)?
+dx7_ascii_verify :: U8 -> U8
+dx7_ascii_verify x = if x < 32 || x > 126 then error "ASCII?" else x
+
+-- | Map ASCII U8 to 'Char'.
+--
+-- > map dx7_ascii_char [32 .. 126]
+dx7_ascii_char :: U8 -> Char
+dx7_ascii_char = Byte.word8_to_char . dx7_ascii_verify
+
 -- | Given 145-byte 'DX7_Param' sequence and a 10 ASCII character name, make 'DX7_Voice'.
 dx7_param_to_dx7_voice :: String -> DX7_Param -> DX7_Voice
 dx7_param_to_dx7_voice nm =
@@ -78,9 +88,10 @@ dx7_param_to_dx7_voice nm =
   then error "dx7_param_to_dx7_voice"
   else flip (++) (map Byte.char_to_word8 nm)
 
--- | Delete the 10 ASCII character voice-name 155-byte at 'DX7_Voice' to make 'DX7_Param'.
-dx7_voice_to_dx7_param :: DX7_Voice -> DX7_Param
-dx7_voice_to_dx7_param = take 145
+-- | Select the 145 parameter bytes from a 155-byte 'DX7_Voice'.
+--   ie. delete the 10 ASCII character voice-name.
+dx7_voice_param :: DX7_Voice -> DX7_Param
+dx7_voice_param = take 145
 
 -- | Voice data (# = 155 = dx7_nvoice)
 type DX7_Voice = [U8]
@@ -102,6 +113,10 @@ dx7_voice_param_correct d =
 -- | Check the voice has 'dx7_nvoice' bytes, and perhaps that all parameter data is in range.
 dx7_voice_verify :: Bool -> DX7_Voice -> Bool
 dx7_voice_verify chk_rng d = length d == dx7_nvoice && (not chk_rng || dx7_voice_out_of_range d == [])
+
+-- | Error if any voice fails to verify.
+dx7_voice_set_verify :: Bool -> [DX7_Voice] -> IO ()
+dx7_voice_set_verify chk_rng v = when (any not (map (dx7_voice_verify chk_rng) v)) (error "dx7_voice?")
 
 -- | Voice operators, in sequence 6,5,4,3,2,1 (# = 6 x 21 = 126)
 dx7_voice_op_params :: DX7_Voice -> [[U8]]
@@ -355,7 +370,7 @@ dx7_parameter_value_pp p x =
                      then (stp - 1,printf "(ERROR BYTE=0x%02X)" x)
                      else (x,"")
       r = if u == "ASCII"
-          then ['\'',Byte.word8_to_enum x_clip,'\'']
+          then ['\'',dx7_ascii_char x_clip,'\'']
           else case Split.splitOn ";" u of
                  [_] -> printf "%02d" (T.word8_to_int8 x_clip + d)
                  e -> Byte.word8_at e x_clip
@@ -406,11 +421,11 @@ dx7_function_parameters_tbl =
 
 -- | Extract 10 character voice name from 'DX7_Voice'.
 dx7_voice_name :: DX7_Voice -> String
-dx7_voice_name v = map (Byte.word8_to_enum . Byte.word8_at v) [145 .. 154]
+dx7_voice_name v = map (dx7_ascii_char . Byte.word8_at v) [145 .. 154]
 
 -- | Encode ASCII name to U8 sequence.
 dx7_name_encode :: String -> [U8]
-dx7_name_encode = map Byte.char_to_word8
+dx7_name_encode = map (dx7_ascii_verify . Byte.char_to_word8)
 
 -- * DX7 VOICE DATA LIST
 
@@ -621,7 +636,8 @@ dx7_read_u8 = fmap B.unpack . B.readFile
 {- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
      Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 
-> d <- dx7_read_u8 "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+> d <- dx7_read_u8 rom1a_fn
 > dx7_fmt9_sysex_verify 0 d == (True,True,True,True)
 
 -}
@@ -679,14 +695,14 @@ dx7_fmt9_sysex_decode = dx7_unpack_u8 . dx7_fmt9_sysex_dat
 {- | Read binary FORMAT=9 sysex file and unpack voice data.
 
 > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
-> d <- dx7_load_fmt9_sysex fn
-> dx7_bank_verify d
+> d <- dx7_load_fmt9_sysex_err fn
+> dx7_bank_verify True d
 > mapM_ (putStrLn . dx7_voice_name) d
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
 
-> dx7_fmt0_sysex_encode 0x00 (d !! 0)
+> dx7_fmt0_sysex_encode True 0x0 (d !! 0)
 
 -}
 dx7_load_fmt9_sysex_err :: FilePath -> IO DX7_Bank
@@ -712,6 +728,7 @@ dx7_load_sysex_try fn = do
          then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
          else return Nothing
 
+-- | Encode 'DX7_Bank' to channel /ch/ 'DX7_SYSEX'.
 dx7_fmt9_sysex_encode :: U8 -> DX7_Bank -> IO DX7_SYSEX
 dx7_fmt9_sysex_encode ch bnk = do
   let dat = concat bnk
@@ -723,9 +740,9 @@ dx7_fmt9_sysex_encode ch bnk = do
 {- | Write binary DX7 FORMAT=9 sysex file.
 
 > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
-> d <- dx7_load_fmt9_sysex fn
-> dx7_store_fmt9_sysex "/tmp/DX7-ROM1A.syx" 0 d
-> Process.rawSystem "cmp" ["-l",fn,"/tmp/DX7-ROM1A.syx"]
+> d <- dx7_load_fmt9_sysex_err fn
+> dx7_store_fmt9_sysex "/tmp/dx7.syx" 0 d
+> Process.rawSystem "cmp" ["-l",fn,"/tmp/dx7.syx"]
 
 -}
 dx7_store_fmt9_sysex :: FilePath -> U8 -> DX7_Bank -> IO ()
@@ -918,26 +935,66 @@ dx7_vrc_syx_name (p,_) = map (\c -> "VRC-" ++ show p ++ ['-',c]) "AB"
 dx7_load_hex :: FilePath -> IO [DX7_Voice]
 dx7_load_hex fn = do
   d <- Byte.load_hex_byte_seq fn
-  when (any (not . dx7_voice_verify False) d) (error ("dx7_load_hex?"))
+  let chk_rng = False
+  dx7_voice_set_verify chk_rng d
   return d
 
 {- | Write sequence of unpacked 155 voice-data parameters to text file.
 
-> d <- dx7_load_fmt9_sysex "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
-> dx7_store_hex "/tmp/DX7-ROM1A.text" d
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+> d <- dx7_load_fmt9_sysex_err fn
+> dx7_store_hex True "/tmp/dx7.hex.text" d
 
-> t <- dx7_load_hex "/tmp/DX7-ROM1A.text"
+> t <- dx7_load_hex "/tmp/dx7.hex.text"
 > (length d,length t,d == t) == (32,32,True)
 
 -}
 dx7_store_hex :: Bool -> FilePath -> [DX7_Voice] -> IO ()
 dx7_store_hex chk_rng fn v = do
-  when (any not (map (dx7_voice_verify chk_rng) v)) (error "dx7_store_hex")
+  dx7_voice_set_verify chk_rng v
   Byte.store_hex_byte_seq fn v
 
 -- | Variant that runs 'dx7_voice_param_correct' on /v/.
 dx7_store_hex_correct :: FilePath -> [DX7_Voice] -> IO ()
 dx7_store_hex_correct fn = dx7_store_hex True fn . map dx7_voice_param_correct
+
+-- * TEXT/CSV
+
+-- | Encode 'DX7_Voice' as CSV entry.
+--   The first column is the voice name as an ASCII string, followed by the parameters in sequence.
+--   Parameters are written as decimal integers.
+dx7_voice_to_csv :: DX7_Voice -> String
+dx7_voice_to_csv v = intercalate "," (dx7_voice_name v : map show (dx7_voice_param v))
+
+-- | Decode 'DX7_Voice' from CSV entry.
+dx7_voice_from_csv :: String -> DX7_Voice
+dx7_voice_from_csv str =
+  case Split.splitOn "," str of
+    nm:p -> dx7_param_to_dx7_voice nm (map read p)
+    _ -> error "dx7_voice_from_csv?"
+
+{- | Write sequence of 'DX7_Voice' to CSV file.
+
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+> d <- dx7_load_fmt9_sysex_err fn
+> dx7_store_csv True "/tmp/dx7.csv" d
+> r <- dx7_load_csv "/tmp/dx7.csv"
+> r == d
+
+-}
+dx7_store_csv :: Bool -> FilePath -> [DX7_Voice] -> IO ()
+dx7_store_csv chk_rng fn v = do
+  dx7_voice_set_verify chk_rng v
+  writeFile fn (unlines (map dx7_voice_to_csv v))
+
+-- | Read sequence of 'DX7_Voice' from CSV file.
+dx7_load_csv :: FilePath -> IO [DX7_Voice]
+dx7_load_csv fn = do
+  s <- readFile fn
+  let v = map dx7_voice_from_csv (lines s)
+      chk_rng = False
+  dx7_voice_set_verify chk_rng v
+  return v
 
 -- * UTIL
 
