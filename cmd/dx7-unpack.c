@@ -7,7 +7,7 @@ UNPACKED DATA : 155 * 32 = 4960
 
 dx7-unpack unpacks and repacks this data structure
 
-data is read and written in plain-text format as sequences of hexadecimal numbers (00 - FF)
+data is read and written in plain-text format as sequences of two-byte hexadecimal numbers (00 - FF)
 
 http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt
 http://sourceforge.net/u/tedfelix/dx7dump/
@@ -22,13 +22,11 @@ http://sourceforge.net/u/tedfelix/dx7dump/
 
 #include "c-common/int.h"
 #include "c-common/dx7.h"
+#include "c-common/failure.h"
 
 void fail_if(bool p,char *err)
 {
-    if (p) {
-	printf("DX7-UNPACK> FAIL: %s\n",err);
-	exit(EXIT_FAILURE);
-    }
+    die_when(p,"DX7-UNPACK> FAIL: %s\n",err);
 }
 
 void print_u8_as_hex(u8 *b,int n)
@@ -67,16 +65,20 @@ void do_pack()
 
 int main(int argc, char *argv[])
 {
-    fail_if(argc != 2,"dx7-unpack unpack|pack");
+    const char usage[] = "usage: dx7-unpack unpack|pack\n";
+    die_when(argc != 2,usage);
     u64_verify_eq("OP",sizeof(struct dx7_operator_packed),17);
     u64_verify_eq("VC",sizeof(struct dx7_voice_packed),128);
     u64_verify_eq("BK",sizeof(struct dx7_bank_packed),4096);
-    if (strncmp(argv[1],"pack",4) == 0) {
+    char *cmd = argv[1];
+    if (strncmp(cmd,"pack",4) == 0) {
         do_pack();
-    } else if (strncmp(argv[1],"unpack",6) == 0) {
+    } else if (strncmp(cmd,"unpack",6) == 0) {
         do_unpack();
+    } else if (strncmp(cmd,"-h",2) == 0) {
+        printf(usage);
     } else {
-        fprintf(stderr,"dx7-unpack unpack|pack");
+        die("unknown command: %s\n",cmd);
     }
     return 0;
 }
