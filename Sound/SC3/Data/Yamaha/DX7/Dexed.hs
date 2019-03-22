@@ -47,6 +47,16 @@ dexed_non_dx7_param =
   ,Ctrl {label="OP6 SWITCH", idx=154} -- non-DX7
   ]
 
+-- | Lookup DEXED index for non-DX7 parameter by name.
+dexed_non_dx7_param_by_name :: String -> Maybe Int
+dexed_non_dx7_param_by_name nm = ctrl_by_label nm dexed_non_dx7_param
+
+-- | Erroring variant.
+--
+-- > dexed_non_dx7_param_by_name_err "MASTER TUNE ADJ"
+dexed_non_dx7_param_by_name_err :: String -> Int
+dexed_non_dx7_param_by_name_err = fromMaybe (error "non_dx7_param?") . dexed_non_dx7_param_by_name
+
 -- | Dexed default values for NON-DX7 parameters, as (IX,N) pairs.
 --
 -- > length non_dx7_defaults == 10
