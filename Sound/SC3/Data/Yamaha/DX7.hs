@@ -161,6 +161,16 @@ dx7_init_voice =
       nm = dx7_name_encode '?' "INIT VOICE"
   in concat [op_6_2,op_1,sh,nm]
 
+-- | Type-specialised 'B.pack'.
+dx7_voice_pack :: DX7_Voice -> B.ByteString
+dx7_voice_pack = B.pack
+
+-- | Type-specialised 'B.unpack'.
+dx7_voice_unpack :: B.ByteString -> DX7_Voice
+dx7_voice_unpack = B.unpack
+
+-- * DX7 / BANK
+
 -- | Sequence of 32 voices (32 * 155 = 4960)
 type DX7_Bank = [DX7_Voice]
 
@@ -625,7 +635,7 @@ dx7_param_to_fmt0_sysex p = dx7_fmt0_sysex_encode True 0 (dx7_param_to_dx7_voice
 dx7_fmt9_sysex_hdr :: U8 -> [U8]
 dx7_fmt9_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x09,0x20,0x00]
 
--- | Given 4096-element packed data sequence, generate 4104-element FORMAT=9 sysex message data.
+-- | Given 4096-element bit-packed data sequence, generate 4104-element FORMAT=9 sysex message data.
 dx7_fmt9_sysex_gen :: U8 -> [U8] -> [U8]
 dx7_fmt9_sysex_gen ch dat = dx7_fmt9_sysex_hdr ch ++ dat ++ [dx7_checksum dat,0xF7]
 
@@ -633,9 +643,9 @@ dx7_fmt9_sysex_gen ch dat = dx7_fmt9_sysex_hdr ch ++ dat ++ [dx7_checksum dat,0x
 dx7_fmt9_sysex_dat :: [U8] -> [U8]
 dx7_fmt9_sysex_dat = take 4096 . drop 6
 
--- | 'B.unpack' of 'B.readFile'.
+-- | 'dx7_voice_unpack' of 'B.readFile'.
 dx7_read_u8 :: FilePath -> IO [U8]
-dx7_read_u8 = fmap B.unpack . B.readFile
+dx7_read_u8 = fmap dx7_voice_unpack . B.readFile
 
 {- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
      Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
@@ -681,20 +691,23 @@ dx7_read_fmt9_sysex_err = fmap (dx7_fmt9_sysex_validate_err "dx7_read_fmt9_sysex
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_write_fmt9_sysex :: FilePath -> DX7_SYSEX -> IO ()
-dx7_write_fmt9_sysex fn = B.writeFile fn . B.pack . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
+dx7_write_fmt9_sysex fn =
+  B.writeFile fn .
+  dx7_voice_pack .
+  dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
 
--- | Unpack 4096-element 'U8' sequence to 'DX7_Bank' (see cmd/dx7-unpack.c).
-dx7_unpack_u8 :: [U8] -> IO DX7_Bank
-dx7_unpack_u8 p = do
+-- | Unpack bit-packed 4096-element 'U8' sequence to 'DX7_Bank' (see cmd/dx7-unpack.c).
+dx7_unpack_bitpacked_u8 :: [U8] -> IO DX7_Bank
+dx7_unpack_bitpacked_u8 p = do
   q <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp p)
   let r = Byte.read_hex_byte_seq q
   when (length r /= 4960) (error ("dx7_unpack_u8: " ++ q))
   return (Split.chunksOf 155 r)
 
 -- | Decode FORMAT=9 SYSEX message.
---   IO because the un-packing is done by an external process.
+--   IO because the bit un-packing is done by an external process.
 dx7_fmt9_sysex_decode :: [U8] -> IO DX7_Bank
-dx7_fmt9_sysex_decode = dx7_unpack_u8 . dx7_fmt9_sysex_dat
+dx7_fmt9_sysex_decode = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
 
 {- | Read binary FORMAT=9 sysex file and unpack voice data.
 
@@ -712,7 +725,7 @@ dx7_fmt9_sysex_decode = dx7_unpack_u8 . dx7_fmt9_sysex_dat
 dx7_load_fmt9_sysex_err :: FilePath -> IO DX7_Bank
 dx7_load_fmt9_sysex_err fn = do
   sysex <- dx7_read_fmt9_sysex_err fn
-  dx7_unpack_u8 (dx7_fmt9_sysex_dat sysex)
+  dx7_unpack_bitpacked_u8 (dx7_fmt9_sysex_dat sysex)
 
 -- | Try and load 'DX7_Voice' data from named file.
 --   Will read 163 (FORMAT=0), 4096, 4104 (FORMAT=9), 4960
@@ -721,11 +734,11 @@ dx7_load_fmt9_sysex_err fn = do
 dx7_load_sysex_try :: FilePath -> IO (Maybe [DX7_Voice])
 dx7_load_sysex_try fn = do
   x <- dx7_read_u8 fn
-  let decode_syx = dx7_unpack_u8 . dx7_fmt9_sysex_dat
+  let decode_syx = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
   case length x of
     163 -> return (Just [dx7_fmt0_sysex_decode x])
     1650 -> return Nothing -- DX7-II PERF SYSEX
-    4096 -> fmap Just (dx7_unpack_u8 x)
+    4096 -> fmap Just (dx7_unpack_bitpacked_u8 x)
     4104 -> fmap Just (decode_syx x)
     4960 -> return (Just (Split.chunksOf 155 x))
     n -> if n `rem` 4104 == 0
@@ -774,18 +787,18 @@ dx7_param_change_sysex_n = 7
 
 -- | DX7 (group,sub-group) to byte.
 --
--- > gen_bitseq_pp 8 (dx7_group_pack (0,0)) == "00000000"
--- > gen_bitseq_pp 8 (dx7_group_pack (2,0)) == "00001000"
--- > gen_bitseq_pp 8 (dx7_group_pack (6,0)) == "00011000"
--- > dx7_group_pack (6,0) == 0x18
-dx7_group_pack :: (U8,U8) -> U8
-dx7_group_pack (g1,g2) = shiftL g1 2 + g2
+-- > gen_bitseq_pp 8 (dx7_group_join (0,0)) == "00000000"
+-- > gen_bitseq_pp 8 (dx7_group_join (2,0)) == "00001000"
+-- > gen_bitseq_pp 8 (dx7_group_join (6,0)) == "00011000"
+-- > dx7_group_join (6,0) == 0x18
+dx7_group_join :: (U8,U8) -> U8
+dx7_group_join (g1,g2) = shiftL g1 2 + g2
 
 -- | Generate DX7 parameter change sysex.
 --
 -- > dx7_parameter_change_sysex 0 (0x06,0) dx7_microtune_octave [1,2,3]
 dx7_parameter_change_sysex :: U8 -> (U8,U8) -> U8 -> [U8] -> [U8]
-dx7_parameter_change_sysex ch grp p d = [0xF0,0x43,0x10 + ch,dx7_group_pack grp,p] ++ d ++ [0xF7]
+dx7_parameter_change_sysex ch grp p d = [0xF0,0x43,0x10 + ch,dx7_group_join grp,p] ++ d ++ [0xF7]
 
 {- | Construct DX7 param change sysex.  Variant of 'dx7_parameter_change_sysex'.
 
