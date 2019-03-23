@@ -47,6 +47,14 @@ dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam
 -- | Voice parameter data (# = 145 = dx7_nparam)
 type DX7_Param = [U8]
 
+-- | Type-specialised 'B.pack'.
+dx7_param_pack :: DX7_Param -> B.ByteString
+dx7_param_pack = B.pack
+
+-- | Type-specialised 'B.unpack'.
+dx7_param_unpack :: B.ByteString -> DX7_Param
+dx7_param_unpack = B.unpack
+
 -- | Equality ignoring indicated indices.
 dx7_param_eq_ignoring :: [U8] -> DX7_Param -> DX7_Param -> Bool
 dx7_param_eq_ignoring = T.list_eq_ignoring_indices
