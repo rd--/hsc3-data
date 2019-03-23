@@ -75,11 +75,15 @@ dx7_nvoice = dx7_nparam + dx7_name_nchar
 dx7_ascii_verify :: U8 -> U8
 dx7_ascii_verify x = if x < 32 || x > 126 then error "ASCII?" else x
 
+-- | Replace out-of-range ASCII U8 with 63, the ASCII code for /c/.
+dx7_ascii_correct :: Char -> U8 -> U8
+dx7_ascii_correct c x = if x < 32 || x > 126 then dx7_ascii_verify (Byte.char_to_word8 c) else x
+
 -- | Map ASCII U8 to 'Char'.
 --
--- > map dx7_ascii_char [32 .. 126]
-dx7_ascii_char :: U8 -> Char
-dx7_ascii_char = Byte.word8_to_char . dx7_ascii_verify
+-- > map (dx7_ascii_char '?') [32 .. 126]
+dx7_ascii_char :: Char -> U8 -> Char
+dx7_ascii_char c = Byte.word8_to_char . dx7_ascii_correct c
 
 -- | Given 145-byte 'DX7_Param' sequence and a 10 ASCII character name, make 'DX7_Voice'.
 dx7_param_to_dx7_voice :: String -> DX7_Param -> DX7_Voice
@@ -154,7 +158,7 @@ dx7_init_voice =
   let op_6_2 = concat (replicate 5 (dx7_init_op 0))
       op_1 = dx7_init_op 99
       sh = dx7_init_pitch_eg ++ [0,0,1] ++ dx7_init_lfo ++ [3,24]
-      nm = dx7_name_encode "INIT VOICE"
+      nm = dx7_name_encode '?' "INIT VOICE"
   in concat [op_6_2,op_1,sh,nm]
 
 -- | Sequence of 32 voices (32 * 155 = 4960)
@@ -370,7 +374,7 @@ dx7_parameter_value_pp p x =
                      then (stp - 1,printf "(ERROR BYTE=0x%02X)" x)
                      else (x,"")
       r = if u == "ASCII"
-          then ['\'',dx7_ascii_char x_clip,'\'']
+          then ['\'',dx7_ascii_char '?' x_clip,'\'']
           else case Split.splitOn ";" u of
                  [_] -> printf "%02d" (T.word8_to_int8 x_clip + d)
                  e -> Byte.word8_at e x_clip
@@ -420,12 +424,12 @@ dx7_function_parameters_tbl =
 -- * Voice
 
 -- | Extract 10 character voice name from 'DX7_Voice'.
-dx7_voice_name :: DX7_Voice -> String
-dx7_voice_name v = map (dx7_ascii_char . Byte.word8_at v) [145 .. 154]
+dx7_voice_name :: Char -> DX7_Voice -> String
+dx7_voice_name c v = map (dx7_ascii_char c . Byte.word8_at v) [145 .. 154]
 
 -- | Encode ASCII name to U8 sequence.
-dx7_name_encode :: String -> [U8]
-dx7_name_encode = map (dx7_ascii_verify . Byte.char_to_word8)
+dx7_name_encode :: Char -> String -> [U8]
+dx7_name_encode c = map (dx7_ascii_correct c . Byte.char_to_word8)
 
 -- * DX7 VOICE DATA LIST
 
@@ -475,7 +479,7 @@ dx7_voice_data_list_pp d =
         if null grp
         then zipWith (pp "") nm ix
         else grp : zipWith (pp "  ") nm ix
-      vc_nm = "NAME=" ++ dx7_voice_name d
+      vc_nm = "NAME=" ++ dx7_voice_name '?' d
   in vc_nm : concatMap f dx7_voice_data_list
 
 -- * DX7 ALGORITHM
@@ -964,7 +968,9 @@ dx7_store_hex_correct fn = dx7_store_hex True fn . map dx7_voice_param_correct
 --   The first column is the voice name as an ASCII string, followed by the parameters in sequence.
 --   Parameters are written as decimal integers.
 dx7_voice_to_csv :: DX7_Voice -> String
-dx7_voice_to_csv v = intercalate "," (dx7_voice_name v : map show (dx7_voice_param v))
+dx7_voice_to_csv v =
+  let nm = map (\c -> if c == ',' then '_' else c) . dx7_voice_name '?'
+  in intercalate "," (nm v : map show (dx7_voice_param v))
 
 -- | Decode 'DX7_Voice' from CSV entry.
 dx7_voice_from_csv :: String -> DX7_Voice
