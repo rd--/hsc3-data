@@ -25,14 +25,8 @@ sleep_ms = pauseThread . ms_to_sec
 with_default_output :: (M.PMStream -> IO r) -> IO r
 with_default_output f = M.pm_default_output >>= \k -> M.pm_with_output_device k f
 
---send_sysex :: M.PMStream -> [[U8]] -> IO ()
---send_sysex fd = mapM_ (\x -> M.pm_sysex_write fd x >> sleep_ms 50)
-
---send_sysex :: M.PMStream -> [[U8]] -> IO ()
---send_sysex = void . M.pm_sysex_write_set
-
 send_sysex_def :: [[U8]] -> IO ()
-send_sysex_def x = void (with_default_output (\fd -> M.pm_sysex_write_set fd x))
+send_sysex_def x = void (with_default_output (\fd -> M.pm_sysex_write_set 10 fd x))
 
 send_patch_fd :: M.PMStream -> Maybe U8 -> [U8] -> IO ()
 send_patch_fd fd d50_ix p =
@@ -41,7 +35,7 @@ send_patch_fd fd d50_ix p =
               Just i -> let a = D50.patch_memory_base i
                         in D50.d50_wsd_gen 0 a (genericLength p) :
                            D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
-    in void (M.pm_sysex_write_set fd d)
+    in void (M.pm_sysex_write_set 10 fd d)
 
 send_patch_def :: Maybe U8 -> [U8] -> IO ()
 send_patch_def ix p = with_default_output (\fd -> send_patch_fd fd ix p)

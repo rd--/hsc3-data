@@ -88,7 +88,7 @@ data D50_SYSEX_CMD = RQI_CMD -- ^ REQUEST DATA - ONE WAY
                    | RJC_CMD -- ^ REJECTION
                      deriving (Eq,Show)
 
--- | DATA-SET COMMAND (DTI|DAT), (CMD,DEVICE-ID,ADDRESS,DATA)
+-- | DSC = DATA-SET COMMAND (DTI|DAT), (CMD,DEVICE-ID,ADDRESS,DATA)
 type DSC = (D50_SYSEX_CMD,U8,ADDRESS,[U8])
 
 dsc_address :: DSC -> ADDRESS
@@ -113,9 +113,11 @@ u24_pack = M.bits_21_join_be . T.t3_from_list
 range_pp :: Show a => (a,a) -> String
 range_pp (p,q) = show p ++ " - " ++ show q
 
+type D50_Sysex = [U8]
+
 -- | Segment byte-sequence into SYSEX messages, no verification,
 -- ie. seperate before each @0xF0@.
-sysex_segment :: [U8] -> [[U8]]
+sysex_segment :: [U8] -> [D50_Sysex]
 sysex_segment = tail . T.split_before 0xF0
 
 -- * ROLAND
@@ -188,42 +190,42 @@ d50_cmd_hdr ch cmd = [M.sysex_status,M.roland_id,ch,d50_id,d50_sysex_cmd_id cmd]
 d50_cmd_data_chk :: [U8] -> [U8]
 d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.sysex_end]
 
-d50_addr_sz_cmd :: D50_SYSEX_CMD -> U8 -> ADDRESS -> U24 -> [U8]
+d50_addr_sz_cmd :: D50_SYSEX_CMD -> U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_addr_sz_cmd cmd ch a sz =
     let dat = u24_unpack a ++ u24_unpack sz
     in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
 -- | Generate WSD command SYSEX.
-d50_wsd_gen :: U8 -> ADDRESS -> U24 -> [U8]
+d50_wsd_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_wsd_gen = d50_addr_sz_cmd WSD_CMD
 
 -- | Generate WSD command SYSEX.
-d50_rqd_gen :: U8 -> ADDRESS -> U24 -> [U8]
+d50_rqd_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_rqd_gen = d50_addr_sz_cmd RQD_CMD
 
 -- | Generate RQI command SYSEX.
 --
--- > let r = map T.read_hex_byte (words "F0 41 00 14 11 00 00 00 00 03 40 3D F7")
--- > in d50_rqi_gen 0 0 0x1C0 == r
-d50_rqi_gen :: U8 -> ADDRESS -> U24 -> [U8]
+-- > let r = map T.read_hex_byte_err (words "F0 41 00 14 11 00 00 00 00 03 40 3D F7")
+-- > d50_rqi_gen 0 0 0x1C0 == r
+d50_rqi_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_rqi_gen = d50_addr_sz_cmd RQI_CMD
 
 -- > d50_cmd_parse (d50_ack_gen 0) == Just (0,0x43,[],0)
-d50_ack_gen :: U8 -> [U8]
+d50_ack_gen :: U8 -> D50_Sysex
 d50_ack_gen ch = d50_cmd_hdr ch ACK_CMD ++ [M.sysex_end]
 
 -- > d50_cmd_parse (d50_eod_gen 0) == Just (0,0x45,[],0)
-d50_eod_gen :: U8 -> [U8]
+d50_eod_gen :: U8 -> D50_Sysex
 d50_eod_gen ch = d50_cmd_hdr ch EOD_CMD ++ [M.sysex_end]
 
 -- > d50_cmd_parse (d50_rjc_gen 0) == Just (0,0x4F,[],0)
-d50_rjc_gen :: U8 -> [U8]
+d50_rjc_gen :: U8 -> D50_Sysex
 d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]
 
 -- | Parse SYSEX to (CH,CMD,DAT,#DAT).
 --
 -- > d50_cmd_parse (d50_dsc_gen (DTI_CMD,0,1,[50])) == Just (0,18,[0,0,1,50,77],5)
-d50_cmd_parse :: [U8] -> Maybe (U8,U8,[U8],U24)
+d50_cmd_parse :: D50_Sysex -> Maybe (U8,U8,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
         dat_n = genericLength b' - 1
@@ -255,7 +257,7 @@ d50_data_addr (dat,dat_n) =
 --
 -- > let b = d50_dsc_gen (DTI_CMD,0,1,[50])
 -- > d50_dsc_parse b == Just (DTI_CMD,0,1,[50])
-d50_dsc_parse :: [U8] -> Maybe DSC
+d50_dsc_parse :: D50_Sysex -> Maybe DSC
 d50_dsc_parse b =
     let Just (ch,cmd,dat,dat_n) = d50_cmd_parse b
         Just (dat',dat_n') = d50_data_chk (dat,dat_n)
@@ -265,14 +267,15 @@ d50_dsc_parse b =
        then Just (cmd',ch,addr,dat'')
        else Nothing
 
-d50_dsc_parse_err :: [U8] -> DSC
+-- | Erroring variant.
+d50_dsc_parse_err :: D50_Sysex -> DSC
 d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
 -- | Generate DSC (DTI|DAT) SYSEX message.
 --
 -- > T.byte_seq_hex_pp (d50_dsc_gen (DTI_CMD,0,1,[50])) == "F041001412000001324DF7"
 -- > T.byte_seq_hex_pp (d50_dsc_gen (DTI_CMD,0,409,[0x10])) == "F0410014120003191054F7"
-d50_dsc_gen :: DSC -> [U8]
+d50_dsc_gen :: DSC -> D50_Sysex
 d50_dsc_gen (cmd,ch,a,d) =
     let dat = u24_unpack a ++ d
     in if length d > 256
@@ -280,7 +283,7 @@ d50_dsc_gen (cmd,ch,a,d) =
        else concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
 -- | Generate a sequence of DSC messages segmenting data sets longer than 256 elements.
-d50_dsc_gen_seq :: DSC -> [[U8]]
+d50_dsc_gen_seq :: DSC -> [D50_Sysex]
 d50_dsc_gen_seq (cmd,ch,a,d) =
     if null d
     then []
@@ -290,7 +293,7 @@ d50_dsc_gen_seq (cmd,ch,a,d) =
 
 -- > let nm = (Patch,"Lower Tone Fine Tune")
 -- > fmap T.byte_seq_hex_pp (d50_gen_dti_nm 0 nm [0x10]) == Just "F0410014120003191054F7"
-d50_gen_dti_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe [U8]
+d50_gen_dti_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe D50_Sysex
 d50_gen_dti_nm ch nm d =
     let f a = d50_dsc_gen (DTI_CMD,ch,a,d)
     in fmap f (named_parameter_to_address nm)
@@ -505,9 +508,9 @@ key_mode_usr = "WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPAR
 
 -- * PP
 
--- | Tone structure number diagram in plain text.
+-- | Tone structure number diagram in plain text (zero indexed).
 --
--- > map structure_pp [1 .. 7]
+-- > map structure_pp [0 .. 6]
 structure_pp :: U8 -> String
 structure_pp n =
     case n + 1 of
@@ -518,7 +521,7 @@ structure_pp n =
       5 -> "S1 + RMOD (S1 + P2)"
       6 -> "P1 + P2"
       7 -> "P1 + RMOD (P1 + P2)"
-      _ -> error "structure_text"
+      _ -> error "structure_text: ix?"
 
 -- * PARTIAL
 
@@ -727,7 +730,7 @@ d50_patch_groups =
 
 -- | 'd50_patch_factors' preceded by patch name.
 --
--- > length d50_patch_parameters == 37
+-- > length d50_patch_parameters == 40
 d50_patch_parameters :: [Parameter]
 d50_patch_parameters =
     let ch n = (n,"Patch Name " ++ show (n + 1),64,0,d50_char_code_usr)
@@ -804,8 +807,11 @@ parameter_csv (a,x) (ty,p) =
                        ,show x',range_pp (parameter_range p)
                        ,parameter_value_usr p x]
 
+-- | A patch is a 448-byte sequence.
+type D50_Patch = [U8]
+
 -- | Given sequence of parameter values, generate /CSV/ of patch.
-d50_patch_csv :: [U8] -> [String]
+d50_patch_csv :: D50_Patch -> [String]
 d50_patch_csv =
     let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,VALUE-USER"
         f (a,v) = case address_to_parameter a of
@@ -835,22 +841,22 @@ group_pp x_seq (g_nm,p_nm_seq,ix) =
 -- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 -- > let g = d50_patch_group_pp p
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.group.text" (unlines g)
-d50_patch_group_pp :: [U8] -> [String]
+d50_patch_group_pp :: D50_Patch -> [String]
 d50_patch_group_pp =
     let f gr pr = "" : parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
     in concat . zipWith f d50_group_seq . parameter_segment . zip d50_parameters_seq
 
 -- | Patch name
-patch_name :: [U8] -> String
+patch_name :: D50_Patch -> String
 patch_name = map d50_byte_to_char_err . take 18 . genericDrop (parameter_type_base_address Patch)
 
 -- | Tone name
 --
 -- > tone_name Upper p
-tone_name :: Tone -> [U8] -> String
+tone_name :: Tone -> D50_Patch -> String
 tone_name t = map d50_byte_to_char_err . take 10 . genericDrop (parameter_type_base_address (Common t))
 
-patch_name_set :: [U8] -> [String]
+patch_name_set :: D50_Patch -> [String]
 patch_name_set p = [patch_name p,tone_name Upper p,tone_name Lower p]
 
 -- * Tuning
@@ -868,13 +874,14 @@ d50_wg_pitch_kf_dti r =
 
 -- * I/O
 
--- | Load text file consisting of 448 (0x1C0) two-character
--- hexidecimal byte values, ie. a D50 patch.
---
--- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
--- > let p' = unlines (filter (not . null) (d50_patch_csv p))
--- > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
-load_d50_text :: FilePath -> IO [U8]
+{- | Load text file consisting of 448 (0x1C0) two-character
+     hexadecimal byte values, ie. a D50 patch.
+
+> p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
+> let p' = unlines (filter (not . null) (d50_patch_csv p))
+> writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
+-}
+load_d50_text :: FilePath -> IO D50_Patch
 load_d50_text fn = do
   b <- T.load_hex_byte_seq fn
   case b of
@@ -919,7 +926,7 @@ d50_load_sysex_u8 fn = do
 > putStrLn$unlines$concatMap d50_patch_group_pp p
 
 -}
-d50_load_sysex :: FilePath -> IO [[U8]]
+d50_load_sysex :: FilePath -> IO [D50_Patch]
 d50_load_sysex fn = do
   dat <- d50_load_sysex_u8 fn
   return (take 64 (chunksOf 448 dat))
