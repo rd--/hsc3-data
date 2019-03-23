@@ -32,7 +32,7 @@ dx7_sysex_print cmd fn =
       print_hex = Byte.byte_seq_hex_pp . snd
       print_parameters = unlines . DX7.dx7_parameter_seq_pp . snd
       print_voice_data_list = unlines . DX7.dx7_voice_data_list_pp . snd
-      print_voice_name (k,v) = printf "%2d %s" k (DX7.dx7_voice_name v)
+      print_voice_name (k,v) = printf "%2d %s" k (DX7.dx7_voice_name '?' v)
   in case cmd of
     "csv" -> dx7_sysex_print_f print_csv fn
     "hex" -> dx7_sysex_print_f print_hex fn
