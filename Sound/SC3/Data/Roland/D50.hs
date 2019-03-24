@@ -863,7 +863,7 @@ group_pp x_seq (g_nm,p_nm_seq,ix) =
 
 -- | Pretty printer for D-50 patch following group structure (ie. HW screen layout).
 --
--- > p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
+-- > [p] <- d50_load_hex "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 -- > let g = d50_patch_group_pp p
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.group.text" (unlines g)
 d50_patch_group_pp :: D50_Patch -> [String]
@@ -902,16 +902,20 @@ d50_wg_pitch_kf_dti r =
 {- | Load text file consisting of 448 (0x1C0) two-character
      hexadecimal byte values, ie. a D50 patch.
 
-> p <- load_d50_text "/home/rohan/uc/invisible/light/d50/d50.hex.text"
+> [p] <- d50_load_hex "/home/rohan/uc/invisible/light/d50/d50.hex.text"
 > let p' = unlines (filter (not . null) (d50_patch_csv p))
 > writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
 -}
-load_d50_text :: FilePath -> IO D50_Patch
-load_d50_text fn = do
+d50_load_hex :: FilePath -> IO [D50_Patch]
+d50_load_hex fn = do
   b <- T.load_hex_byte_seq fn
   case b of
-    [] -> error "load_d50_text?"
-    x:_ -> if length x /= 448 then error "load_d50_text: 448?" else return x
+    [] -> error "d50_load_hex?"
+    x -> if any (((/=) 448) . length) x then error "d50_load_hex: 448?" else return x
+
+-- | Type specialised 'T.store_hex_byte_seq'
+d50_store_hex :: FilePath -> [D50_Patch] -> IO ()
+d50_store_hex = T.store_hex_byte_seq
 
 -- | Load binary 'U8' sequence from file.
 load_byte_seq :: FilePath -> IO [U8]
