@@ -1,21 +1,21 @@
-# d50-sysex
+# d50
 
 Roland D-50 utilities.
 
 Midi connections use the environment variables `PM_DEFAULT_INPUT` and
 `PM_DEFAULT_OUTPUT`.
 
-# load-on-program-change
+# sysex load-on-program-change
 
 Reads MIDI program change messages and sends the indicated patch from
 a SYSEX file to the _temporary_ memory area of the synthesiser.
 
-# print-patch text
+# hex print
 
 Pretty printer for patch data stored as hexadecimal text.
 
 ~~~~
-$ hsc3-d50-sysex print-patch text pp-group ~/uc/invisible/light/d50/d50.hex.text
+$ hsc3-d50 hex print pp-group ~/uc/invisible/light/d50/d50.hex.text
 Upper Partial 1
 WG Pitch         -> Cors=C4 Fine=0 KF=1
 WG Mod           -> LFO=(+) ENV=(+) Bend=KF
@@ -116,19 +116,19 @@ Chase Edit       -> Mode=ULU Levl=0 Time=52
 $
 ~~~~
 
-# print-sysex
+# sysex print
 
 Pretty printer for patch data stored in plain SYSEX file (ie. the
 format sent by the synthesiser as a BULK DUMP).  Patch number is
 zero-indexed, or `all`.
 
 ~~~~
-$ hsc3-d50-sysex print-sysex 1 name ~/sw/hsc3-data/data/roland/d50/PN-D50-01.syx
+$ hsc3-d50 sysex print 1 name ~/sw/hsc3-data/data/roland/d50/PN-D50-01.syx
 Deep Analog Strngs | SynStrng l | SynStrng 2
 $
 ~~~~
 
-# send patch
+# sysex send
 
 Send indicated patch from SYSEX file to indicated location at synthesiser.
 

@@ -48,6 +48,24 @@ u8_to_i8 = T.word8_to_int8
 u8_to_u24 :: U8 -> U24
 u8_to_u24 = T.word8_to_word32
 
+u8_length :: [t] -> U8
+u8_length = genericLength
+
+u8_at :: [t] -> U8 -> t
+u8_at = genericIndex
+
+u24_length :: [t] -> U24
+u24_length = genericLength
+
+u24_at :: [t] -> U24 -> t
+u24_at = genericIndex
+
+u24_drop :: U24 -> [t] -> [t]
+u24_drop = genericDrop
+
+u24_split_at :: U24 -> [t] -> ([t], [t])
+u24_split_at = genericSplitAt
+
 -- | Parameter address.
 type ADDRESS = U24
 
@@ -235,8 +253,8 @@ d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]
 d50_cmd_parse :: D50_Sysex -> Maybe (U8,U8,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
-        dat_n = genericLength b' - 1
-        (dat,[eox]) = genericSplitAt dat_n b'
+        dat_n = u24_length b' - 1
+        (dat,[eox]) = u24_split_at dat_n b'
     in if any not [b0 == M.sysex_status,b1 == M.roland_id,b3 == d50_id,eox == M.sysex_end]
        then Nothing
        else Just (b2,b4,dat,dat_n)
@@ -246,7 +264,7 @@ d50_cmd_parse b =
 -- > d50_data_chk ([0,0,1,50,77],5) == Just ([0,0,1,50],4)
 d50_data_chk :: ([U8],U24) -> Maybe ([U8],U24)
 d50_data_chk (dat,dat_n) =
-    let (dat',[ch]) = genericSplitAt (dat_n - 1) dat
+    let (dat',[ch]) = u24_split_at (dat_n - 1) dat
     in if roland_checksum dat' == ch
        then Just (dat',dat_n - 1)
        else Nothing
@@ -375,7 +393,7 @@ parameter_type_address_segments =
 -- | Split sequence into groups based on 'Parameter_Type' sequence.
 parameter_segment :: [t] -> [(Parameter_Type,[t])]
 parameter_segment p =
-    let f (ty,(b,x)) = (ty,map (genericIndex p) [b .. x])
+    let f (ty,(b,x)) = (ty,map (u24_at p) [b .. x])
     in map f parameter_type_address_segments
 
 -- | 4.1 Parameter base address (Top address)
@@ -804,7 +822,7 @@ parameter_value_usr p x =
        then error (show ("parameter_value_usr",p,x))
        else case splitOn ";" usr_str of
               [_] -> show (u8_to_i8 x + usr_diff)
-              e -> e `genericIndex` x
+              e -> e `u8_at` x
 
 parameter_csv :: (ADDRESS,U8) -> (Parameter_Type,Parameter) -> String
 parameter_csv (a,x) (ty,p) =
@@ -840,7 +858,7 @@ group_pp :: [(Parameter,U8)] -> PARAM_GROUP -> String
 group_pp x_seq (g_nm,p_nm_seq,ix) =
     let f p_nm (p,x) = let x' = parameter_value_usr p x
                        in if null p_nm {- ie. CHAR -} then x' else concat [p_nm,"=",x']
-        gr_p = zipWith f (splitOn ";" p_nm_seq) (map (genericIndex x_seq) ix)
+        gr_p = zipWith f (splitOn ";" p_nm_seq) (map (u24_at x_seq) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
 
 -- | Pretty printer for D-50 patch following group structure (ie. HW screen layout).
@@ -855,13 +873,13 @@ d50_patch_group_pp =
 
 -- | Patch name
 patch_name :: D50_Patch -> String
-patch_name = map d50_byte_to_char_err . take 18 . genericDrop (parameter_type_base_address Patch)
+patch_name = map d50_byte_to_char_err . take 18 . u24_drop (parameter_type_base_address Patch)
 
 -- | Tone name
 --
 -- > tone_name Upper p
 tone_name :: Tone -> D50_Patch -> String
-tone_name t = map d50_byte_to_char_err . take 10 . genericDrop (parameter_type_base_address (Common t))
+tone_name t = map d50_byte_to_char_err . take 10 . u24_drop (parameter_type_base_address (Common t))
 
 patch_name_set :: D50_Patch -> [String]
 patch_name_set p = [patch_name p,tone_name Upper p,tone_name Lower p]
