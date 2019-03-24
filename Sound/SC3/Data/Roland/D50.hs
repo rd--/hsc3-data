@@ -104,6 +104,8 @@ u24_unpack :: U24 -> [U8]
 u24_unpack = T.t3_to_list . M.bits_21_sep_be
 
 -- | Pack 'U24' from three 'U8'.
+--
+-- > map u24_pack [[0x02,0x00,0x00],[0x02,0x0F,0x00]] == [0x8000,0x8780]
 u24_pack :: [U8] -> U24
 u24_pack = M.bits_21_join_be . T.t3_from_list
 
@@ -196,10 +198,13 @@ d50_addr_sz_cmd cmd ch a sz =
     in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
 -- | Generate WSD command SYSEX.
+--
+-- > pp = unwords . map T.byte_hex_pp_err
+-- > pp (d50_wsd_gen 0 0x8000 0x8780) == "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
 d50_wsd_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_wsd_gen = d50_addr_sz_cmd WSD_CMD
 
--- | Generate WSD command SYSEX.
+-- | Generate RQD command SYSEX.
 d50_rqd_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_rqd_gen = d50_addr_sz_cmd RQD_CMD
 
@@ -210,6 +215,7 @@ d50_rqd_gen = d50_addr_sz_cmd RQD_CMD
 d50_rqi_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_rqi_gen = d50_addr_sz_cmd RQI_CMD
 
+-- > pp (d50_ack_gen 0) == "F0 41 00 14 43 F7"
 -- > d50_cmd_parse (d50_ack_gen 0) == Just (0,0x43,[],0)
 d50_ack_gen :: U8 -> D50_Sysex
 d50_ack_gen ch = d50_cmd_hdr ch ACK_CMD ++ [M.sysex_end]
@@ -218,6 +224,7 @@ d50_ack_gen ch = d50_cmd_hdr ch ACK_CMD ++ [M.sysex_end]
 d50_eod_gen :: U8 -> D50_Sysex
 d50_eod_gen ch = d50_cmd_hdr ch EOD_CMD ++ [M.sysex_end]
 
+-- > pp (d50_rjc_gen 0) == "F0 41 00 14 4F F7"
 -- > d50_cmd_parse (d50_rjc_gen 0) == Just (0,0x4F,[],0)
 d50_rjc_gen :: U8 -> D50_Sysex
 d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]

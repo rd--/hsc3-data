@@ -25,6 +25,7 @@ sleep_ms = pauseThread . ms_to_sec
 with_default_output :: (M.PMStream -> IO r) -> IO r
 with_default_output f = M.pm_default_output >>= \k -> M.pm_with_output_device k f
 
+-- > send_sysex_def [D50.d50_ack_gen 0]
 send_sysex_def :: [[U8]] -> IO ()
 send_sysex_def x = void (with_default_output (\fd -> M.pm_sysex_write_set 10 fd x))
 
@@ -131,3 +132,16 @@ main = do
     ["send","patch",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix d50_ix) (read sysex_ix) fn
     ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
     _ -> usage
+
+{-
+
+DATA TRANSFER -> B.Dump -> ENTER
+SENDS WSD = F0 41 00 14 40 02 00 00 02 0F 00 6D F7
+WAITS FOR ACK
+SENDS DAT
+...
+
+EXIT
+SEND RJC = F0 41 00 14 4F F7
+
+-}
