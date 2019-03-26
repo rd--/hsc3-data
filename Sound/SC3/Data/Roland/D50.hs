@@ -193,19 +193,19 @@ d50_sysex_cmd_tbl =
 maybe_err :: String -> Maybe a -> a
 maybe_err str = fromMaybe (error str)
 
--- | SYSEX_CMD to 8-Bit identifier.
+-- | SYSEX_CMD to 8-bit identifier.
 --
--- > let k = d50_sysex_cmd_id DTI_CMD in (k == 0x12,k == 0b00010010)
--- > let k = d50_sysex_cmd_id RQI_CMD in (k == 0x11,k == 0b00010001)
-d50_sysex_cmd_id :: D50_SYSEX_CMD -> U8
-d50_sysex_cmd_id cmd = maybe_err "d50_sysex_cmd_id" (lookup cmd d50_sysex_cmd_tbl)
+-- > let k = d50_sysex_cmd_encode DTI_CMD in (k == 0x12,k == 0b00010010)
+-- > let k = d50_sysex_cmd_encode RQI_CMD in (k == 0x11,k == 0b00010001)
+d50_sysex_cmd_encode :: D50_SYSEX_CMD -> U8
+d50_sysex_cmd_encode cmd = maybe_err "d50_sysex_cmd_encode" (lookup cmd d50_sysex_cmd_tbl)
 
--- | Inverse of 'd50_sysex_cmd_id'.
-d50_sysex_cmd_parse :: U8 -> D50_SYSEX_CMD
-d50_sysex_cmd_parse i = maybe_err "d50_sysex_cmd_parse" (T.reverse_lookup i d50_sysex_cmd_tbl)
+-- | Inverse of 'd50_sysex_cmd_encode'.
+d50_sysex_cmd_decode :: U8 -> D50_SYSEX_CMD
+d50_sysex_cmd_decode i = maybe_err "d50_sysex_cmd_decode" (T.reverse_lookup i d50_sysex_cmd_tbl)
 
 d50_cmd_hdr :: U8 -> D50_SYSEX_CMD -> [U8]
-d50_cmd_hdr ch cmd = [M.sysex_status,M.roland_id,ch,d50_id,d50_sysex_cmd_id cmd]
+d50_cmd_hdr ch cmd = [M.sysex_status,M.roland_id,ch,d50_id,d50_sysex_cmd_encode cmd]
 
 d50_cmd_data_chk :: [U8] -> [U8]
 d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.sysex_end]
@@ -217,8 +217,10 @@ d50_addr_sz_cmd cmd ch a sz =
 
 -- | Generate WSD command SYSEX.
 --
--- > pp = unwords . map T.byte_hex_pp_err
--- > pp (d50_wsd_gen 0 0x8000 0x8780) == "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
+-- > let pp = unwords . map T.byte_hex_pp_err
+-- > let syx = T.read_hex_byte_seq_ws "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
+-- > d50_wsd_gen 0 0x8000 0x8780 == syx
+-- > d50_cmd_parse syx == Just (0,0x40,[2,0,0,2,15,0],6)
 d50_wsd_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
 d50_wsd_gen = d50_addr_sz_cmd WSD_CMD
 
@@ -249,24 +251,27 @@ d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]
 
 -- | Parse SYSEX to (CH,CMD,DAT,#DAT).
 --
--- > d50_cmd_parse (d50_dsc_gen (DTI_CMD,0,1,[50])) == Just (0,18,[0,0,1,50,77],5)
+-- > d50_cmd_parse (d50_dsc_gen (DTI_CMD,0,1,[50])) == Just (0,0x12,[0,0,1,50],4)
 d50_cmd_parse :: D50_Sysex -> Maybe (U8,U8,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
-        dat_n = u24_length b' - 1
-        (dat,[eox]) = u24_split_at dat_n b'
+        dat_chk_n = u24_length b' - 1
+        (dat_chk,[eox]) = u24_split_at dat_chk_n b'
     in if any not [b0 == M.sysex_status,b1 == M.roland_id,b3 == d50_id,eox == M.sysex_end]
        then Nothing
-       else Just (b2,b4,dat,dat_n)
+       else if dat_chk_n == 0
+            then Just (b2,b4,[],0)
+            else let Just (dat,dat_n) = d50_data_chk (dat_chk,dat_chk_n)
+                 in Just (b2,b4,dat,dat_n)
 
 -- | Check and remove CHECKSUM from DATA.
 --
 -- > d50_data_chk ([0,0,1,50,77],5) == Just ([0,0,1,50],4)
 d50_data_chk :: ([U8],U24) -> Maybe ([U8],U24)
-d50_data_chk (dat,dat_n) =
-    let (dat',[ch]) = u24_split_at (dat_n - 1) dat
-    in if roland_checksum dat' == ch
-       then Just (dat',dat_n - 1)
+d50_data_chk (dat_chk,dat_chk_n) =
+    let (dat,[chk]) = u24_split_at (dat_chk_n - 1) dat_chk
+    in if roland_checksum dat == chk
+       then Just (dat,dat_chk_n - 1)
        else Nothing
 
 -- | Remove and pack ADDRESS from start of DAT.
@@ -283,13 +288,12 @@ d50_data_addr (dat,dat_n) =
 -- > let b = d50_dsc_gen (DTI_CMD,0,1,[50])
 -- > d50_dsc_parse b == Just (DTI_CMD,0,1,[50])
 d50_dsc_parse :: D50_Sysex -> Maybe DSC
-d50_dsc_parse b =
-    let Just (ch,cmd,dat,dat_n) = d50_cmd_parse b
-        Just (dat',dat_n') = d50_data_chk (dat,dat_n)
-        Just (addr,dat'',_dat_n'') = d50_data_addr (dat',dat_n')
-        cmd' = d50_sysex_cmd_parse cmd
-    in if cmd' == DTI_CMD || cmd' == DAT_CMD
-       then Just (cmd',ch,addr,dat'')
+d50_dsc_parse syx =
+    let Just (ch,cmd,addr_dat,addr_dat_n) = d50_cmd_parse syx
+        Just (addr,dat,_dat_n) = d50_data_addr (addr_dat,addr_dat_n)
+        cmd_e = d50_sysex_cmd_decode cmd
+    in if cmd_e == DTI_CMD || cmd_e == DAT_CMD
+       then Just (cmd_e,ch,addr,dat)
        else Nothing
 
 -- | Erroring variant.
@@ -446,7 +450,9 @@ named_parameter_to_address =
 patch_memory_base :: U8 -> ADDRESS
 patch_memory_base n = 32768 + (448 * u8_to_u24 n)
 
-{- | Base address for reverb memory /n/ (0,15)
+{- | Base address for zero-indexed reverb memory /n/, ie. (0,15).
+     The mutable reverbs are those numbered 17-32.
+     Each reverb data segment is 376 bytes, the total reverb data segment is 6016 bytes.
 
 > M.bits_21_join_be (0x03,0x60,0x00) == 61440
 > M.bits_21_join_be (0x03,0x62,0x78) == 61816
