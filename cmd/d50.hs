@@ -2,6 +2,8 @@ import Control.Monad {- base -}
 import Data.List {- base -}
 import System.Environment {- base -}
 
+import qualified Data.List.Split as Split {- split -}
+
 import Sound.OSC {- hosc -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
@@ -10,6 +12,7 @@ import qualified Sound.Midi.Type as M {- midi-osc -}
 import qualified Sound.Midi.PM as PM {- midi-osc -}
 
 import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
+import qualified Sound.SC3.Data.Roland.D50.PM as D50 {- hsc3-data -}
 
 -- * COMMON
 
@@ -29,7 +32,7 @@ send_sysex_def x = void (PM.pm_with_default_output (\fd -> PM.pm_sysex_write_set
 send_patch_fd :: PM.PM_FD -> Maybe U8 -> [U8] -> IO ()
 send_patch_fd fd d50_ix p =
     let d = case d50_ix of
-              Nothing -> D50.d50_dsc_gen_seq (D50.DTI_CMD,0,0,p)
+              Nothing -> D50.d50_dsc_gen_seq (D50.DT1_CMD,0,0,p)
               Just i -> let a = D50.patch_memory_base i
                         in D50.d50_wsd_gen 0 a (genericLength p) :
                            D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
@@ -102,7 +105,7 @@ send_patch d50_ix sysex_ix fn = do
 
 -- > set_wg_pitch_kf (1/8)
 set_wg_pitch_kf :: (Eq n, Fractional n) => n -> IO ()
-set_wg_pitch_kf r = send_sysex_def (map D50.d50_dsc_gen (D50.d50_wg_pitch_kf_dti r))
+set_wg_pitch_kf r = send_sysex_def (map D50.d50_dsc_gen (D50.d50_wg_pitch_kf_dt1 r))
 
 -- * MAIN
 
@@ -143,23 +146,22 @@ main = do
     ["sysex","send",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix "tmp" d50_ix) (read sysex_ix) fn
     _ -> usage_wr
 
+data_transfer_recv_bulk :: IO ([D50.D50_Patch],[D50.D50_Reverb])
+data_transfer_recv_bulk = do
+  let err str = error ("data_transfer_recv_bulk: " ++ str)
+  d <- D50.d50_recv_dat_def 0
+  when (length d /= 136) (err "#d?")
+  let b = concatMap D50.dsc_data d
+  when (length b /= 34688) (err "#b?")
+  let k = D50.d50_parameter_n * 64
+      (p_dat,r_dat) = splitAt k b
+  return (Split.chunksOf D50.d50_parameter_n p_dat
+         ,Split.chunksOf D50.d50_reverb_data_segment_n r_dat)
+
 {-
 
-d <- d50_recv_dat_def
-length d == 136
-b = concatMap D50.dsc_data d
-length b == 34688
-import Data.List.Split
-p = chunksOf 448 (take 28672 b)
+(p,r) <- data_transfer_recv_bulk
 D50.d50_store_hex "/tmp/d50.hex.text" p
-rvb = drop 28672 b
-length rvb == 6016
-D50.d50_store_hex "/tmp/rvb.hex.text" (chunksOf 376 rvb)
-sum (map (length . D50.dsc_data) d) == 34688
-448 * 64 == 28672
-34688 - 28672 == 6016
-16 * 376 == 6016
-import Music.Theory.List as T
-T.d_dx (map D50.dsc_address d)
+D50.d50_store_hex "/tmp/rvb.hex.text" r
 
 -}

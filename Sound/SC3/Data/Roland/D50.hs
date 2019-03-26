@@ -485,6 +485,8 @@ d50_work_area_base_address = 0x8000
 patch_memory_base :: U8 -> ADDRESS
 patch_memory_base n = d50_work_area_base_address + (d50_parameter_n * u8_to_u24 n)
 
+type D50_Reverb = [U8]
+
 d50_reverb_data_segment_n :: Num n => n
 d50_reverb_data_segment_n = 376
 
