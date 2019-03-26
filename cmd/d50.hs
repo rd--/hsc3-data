@@ -143,58 +143,23 @@ main = do
     ["sysex","send",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix "tmp" d50_ix) (read sysex_ix) fn
     _ -> usage_wr
 
-is_wsd :: D50.D50_Sysex -> Bool
-is_wsd m =
-  case D50.d50_cmd_parse m of
-    Just (_,0x40,_,6) -> True
-    _ -> False
-
-d50_recv_dat_seq :: (PM.PM_FD, PM.PM_FD) -> [D50.DSC] -> IO [D50.DSC]
-d50_recv_dat_seq (in_fd,out_fd) st = do
-  let ch = 0
-  syx <- PM.pm_read_sysex in_fd
-  print syx
-  case D50.d50_cmd_parse syx of
-    Just (_,0x42,_,_) ->
-      PM.pm_sysex_write out_fd (D50.d50_ack_gen ch) >>
-      d50_recv_dat_seq (in_fd,out_fd) (D50.d50_dsc_parse_err syx : st)
-    Just (_,0x45,[],0) -> return (reverse st)
-    _ -> error "d50_recv_dat_seq?"
-
--- > d <- d50_recv_dat
--- > length d == 136
--- > b = concatMap D50.dsc_data d
--- > length b == 34688
--- > import Data.List.Split
--- > p = chunksOf 448 (take 28672 b)
--- > D50.d50_store_hex "/tmp/rd.hex.text" p
--- > sum (map (length . D50.dsc_data) d) == 34688
--- > 448 * 64 == 28672
--- > 34688 - 28672 == 6016
--- > 16 * 376 == 6016
--- > import Music.Theory.List as T
--- > T.d_dx (map D50.dsc_address d)
-d50_recv_dat :: IO [D50.DSC]
-d50_recv_dat = do
-  let ch = 0
-  in_fd <- PM.pm_open_input_def
-  out_fd <- PM.pm_open_output_def
-  m0 <- PM.pm_read_sysex in_fd
-  print ("WSD",m0)
-  when (not (is_wsd m0)) (error "d50_recv_dat?")
-  print "SEND ACK"
-  _ <- PM.pm_sysex_write out_fd (D50.d50_ack_gen ch)
-  d50_recv_dat_seq (in_fd,out_fd) []
-
 {-
 
-DATA TRANSFER -> B.Dump -> ENTER
-SENDS WSD = F0 41 00 14 40 02 00 00 02 0F 00 6D F7
-WAITS FOR ACK
-SENDS DAT
-...
-
-EXIT
-SEND RJC = F0 41 00 14 4F F7
+d <- d50_recv_dat_def
+length d == 136
+b = concatMap D50.dsc_data d
+length b == 34688
+import Data.List.Split
+p = chunksOf 448 (take 28672 b)
+D50.d50_store_hex "/tmp/d50.hex.text" p
+rvb = drop 28672 b
+length rvb == 6016
+D50.d50_store_hex "/tmp/rvb.hex.text" (chunksOf 376 rvb)
+sum (map (length . D50.dsc_data) d) == 34688
+448 * 64 == 28672
+34688 - 28672 == 6016
+16 * 376 == 6016
+import Music.Theory.List as T
+T.d_dx (map D50.dsc_address d)
 
 -}
