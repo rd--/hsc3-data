@@ -18,7 +18,7 @@ import qualified Data.ByteString as B {- bytestring -}
 import Data.Char {- base -}
 import Data.Int {- base -}
 import Data.List {- base -}
-import Data.List.Split {- split -}
+import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
 
@@ -67,7 +67,7 @@ u24_split_at :: U24 -> [t] -> ([t], [t])
 u24_split_at = genericSplitAt
 
 -- | Parameter address.
-type ADDRESS = U24
+type D50_ADDRESS = U24
 
 -- | A patch has two tones, 'Upper' and 'Lower'.
 data Tone = Upper | Lower deriving (Eq,Show)
@@ -126,14 +126,14 @@ data D50_SYSEX_CMD = RQ1_CMD -- ^ REQUEST DATA - ONE WAY (0x11)
                      deriving (Eq,Show)
 
 -- | DSC = DATA-SET COMMAND (DT1|DAT), (CMD,DEVICE-ID,ADDRESS,DATA)
-type DSC = (D50_SYSEX_CMD,U8,ADDRESS,[U8])
+type D50_DSC = (D50_SYSEX_CMD,U8,D50_ADDRESS,[U8])
 
 -- | ADDR field of DSC.
-dsc_address :: DSC -> ADDRESS
+dsc_address :: D50_DSC -> D50_ADDRESS
 dsc_address (_,_,a,_) = a
 
 -- | DATA field of DSC.
-dsc_data :: DSC -> [U8]
+dsc_data :: D50_DSC -> [U8]
 dsc_data (_,_,_,d) = d
 
 -- * COMMON
@@ -232,7 +232,7 @@ d50_cmd_data_chk :: [U8] -> [U8]
 d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.sysex_end]
 
 -- | Generate ADDR/SIZE category of D-50 SYSEX messages.
-d50_addr_sz_cmd :: D50_SYSEX_CMD -> U8 -> ADDRESS -> U24 -> D50_Sysex
+d50_addr_sz_cmd :: D50_SYSEX_CMD -> U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_addr_sz_cmd cmd ch a sz =
     let dat = u24_unpack a ++ u24_unpack sz
     in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
@@ -243,18 +243,18 @@ d50_addr_sz_cmd cmd ch a sz =
 -- > let syx = T.read_hex_byte_seq_ws "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
 -- > d50_wsd_gen 0 0x8000 0x8780 == syx
 -- > d50_cmd_parse syx == Just (0,0x40,[2,0,0,2,15,0],6)
-d50_wsd_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
+d50_wsd_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_wsd_gen = d50_addr_sz_cmd WSD_CMD
 
 -- | Generate RQD command SYSEX.
-d50_rqd_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
+d50_rqd_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_rqd_gen = d50_addr_sz_cmd RQD_CMD
 
 -- | Generate RQI command SYSEX.
 --
 -- > let r = map T.read_hex_byte_err (words "F0 41 00 14 11 00 00 00 00 03 40 3D F7")
 -- > d50_rq1_gen 0 0 0x1C0 == r
-d50_rq1_gen :: U8 -> ADDRESS -> U24 -> D50_Sysex
+d50_rq1_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_rq1_gen = d50_addr_sz_cmd RQ1_CMD
 
 -- > pp (d50_ack_gen 0) == "F0 41 00 14 43 F7"
@@ -274,17 +274,18 @@ d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]
 -- | Parse SYSEX to (CH,CMD,DAT,#DAT).
 --
 -- > d50_cmd_parse (d50_dsc_gen (DT1_CMD,0,1,[50])) == Just (0,0x12,[0,0,1,50],4)
-d50_cmd_parse :: D50_Sysex -> Maybe (U8,U8,[U8],U24)
+d50_cmd_parse :: D50_Sysex -> Maybe (U8,D50_SYSEX_CMD,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
         dat_chk_n = u24_length b' - 1
         (dat_chk,[eox]) = u24_split_at dat_chk_n b'
+        cmd = d50_sysex_cmd_decode b4
     in if any not [b0 == M.sysex_status,b1 == M.roland_id,b3 == d50_id,eox == M.sysex_end]
        then Nothing
        else if dat_chk_n == 0
-            then Just (b2,b4,[],0)
+            then Just (b2,cmd,[],0)
             else let Just (dat,dat_n) = d50_data_chk (dat_chk,dat_chk_n)
-                 in Just (b2,b4,dat,dat_n)
+                 in Just (b2,cmd,dat,dat_n)
 
 -- | Check and remove CHECKSUM from DATA.
 --
@@ -309,24 +310,23 @@ d50_data_addr (dat,dat_n) =
 --
 -- > let b = d50_dsc_gen (DT1_CMD,0,1,[50])
 -- > d50_dsc_parse b == Just (DT1_CMD,0,1,[50])
-d50_dsc_parse :: D50_Sysex -> Maybe DSC
+d50_dsc_parse :: D50_Sysex -> Maybe D50_DSC
 d50_dsc_parse syx =
     let Just (ch,cmd,addr_dat,addr_dat_n) = d50_cmd_parse syx
         Just (addr,dat,_dat_n) = d50_data_addr (addr_dat,addr_dat_n)
-        cmd_e = d50_sysex_cmd_decode cmd
-    in if cmd_e == DT1_CMD || cmd_e == DAT_CMD
-       then Just (cmd_e,ch,addr,dat)
+    in if cmd == DT1_CMD || cmd == DAT_CMD
+       then Just (cmd,ch,addr,dat)
        else Nothing
 
 -- | Erroring variant.
-d50_dsc_parse_err :: D50_Sysex -> DSC
+d50_dsc_parse_err :: D50_Sysex -> D50_DSC
 d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
 -- | Generate DSC (DT1|DAT) SYSEX message.
 --
 -- > T.byte_seq_hex_pp (d50_dsc_gen (DT1_CMD,0,1,[50])) == "F041001412000001324DF7"
 -- > T.byte_seq_hex_pp (d50_dsc_gen (DT1_CMD,0,409,[0x10])) == "F0410014120003191054F7"
-d50_dsc_gen :: DSC -> D50_Sysex
+d50_dsc_gen :: D50_DSC -> D50_Sysex
 d50_dsc_gen (cmd,ch,a,d) =
     let dat = u24_unpack a ++ d
     in if length d > 256
@@ -334,7 +334,7 @@ d50_dsc_gen (cmd,ch,a,d) =
        else concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
 -- | Generate a sequence of DSC messages segmenting data sets longer than 256 elements.
-d50_dsc_gen_seq :: DSC -> [D50_Sysex]
+d50_dsc_gen_seq :: D50_DSC -> [D50_Sysex]
 d50_dsc_gen_seq (cmd,ch,a,d) =
     if null d
     then []
@@ -348,6 +348,30 @@ d50_gen_dt1_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe D50_Sysex
 d50_gen_dt1_nm ch nm d =
     let f a = d50_dsc_gen (DT1_CMD,ch,a,d)
     in fmap f (named_parameter_to_address nm)
+
+-- * D50_DSC SEQ
+
+-- | Join a contiguous sequence of 'D50_DSC' into one data segment, ie. (address,size,data).
+d50_dsc_seq_join :: [D50_DSC] -> (D50_ADDRESS,U24,[U8])
+d50_dsc_seq_join sq =
+  let addr_seq = map dsc_address sq
+      dat_seq = map dsc_data sq
+      size_seq = map u24_length dat_seq
+      addr:_ = addr_seq
+  in if T.d_dx addr_seq `isPrefixOf` size_seq
+     then (addr,sum size_seq,concat dat_seq)
+     else error "d50_dsc_seq_join?"
+
+-- | If data segment is a D50 bulk-data transfer partition into 64 patches and 16 reverbs.
+d50_bulk_data_transfer_parse :: (D50_ADDRESS,U24,[U8]) -> Maybe ([D50_Patch],[D50_Reverb])
+d50_bulk_data_transfer_parse (addr,sz,dat) =
+  let patch_n = d50_parameter_n * 64
+      rvb_n = d50_reverb_data_segment_n * 16
+  in if addr /= 0x8000 || sz /= (patch_n + rvb_n)
+     then Nothing
+     else let (p_dat,r_dat) = u24_split_at patch_n dat
+          in Just (Split.chunksOf d50_parameter_n p_dat
+                  ,Split.chunksOf d50_reverb_data_segment_n r_dat)
 
 -- * PARTIAL IX
 
@@ -369,7 +393,9 @@ d50_addr_parse_t3 str =
     _ -> Nothing
 
 -- | Encode D50 address, alias for 'M.bits_21_join_be'
-d50_addr_encode :: (U8,U8,U8) -> ADDRESS
+--
+-- > d50_addr_encode (0x02,0x00,0x00) == 0x8000
+d50_addr_encode :: (U8,U8,U8) -> D50_ADDRESS
 d50_addr_encode = M.bits_21_join_be
 
 {- | Base address (offset) for each parameter type (as 7-bit 3-tuple).
@@ -396,22 +422,22 @@ parameter_type_base_address_t3 ty =
       Common Lower -> (0x00,0x02,0x40) -- 0x140 = 320
       Patch -> (0x00,0x03,0x00) -- 0x180 = 384
 
--- | Base address (offset) for each parameter type (as 'ADDRESS').
+-- | Base address (offset) for each parameter type (as 'D50_ADDRESS').
 --   These are also the actual addresses of the "temporary area".
 --
 -- > map parameter_type_base_address parameter_type_seq == [0,64,128,192,256,320,384]
 -- > [0,64,128,192,256,320,384] == [0x000,0x040,0x080,0x0C0,0x100,0x140,0x180]
-parameter_type_base_address :: Parameter_Type -> ADDRESS
+parameter_type_base_address :: Parameter_Type -> D50_ADDRESS
 parameter_type_base_address = d50_addr_encode . parameter_type_base_address_t3
 
-partial_base_address_seq :: [ADDRESS]
+partial_base_address_seq :: [D50_ADDRESS]
 partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
 
 -- | Base address, initial offset, number of parameters.
 --
 -- > sum (map (\ty -> let (_,_,n) = parameter_type_extent ty in n) parameter_type_seq) == 312
 -- > let (b,o,n) = parameter_type_extent (last parameter_type_seq) in b + o + n == 424
-parameter_type_extent :: Parameter_Type -> (ADDRESS,U24,U24)
+parameter_type_extent :: Parameter_Type -> (D50_ADDRESS,U24,U24)
 parameter_type_extent ty =
     case ty of
       Partial _ _ -> (parameter_type_base_address ty,0,54)
@@ -419,7 +445,7 @@ parameter_type_extent ty =
       Patch -> (parameter_type_base_address ty,20,20)
 
 -- | Parameter base address (Top address) (4.1)
-parameter_type_address_segments :: [(Parameter_Type,(ADDRESS,U24))]
+parameter_type_address_segments :: [(Parameter_Type,(D50_ADDRESS,U24))]
 parameter_type_address_segments =
     let f ty = let (b,o,n) = parameter_type_extent ty
                in (ty,(b,b + o + n - 1))
@@ -432,21 +458,21 @@ parameter_segment p =
     in map f parameter_type_address_segments
 
 -- | 4.1 Parameter base address (Top address)
-d50_parameter_base_address_tbl :: [(ADDRESS,String,Parameter_Type,String)]
+d50_parameter_base_address_tbl :: [(D50_ADDRESS,String,Parameter_Type,String)]
 d50_parameter_base_address_tbl =
     let f (ty,(b,x)) = (b,parameter_type_pp ty,ty,range_pp (b,x))
     in map f parameter_type_address_segments
 
--- | Determine 'Parameter_Type' of value at 'ADDRESS'.
+-- | Determine 'Parameter_Type' of value at 'D50_ADDRESS'.
 --
 -- > mapMaybe (\n -> fmap parameter_type_pp (address_to_parameter_type n)) [0 .. 420]
-address_to_parameter_type :: ADDRESS -> Maybe Parameter_Type
+address_to_parameter_type :: D50_ADDRESS -> Maybe Parameter_Type
 address_to_parameter_type a =
     let f ty = let (b,o,n) = parameter_type_extent ty in a >= b && a < b + o + n
     in find f parameter_type_seq
 
 -- > let ix = [0 .. 420] in zip ix (map address_to_parameter ix)
-address_to_parameter :: ADDRESS -> Maybe (Parameter_Type,Parameter)
+address_to_parameter :: D50_ADDRESS -> Maybe (Parameter_Type,Parameter)
 address_to_parameter a =
     case address_to_parameter_type a of
       Just ty -> let (b,_,_) = parameter_type_extent ty
@@ -462,13 +488,13 @@ parameter_lookup (ty,nm) =
 -- > named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
 -- > named_parameter_to_address (Patch,"Patch Name 1") == Just 384
 -- > named_parameter_to_address (Common Upper,"Tone Name 1") == Just 128
-named_parameter_to_address :: (Parameter_Type,String) -> Maybe ADDRESS
+named_parameter_to_address :: (Parameter_Type,String) -> Maybe D50_ADDRESS
 named_parameter_to_address =
     let f (ty,(n,_,_,_,_)) = let (b,_,_) = parameter_type_extent ty in b + n
     in fmap f . parameter_lookup
 
 -- | The base address for the D50 work area memory.
-d50_work_area_base_address :: ADDRESS
+d50_work_area_base_address :: D50_ADDRESS
 d50_work_area_base_address = 0x8000
 
 {- | Base address for patch memory /n/ (0,63).
@@ -482,11 +508,13 @@ d50_work_area_base_address = 0x8000
 > M.bits_21_sep_be 60992 == (0x03,0x5C,0x40)
 
 -}
-patch_memory_base :: U8 -> ADDRESS
+patch_memory_base :: U8 -> D50_ADDRESS
 patch_memory_base n = d50_work_area_base_address + (d50_parameter_n * u8_to_u24 n)
 
+-- | Reverb data, 376 element byte-sequence.
 type D50_Reverb = [U8]
 
+-- | Size of reverb data segment (376-bytes).
 d50_reverb_data_segment_n :: Num n => n
 d50_reverb_data_segment_n = 376
 
@@ -501,8 +529,45 @@ d50_reverb_data_segment_n = 376
 > 61440 + (376 * (32 - 17)) == 67080
 
 -}
-reverb_memory_base :: U8 -> ADDRESS
+reverb_memory_base :: U8 -> D50_ADDRESS
 reverb_memory_base n = 61440 + (376 * u8_to_u24 n)
+
+-- | 1-16 are shared (common) reverb types, 17-32 are user (bank) reverb types.
+d50_reverb_type :: [(Int,String)]
+d50_reverb_type =
+  [(01,"Small Hall")
+  ,(02,"Medium Hall")
+  ,(03,"Large Hall")
+  ,(04,"Chapel")
+  ,(05,"Box")
+  ,(06,"Small Metal Room")
+  ,(07,"Small Room")
+  ,(08,"Medium Room")
+  ,(09,"Medium Large Room")
+  ,(10,"Large Room")
+  ,(11,"Single Delay (102 ms)")
+  ,(12,"Cross Delay (180 ms)")
+  ,(13,"Cross Delay (224 ms)")
+  ,(14,"Cross Delay (148-296 ms)")
+  ,(15,"Short Gate (200 ms)")
+  ,(16,"Long Gate (480 ms)")
+  ,(17,"Bright Hall")
+  ,(18,"Large Cave")
+  ,(19,"Steel Pan")
+  ,(20,"Delay (248 ms)")
+  ,(21,"Delay (338 ms)")
+  ,(22,"Cross Delay (157 ms)")
+  ,(23,"Cross Delay (252 ms)")
+  ,(24,"Cross Delay (274-137 ms)")
+  ,(25,"Gate Reverb")
+  ,(26,"Reverse Gate (360 ms)")
+  ,(27,"Reverse Gate (480 ms)")
+  ,(28,"Slap Back")
+  ,(29,"Slap Back")
+  ,(30,"Slap Back")
+  ,(31,"Twisted Space")
+  ,(32,"Space")
+  ]
 
 -- * CHAR
 
@@ -870,11 +935,11 @@ parameter_value_usr p x =
     let (_,_,stp,usr_diff,usr_str) = p
     in if x < 0 || x > stp
        then error (show ("parameter_value_usr",p,x))
-       else case splitOn ";" usr_str of
+       else case Split.splitOn ";" usr_str of
               [_] -> show (u8_to_i8 x + usr_diff)
               e -> e `u8_at` x
 
-parameter_csv :: (ADDRESS,U8) -> (Parameter_Type,Parameter) -> String
+parameter_csv :: (D50_ADDRESS,U8) -> (Parameter_Type,Parameter) -> String
 parameter_csv (a,x) (ty,p) =
     let (ix,nm,_,_,_usr_str) = p
         x' = parameter_value_verify p x
@@ -908,7 +973,7 @@ group_pp :: [(Parameter,U8)] -> PARAM_GROUP -> String
 group_pp x_seq (g_nm,p_nm_seq,ix) =
     let f p_nm (p,x) = let x' = parameter_value_usr p x
                        in if null p_nm {- ie. CHAR -} then x' else concat [p_nm,"=",x']
-        gr_p = zipWith f (splitOn ";" p_nm_seq) (map (u24_at x_seq) ix)
+        gr_p = zipWith f (Split.splitOn ";" p_nm_seq) (map (u24_at x_seq) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
 
 -- | Pretty printer for D-50 patch following group structure (ie. HW screen layout).
@@ -931,8 +996,13 @@ patch_name = map d50_byte_to_char_err . take 18 . u24_drop (parameter_type_base_
 tone_name :: Tone -> D50_Patch -> String
 tone_name t = map d50_byte_to_char_err . take 10 . u24_drop (parameter_type_base_address (Common t))
 
-patch_name_set :: D50_Patch -> [String]
-patch_name_set p = [patch_name p,tone_name Upper p,tone_name Lower p]
+-- | (patch-name,upper-tone-name,lower-tone-name).
+patch_name_set :: D50_Patch -> (String,String,String)
+patch_name_set p = (patch_name p,tone_name Upper p,tone_name Lower p)
+
+-- | Patch name set pretty printed.
+patch_name_set_pp :: D50_Patch -> String
+patch_name_set_pp p = let (n,u,l) = patch_name_set p in intercalate " | " [n,u,l]
 
 -- * Tuning
 
@@ -940,7 +1010,7 @@ patch_name_set p = [patch_name p,tone_name Upper p,tone_name Lower p]
 -- four partials to indicated ratio.
 --
 -- > map d50_dsc_gen (d50_wg_pitch_kf_dt1 (1/4))
-d50_wg_pitch_kf_dt1 :: (Eq n,Fractional n) => n -> [DSC]
+d50_wg_pitch_kf_dt1 :: (Eq n,Fractional n) => n -> [D50_DSC]
 d50_wg_pitch_kf_dt1 r =
     let e = wg_pitch_kf_to_enum_err r
         a_seq = map (+ 2) partial_base_address_seq
@@ -981,7 +1051,7 @@ load_byte_seq = fmap B.unpack . B.readFile
 > s == s'
 
 -}
-d50_load_sysex_dt1 :: FilePath -> IO [DSC]
+d50_load_sysex_dt1 :: FilePath -> IO [D50_DSC]
 d50_load_sysex_dt1 fn = do
   b <- load_byte_seq fn
   let b_n = length b
@@ -1008,7 +1078,7 @@ d50_load_sysex_u8 fn = do
 d50_load_sysex :: FilePath -> IO [D50_Patch]
 d50_load_sysex fn = do
   dat <- d50_load_sysex_u8 fn
-  return (take 64 (chunksOf 448 dat))
+  return (take 64 (Split.chunksOf 448 dat))
 
 {-
 
@@ -1074,7 +1144,7 @@ When the Manual button is pushed, all the parameter values (knob's
 positions on the panel) of the Partial, Common and Patch will be
 transmitted.
 
-*3-5 See section 4 ( ADDRESS MAPPING OF PARAMETERS AND REMOTE FUNCTION)
+*3-5 See section 4 (ADDRESS MAPPING OF PARAMETERS AND REMOTE FUNCTION)
 
 4. ADDRESS MAPPING OF PARAMETERS AND REMOTE FUNCTION
 

@@ -2,12 +2,9 @@ import Control.Monad {- base -}
 import Data.List {- base -}
 import System.Environment {- base -}
 
-import qualified Data.List.Split as Split {- split -}
-
 import Sound.OSC {- hosc -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
-import qualified Sound.Midi.Type as M {- midi-osc -}
 
 import qualified Sound.Midi.PM as PM {- midi-osc -}
 
@@ -27,7 +24,7 @@ sleep_ms = pauseThread . ms_to_sec
 
 -- > send_sysex_def [D50.d50_ack_gen 0]
 send_sysex_def :: [[U8]] -> IO ()
-send_sysex_def x = void (PM.pm_with_default_output (\fd -> PM.pm_sysex_write_set 10 fd x))
+send_sysex_def x = void (PM.pm_with_default_output (\fd -> PM.pm_sysex_write_seq 10 fd x))
 
 send_patch_fd :: PM.PM_FD -> Maybe U8 -> [U8] -> IO ()
 send_patch_fd fd d50_ix p =
@@ -36,7 +33,7 @@ send_patch_fd fd d50_ix p =
               Just i -> let a = D50.patch_memory_base i
                         in D50.d50_wsd_gen 0 a (genericLength p) :
                            D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
-    in void (PM.pm_sysex_write_set 10 fd d)
+    in void (PM.pm_sysex_write_seq 10 fd d)
 
 send_patch_def :: Maybe U8 -> [U8] -> IO ()
 send_patch_def ix p = PM.pm_with_default_output (\fd -> send_patch_fd fd ix p)
@@ -57,7 +54,7 @@ pm_run_proc dt fd proc_f =
 u8_index :: [t] -> U8 -> t
 u8_index l n = l !! (fromIntegral n)
 
-lpc_recv_midi :: ([D50.D50_Patch], PM.PM_FD) -> Either (M.CVM3 U8) (M.SYSEX U8) -> IO ()
+lpc_recv_midi :: ([D50.D50_Patch], PM.PM_FD) -> PM.PROC_F
 lpc_recv_midi (p,fd) m =
     case m of
       Left (0xC0,n,0) -> print n >> patch_pp (u8_index p n) >> send_patch_fd fd Nothing (u8_index p n)
@@ -112,6 +109,7 @@ set_wg_pitch_kf r = send_sysex_def (map D50.d50_dsc_gen (D50.d50_wg_pitch_kf_dt1
 usage :: [String]
 usage =
   ["hex print {csv|pp-group} text-file..."
+  ,"hex send ix text-file"
   ,"set wg-pitch-kf ratio"
   ,"sysex load-on-program-change sysex-file"
   ,"sysex print {ix|all} {name|pp-group} sysex-file..."
@@ -128,10 +126,13 @@ hex_print ty fn =
     "pp-group" -> mapM_ (d50_print_patch_text D50.d50_patch_group_pp) fn
     _ -> error "hex_print?"
 
+hex_send :: Int -> FilePath -> IO ()
+hex_send k fn = D50.d50_load_hex fn >>= send_patch_def Nothing . (!! k)
+
 sysex_print :: Maybe Int -> String -> [FilePath] -> IO ()
 sysex_print ix ty fn =
   case ty of
-    "name" -> mapM_ (d50_print_sysex ix (return . intercalate " | " . D50.patch_name_set)) fn
+    "name" -> mapM_ (d50_print_sysex ix (return . D50.patch_name_set_pp)) fn
     "pp-group" -> mapM_ (d50_print_sysex ix D50.d50_patch_group_pp) fn
     _ -> error "sysex_print?"
 
@@ -140,28 +141,17 @@ main = do
   a <- getArgs
   case a of
     "hex":"print":ty:fn_seq -> hex_print ty fn_seq
+    ["hex","send",ix,fn] -> hex_send (read ix) fn
     ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
     ["sysex","load-on-program-change",fn] -> PM.pm_with_midi (lpc_run fn)
     "sysex":"print":ix:ty:fn_seq -> sysex_print (parse_d50_ix "all" ix) ty fn_seq
     ["sysex","send",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix "tmp" d50_ix) (read sysex_ix) fn
+    ["transfer","receive","bulk",p_fn,r_fn] -> transfer_recv_bulk p_fn r_fn
     _ -> usage_wr
 
-data_transfer_recv_bulk :: IO ([D50.D50_Patch],[D50.D50_Reverb])
-data_transfer_recv_bulk = do
-  let err str = error ("data_transfer_recv_bulk: " ++ str)
-  d <- D50.d50_recv_dat_def 0
-  when (length d /= 136) (err "#d?")
-  let b = concatMap D50.dsc_data d
-  when (length b /= 34688) (err "#b?")
-  let k = D50.d50_parameter_n * 64
-      (p_dat,r_dat) = splitAt k b
-  return (Split.chunksOf D50.d50_parameter_n p_dat
-         ,Split.chunksOf D50.d50_reverb_data_segment_n r_dat)
-
-{-
-
-(p,r) <- data_transfer_recv_bulk
-D50.d50_store_hex "/tmp/d50.hex.text" p
-D50.d50_store_hex "/tmp/rvb.hex.text" r
-
--}
+-- > transfer_recv_bulk "/tmp/d50.hex.text" "/tmp/rvb.hex.text"
+transfer_recv_bulk :: FilePath -> FilePath -> IO ()
+transfer_recv_bulk p_fn r_fn = do
+  (p,r) <- D50.d50_recv_bulk_data 0
+  D50.d50_store_hex p_fn p
+  D50.d50_store_hex r_fn r
