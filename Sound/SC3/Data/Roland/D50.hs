@@ -743,6 +743,7 @@ d50_partial_groups =
 
 -- * COMMON
 
+-- | Names of chorus types (1-8).
 chorus_type_enum :: [String]
 chorus_type_enum =
     ["Chorus 1","Chorus 2"
