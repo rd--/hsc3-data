@@ -987,22 +987,25 @@ d50_patch_group_pp =
     in concat . zipWith f d50_group_seq . parameter_segment . zip d50_parameters_seq
 
 -- | Patch name
-patch_name :: D50_Patch -> String
-patch_name = map d50_byte_to_char_err . take 18 . u24_drop (parameter_type_base_address Patch)
+d50_patch_name :: D50_Patch -> String
+d50_patch_name = map d50_byte_to_char_err . take 18 . u24_drop (parameter_type_base_address Patch)
 
 -- | Tone name
 --
 -- > tone_name Upper p
-tone_name :: Tone -> D50_Patch -> String
-tone_name t = map d50_byte_to_char_err . take 10 . u24_drop (parameter_type_base_address (Common t))
+d50_tone_name :: Tone -> D50_Patch -> String
+d50_tone_name t =
+  map d50_byte_to_char_err .
+  take 10 .
+  u24_drop (parameter_type_base_address (Common t))
 
 -- | (patch-name,upper-tone-name,lower-tone-name).
-patch_name_set :: D50_Patch -> (String,String,String)
-patch_name_set p = (patch_name p,tone_name Upper p,tone_name Lower p)
+d50_patch_name_set :: D50_Patch -> (String,String,String)
+d50_patch_name_set p = (d50_patch_name p,d50_tone_name Upper p,d50_tone_name Lower p)
 
 -- | Patch name set pretty printed.
-patch_name_set_pp :: D50_Patch -> String
-patch_name_set_pp p = let (n,u,l) = patch_name_set p in intercalate " | " [n,u,l]
+d50_patch_name_set_pp :: D50_Patch -> String
+d50_patch_name_set_pp p = let (n,u,l) = d50_patch_name_set p in intercalate " | " [n,u,l]
 
 -- * Tuning
 

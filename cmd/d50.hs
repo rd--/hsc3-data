@@ -114,6 +114,7 @@ usage =
   ,"sysex load-on-program-change sysex-file"
   ,"sysex print {ix|all} {name|pp-group} sysex-file..."
   ,"sysex send {tmp|d50-ix} sysex-ix sysex-file"
+  ,"transfer receive bulk patch-hex-file reverb-hex-file"
   ]
 
 usage_wr :: IO ()
