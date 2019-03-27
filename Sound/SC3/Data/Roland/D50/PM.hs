@@ -14,7 +14,7 @@ d50_send_ack ch fd = PM.pm_sysex_write fd (d50_ack_gen ch)
 -- | Receive ACK sysex, else error.
 d50_recv_ack :: PM.PM_FD -> IO ()
 d50_recv_ack fd = do
-  syx <- PM.pm_read_sysex fd
+  syx <- PM.pm_sysex_read fd
   case d50_cmd_parse syx of
     Just (_,ACK_CMD,[],0) -> return ()
     _ -> error "d50_recv_ack?"
@@ -23,8 +23,7 @@ d50_recv_ack fd = do
 d50_recv_dat_seq :: U8 -> (PM.PM_FD,PM.PM_FD) -> IO [D50_DSC]
 d50_recv_dat_seq ch (in_fd,out_fd) =
   let recur st = do
-        PM.pm_wait_for_input 10 in_fd
-        syx <- PM.pm_read_sysex in_fd
+        syx <- PM.pm_sysex_read in_fd
         case d50_cmd_parse syx of
           Just (_,DAT_CMD,_,_) ->
             d50_send_ack ch out_fd >>
@@ -36,8 +35,7 @@ d50_recv_dat_seq ch (in_fd,out_fd) =
 -- | Read WSD sysex, send ACK, then run 'd50_recv_dat_seq'.
 d50_recv_dat :: U8 -> (PM.PM_FD,PM.PM_FD) -> IO [D50_DSC]
 d50_recv_dat ch (in_fd,out_fd) =  do
-  PM.pm_wait_for_input 10 in_fd
-  syx <- PM.pm_read_sysex in_fd
+  syx <- PM.pm_sysex_read in_fd
   case d50_cmd_parse syx of
     Just (_,WSD_CMD,_,6) -> do
       d50_send_ack ch out_fd
