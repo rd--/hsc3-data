@@ -158,8 +158,8 @@ type D50_Sysex = [U8]
 
 -- | Segment byte-sequence into SYSEX messages, no verification,
 -- ie. seperate before each @0xF0@.
-sysex_segment :: [U8] -> [D50_Sysex]
-sysex_segment = tail . T.split_before 0xF0
+d50_sysex_segment :: [U8] -> [D50_Sysex]
+d50_sysex_segment = tail . T.split_before 0xF0
 
 -- * ROLAND
 
@@ -226,10 +226,10 @@ d50_sysex_cmd_decode :: U8 -> D50_SYSEX_CMD
 d50_sysex_cmd_decode i = maybe_err "d50_sysex_cmd_decode" (T.reverse_lookup i d50_sysex_cmd_tbl)
 
 d50_cmd_hdr :: U8 -> D50_SYSEX_CMD -> [U8]
-d50_cmd_hdr ch cmd = [M.sysex_status,M.roland_id,ch,d50_id,d50_sysex_cmd_encode cmd]
+d50_cmd_hdr ch cmd = [M.k_Sysex_Status,M.k_Roland_ID,ch,d50_id,d50_sysex_cmd_encode cmd]
 
 d50_cmd_data_chk :: [U8] -> [U8]
-d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.sysex_end]
+d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.k_Sysex_End]
 
 -- | Generate ADDR/SIZE category of D-50 SYSEX messages.
 d50_addr_sz_cmd :: D50_SYSEX_CMD -> U8 -> D50_ADDRESS -> U24 -> D50_Sysex
@@ -260,16 +260,16 @@ d50_rq1_gen = d50_addr_sz_cmd RQ1_CMD
 -- > pp (d50_ack_gen 0) == "F0 41 00 14 43 F7"
 -- > d50_cmd_parse (d50_ack_gen 0) == Just (0,0x43,[],0)
 d50_ack_gen :: U8 -> D50_Sysex
-d50_ack_gen ch = d50_cmd_hdr ch ACK_CMD ++ [M.sysex_end]
+d50_ack_gen ch = d50_cmd_hdr ch ACK_CMD ++ [M.k_Sysex_End]
 
 -- > d50_cmd_parse (d50_eod_gen 0) == Just (0,0x45,[],0)
 d50_eod_gen :: U8 -> D50_Sysex
-d50_eod_gen ch = d50_cmd_hdr ch EOD_CMD ++ [M.sysex_end]
+d50_eod_gen ch = d50_cmd_hdr ch EOD_CMD ++ [M.k_Sysex_End]
 
 -- > pp (d50_rjc_gen 0) == "F0 41 00 14 4F F7"
 -- > d50_cmd_parse (d50_rjc_gen 0) == Just (0,0x4F,[],0)
 d50_rjc_gen :: U8 -> D50_Sysex
-d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.sysex_end]
+d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.k_Sysex_End]
 
 -- | Parse SYSEX to (CH,CMD,DAT,#DAT).
 --
@@ -280,7 +280,7 @@ d50_cmd_parse b =
         dat_chk_n = u24_length b' - 1
         (dat_chk,[eox]) = u24_split_at dat_chk_n b'
         cmd = d50_sysex_cmd_decode b4
-    in if any not [b0 == M.sysex_status,b1 == M.roland_id,b3 == d50_id,eox == M.sysex_end]
+    in if any not [b0 == M.k_Sysex_Status,b1 == M.k_Roland_ID,b3 == d50_id,eox == M.k_Sysex_End]
        then Nothing
        else if dat_chk_n == 0
             then Just (b2,cmd,[],0)
@@ -1021,7 +1021,7 @@ d50_wg_pitch_kf_dt1 r =
         f a = (DT1_CMD,0,a,[e])
     in map f a_seq
 
--- * I/O
+-- * HEX I/O
 
 {- | Load text file consisting of 448 (0x1C0) two-character
      hexadecimal byte values, ie. a D50 patch.
@@ -1041,14 +1041,16 @@ d50_load_hex fn = do
 d50_store_hex :: FilePath -> [D50_Patch] -> IO ()
 d50_store_hex = T.store_hex_byte_seq
 
--- | Load binary 'U8' sequence from file.
-load_byte_seq :: FilePath -> IO [U8]
-load_byte_seq = fmap B.unpack . B.readFile
+-- * BINARY I/O
 
-{-| Load DT1 sequence from D-50 SYSEX file.
+-- | Load binary 'U8' sequence from file.
+d50_load_bin :: FilePath -> IO [U8]
+d50_load_bin = fmap B.unpack . B.readFile
+
+{-| Load DT1 sequence from 36048-byte D-50 SYSEX file.
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
-> b <- load_byte_seq sysex_fn
+> b <- d50_load_bin sysex_fn
 > let s = sysex_segment b
 > d <- d50_load_sysex_dt1 sysex_fn
 > let s' = d50_dsc_gen_seq (DT1_CMD,0,patch_memory_base 0,concatMap dsc_data d)
@@ -1057,11 +1059,11 @@ load_byte_seq = fmap B.unpack . B.readFile
 -}
 d50_load_sysex_dt1 :: FilePath -> IO [D50_DSC]
 d50_load_sysex_dt1 fn = do
-  b <- load_byte_seq fn
+  b <- d50_load_bin fn
   let b_n = length b
   when (b_n /= 0x8CD0) (putStrLn "d50_load_sysex: sysex != 0x8CD0 (36048)")
   when (b_n < 0x8CD0) (error "d50_load_sysex: sysex < 0x8CD0 (36048)")
-  return (map d50_dsc_parse_err (sysex_segment b))
+  return (map d50_dsc_parse_err (d50_sysex_segment b))
 
 -- | 'dsc_data' of 'd50_load_sysex_dt1'.
 d50_load_sysex_u8 :: FilePath -> IO [U8]
