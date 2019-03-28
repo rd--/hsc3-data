@@ -32,3 +32,8 @@ ln-local-c-common:
 
 mk-local-c-common:
 	(cd c-common ; make)
+
+mk-d50:
+	rm -f d50
+	make d50
+	cp d50 $(prefix)/bin/hsc3-d50

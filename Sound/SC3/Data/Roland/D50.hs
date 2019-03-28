@@ -75,40 +75,40 @@ data Tone = Upper | Lower deriving (Eq,Show)
 -- | A 'Tone' has two partials, 'One' and 'Two'.
 data Partial_Ix = One | Two deriving (Eq,Show)
 
--- * PARAMETER TYPE
+-- * D50 PARAMETER TYPE
 
 -- | Parameters are of one of seven types, four 'Partial's
 -- (U1,U2,L1,L2), two 'Common' (U,L), or 'Patch'.
-data Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
+data D50_Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
 
--- | All 'Parameter_Type' in sequence, ie. in ascending ADDRESS order).
-parameter_type_seq :: [Parameter_Type]
-parameter_type_seq =
+-- | All 'D50_Parameter_Type' in sequence, ie. in ascending ADDRESS order).
+d50_parameter_type_seq :: [D50_Parameter_Type]
+d50_parameter_type_seq =
     [Partial Upper One,Partial Upper Two,Common Upper
     ,Partial Lower One,Partial Lower Two,Common Lower
     ,Patch]
 
--- | Pretty printer for 'Parameter_Type'.
+-- | Pretty printer for 'D50_Parameter_Type'.
 --
--- > map parameter_type_pp parameter_type_seq
-parameter_type_pp :: Parameter_Type -> String
-parameter_type_pp ty =
+-- > map d50_parameter_type_pp parameter_type_seq
+d50_parameter_type_pp :: D50_Parameter_Type -> String
+d50_parameter_type_pp ty =
     case ty of
       Partial tn ix -> unwords [show tn,"Partial",partial_ix_pp ix]
       Common tn -> unwords [show tn,"Common"]
       Patch -> "Patch"
 
 -- | (INDEX,NAME,STEPS,USR-OFFSET,USR-STRING)
-type Parameter = (U24,String,U8,I8,String)
+type D50_Parameter = (U24,String,U8,I8,String)
 
-parameter_ix :: Parameter -> U24
-parameter_ix (ix,_,_,_,_) = ix
+d50_parameter_ix :: D50_Parameter -> U24
+d50_parameter_ix (ix,_,_,_,_) = ix
 
-parameter_name :: Parameter -> String
-parameter_name (_,nm,_,_,_) = nm
+d50_parameter_name :: D50_Parameter -> String
+d50_parameter_name (_,nm,_,_,_) = nm
 
-parameter_user_offset :: Parameter -> I8
-parameter_user_offset (_,_,_,o,_) = o
+d50_parameter_user_offset :: D50_Parameter -> I8
+d50_parameter_user_offset (_,_,_,o,_) = o
 
 -- | (GROUP-NAME,PARAMETER-NAME-SEQ,PARAMETER-IX-SEQ)
 type PARAM_GROUP = (String,String,[U24])
@@ -242,7 +242,7 @@ d50_addr_sz_cmd cmd ch a sz =
 -- > let pp = unwords . map T.byte_hex_pp_err
 -- > let syx = T.read_hex_byte_seq_ws "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
 -- > d50_wsd_gen 0 0x8000 0x8780 == syx
--- > d50_cmd_parse syx == Just (0,0x40,[2,0,0,2,15,0],6)
+-- > d50_cmd_parse syx == Just (0,WSD_CMD,[2,0,0,2,15,0],6)
 d50_wsd_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_wsd_gen = d50_addr_sz_cmd WSD_CMD
 
@@ -257,15 +257,22 @@ d50_rqd_gen = d50_addr_sz_cmd RQD_CMD
 d50_rq1_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_rq1_gen = d50_addr_sz_cmd RQ1_CMD
 
+-- | Make ACK sysex.
+--
 -- > pp (d50_ack_gen 0) == "F0 41 00 14 43 F7"
--- > d50_cmd_parse (d50_ack_gen 0) == Just (0,0x43,[],0)
+-- > d50_cmd_parse (d50_ack_gen 0) == Just (0,ACK_CMD,[],0)
 d50_ack_gen :: U8 -> D50_Sysex
 d50_ack_gen ch = d50_cmd_hdr ch ACK_CMD ++ [M.k_Sysex_End]
 
--- > d50_cmd_parse (d50_eod_gen 0) == Just (0,0x45,[],0)
+-- | Make EOD sysex.
+--
+-- > pp (d50_eod_gen 0) == "F0 41 00 14 45 F7"
+-- > d50_cmd_parse (d50_eod_gen 0) == Just (0,EOD_CMD,[],0)
 d50_eod_gen :: U8 -> D50_Sysex
 d50_eod_gen ch = d50_cmd_hdr ch EOD_CMD ++ [M.k_Sysex_End]
 
+-- | Make RJC sysex.
+--
 -- > pp (d50_rjc_gen 0) == "F0 41 00 14 4F F7"
 -- > d50_cmd_parse (d50_rjc_gen 0) == Just (0,0x4F,[],0)
 d50_rjc_gen :: U8 -> D50_Sysex
@@ -273,7 +280,7 @@ d50_rjc_gen ch = d50_cmd_hdr ch RJC_CMD ++ [M.k_Sysex_End]
 
 -- | Parse SYSEX to (CH,CMD,DAT,#DAT).
 --
--- > d50_cmd_parse (d50_dsc_gen (DT1_CMD,0,1,[50])) == Just (0,0x12,[0,0,1,50],4)
+-- > d50_cmd_parse (d50_dsc_gen (DT1_CMD,0,1,[50])) == Just (0,DT1_CMD,[0,0,1,50],4)
 d50_cmd_parse :: D50_Sysex -> Maybe (U8,D50_SYSEX_CMD,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
@@ -342,12 +349,14 @@ d50_dsc_gen_seq (cmd,ch,a,d) =
          then [d50_dsc_gen (cmd,ch,a,d)]
          else d50_dsc_gen (cmd,ch,a,take 256 d) : d50_dsc_gen_seq (cmd,ch,a + 256,drop 256 d)
 
+-- | 'd50_dsc_gen' of 'd50_named_parameter_to_address'.
+--
 -- > let nm = (Patch,"Lower Tone Fine Tune")
 -- > fmap T.byte_seq_hex_pp (d50_gen_dt1_nm 0 nm [0x10]) == Just "F0410014120003191054F7"
-d50_gen_dt1_nm :: U8 -> (Parameter_Type,String) -> [U8] -> Maybe D50_Sysex
+d50_gen_dt1_nm :: U8 -> (D50_Parameter_Type,String) -> [U8] -> Maybe D50_Sysex
 d50_gen_dt1_nm ch nm d =
     let f a = d50_dsc_gen (DT1_CMD,ch,a,d)
-    in fmap f (named_parameter_to_address nm)
+    in fmap f (d50_named_parameter_to_address nm)
 
 -- * D50_DSC SEQ
 
@@ -375,6 +384,7 @@ d50_bulk_data_transfer_parse (addr,sz,dat) =
 
 -- * PARTIAL IX
 
+-- | Each 'Tone' has two Partials, indexed as One and Two.
 partial_ix_pp :: Partial_Ix -> String
 partial_ix_pp ix =
     case ix of
@@ -408,11 +418,11 @@ d50_addr_encode = M.bits_21_join_be
 [00-02-40] Lower Common
 [00-03-00] Patch
 
-> map (d50_addr_encode . parameter_type_base_address_t3) parameter_type_univ
+> map (d50_addr_encode . d50_parameter_type_base_address_t3) parameter_type_univ
 
 -}
-parameter_type_base_address_t3 :: Parameter_Type -> (U8,U8,U8)
-parameter_type_base_address_t3 ty =
+d50_parameter_type_base_address_t3 :: D50_Parameter_Type -> (U8,U8,U8)
+d50_parameter_type_base_address_t3 ty =
     case ty of
       Partial Upper One -> (0x00,0x00,0x00) -- 0x000 = 000
       Partial Upper Two -> (0x00,0x00,0x40) -- 0x040 = 064
@@ -427,71 +437,77 @@ parameter_type_base_address_t3 ty =
 --
 -- > map parameter_type_base_address parameter_type_seq == [0,64,128,192,256,320,384]
 -- > [0,64,128,192,256,320,384] == [0x000,0x040,0x080,0x0C0,0x100,0x140,0x180]
-parameter_type_base_address :: Parameter_Type -> D50_ADDRESS
-parameter_type_base_address = d50_addr_encode . parameter_type_base_address_t3
+d50_parameter_type_base_address :: D50_Parameter_Type -> D50_ADDRESS
+d50_parameter_type_base_address = d50_addr_encode . d50_parameter_type_base_address_t3
 
-partial_base_address_seq :: [D50_ADDRESS]
-partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
+d50_partial_base_address_seq :: [D50_ADDRESS]
+d50_partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
 
 -- | Base address, initial offset, number of parameters.
 --
 -- > sum (map (\ty -> let (_,_,n) = parameter_type_extent ty in n) parameter_type_seq) == 312
 -- > let (b,o,n) = parameter_type_extent (last parameter_type_seq) in b + o + n == 424
-parameter_type_extent :: Parameter_Type -> (D50_ADDRESS,U24,U24)
+parameter_type_extent :: D50_Parameter_Type -> (D50_ADDRESS,U24,U24)
 parameter_type_extent ty =
     case ty of
-      Partial _ _ -> (parameter_type_base_address ty,0,54)
-      Common _ -> (parameter_type_base_address ty,10,38)
-      Patch -> (parameter_type_base_address ty,20,20)
+      Partial _ _ -> (d50_parameter_type_base_address ty,0,54)
+      Common _ -> (d50_parameter_type_base_address ty,10,38)
+      Patch -> (d50_parameter_type_base_address ty,20,20)
 
--- | Parameter base address (Top address) (4.1)
-parameter_type_address_segments :: [(Parameter_Type,(D50_ADDRESS,U24))]
+-- | D50_Parameter base address (Top address) (4.1)
+parameter_type_address_segments :: [(D50_Parameter_Type,(D50_ADDRESS,U24))]
 parameter_type_address_segments =
     let f ty = let (b,o,n) = parameter_type_extent ty
                in (ty,(b,b + o + n - 1))
-    in map f parameter_type_seq
+    in map f d50_parameter_type_seq
 
--- | Split sequence into groups based on 'Parameter_Type' sequence.
-parameter_segment :: [t] -> [(Parameter_Type,[t])]
+-- | Split sequence into groups based on 'D50_Parameter_Type' sequence.
+parameter_segment :: [t] -> [(D50_Parameter_Type,[t])]
 parameter_segment p =
     let f (ty,(b,x)) = (ty,map (u24_at p) [b .. x])
     in map f parameter_type_address_segments
 
 -- | 4.1 Parameter base address (Top address)
-d50_parameter_base_address_tbl :: [(D50_ADDRESS,String,Parameter_Type,String)]
+d50_parameter_base_address_tbl :: [(D50_ADDRESS,String,D50_Parameter_Type,String)]
 d50_parameter_base_address_tbl =
-    let f (ty,(b,x)) = (b,parameter_type_pp ty,ty,range_pp (b,x))
+    let f (ty,(b,x)) = (b,d50_parameter_type_pp ty,ty,range_pp (b,x))
     in map f parameter_type_address_segments
 
--- | Determine 'Parameter_Type' of value at 'D50_ADDRESS'.
+-- | Determine 'D50_Parameter_Type' of value at 'D50_ADDRESS'.
 --
 -- > mapMaybe (\n -> fmap parameter_type_pp (address_to_parameter_type n)) [0 .. 420]
-address_to_parameter_type :: D50_ADDRESS -> Maybe Parameter_Type
+address_to_parameter_type :: D50_ADDRESS -> Maybe D50_Parameter_Type
 address_to_parameter_type a =
     let f ty = let (b,o,n) = parameter_type_extent ty in a >= b && a < b + o + n
-    in find f parameter_type_seq
+    in find f d50_parameter_type_seq
 
+-- | Lookup parameter at address.
+--
 -- > let ix = [0 .. 420] in zip ix (map address_to_parameter ix)
-address_to_parameter :: D50_ADDRESS -> Maybe (Parameter_Type,Parameter)
-address_to_parameter a =
+d50_address_to_parameter :: D50_ADDRESS -> Maybe (D50_Parameter_Type,D50_Parameter)
+d50_address_to_parameter a =
     case address_to_parameter_type a of
       Just ty -> let (b,_,_) = parameter_type_extent ty
                      f (i,_,_,_,_) = i == a - b
-                 in fmap (\p -> (ty,p)) (find f (parameter_type_parameters ty))
+                 in fmap (\p -> (ty,p)) (find f (d50_parameters_by_type ty))
       Nothing -> Nothing
 
-parameter_lookup :: (Parameter_Type,String) -> Maybe (Parameter_Type,Parameter)
-parameter_lookup (ty,nm) =
+-- | Given 'D50_Parameter_Type' and name, lookup 'D50_Parameter'.
+d50_parameter_lookup :: (D50_Parameter_Type,String) -> Maybe D50_Parameter
+d50_parameter_lookup (ty,nm) =
     let f (_,nm',_,_,_) = nm == nm'
-    in fmap (\p -> (ty,p)) (find f (parameter_type_parameters ty))
+    in find f (d50_parameters_by_type ty)
 
--- > named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
--- > named_parameter_to_address (Patch,"Patch Name 1") == Just 384
--- > named_parameter_to_address (Common Upper,"Tone Name 1") == Just 128
-named_parameter_to_address :: (Parameter_Type,String) -> Maybe D50_ADDRESS
-named_parameter_to_address =
-    let f (ty,(n,_,_,_,_)) = let (b,_,_) = parameter_type_extent ty in b + n
-    in fmap f . parameter_lookup
+-- | Get 'D50_ADDRESS' of named parameter.
+--
+-- > d50_named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
+-- > d50_named_parameter_to_address (Patch,"Patch Name 1") == Just 384
+-- > d50_named_parameter_to_address (Common Upper,"Tone Name 1") == Just 128
+-- > d50_named_parameter_to_address (Common Lower,"Structure No.") == Just 330
+d50_named_parameter_to_address :: (D50_Parameter_Type,String) -> Maybe D50_ADDRESS
+d50_named_parameter_to_address (ty,nm) =
+  let f (n,_,_,_,_) = let (b,_,_) = parameter_type_extent ty in b + n
+  in fmap f (d50_parameter_lookup (ty,nm))
 
 -- | The base address for the D50 work area memory.
 d50_work_area_base_address :: D50_ADDRESS
@@ -511,6 +527,8 @@ d50_work_area_base_address = 0x8000
 patch_memory_base :: U8 -> D50_ADDRESS
 patch_memory_base n = d50_work_area_base_address + (d50_parameter_n * u8_to_u24 n)
 
+-- * REVERB
+
 -- | Reverb data, 376 element byte-sequence.
 type D50_Reverb = [U8]
 
@@ -529,8 +547,8 @@ d50_reverb_data_segment_n = 376
 > 61440 + (376 * (32 - 17)) == 67080
 
 -}
-reverb_memory_base :: U8 -> D50_ADDRESS
-reverb_memory_base n = 61440 + (376 * u8_to_u24 n)
+d50_reverb_memory_base :: U8 -> D50_ADDRESS
+d50_reverb_memory_base n = 61440 + (376 * u8_to_u24 n)
 
 -- | 1-16 are shared (common) reverb types, 17-32 are user (bank) reverb types.
 d50_reverb_type :: [(Int,String)]
@@ -569,9 +587,16 @@ d50_reverb_type =
   ,(32,"Space")
   ]
 
+-- | USR string variant of 'd50_reverb_type'.
+d50_reverb_type_usr :: String
+d50_reverb_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ') . snd) d50_reverb_type)
+
 -- * CHAR
 
--- | Table mapping byte to ASCII character.
+-- | Table mapping the (NON-ASCII) D-50 character encoding to it's ASCII character.
+--
+-- > length d50_char_table == 67
+-- > map (\(x,c) -> (x,fromEnum c,c)) d50_char_table
 d50_char_table :: [(U8,Char)]
 d50_char_table =
     let ch = [[' '],['A'..'Z'],['a'..'z'],['1'..'9'],['0','-','?','?','-']]
@@ -583,6 +608,7 @@ d50_char_table =
 d50_byte_to_char :: U8 -> Maybe Char
 d50_byte_to_char n = lookup n d50_char_table
 
+-- | Erroring variant.
 d50_byte_to_char_err :: U8 -> Char
 d50_byte_to_char_err = fromMaybe (error "d50_byte_to_char") . d50_byte_to_char
 
@@ -594,13 +620,21 @@ d50_char_to_byte c = T.reverse_lookup c d50_char_table
 
 -- * USR/STR
 
+-- | USR strings naming the 12 pitch-classes.
 pitch_class_seq :: [String]
 pitch_class_seq = words "C C# D D# E F F# G G# A A# B"
 
+-- | USR strings naming the 84 pitches from C1 to B7.
+--
+-- > length pitch_seq == 7 * 12
 pitch_seq :: [String]
 pitch_seq = [p ++ show o | o <- [1::Int .. 7],p <- pitch_class_seq]
 
--- | "C1 - C7"
+-- | "C2 - C7" as USR string.
+split_point_usr :: String
+split_point_usr = intercalate ";" (take 61 (drop 12 pitch_seq))
+
+-- | "C1 - C7" as USR string.
 wg_pitch_coarse_usr :: String
 wg_pitch_coarse_usr = intercalate ";" (take 73 pitch_seq)
 
@@ -642,13 +676,13 @@ d50_char_code_usr = intersperse ';' (map snd d50_char_table)
 key_mode_usr :: String
 key_mode_usr = "WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPARATE-S"
 
--- * PP
+-- * STRUCTURE
 
 -- | Tone structure number diagram in plain text (zero indexed).
 --
--- > map structure_pp [0 .. 6]
-structure_pp :: U8 -> String
-structure_pp n =
+-- > map d50_structure_pp [0 .. 6]
+d50_structure_pp :: U8 -> String
+d50_structure_pp n =
     case n + 1 of
       1 -> "S1 + S2"
       2 -> "S1 + RMOD (S1 + S2)"
@@ -664,7 +698,7 @@ structure_pp n =
 -- | Partial parameters (4.3)
 --
 -- > length d50_partial_parameters == 54
-d50_partial_parameters :: [Parameter]
+d50_partial_parameters :: [D50_Parameter]
 d50_partial_parameters =
     [(0,"WG Pitch Coarse",73,0,wg_pitch_coarse_usr)
     ,(1,"WG Pitch Fine",101,-50,"-50 - +50")
@@ -741,24 +775,27 @@ d50_partial_groups =
     ,("TVA MOD","LFO;LFOD;Aftr",[51..53])
     ]
 
--- * COMMON
+-- * CHORUS
 
 -- | Names of chorus types (1-8).
-chorus_type_enum :: [String]
-chorus_type_enum =
+d50_chorus_type_enum :: [String]
+d50_chorus_type_enum =
     ["Chorus 1","Chorus 2"
     ,"Flanger1","Flanger2"
     ,"FBChorus"
     ,"Tremolo","C Trem"
     ,"Dimensn"]
 
-chorus_type_usr :: String
-chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) chorus_type_enum)
+-- | USR string variant of 'd50_chorus_type_enum'.
+d50_chorus_type_usr :: String
+d50_chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) d50_chorus_type_enum)
+
+-- * COMMON (TONE)
 
 -- | Common parameters (4.4).
 --
 -- > length d50_common_factors == 38
-d50_common_factors :: [Parameter]
+d50_common_factors :: [D50_Parameter]
 d50_common_factors =
     [(10,"Structure No.",7,1,"1 - 7")
     ,(11,"P-ENV Velocity Range",3,0,"0 - 2")
@@ -792,7 +829,7 @@ d50_common_factors =
     ,(39,"High EQ Frequency",22,0,eq_hf_usr)
     ,(40,"High EQ Q",9,0,"0.3;0.5;0.7;1.0;1.4;2.0;3.0;4.2;6.0")
     ,(41,"High EQ Gain",25,-12,"-12 - +12")
-    ,(42,"Chorus Type",8,1,chorus_type_usr)
+    ,(42,"Chorus Type",8,1,d50_chorus_type_usr)
     ,(43,"Chorus Rate",101,0,"0 - 100")
     ,(44,"Chorus Depth",101,0,"0 - 100")
     ,(45,"Chorus Balance",101,0,"0 - 100")
@@ -800,10 +837,10 @@ d50_common_factors =
     ,(47,"Partial Balance",101,0,"0 - 100")
      ]
 
--- | 'd50_common_factors' preceded by tone name.
+-- | 'd50_common_factors' preceded by 10-byte Tone name.
 --
 -- > length d50_common_parameters == 48
-d50_common_parameters :: [Parameter]
+d50_common_parameters :: [D50_Parameter]
 d50_common_parameters =
     let ch n = (n,"Tone Name " ++ show (n + 1),64,0,d50_char_code_usr)
     in map ch [0 .. 9] ++ d50_common_factors
@@ -829,10 +866,10 @@ d50_common_groups =
 -- | 4.5 Patch Factors.
 --
 -- > length d50_patch_factors == 22
-d50_patch_factors :: [Parameter]
+d50_patch_factors :: [D50_Parameter]
 d50_patch_factors =
     [(18,"Key Mode",9,0,key_mode_usr)
-    ,(19,"Split Point",61,0,"C2 - C7")
+    ,(19,"Split Point",61,0,split_point_usr)
     ,(20,"Portamento Mode",3,0,"U;L;UL")
     ,(21,"Hold Mode",3,0,"U;L;UL")
     ,(22,"Upper Tone Key Shift",49,-24,"-24 - +24")
@@ -868,22 +905,22 @@ d50_patch_groups =
 -- | 'd50_patch_factors' preceded by patch name.
 --
 -- > length d50_patch_parameters == 40
-d50_patch_parameters :: [Parameter]
+d50_patch_parameters :: [D50_Parameter]
 d50_patch_parameters =
     let ch n = (n,"Patch Name " ++ show (n + 1),64,0,d50_char_code_usr)
     in map ch [0 .. 17] ++ d50_patch_factors
 
 -- * PARAMETER
 
--- | Complete set of /used/ 'Parameter's.
+-- | Complete set of /used/ 'D50_Parameter's.
 --
 -- > length d50_parameters == 352
 -- > nub $ sort $ map parameter_user_offset d50_parameters
 -- > putStrLn $ unlines $ map show d50_parameters
-d50_parameters :: [Parameter]
+d50_parameters :: [D50_Parameter]
 d50_parameters =
     let f i = map (\(ix,nm,stp,usr_diff,usr_str) -> (ix + i,nm,stp,usr_diff,usr_str))
-        a = map parameter_type_base_address parameter_type_seq
+        a = map d50_parameter_type_base_address d50_parameter_type_seq
         p = [d50_partial_parameters,d50_partial_parameters,d50_common_parameters
             ,d50_partial_parameters,d50_partial_parameters,d50_common_parameters
             ,d50_patch_parameters]
@@ -893,22 +930,22 @@ d50_parameters =
 d50_parameter_n :: Num n => n
 d50_parameter_n = 448
 
--- | Complete 'Parameter' sequence, including all /unused/ parmaters.
+-- | Complete 'D50_Parameter' sequence, including all /unused/ parmaters.
 --
 -- > length d50_parameters_seq == d50_parameter_n
 -- > map parameter_ix d50_parameters_seq == [0 .. d50_parameter_n - 1]
-d50_parameters_seq :: [Parameter]
+d50_parameters_seq :: [D50_Parameter]
 d50_parameters_seq =
     let recur n sq =
             case sq of
               [] -> []
-              p:sq' -> if n == parameter_ix p
+              p:sq' -> if n == d50_parameter_ix p
                        then p : recur (n + 1) sq'
                        else d50_unused_parameter n : recur (n + 1) sq
     in recur 0 d50_parameters ++ map d50_unused_parameter [424..447]
 
-parameter_type_parameters :: Parameter_Type -> [Parameter]
-parameter_type_parameters ty =
+d50_parameters_by_type :: D50_Parameter_Type -> [D50_Parameter]
+d50_parameters_by_type ty =
     case ty of
       Partial _ _ -> d50_partial_parameters
       Common _ -> d50_common_parameters
@@ -916,37 +953,46 @@ parameter_type_parameters ty =
 
 -- * PARAMETER
 
-d50_unused_parameter :: U24 -> Parameter
+d50_unused_parameter :: U24 -> D50_Parameter
 d50_unused_parameter ix = (ix,"UNUSED",1,0,"")
 
-parameter_range :: Parameter -> (U8,U8)
+parameter_range :: D50_Parameter -> (U8,U8)
 parameter_range (_,_,stp,_,_) = (0,stp - 1)
 
-parameter_range_usr :: Parameter -> (I8,I8)
+parameter_range_usr :: D50_Parameter -> (I8,I8)
 parameter_range_usr (_,_,stp,diff,_) = (diff,diff + u8_to_i8 stp - 1)
 
-parameter_value_verify :: Parameter -> U8 -> U8
+parameter_value_verify :: D50_Parameter -> U8 -> U8
 parameter_value_verify (_,_,stp,_,_) x =
     if x < 0 || x > stp
     then error (show ("parameter_value_verify",x,stp))
     else x
 
-parameter_value_usr :: Parameter -> U8 -> String
+parameter_value_usr :: D50_Parameter -> U8 -> Maybe String
 parameter_value_usr p x =
     let (_,_,stp,usr_diff,usr_str) = p
     in if x < 0 || x > stp
-       then error (show ("parameter_value_usr",p,x))
-       else case Split.splitOn ";" usr_str of
-              [_] -> show (u8_to_i8 x + usr_diff)
-              e -> e `u8_at` x
+       then Nothing
+       else Just (case Split.splitOn ";" usr_str of
+                    [_] -> show (u8_to_i8 x + usr_diff)
+                    e -> e `u8_at` x)
 
-parameter_csv :: (D50_ADDRESS,U8) -> (Parameter_Type,Parameter) -> String
+parameter_value_usr_def :: String -> D50_Parameter -> U8 -> String
+parameter_value_usr_def def p = fromMaybe def . parameter_value_usr p
+
+parameter_value_usr_err :: D50_Parameter -> U8 -> String
+parameter_value_usr_err p x =
+  fromMaybe
+  (error (show ("parameter_value_usr",p,x)))
+  (parameter_value_usr p x)
+
+parameter_csv :: (D50_ADDRESS,U8) -> (D50_Parameter_Type,D50_Parameter) -> String
 parameter_csv (a,x) (ty,p) =
     let (ix,nm,_,_,_usr_str) = p
         x' = parameter_value_verify p x
-    in intercalate "," [show a,parameter_type_pp ty,show ix,nm
+    in intercalate "," [show a,d50_parameter_type_pp ty,show ix,nm
                        ,show x',range_pp (parameter_range p)
-                       ,parameter_value_usr p x]
+                       ,parameter_value_usr_def "??" p x]
 
 -- | A patch is a 448-byte sequence.
 type D50_Patch = [U8]
@@ -955,7 +1001,7 @@ type D50_Patch = [U8]
 d50_patch_csv :: D50_Patch -> [String]
 d50_patch_csv =
     let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,VALUE-USER"
-        f (a,v) = case address_to_parameter a of
+        f (a,v) = case d50_address_to_parameter a of
                     Just p -> parameter_csv (a,v) p
                     _ -> if v == 0
                          then ""
@@ -970,9 +1016,9 @@ d50_group_seq =
     let tn = [d50_partial_groups,d50_partial_groups,d50_common_groups]
     in concat [tn,tn,[d50_patch_groups]]
 
-group_pp :: [(Parameter,U8)] -> PARAM_GROUP -> String
+group_pp :: [(D50_Parameter,U8)] -> PARAM_GROUP -> String
 group_pp x_seq (g_nm,p_nm_seq,ix) =
-    let f p_nm (p,x) = let x' = parameter_value_usr p x
+    let f p_nm (p,x) = let x' = parameter_value_usr_def "??" p x
                        in if null p_nm {- ie. CHAR -} then x' else concat [p_nm,"=",x']
         gr_p = zipWith f (Split.splitOn ";" p_nm_seq) (map (u24_at x_seq) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
@@ -984,21 +1030,21 @@ group_pp x_seq (g_nm,p_nm_seq,ix) =
 -- > writeFile "/home/rohan/uc/invisible/light/d50/d50.group.text" (unlines g)
 d50_patch_group_pp :: D50_Patch -> [String]
 d50_patch_group_pp =
-    let f gr pr = "" : parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
+    let f gr pr = "" : d50_parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
     in concat . zipWith f d50_group_seq . parameter_segment . zip d50_parameters_seq
 
--- | Patch name
+-- | Patch name, 18-byte ASCII string.
 d50_patch_name :: D50_Patch -> String
-d50_patch_name = map d50_byte_to_char_err . take 18 . u24_drop (parameter_type_base_address Patch)
+d50_patch_name = map d50_byte_to_char_err . take 18 . u24_drop (d50_parameter_type_base_address Patch)
 
--- | Tone name
+-- | Tone name, 10-byte ASCII string.
 --
 -- > tone_name Upper p
 d50_tone_name :: Tone -> D50_Patch -> String
 d50_tone_name t =
   map d50_byte_to_char_err .
   take 10 .
-  u24_drop (parameter_type_base_address (Common t))
+  u24_drop (d50_parameter_type_base_address (Common t))
 
 -- | (patch-name,upper-tone-name,lower-tone-name).
 d50_patch_name_set :: D50_Patch -> (String,String,String)
@@ -1017,7 +1063,7 @@ d50_patch_name_set_pp p = let (n,u,l) = d50_patch_name_set p in intercalate " | 
 d50_wg_pitch_kf_dt1 :: (Eq n,Fractional n) => n -> [D50_DSC]
 d50_wg_pitch_kf_dt1 r =
     let e = wg_pitch_kf_to_enum_err r
-        a_seq = map (+ 2) partial_base_address_seq
+        a_seq = map (+ 2) d50_partial_base_address_seq
         f a = (DT1_CMD,0,a,[e])
     in map f a_seq
 
@@ -1055,8 +1101,8 @@ d50_store_binary_u8 fn = B.writeFile fn . B.pack
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > b <- d50_load_binary_u8 sysex_fn
-> let s = sysex_segment b
-> d <- d50_load_sysex_dt1 sysex_fn
+> let s = d50_sysex_segment b
+> d <- d50_load_sysex_dsc sysex_fn
 > let s' = d50_dsc_gen_seq (DT1_CMD,0,patch_memory_base 0,concatMap dsc_data d)
 > s == s'
 
@@ -1069,10 +1115,10 @@ d50_load_sysex_dsc fn = do
   when (b_n < 0x8CD0) (error "d50_load_sysex: sysex < 0x8CD0 (36048)")
   return (map d50_dsc_parse_err (d50_sysex_segment b))
 
-{-| Load patch data (64 patches of 448 bytes) from D-50 SYSEX file.
+{-| Load patch data (64 patches of 448 bytes) and reverb data from D-50 SYSEX file.
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
-> (p,_) <- d50_load_sysex sysex_fn
+> (p,_r) <- d50_load_sysex sysex_fn
 > putStrLn$unlines$map d50_patch_name p
 > putStrLn$unlines$concatMap d50_patch_group_pp p
 
