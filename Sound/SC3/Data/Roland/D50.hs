@@ -1044,47 +1044,45 @@ d50_store_hex = T.store_hex_byte_seq
 -- * BINARY I/O
 
 -- | Load binary 'U8' sequence from file.
-d50_load_bin :: FilePath -> IO [U8]
-d50_load_bin = fmap B.unpack . B.readFile
+d50_load_binary_u8 :: FilePath -> IO [U8]
+d50_load_binary_u8 = fmap B.unpack . B.readFile
 
-{-| Load DT1 sequence from 36048-byte D-50 SYSEX file.
+-- | Write binary 'U8' sequence to file.
+d50_store_binary_u8 :: FilePath -> [U8] -> IO ()
+d50_store_binary_u8 fn = B.writeFile fn . B.pack
+
+{-| Load DT1|DAT sequence from 36048-byte D-50 SYSEX file.
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
-> b <- d50_load_bin sysex_fn
+> b <- d50_load_binary_u8 sysex_fn
 > let s = sysex_segment b
 > d <- d50_load_sysex_dt1 sysex_fn
 > let s' = d50_dsc_gen_seq (DT1_CMD,0,patch_memory_base 0,concatMap dsc_data d)
 > s == s'
 
 -}
-d50_load_sysex_dt1 :: FilePath -> IO [D50_DSC]
-d50_load_sysex_dt1 fn = do
-  b <- d50_load_bin fn
+d50_load_sysex_dsc :: FilePath -> IO [D50_DSC]
+d50_load_sysex_dsc fn = do
+  b <- d50_load_binary_u8 fn
   let b_n = length b
   when (b_n /= 0x8CD0) (putStrLn "d50_load_sysex: sysex != 0x8CD0 (36048)")
   when (b_n < 0x8CD0) (error "d50_load_sysex: sysex < 0x8CD0 (36048)")
   return (map d50_dsc_parse_err (d50_sysex_segment b))
 
--- | 'dsc_data' of 'd50_load_sysex_dt1'.
-d50_load_sysex_u8 :: FilePath -> IO [U8]
-d50_load_sysex_u8 fn = do
-  dsc <- d50_load_sysex_dt1 fn
-  let dat = concatMap dsc_data dsc
-  when (length dat /= 0x8780) (error "d50_load_sysex_u8: length != 0x8780 (34688)")
-  return dat
-
 {-| Load patch data (64 patches of 448 bytes) from D-50 SYSEX file.
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
-> p <- d50_load_sysex sysex_fn
-> putStrLn$unlines$map patch_name p
+> (p,_) <- d50_load_sysex sysex_fn
+> putStrLn$unlines$map d50_patch_name p
 > putStrLn$unlines$concatMap d50_patch_group_pp p
 
 -}
-d50_load_sysex :: FilePath -> IO [D50_Patch]
+d50_load_sysex :: FilePath -> IO ([D50_Patch],[D50_Reverb])
 d50_load_sysex fn = do
-  dat <- d50_load_sysex_u8 fn
-  return (take 64 (Split.chunksOf 448 dat))
+  dsc <- d50_load_sysex_dsc fn
+  case d50_bulk_data_transfer_parse (d50_dsc_seq_join dsc) of
+    Just r -> return r
+    Nothing -> error "d50_load_sysex?"
 
 {-
 
