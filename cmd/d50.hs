@@ -71,20 +71,27 @@ lpc_run fn = do
 
 -- * PRINT
 
--- > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-01.syx"
--- > d50_print_sysex 0 D50.d50_patch_group_pp fn
--- > d50_print_sysex Nothing (return . D50.patch_name) fn
--- > d50_print_sysex Nothing (return . intercalate " | " . D50.patch_name_set) fn
-d50_print_sysex :: Maybe Int -> ([U8] -> [String]) -> FilePath -> IO ()
-d50_print_sysex m_ix pp fn =
+d50_print_dat :: Maybe Int -> ([U8] -> [String]) -> [D50.D50_Patch] -> IO ()
+d50_print_dat m_ix pp v =
   case m_ix of
-    Nothing -> D50.d50_load_sysex fn >>= putStr . unlines . concatMap pp . fst
-    Just ix -> D50.d50_load_sysex fn >>= putStr . unlines . pp . (!! ix) . fst
+    Nothing -> putStr . unlines . concatMap pp $ v
+    Just ix -> putStr . unlines . pp . (!! ix) $ v
 
--- > let fn = "/home/rohan/uc/invisible/light/d50/d50.hex.text"
--- > d50_print_patch_text D50.d50_patch_group_pp fn
-d50_print_patch_text :: ([U8] -> [String]) -> FilePath -> IO ()
-d50_print_patch_text pp fn = D50.d50_load_hex fn >>= mapM_ putStrLn . map (unlines . pp)
+dat_print :: Maybe Int -> String -> [D50.D50_Patch] -> IO ()
+dat_print ix ty v =
+  let f pp = d50_print_dat ix pp v
+  in case ty of
+       "csv" -> f D50.d50_patch_csv
+       "hex" -> f (return . D50.d50_sysex_pp)
+       "name" -> f (return . D50.d50_patch_name_set_pp)
+       "pp-group" -> f D50.d50_patch_group_pp
+       _ -> error "dat_print?"
+
+sysex_print :: Maybe Int -> String -> [FilePath] -> IO ()
+sysex_print m_ix ty fn = mapM D50.d50_load_sysex fn >>= mapM_ (dat_print m_ix ty) . map fst
+
+hex_print :: Maybe Int -> String -> [FilePath] -> IO ()
+hex_print m_ix ty fn = mapM D50.d50_load_hex fn >>= mapM_ (dat_print m_ix ty)
 
 -- * SEND
 
@@ -106,24 +113,8 @@ set_wg_pitch_kf r = send_sysex_def (map D50.d50_dsc_gen (D50.d50_wg_pitch_kf_dt1
 
 -- * MAIN
 
-hex_print :: String -> [FilePath] -> IO ()
-hex_print ty fn =
-  case ty of
-    "csv" -> mapM_ (d50_print_patch_text D50.d50_patch_csv) fn
-    "pp-group" -> mapM_ (d50_print_patch_text D50.d50_patch_group_pp) fn
-    _ -> error "hex_print?"
-
 hex_send :: Int -> FilePath -> IO ()
 hex_send k fn = D50.d50_load_hex fn >>= send_patch_def Nothing . (!! k)
-
-sysex_print :: Maybe Int -> String -> [FilePath] -> IO ()
-sysex_print ix ty fn =
-  let f pp = mapM_ (d50_print_sysex ix pp) fn
-  in case ty of
-       "hex" -> f (return . D50.d50_sysex_pp)
-       "name" -> f (return . D50.d50_patch_name_set_pp)
-       "pp-group" -> f D50.d50_patch_group_pp
-       _ -> error "sysex_print?"
 
 -- > transfer_recv_bulk_hex "/tmp/d50.hex.text" "/tmp/rvb.hex.text"
 transfer_recv_bulk_hex :: FilePath -> FilePath -> IO ()
@@ -139,11 +130,11 @@ transfer_recv_bulk_sysex fn = do
 
 usage :: [String]
 usage =
-  ["hex print {csv | pp-group} text-file..."
+  ["hex print {ix | all} {csv | hex | name | pp-group} text-file..."
   ,"hex send ix text-file"
   ,"set wg-pitch-kf ratio"
   ,"sysex load-on-program-change sysex-file"
-  ,"sysex print {ix | all} {hex | name | pp-group} sysex-file..."
+  ,"sysex print {ix | all} {csv | hex | name | pp-group} sysex-file..."
   ,"sysex send {tmp | d50-ix} sysex-ix sysex-file"
   ,"transfer receive bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
   ]
@@ -155,7 +146,7 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
-    "hex":"print":ty:fn_seq -> hex_print ty fn_seq
+    "hex":"print":ix:ty:fn_seq -> hex_print (parse_d50_ix "all" ix) ty fn_seq
     ["hex","send",ix,fn] -> hex_send (read ix) fn
     ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
     ["sysex","load-on-program-change",fn] -> PM.pm_with_midi (lpc_run fn)

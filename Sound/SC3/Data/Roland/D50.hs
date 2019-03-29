@@ -677,10 +677,33 @@ eq_hf_usr =
 d50_char_code_usr :: String
 d50_char_code_usr = intersperse ';' (map snd d50_char_table)
 
-key_mode_usr :: String
-key_mode_usr = "WHOLE;DUAL;SPLIT;SEPARATE;WHOLE-S;DUAL-S;SPLIT-US;SPLIT-LS;SEPARATE-S"
+{- * KEY MODE
+
+WHOLE;
+DUAL;
+SPLIT;
+SEP (Separate);
+WHOL-S (Whole Solo);
+DUAL-S (Dual Solo);
+SPL-US (Split Upper Solo);
+SPL-LS (Split Lower Solo);
+SEP-S (Separate Solo)
+-}
+d50_key_mode_tbl :: [(U8,String)]
+d50_key_mode_tbl = zip [0..] (Split.splitOn ";" d50_key_mode_usr)
+
+d50_key_mode_usr :: String
+d50_key_mode_usr = "WHOLE;DUAL;SPLIT;SEP;WHOL-S;DUAL-S;SPL-US;SPL-LS;SEP-S"
+
+-- | Is KEY-MODE 0=WHOLE or 4=WHOL-S?
+d50_is_lower_tone_unused :: U8 -> Bool
+d50_is_lower_tone_unused x = x == 0 || x == 4
 
 -- * STRUCTURE
+
+-- | Tone structure indicates synthesis type for each partial (S=SYNTHESIS, P=PCM, R=RING-MOD).
+d50_structure_usr :: String
+d50_structure_usr = "SS;SSR;PS;PSR;SPR;PP;PPR"
 
 -- | Tone structure number diagram in plain text (zero indexed).
 --
@@ -786,9 +809,9 @@ d50_chorus_type_enum :: [String]
 d50_chorus_type_enum =
     ["Chorus 1","Chorus 2"
     ,"Flanger1","Flanger2"
-    ,"FBChorus"
-    ,"Tremolo","C Trem"
-    ,"Dimensn"]
+    ,"FBChorus" -- Feedback Chorus
+    ,"Tremolo","C Trem" -- Chorus Tremolo
+    ,"Dimensn"] -- Dimension
 
 -- | USR string variant of 'd50_chorus_type_enum'.
 d50_chorus_type_usr :: String
@@ -872,7 +895,7 @@ d50_common_groups =
 -- > length d50_patch_factors == 22
 d50_patch_factors :: [D50_Parameter]
 d50_patch_factors =
-    [(18,"Key Mode",9,0,key_mode_usr)
+    [(18,"Key Mode",9,0,d50_key_mode_usr)
     ,(19,"Split Point",61,0,split_point_usr)
     ,(20,"Portamento Mode",3,0,"U;L;UL")
     ,(21,"Hold Mode",3,0,"U;L;UL")
