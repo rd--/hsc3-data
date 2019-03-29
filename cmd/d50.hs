@@ -118,10 +118,12 @@ hex_send k fn = D50.d50_load_hex fn >>= send_patch_def Nothing . (!! k)
 
 sysex_print :: Maybe Int -> String -> [FilePath] -> IO ()
 sysex_print ix ty fn =
-  case ty of
-    "name" -> mapM_ (d50_print_sysex ix (return . D50.d50_patch_name_set_pp)) fn
-    "pp-group" -> mapM_ (d50_print_sysex ix D50.d50_patch_group_pp) fn
-    _ -> error "sysex_print?"
+  let f pp = mapM_ (d50_print_sysex ix pp) fn
+  in case ty of
+       "hex" -> f (return . D50.d50_sysex_pp)
+       "name" -> f (return . D50.d50_patch_name_set_pp)
+       "pp-group" -> f D50.d50_patch_group_pp
+       _ -> error "sysex_print?"
 
 -- > transfer_recv_bulk_hex "/tmp/d50.hex.text" "/tmp/rvb.hex.text"
 transfer_recv_bulk_hex :: FilePath -> FilePath -> IO ()
@@ -141,7 +143,7 @@ usage =
   ,"hex send ix text-file"
   ,"set wg-pitch-kf ratio"
   ,"sysex load-on-program-change sysex-file"
-  ,"sysex print {ix | all} {name | pp-group} sysex-file..."
+  ,"sysex print {ix | all} {hex | name | pp-group} sysex-file..."
   ,"sysex send {tmp | d50-ix} sysex-ix sysex-file"
   ,"transfer receive bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
   ]

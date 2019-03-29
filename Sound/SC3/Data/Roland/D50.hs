@@ -329,10 +329,14 @@ d50_dsc_parse syx =
 d50_dsc_parse_err :: D50_Sysex -> D50_DSC
 d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
+-- | Alias for 'T.byte_seq_hex_pp'
+d50_sysex_pp :: D50_Sysex -> String
+d50_sysex_pp = T.byte_seq_hex_pp
+
 -- | Generate DSC (DT1|DAT) SYSEX message.
 --
--- > T.byte_seq_hex_pp (d50_dsc_gen (DT1_CMD,0,1,[50])) == "F041001412000001324DF7"
--- > T.byte_seq_hex_pp (d50_dsc_gen (DT1_CMD,0,409,[0x10])) == "F0410014120003191054F7"
+-- > d50_sysex_pp (d50_dsc_gen (DT1_CMD,0,1,[50])) == "F041001412000001324DF7"
+-- > d50_sysex_pp (d50_dsc_gen (DT1_CMD,0,409,[0x10])) == "F0410014120003191054F7"
 d50_dsc_gen :: D50_DSC -> D50_Sysex
 d50_dsc_gen (cmd,ch,a,d) =
     let dat = u24_unpack a ++ d
@@ -352,7 +356,7 @@ d50_dsc_gen_seq (cmd,ch,a,d) =
 -- | 'd50_dsc_gen' of 'd50_named_parameter_to_address'.
 --
 -- > let nm = (Patch,"Lower Tone Fine Tune")
--- > fmap T.byte_seq_hex_pp (d50_gen_dt1_nm 0 nm [0x10]) == Just "F0410014120003191054F7"
+-- > fmap d50_sysex_pp (d50_gen_dt1_nm 0 nm [0x10]) == Just "F0410014120003191054F7"
 d50_gen_dt1_nm :: U8 -> (D50_Parameter_Type,String) -> [U8] -> Maybe D50_Sysex
 d50_gen_dt1_nm ch nm d =
     let f a = d50_dsc_gen (DT1_CMD,ch,a,d)
