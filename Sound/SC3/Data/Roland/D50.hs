@@ -45,6 +45,12 @@ type U24 = Word32
 int_to_u8 :: Int -> U8
 int_to_u8 = fromMaybe (error "int_to_u8") . T.int_to_word8_maybe
 
+u24_max :: Num n => n
+u24_max = 16777215 -- 2^24 - 1
+
+int_to_u24 :: Int -> U24
+int_to_u24 n = if n < 0 || n > u24_max then error "int_to_u24" else fromIntegral n
+
 u8_to_i8 :: U8 -> I8
 u8_to_i8 = T.word8_to_int8
 
@@ -52,13 +58,13 @@ u8_to_u24 :: U8 -> U24
 u8_to_u24 = T.word8_to_word32
 
 u8_length :: [t] -> U8
-u8_length = genericLength
+u8_length = int_to_u8 . length
 
 u8_at :: [t] -> U8 -> t
 u8_at = genericIndex
 
 u24_length :: [t] -> U24
-u24_length = genericLength
+u24_length = int_to_u24 . length
 
 u24_at :: [t] -> U24 -> t
 u24_at = genericIndex
@@ -69,11 +75,11 @@ u24_drop = genericDrop
 u24_split_at :: U24 -> [t] -> ([t], [t])
 u24_split_at = genericSplitAt
 
--- | Unpack 'U24' to three 'U8'.
+-- | Unpack 'U24' to 'U8', MSB-LSB.
 u24_unpack :: U24 -> [U8]
 u24_unpack = T.t3_to_list . M.bits_21_sep_be
 
--- | Pack 'U24' from three 'U8'.
+-- | Pack 'U24' from three 'U8', MSB-LSB.
 --
 -- > map u24_pack [[0x02,0x00,0x00],[0x02,0x0F,0x00]] == [0x8000,0x8780]
 u24_pack :: [U8] -> U24
@@ -1052,7 +1058,7 @@ d50_parameters =
             ,d50_patch_parameters]
     in concat (zipWith f a p)
 
--- | The number of D50 patch parameters.
+-- | The number of D50 patch parameters, including unused.
 d50_parameter_n :: Num n => n
 d50_parameter_n = 448
 
@@ -1070,6 +1076,7 @@ d50_parameters_seq =
                        else d50_unused_parameter n : recur (n + 1) sq
     in recur 0 d50_parameters ++ map d50_unused_parameter [424..447]
 
+-- | Parameters of indicated type.
 d50_parameters_by_type :: D50_Parameter_Type -> [D50_Parameter]
 d50_parameters_by_type ty =
     case ty of
