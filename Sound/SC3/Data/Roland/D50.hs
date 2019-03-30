@@ -558,9 +558,9 @@ d50_reverb_data_segment_n = 376
 d50_reverb_memory_base :: U8 -> D50_ADDRESS
 d50_reverb_memory_base n = 61440 + (376 * u8_to_u24 n)
 
--- | 1-16 are shared (common) reverb types, 17-32 are user (bank) reverb types.
-d50_reverb_type :: [(Int,String)]
-d50_reverb_type =
+-- | Reverbs 1-16 are shared (common) reverb types, 17-32 are user (bank) reverb types.
+d50_reverb_type_shared :: [(U8,String)]
+d50_reverb_type_shared =
   [(01,"Small Hall")
   ,(02,"Medium Hall")
   ,(03,"Large Hall")
@@ -576,28 +576,18 @@ d50_reverb_type =
   ,(13,"Cross Delay (224 ms)")
   ,(14,"Cross Delay (148-296 ms)")
   ,(15,"Short Gate (200 ms)")
-  ,(16,"Long Gate (480 ms)")
-  ,(17,"Bright Hall")
-  ,(18,"Large Cave")
-  ,(19,"Steel Pan")
-  ,(20,"Delay (248 ms)")
-  ,(21,"Delay (338 ms)")
-  ,(22,"Cross Delay (157 ms)")
-  ,(23,"Cross Delay (252 ms)")
-  ,(24,"Cross Delay (274-137 ms)")
-  ,(25,"Gate Reverb")
-  ,(26,"Reverse Gate (360 ms)")
-  ,(27,"Reverse Gate (480 ms)")
-  ,(28,"Slap Back")
-  ,(29,"Slap Back")
-  ,(30,"Slap Back")
-  ,(31,"Twisted Space")
-  ,(32,"Space")
-  ]
+  ,(16,"Long Gate (480 ms)")]
 
--- | USR string variant of 'd50_reverb_type'.
+-- | USR string variant of 'd50_reverb_type_shared', with indices for 17-32.
 d50_reverb_type_usr :: String
-d50_reverb_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ') . snd) d50_reverb_type)
+d50_reverb_type_usr =
+  let rw c =
+        case c of
+          ' ' -> Just '-'
+          '(' -> Nothing
+          ')' -> Nothing
+          _ -> Just (toUpper c)
+  in intercalate ";" (map (mapMaybe rw . snd) d50_reverb_type_shared ++ map show [17::U8 .. 32])
 
 -- * CHAR
 
@@ -725,6 +715,111 @@ d50_structure_pp n =
       _ -> error "structure_text: ix?"
 
 -- * PARTIAL
+
+-- | (WG-PCM-WAVE-NUMBER,INDICATION:PCM-NAME)
+d50_pcm_wave_tbl :: [(U8,String)]
+d50_pcm_wave_tbl =
+  [(001,"Marmba:Marimba")
+  ,(002,"Vibes:Vibraphone")
+  ,(003,"Xylo1:Xylophone 1")
+  ,(004,"Xylo2:Xylophone 2")
+  ,(005,"Log_Bs:Log bass")
+  ,(006,"Hammer:Hammer")
+  ,(007,"JpnDrm:Japanese Drum")
+  ,(008,"Kalmba:Kalimba")
+  ,(009,"Pluck:Pluck 1")
+  ,(010,"Chink:Chink")
+  ,(011,"Agogo:Agogo")
+  ,(012,"3angle:Triangle")
+  ,(013,"Bells:Bells")
+  ,(014,"Nails:Nail File")
+  ,(015,"Pick:Pick")
+  ,(016,"Lpiano:Low Piano")
+  ,(017,"Mpiano:Mid Piano")
+  ,(018,"Hpiano:High Piano")
+  ,(019,"Harpsi:Harpsichord")
+  ,(020,"Harp:Harp")
+  ,(021,"Orgprc:Organ Percussion")
+  ,(022,"Steel:Steel Strings")
+  ,(023,"Nylon:Nylon Strings")
+  ,(024,"Eguit1:Electric Guitar 1")
+  ,(025,"Eguit2:Electric Guitar 2")
+  ,(026,"Dirt:Dirty Guitar")
+  ,(027,"P_Bass:Pick Bass")
+  ,(028,"Pop:Pop Bass")
+  ,(029,"Thump:Thump")
+  ,(030,"Uprite:Upright Bass")
+  ,(031,"Clarnt:Clarinet")
+  ,(032,"Breath:Breath")
+  ,(033,"Steam:Steamer")
+  ,(034,"FluteH:High Flute")
+  ,(035,"FluteL:Low Flute")
+  ,(036,"Guiro:Guiro")
+  ,(037,"IndFlt:Indian Flute")
+  ,(038,"Harmo:Flute Harmonics")
+  ,(039,"Lips1:Lips 1")
+  ,(040,"Lips2:Lips 2")
+  ,(041,"Trumpt:Trumpet")
+  ,(042,"Bones:Trombones")
+  ,(043,"Contra:Contrabass")
+  ,(044,"Cello:Cello")
+  ,(045,"VioBow:Violin bow")
+  ,(046,"Violns:Violins")
+  ,(047,"Pizz:Pizzicart")
+  ,(048,"Drawbr:Draw bars (0Loop)")
+  ,(049,"Horgan:High Organ (0Loop)")
+  ,(050,"Lorgan:Low Organ (0Loop)")
+  ,(051,"EP_lp1:Electric Piano (0Loop 1)")
+  ,(052,"EP_lp2:Electric Piano (0Loop 2)")
+  ,(053,"CLAVlp:Clavi (0Loop)")
+  ,(054,"HC_lp:Harpsichord (0Loop)")
+  ,(055,"EP_lp1:Electric Bass (0Loop 1)")
+  ,(056,"AB_lp:Acoustic Bass (0Loop)")
+  ,(057,"EB_lp2:Electric Bass (0Loop 2)")
+  ,(058,"EB_lp3:Electric Bass (0Loop 3)")
+  ,(059,"EG_lp:Electric Guitar (0Loop)")
+  ,(060,"CELLlp:CELLlp (0Loop)")
+  ,(061,"VIOLlp:Violin (0Loop)")
+  ,(062,"Reedlp:Lead (0Loop)")
+  ,(063,"SAXip1:Sax (0Loop 1)")
+  ,(064,"SAXlp2:Sax (0Loop 2)")
+  ,(065,"Aah_lp:Aah (0Loop)")
+  ,(066,"Ooh_lp:Ooh (0Loop)")
+  ,(067,"Manlp1:Male (0Loop 1)")
+  ,(068,"Spect1:Spectrum 1 (0Loop)")
+  ,(069,"Spect2:Spectrum 2 (0Loop)")
+  ,(070,"Spect3:Spectrum 3 (0Loop)")
+  ,(071,"Spect4:Spectrum 4 (0Loop)")
+  ,(072,"Spect5:Spectrum 5 (0Loop)")
+  ,(073,"Spect6:Spectrum 6 (0Loop)")
+  ,(074,"Spect7:Spectrum 7 (0Loop)")
+  ,(075,"Manlp2:Male (0Loop 2)")
+  ,(076,"Noise:Noise (0Loop)")
+  ,(077,"Loop01")
+  ,(078,"Loop02")
+  ,(079,"Loop03")
+  ,(080,"Loop04")
+  ,(081,"Loop05")
+  ,(082,"Loop06")
+  ,(083,"Loop07")
+  ,(084,"Loop08")
+  ,(085,"Loop09")
+  ,(086,"Loop10")
+  ,(087,"Loop11")
+  ,(088,"Loop12")
+  ,(089,"Loop13")
+  ,(090,"Loop14")
+  ,(091,"Loop15")
+  ,(092,"Loop16")
+  ,(093,"Loop17")
+  ,(094,"Loop18")
+  ,(095,"Loop19")
+  ,(096,"Loop20")
+  ,(097,"Loop21")
+  ,(098,"Loop22")
+  ,(099,"Loop23")
+  ,(100,"Loop24")
+  ]
 
 -- | Partial parameters (4.3)
 --
@@ -866,7 +961,7 @@ d50_common_factors =
     ,(45,"Chorus Balance",101,0,"0 - 100")
     ,(46,"Partial Mute",4,0,"MM;SM;MS;SS")
     ,(47,"Partial Balance",101,0,"0 - 100")
-     ]
+    ]
 
 -- | 'd50_common_factors' preceded by 10-byte Tone name.
 --
@@ -911,7 +1006,7 @@ d50_patch_factors =
     ,(27,"After Bend Range",25,-12,"-12 - +12")
     ,(28,"Portamento Time",101,0,"0 - 100")
     ,(29,"Output Mode",4,1,"1 - 4")
-    ,(30,"Reverb Type",32,1,"1 - 32")
+    ,(30,"Reverb Type",32,1,d50_reverb_type_usr)
     ,(31,"Reverb Balance",101,0,"0 - 100")
     ,(32,"Total Volume",101,0,"0 - 100")
     ,(33,"Tone Balance",101,0,"0 - 100")
@@ -1047,7 +1142,12 @@ d50_patch_csv_e =
                  else error ("d50_patch_csv: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v))
     in map f . zip [0 ..]
 
--- | 'd50_patch_csv_e', if /u/ write unused entries as empty rows, else discard them.
+{- | 'd50_patch_csv_e', if /u/ write unused entries as empty rows, else discard them.
+
+> dir = "/home/rohan/uc/invisible/light/d50/"
+> p:_ <- d50_load_hex (dir ++ "d50.hex.text")
+> writeFile (dir ++ "d50.csv") (unlines (d50_patch_csv True p))
+-}
 d50_patch_csv :: Bool -> D50_Patch -> [String]
 d50_patch_csv u =
   let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,VALUE-USER"
@@ -1070,11 +1170,12 @@ group_pp x_seq (g_nm,p_nm_seq,ix) =
         gr_p = zipWith f (Split.splitOn ";" p_nm_seq) (map (u24_at x_seq) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
 
--- | Pretty printer for D-50 patch following group structure (ie. HW screen layout).
---
--- > [p] <- d50_load_hex "/home/rohan/uc/invisible/light/d50/d50.hex.text"
--- > let g = d50_patch_group_pp p
--- > writeFile "/home/rohan/uc/invisible/light/d50/d50.group.text" (unlines g)
+{- | Pretty printer for D-50 patch following group structure (ie. HW screen layout).
+
+> dir = "/home/rohan/uc/invisible/light/d50/"
+> p:_ <- d50_load_hex (dir ++ "d50.hex.text")
+> writeFile (dir ++ "d50.group.text") (unlines (d50_patch_group_pp p))
+-}
 d50_patch_group_pp :: D50_Patch -> [String]
 d50_patch_group_pp =
     let f gr pr = "" : d50_parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
@@ -1118,10 +1219,6 @@ d50_wg_pitch_kf_dt1 r =
 
 {- | Load text file where each line is a sequence of 448 (0x1C0)
    two-character hexadecimal byte values, ie. a D50 patch.
-
-> dir = "/home/rohan/uc/invisible/light/d50/"
-> p:_ <- d50_load_hex (dir ++ "d50.hex.text")
-> writeFile (dir ++ "d50.csv") (unlines (d50_patch_csv True p))
 -}
 d50_load_hex :: FilePath -> IO [D50_Patch]
 d50_load_hex fn = do
