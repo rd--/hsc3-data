@@ -16,6 +16,7 @@ module Sound.SC3.Data.Roland.D50 where
 import Control.Monad {- base -}
 import qualified Data.ByteString as B {- bytestring -}
 import Data.Char {- base -}
+import Data.Either {- base -}
 import Data.Int {- base -}
 import Data.List {- base -}
 import qualified Data.List.Split as Split {- split -}
@@ -29,6 +30,8 @@ import qualified Music.Theory.Tuple as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Constant as M {- midi-osc -}
+
+-- * UTIL
 
 -- | 8-bit unsigned integer, ie. parameter values, midi data etc.
 type U8 = Word8
@@ -66,6 +69,24 @@ u24_drop = genericDrop
 u24_split_at :: U24 -> [t] -> ([t], [t])
 u24_split_at = genericSplitAt
 
+-- | Unpack 'U24' to three 'U8'.
+u24_unpack :: U24 -> [U8]
+u24_unpack = T.t3_to_list . M.bits_21_sep_be
+
+-- | Pack 'U24' from three 'U8'.
+--
+-- > map u24_pack [[0x02,0x00,0x00],[0x02,0x0F,0x00]] == [0x8000,0x8780]
+u24_pack :: [U8] -> U24
+u24_pack = M.bits_21_join_be . T.t3_from_list
+
+-- | Range as @p - q@.
+--
+-- > range_pp (1,7) == "1 - 7"
+range_pp :: Show a => (a,a) -> String
+range_pp (p,q) = show p ++ " - " ++ show q
+
+-- * PARAMETER TYPE
+
 -- | Parameter address.
 type D50_ADDRESS = U24
 
@@ -74,8 +95,6 @@ data Tone = Upper | Lower deriving (Eq,Show)
 
 -- | A 'Tone' has two partials, 'One' and 'Two'.
 data Partial_Ix = One | Two deriving (Eq,Show)
-
--- * D50 PARAMETER TYPE
 
 -- | Parameters are of one of seven types, four 'Partial's
 -- (U1,U2,L1,L2), two 'Common' (U,L), or 'Patch'.
@@ -136,24 +155,9 @@ dsc_address (_,_,a,_) = a
 dsc_data :: D50_DSC -> [U8]
 dsc_data (_,_,_,d) = d
 
--- * COMMON
+-- * SYSEX
 
--- | Unpack 'U24' to three 'U8'.
-u24_unpack :: U24 -> [U8]
-u24_unpack = T.t3_to_list . M.bits_21_sep_be
-
--- | Pack 'U24' from three 'U8'.
---
--- > map u24_pack [[0x02,0x00,0x00],[0x02,0x0F,0x00]] == [0x8000,0x8780]
-u24_pack :: [U8] -> U24
-u24_pack = M.bits_21_join_be . T.t3_from_list
-
--- | Range as @p - q@.
---
--- > range_pp (1,7) == "1 - 7"
-range_pp :: Show a => (a,a) -> String
-range_pp (p,q) = show p ++ " - " ++ show q
-
+-- | SYSEX as sequence of U8.
 type D50_Sysex = [U8]
 
 -- | Segment byte-sequence into SYSEX messages, no verification,
@@ -528,8 +532,8 @@ d50_work_area_base_address = 0x8000
 > M.bits_21_sep_be 60992 == (0x03,0x5C,0x40)
 
 -}
-patch_memory_base :: U8 -> D50_ADDRESS
-patch_memory_base n = d50_work_area_base_address + (d50_parameter_n * u8_to_u24 n)
+d50_patch_memory_base :: U8 -> D50_ADDRESS
+d50_patch_memory_base n = d50_work_area_base_address + (d50_parameter_n * u8_to_u24 n)
 
 -- * REVERB
 
@@ -980,23 +984,28 @@ d50_parameters_by_type ty =
 
 -- * PARAMETER
 
+-- | The D50 parameter address space is sparse, ie. has unused addresses.
 d50_unused_parameter :: U24 -> D50_Parameter
 d50_unused_parameter ix = (ix,"UNUSED",1,0,"")
 
-parameter_range :: D50_Parameter -> (U8,U8)
-parameter_range (_,_,stp,_,_) = (0,stp - 1)
+-- | Parameter range as stored.
+d50_parameter_range :: D50_Parameter -> (U8,U8)
+d50_parameter_range (_,_,stp,_,_) = (0,stp - 1)
 
-parameter_range_usr :: D50_Parameter -> (I8,I8)
-parameter_range_usr (_,_,stp,diff,_) = (diff,diff + u8_to_i8 stp - 1)
+-- | Parameter range as displayed (USR).
+d50_parameter_range_usr :: D50_Parameter -> (I8,I8)
+d50_parameter_range_usr (_,_,stp,diff,_) = (diff,diff + u8_to_i8 stp - 1)
 
-parameter_value_verify :: D50_Parameter -> U8 -> U8
-parameter_value_verify (_,_,stp,_,_) x =
+-- | Verify that /x/ is a valid value for parameter, ie. identity or error.
+d50_parameter_value_verify :: D50_Parameter -> U8 -> U8
+d50_parameter_value_verify (_,_,stp,_,_) x =
     if x < 0 || x > stp
     then error (show ("parameter_value_verify",x,stp))
     else x
 
-parameter_value_usr :: D50_Parameter -> U8 -> Maybe String
-parameter_value_usr p x =
+-- | Make USR display value for value /x/ at parameter /p/.
+d50_parameter_value_usr :: D50_Parameter -> U8 -> Maybe String
+d50_parameter_value_usr p x =
     let (_,_,stp,usr_diff,usr_str) = p
     in if x < 0 || x > stp
        then Nothing
@@ -1004,36 +1013,47 @@ parameter_value_usr p x =
                     [_] -> show (u8_to_i8 x + usr_diff)
                     e -> e `u8_at` x)
 
-parameter_value_usr_def :: String -> D50_Parameter -> U8 -> String
-parameter_value_usr_def def p = fromMaybe def . parameter_value_usr p
+-- | Variant that allows a default string for cases where the value is out of range.
+d50_parameter_value_usr_def :: String -> D50_Parameter -> U8 -> String
+d50_parameter_value_usr_def def p = fromMaybe def . d50_parameter_value_usr p
 
-parameter_value_usr_err :: D50_Parameter -> U8 -> String
-parameter_value_usr_err p x =
+-- | Variant that errors if the value is out of range.
+d50_parameter_value_usr_err :: D50_Parameter -> U8 -> String
+d50_parameter_value_usr_err p x =
   fromMaybe
   (error (show ("parameter_value_usr",p,x)))
-  (parameter_value_usr p x)
+  (d50_parameter_value_usr p x)
 
-parameter_csv :: (D50_ADDRESS,U8) -> (D50_Parameter_Type,D50_Parameter) -> String
-parameter_csv (a,x) (ty,p) =
+-- | Given (ADDR,VALUE) for (TYPE,PARAM) make CSV entry.
+d50_parameter_csv :: (D50_ADDRESS,U8) -> (D50_Parameter_Type,D50_Parameter) -> String
+d50_parameter_csv (a,x) (ty,p) =
     let (ix,nm,_,_,_usr_str) = p
-        x' = parameter_value_verify p x
+        x' = d50_parameter_value_verify p x
     in intercalate "," [show a,d50_parameter_type_pp ty,show ix,nm
-                       ,show x',range_pp (parameter_range p)
-                       ,parameter_value_usr_def "??" p x]
+                       ,show x',range_pp (d50_parameter_range p)
+                       ,d50_parameter_value_usr_def "??" p x]
 
 -- | A patch is a 448-byte sequence.
 type D50_Patch = [U8]
 
--- | Given sequence of parameter values, generate /CSV/ of patch.
-d50_patch_csv :: D50_Patch -> [String]
-d50_patch_csv =
-    let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,VALUE-USER"
-        f (a,v) = case d50_address_to_parameter a of
-                    Just p -> parameter_csv (a,v) p
-                    _ -> if v == 0
-                         then ""
-                         else "ERROR: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v)
-    in (hdr :) . map f . zip [0 ..]
+-- | Given sequence of parameter values, generate /CSV/ of patch, unused param are Left.
+d50_patch_csv_e :: D50_Patch -> [Either D50_ADDRESS String]
+d50_patch_csv_e =
+    let f (a,v) =
+          case d50_address_to_parameter a of
+            Just p -> Right (d50_parameter_csv (a,v) p)
+            _ -> if v == 0
+                 then Left a
+                 else error ("d50_patch_csv: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v))
+    in map f . zip [0 ..]
+
+-- | 'd50_patch_csv_e', if /u/ write unused entries as empty rows, else discard them.
+d50_patch_csv :: Bool -> D50_Patch -> [String]
+d50_patch_csv u =
+  let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,VALUE-USER"
+  in (hdr :) .
+     (if u then map (either (\a -> show a ++ ",,,,,,") id) else rights) .
+     d50_patch_csv_e
 
 -- | 'PARAM_GROUP' in ADDRESS sequence.
 --
@@ -1045,7 +1065,7 @@ d50_group_seq =
 
 group_pp :: [(D50_Parameter,U8)] -> PARAM_GROUP -> String
 group_pp x_seq (g_nm,p_nm_seq,ix) =
-    let f p_nm (p,x) = let x' = parameter_value_usr_def "??" p x
+    let f p_nm (p,x) = let x' = d50_parameter_value_usr_def "??" p x
                        in if null p_nm {- ie. CHAR -} then x' else concat [p_nm,"=",x']
         gr_p = zipWith f (Split.splitOn ";" p_nm_seq) (map (u24_at x_seq) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
@@ -1096,12 +1116,12 @@ d50_wg_pitch_kf_dt1 r =
 
 -- * HEX I/O
 
-{- | Load text file consisting of 448 (0x1C0) two-character
-     hexadecimal byte values, ie. a D50 patch.
+{- | Load text file where each line is a sequence of 448 (0x1C0)
+   two-character hexadecimal byte values, ie. a D50 patch.
 
-> [p] <- d50_load_hex "/home/rohan/uc/invisible/light/d50/d50.hex.text"
-> let p' = unlines (filter (not . null) (d50_patch_csv p))
-> writeFile "/home/rohan/uc/invisible/light/d50/d50.csv" p'
+> dir = "/home/rohan/uc/invisible/light/d50/"
+> p:_ <- d50_load_hex (dir ++ "d50.hex.text")
+> writeFile (dir ++ "d50.csv") (unlines (d50_patch_csv True p))
 -}
 d50_load_hex :: FilePath -> IO [D50_Patch]
 d50_load_hex fn = do
@@ -1130,7 +1150,7 @@ d50_store_binary_u8 fn = B.writeFile fn . B.pack
 > b <- d50_load_binary_u8 sysex_fn
 > let s = d50_sysex_segment b
 > d <- d50_load_sysex_dsc sysex_fn
-> let s' = d50_dsc_gen_seq (DT1_CMD,0,patch_memory_base 0,concatMap dsc_data d)
+> let s' = d50_dsc_gen_seq (DT1_CMD,0,d50_patch_memory_base 0,concatMap dsc_data d)
 > s == s'
 
 -}

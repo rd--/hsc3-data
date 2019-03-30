@@ -30,7 +30,7 @@ send_patch_fd :: PM.PM_FD -> Maybe U8 -> [U8] -> IO ()
 send_patch_fd fd d50_ix p =
     let d = case d50_ix of
               Nothing -> D50.d50_dsc_gen_seq (D50.DT1_CMD,0,0,p)
-              Just i -> let a = D50.patch_memory_base i
+              Just i -> let a = D50.d50_patch_memory_base i
                         in D50.d50_wsd_gen 0 a (genericLength p) :
                            D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
     in void (PM.pm_sysex_write_seq 10 fd d)
@@ -81,7 +81,7 @@ dat_print :: Maybe Int -> String -> [D50.D50_Patch] -> IO ()
 dat_print ix ty v =
   let f pp = d50_print_dat ix pp v
   in case ty of
-       "csv" -> f D50.d50_patch_csv
+       "csv" -> f (D50.d50_patch_csv True)
        "hex" -> f (return . D50.d50_sysex_pp)
        "name" -> f (return . D50.d50_patch_name_set_pp)
        "pp-group" -> f D50.d50_patch_group_pp
