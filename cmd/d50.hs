@@ -1,6 +1,6 @@
 import Control.Monad {- base -}
-import Data.List {- base -}
 import System.Environment {- base -}
+import Text.Printf {- base -}
 
 import Sound.OSC {- hosc -}
 
@@ -26,18 +26,6 @@ sleep_ms = pauseThread . ms_to_sec
 send_sysex_def :: [[U8]] -> IO ()
 send_sysex_def x = void (PM.pm_with_default_output (\fd -> PM.pm_sysex_write_seq 10 fd x))
 
-send_patch_fd :: PM.PM_FD -> Maybe U8 -> [U8] -> IO ()
-send_patch_fd fd d50_ix p =
-    let d = case d50_ix of
-              Nothing -> D50.d50_dsc_gen_seq (D50.DT1_CMD,0,0,p)
-              Just i -> let a = D50.d50_patch_memory_base i
-                        in D50.d50_wsd_gen 0 a (genericLength p) :
-                           D50.d50_dsc_gen_seq (D50.DAT_CMD,0,a,p)
-    in void (PM.pm_sysex_write_seq 10 fd d)
-
-send_patch_def :: Maybe U8 -> [U8] -> IO ()
-send_patch_def ix p = PM.pm_with_default_output (\fd -> send_patch_fd fd ix p)
-
 patch_pp :: [U8] -> IO ()
 patch_pp = putStrLn. unlines . D50.d50_patch_group_pp
 
@@ -51,13 +39,10 @@ pm_run_proc dt fd proc_f =
 
 -- * LOAD ON PROGRAM CHANGE (LPC)
 
-u8_index :: [t] -> U8 -> t
-u8_index l n = l !! (fromIntegral n)
-
 lpc_recv_midi :: ([D50.D50_Patch], PM.PM_FD) -> PM.PROC_F
 lpc_recv_midi (p,fd) m =
     case m of
-      Left (0xC0,n,0) -> print n >> patch_pp (u8_index p n) >> send_patch_fd fd Nothing (u8_index p n)
+      Left (0xC0,n,0) -> patch_pp (D50.u8_at p n) >> D50.d50_send_patch_tmp_fd (D50.u8_at p n) fd
       _ -> return ()
 
 -- > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
@@ -71,27 +56,36 @@ lpc_run fn = do
 
 -- * PRINT
 
-d50_print_dat :: Maybe Int -> ([U8] -> [String]) -> [D50.D50_Patch] -> IO ()
+d50_print_dat :: Maybe Int -> ((Int,[U8]) -> [String]) -> [D50.D50_Patch] -> IO ()
 d50_print_dat m_ix pp v =
   case m_ix of
-    Nothing -> putStr . unlines . concatMap pp $ v
-    Just ix -> putStr . unlines . pp . (!! ix) $ v
+    Nothing -> putStr . unlines . concatMap pp $ zip [0..] v
+    Just ix -> putStr . unlines . pp . (!! ix) $ zip [0..] v
 
-dat_print :: Maybe Int -> String -> [D50.D50_Patch] -> IO ()
-dat_print ix ty v =
+print_name :: Bool -> (Int,[U8]) -> String
+print_name bnk (k,p) =
+  let nm = D50.d50_patch_name_set_pp p
+  in if bnk
+     then let (b,n) = D50.ix_to_bank k
+          in printf "%d%d %s" b n nm
+     else nm
+
+dat_print :: Bool -> Maybe Int -> String -> [D50.D50_Patch] -> IO ()
+dat_print bnk ix ty v =
   let f pp = d50_print_dat ix pp v
   in case ty of
-       "csv" -> f (D50.d50_patch_csv True)
-       "hex" -> f (return . D50.d50_sysex_pp)
-       "name" -> f (return . D50.d50_patch_name_set_pp)
-       "pp-group" -> f D50.d50_patch_group_pp
+       "csv" -> f (D50.d50_patch_csv True . snd)
+       "hex" -> f (return . D50.d50_sysex_pp . snd)
+       "name" -> f (return . print_name bnk)
+       "pp-group" -> f (D50.d50_patch_group_pp . snd)
        _ -> error "dat_print?"
 
+-- > sysex_print Nothing "name" [fn]
 sysex_print :: Maybe Int -> String -> [FilePath] -> IO ()
-sysex_print m_ix ty fn = mapM D50.d50_load_sysex fn >>= mapM_ (dat_print m_ix ty) . map fst
+sysex_print m_ix ty fn = mapM D50.d50_load_sysex fn >>= mapM_ (dat_print True m_ix ty) . map fst
 
 hex_print :: Maybe Int -> String -> [FilePath] -> IO ()
-hex_print m_ix ty fn = mapM D50.d50_load_hex fn >>= mapM_ (dat_print m_ix ty)
+hex_print m_ix ty fn = mapM D50.d50_load_hex fn >>= mapM_ (dat_print False m_ix ty)
 
 -- * SEND
 
@@ -104,10 +98,12 @@ parse_d50_ix nil s = if s == nil then Nothing else Just (read s)
 send_patch :: Maybe U8 -> U8 -> FilePath -> IO ()
 send_patch d50_ix sysex_ix fn = do
   (p,_) <- D50.d50_load_sysex fn
-  send_patch_def d50_ix (u8_index p sysex_ix)
+  case d50_ix of
+    Nothing -> D50.d50_send_patch_tmp_def (D50.u8_at p sysex_ix)
+    _ -> error "send_patch?"
 
 hex_send :: Int -> FilePath -> IO ()
-hex_send k fn = D50.d50_load_hex fn >>= send_patch_def Nothing . (!! k)
+hex_send k fn = D50.d50_load_hex fn >>= D50.d50_send_patch_tmp_def . (!! k)
 
 -- * SET
 

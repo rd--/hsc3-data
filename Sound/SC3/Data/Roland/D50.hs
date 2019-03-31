@@ -91,6 +91,10 @@ u24_pack = M.bits_21_join_be . T.t3_from_list
 range_pp :: Show a => (a,a) -> String
 range_pp (p,q) = show p ++ " - " ++ show q
 
+-- | Error if 'Nothing', printing /msg/.
+maybe_err :: String -> Maybe a -> a
+maybe_err msg = fromMaybe (error msg)
+
 -- * PARAMETER TYPE
 
 -- | Parameter address.
@@ -200,7 +204,7 @@ roland_checksum =
 
 -- | Translate one-indexed (BANK-NUMBER,PATCH-NUMBER) index to zero linear index.
 --
--- > map bank_to_ix [(1,1),(2,3),(7,4),(8,8)] == [0,10,51,63]
+-- > map bank_to_ix [(1,1),(2,3),(3,1),(4,7),(7,4),(8,8)] == [0,10,16,30,51,63]
 bank_to_ix :: Num n => (n,n) -> n
 bank_to_ix (p,q) = ((p - 1) * 8) + (q - 1)
 
@@ -225,9 +229,6 @@ d50_sysex_cmd_tbl =
     ,(ERR_CMD,0x4E)
     ,(RJC_CMD,0x4F)]
 
-maybe_err :: String -> Maybe a -> a
-maybe_err str = fromMaybe (error str)
-
 -- | SYSEX_CMD to 8-bit identifier.
 --
 -- > let k = d50_sysex_cmd_encode DT1_CMD in (k == 0x12,k == 0b00010010)
@@ -239,9 +240,18 @@ d50_sysex_cmd_encode cmd = maybe_err "d50_sysex_cmd_encode" (lookup cmd d50_syse
 d50_sysex_cmd_decode :: U8 -> D50_SYSEX_CMD
 d50_sysex_cmd_decode i = maybe_err "d50_sysex_cmd_decode" (T.reverse_lookup i d50_sysex_cmd_tbl)
 
+{- | D50 SYSEX header, 5-byte sequence of:
+
+ F0 - Exclusive status
+ 41 - Roland ID
+ CH - Channel (Device-ID)
+ 14 - Model-ID
+CMD - Command-ID
+-}
 d50_cmd_hdr :: U8 -> D50_SYSEX_CMD -> [U8]
 d50_cmd_hdr ch cmd = [M.k_Sysex_Status,M.k_Roland_ID,ch,d50_id,d50_sysex_cmd_encode cmd]
 
+-- | Data with checksum and F7 appended.
 d50_cmd_data_chk :: [U8] -> [U8]
 d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.k_Sysex_End]
 
