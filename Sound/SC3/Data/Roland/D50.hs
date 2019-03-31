@@ -161,6 +161,10 @@ dsc_address (_,_,a,_) = a
 dsc_data :: D50_DSC -> [U8]
 dsc_data (_,_,_,d) = d
 
+-- | Set the CMD element of DSC to /cmd/.
+dsc_set_cmd :: D50_SYSEX_CMD -> D50_DSC -> D50_DSC
+dsc_set_cmd cmd (_,ch,a,d) = (cmd,ch,a,d)
+
 -- * SYSEX
 
 -- | SYSEX as sequence of U8.
@@ -242,30 +246,30 @@ d50_cmd_data_chk :: [U8] -> [U8]
 d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.k_Sysex_End]
 
 -- | Generate ADDR/SIZE category of D-50 SYSEX messages.
-d50_addr_sz_cmd :: D50_SYSEX_CMD -> U8 -> D50_ADDRESS -> U24 -> D50_Sysex
-d50_addr_sz_cmd cmd ch a sz =
-    let dat = u24_unpack a ++ u24_unpack sz
+d50_addr_sz_cmd_gen :: D50_SYSEX_CMD -> U8 -> D50_ADDRESS -> U24 -> D50_Sysex
+d50_addr_sz_cmd_gen cmd ch addr sz =
+    let dat = u24_unpack addr ++ u24_unpack sz
     in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
 -- | Generate WSD command SYSEX.
 --
--- > let pp = unwords . map T.byte_hex_pp_err
+-- > let pp = T.byte_seq_hex_pp True
 -- > let syx = T.read_hex_byte_seq_ws "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
 -- > d50_wsd_gen 0 0x8000 0x8780 == syx
 -- > d50_cmd_parse syx == Just (0,WSD_CMD,[2,0,0,2,15,0],6)
 d50_wsd_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
-d50_wsd_gen = d50_addr_sz_cmd WSD_CMD
+d50_wsd_gen = d50_addr_sz_cmd_gen WSD_CMD
 
 -- | Generate RQD command SYSEX.
 d50_rqd_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
-d50_rqd_gen = d50_addr_sz_cmd RQD_CMD
+d50_rqd_gen = d50_addr_sz_cmd_gen RQD_CMD
 
 -- | Generate RQI command SYSEX.
 --
 -- > let r = map T.read_hex_byte_err (words "F0 41 00 14 11 00 00 00 00 03 40 3D F7")
 -- > d50_rq1_gen 0 0 0x1C0 == r
 d50_rq1_gen :: U8 -> D50_ADDRESS -> U24 -> D50_Sysex
-d50_rq1_gen = d50_addr_sz_cmd RQ1_CMD
+d50_rq1_gen = d50_addr_sz_cmd_gen RQ1_CMD
 
 -- | Make ACK sysex.
 --
@@ -323,6 +327,13 @@ d50_data_addr (dat,dat_n) =
       a0:a1:a2:dat' -> Just (u24_pack [a0,a1,a2],dat',dat_n - 3)
       _ -> Nothing
 
+-- | Parse addr/size command from SYSEX.
+d50_addr_sz_cmd_parse :: D50_Sysex -> Maybe (U8,D50_SYSEX_CMD,D50_ADDRESS,U24)
+d50_addr_sz_cmd_parse syx =
+  case d50_cmd_parse syx of
+    Just (ch,cmd,[a1,a2,a3,s1,s2,s3],6) -> Just (ch,cmd,u24_pack [a1,a2,a3],u24_pack [s1,s2,s3])
+    _ -> Nothing
+
 -- | Parse DSC (DT1|DAT) SYSEX message.
 --
 -- > let b = d50_dsc_gen (DT1_CMD,0,1,[50])
@@ -341,7 +352,7 @@ d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
 -- | Alias for 'T.byte_seq_hex_pp'
 d50_sysex_pp :: D50_Sysex -> String
-d50_sysex_pp = T.byte_seq_hex_pp
+d50_sysex_pp = T.byte_seq_hex_pp False
 
 -- | Generate DSC (DT1|DAT) SYSEX message.
 --

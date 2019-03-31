@@ -707,7 +707,7 @@ dx7_write_fmt9_sysex fn =
 -- | Unpack bit-packed 4096-element 'U8' sequence to 'DX7_Bank' (see cmd/dx7-unpack.c).
 dx7_unpack_bitpacked_u8 :: [U8] -> IO DX7_Bank
 dx7_unpack_bitpacked_u8 p = do
-  q <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp p)
+  q <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp False p)
   let r = Byte.read_hex_byte_seq q
   when (length r /= 4960) (error ("dx7_unpack_u8: " ++ q))
   return (Split.chunksOf 155 r)
@@ -757,7 +757,7 @@ dx7_load_sysex_try fn = do
 dx7_fmt9_sysex_encode :: U8 -> DX7_Bank -> IO DX7_SYSEX
 dx7_fmt9_sysex_encode ch bnk = do
   let dat = concat bnk
-      dat_str = Byte.byte_seq_hex_pp dat ++ "\n"
+      dat_str = Byte.byte_seq_hex_pp False dat ++ "\n"
   when (length dat /= 4960) (error "dx7_fmt9_sysex_encode")
   syx <- Process.readProcess "hsc3-dx7-unpack" ["pack"] dat_str
   return (dx7_fmt9_sysex_gen ch (Byte.read_hex_byte_seq syx))

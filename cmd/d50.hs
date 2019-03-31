@@ -98,12 +98,16 @@ hex_print m_ix ty fn = mapM D50.d50_load_hex fn >>= mapM_ (dat_print m_ix ty)
 parse_d50_ix :: (Integral t, Read t) => String -> String -> Maybe t
 parse_d50_ix nil s = if s == nil then Nothing else Just (read s)
 
--- > send_patch Nothing 0 "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
--- > send_patch (Just 10) 0 "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
+-- > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
+-- > send_patch Nothing 0 fn
+-- > send_patch (Just 10) 0 fn
 send_patch :: Maybe U8 -> U8 -> FilePath -> IO ()
 send_patch d50_ix sysex_ix fn = do
   (p,_) <- D50.d50_load_sysex fn
   send_patch_def d50_ix (u8_index p sysex_ix)
+
+hex_send :: Int -> FilePath -> IO ()
+hex_send k fn = D50.d50_load_hex fn >>= send_patch_def Nothing . (!! k)
 
 -- * SET
 
@@ -111,10 +115,7 @@ send_patch d50_ix sysex_ix fn = do
 set_wg_pitch_kf :: (Eq n, Fractional n) => n -> IO ()
 set_wg_pitch_kf r = send_sysex_def (map D50.d50_dsc_gen (D50.d50_wg_pitch_kf_dt1 r))
 
--- * MAIN
-
-hex_send :: Int -> FilePath -> IO ()
-hex_send k fn = D50.d50_load_hex fn >>= send_patch_def Nothing . (!! k)
+-- * DATA TRANSFER
 
 -- > transfer_recv_bulk_hex "/tmp/d50.hex.text" "/tmp/rvb.hex.text"
 transfer_recv_bulk_hex :: FilePath -> FilePath -> IO ()
@@ -128,6 +129,15 @@ transfer_recv_bulk_sysex fn = do
   d <- D50.d50_recv_dat_def 0
   D50.d50_store_binary_u8 fn (concatMap D50.d50_dsc_gen d)
 
+-- > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-01.syx"
+-- > transfer_send_bulk_sysex fn
+transfer_send_bulk_sysex :: FilePath -> IO ()
+transfer_send_bulk_sysex fn = do
+  dsc <- D50.d50_load_sysex_dsc fn
+  D50.d50_send_bulk_data_def 0 dsc
+
+-- * MAIN
+
 usage :: [String]
 usage =
   ["hex print {ix | all} {csv | hex | name | pp-group} text-file..."
@@ -137,6 +147,7 @@ usage =
   ,"sysex print {ix | all} {csv | hex | name | pp-group} sysex-file..."
   ,"sysex send {tmp | d50-ix} sysex-ix sysex-file"
   ,"transfer receive bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
+  ,"transfer send bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
   ]
 
 usage_wr :: IO ()
@@ -154,4 +165,5 @@ main = do
     ["sysex","send",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix "tmp" d50_ix) (read sysex_ix) fn
     ["transfer","receive","bulk","hex",p_fn,r_fn] -> transfer_recv_bulk_hex p_fn r_fn
     ["transfer","receive","bulk","sysex",fn] -> transfer_recv_bulk_sysex fn
+    ["transfer","send","bulk","sysex",fn] -> transfer_send_bulk_sysex fn
     _ -> usage_wr
