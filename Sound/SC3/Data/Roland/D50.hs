@@ -1218,7 +1218,9 @@ d50_patch_name_set p = (d50_patch_name p,d50_tone_name Upper p,d50_tone_name Low
 
 -- | Patch name set pretty printed.
 d50_patch_name_set_pp :: D50_Patch -> String
-d50_patch_name_set_pp p = let (n,u,l) = d50_patch_name_set p in intercalate " | " [n,u,l]
+d50_patch_name_set_pp p =
+  let (n,u,l) = d50_patch_name_set p
+  in concat [n," U: ",u," L: ",l]
 
 -- * Tuning
 
