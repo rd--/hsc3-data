@@ -318,13 +318,16 @@ d50_parameter_lookup (ty,nm) =
     let f (_,nm',_,_,_) = nm == nm'
     in find f (d50_parameters_by_type ty)
 
--- | Get 'D50_ADDRESS' of named parameter.
---
--- > d50_named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
--- > d50_named_parameter_to_address (Patch,"Patch Name 1") == Just 384
--- > d50_named_parameter_to_address (Common Upper,"Tone Name 1") == Just 128
--- > d50_named_parameter_to_address (Common Lower,"Structure No.") == Just 330
--- > d50_named_parameter_to_address (Common Upper,"Partial Mute") == Just 174
+{- | Get 'D50_ADDRESS' of named parameter.
+
+> d50_named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
+> d50_named_parameter_to_address (Patch,"Patch Name 1") == Just 384
+> d50_named_parameter_to_address (Patch,"Key Mode") == Just 402
+> d50_named_parameter_to_address (Common Upper,"Tone Name 1") == Just 128
+> d50_named_parameter_to_address (Common Lower,"Structure No.") == Just 330
+> d50_named_parameter_to_address (Common Upper,"Partial Mute") == Just 174
+
+-}
 d50_named_parameter_to_address :: (D50_Parameter_Type,String) -> Maybe D50_ADDRESS
 d50_named_parameter_to_address (ty,nm) =
   let f (n,_,_,_,_) = let (b,_,_) = parameter_type_extent ty in b + n
@@ -365,25 +368,33 @@ d50_patch_memory_base n = d50_work_area_base_address + (d50_parameter_n * u8_to_
 
 -- * SYM
 
--- | Show partial mute for upper and lower tones as 4-character string.
---   M = Muted, S = Sounding
+-- | Show key mode 6-character string.
 --
--- > d50_patch_partial_mute_sym p == "SSSS"
+-- > d50_patch_key_mode_sym p == " DUAL "
+d50_patch_key_mode_sym :: D50_Patch -> String
+d50_patch_key_mode_sym p =
+  let k = u24_at p 402
+  in d50_usr_ix (error "?") d50_key_mode_usr k
+
+-- | Show partial mute for lower and upper tones as 4-character string.
+--   0 = Muted, 1 = Sounding
+--
+-- > d50_patch_partial_mute_sym p == "1111"
 d50_patch_partial_mute_sym :: D50_Patch -> String
 d50_patch_partial_mute_sym p =
   let u = u24_at p 174
       l = u24_at p 366
-  in concatMap (d50_usr_ix (error "?") d50_partial_mute_usr) [u,l]
+  in concatMap (d50_usr_ix (error "?") d50_partial_mute_usr) [l,u]
 
--- | Show partial structure for upper and lower tones as 4-character string.
+-- | Show partial structure for lower and upper tones as 6-character string.
 --   S = Synthesis, P = PCM
 --
--- > d50_patch_structure_sym p == "SSSS"
+-- > d50_patch_structure_sym p == "SS SS "
 d50_patch_structure_sym :: D50_Patch -> String
 d50_patch_structure_sym p =
   let u = u24_at p 138
       l = u24_at p 330
-  in filter (/= 'R') (concatMap (d50_usr_ix (error "?") d50_structure_usr) [u,l])
+  in concatMap (d50_usr_ix (error "?") d50_structure_usr) [l,u]
 
 -- * REVERB
 
@@ -535,9 +546,11 @@ bias_point_direction_usr =
     let p = take 64 (drop 9 pitch_seq)
     in intercalate ";" (map ('<' :) p ++ map ('>' :) p)
 
+-- | EQ LF 3-character USR strings.
 eq_lf_usr :: String
-eq_lf_usr = "63;75;88;105;125;150;175;210;250;300;350;420;500;600;700;840"
+eq_lf_usr = "63 ;75 ;88 ;105;125;150;175;210;250;300;350;420;500;600;700;840"
 
+-- | EQ HF 3-character USR strings.
 eq_hf_usr :: String
 eq_hf_usr =
     "250;300;350;420;500;600;700;840;" ++
@@ -548,23 +561,24 @@ eq_hf_usr =
 d50_char_code_usr :: String
 d50_char_code_usr = intersperse ';' (map snd d50_char_table)
 
+-- | Key-mode 6-character ASCII string.
+d50_key_mode_usr :: String
+d50_key_mode_usr = "WHOLE ; DUAL ;SPLIT ; SEP  ;WHOL-S;DUAL-S;SPL-US;SPL-LS;SEP-S "
+
 {- * KEY MODE
 
-WHOLE;
-DUAL;
-SPLIT;
-SEP (Separate);
-WHOL-S (Whole Solo);
-DUAL-S (Dual Solo);
-SPL-US (Split Upper Solo);
-SPL-LS (Split Lower Solo);
-SEP-S (Separate Solo)
+WHOLE ;
+ DUAL ;
+SPLIT ;
+ SEP  ; (Separate)
+WHOL-S; (Whole Solo)
+DUAL-S; (Dual Solo)
+SPL-US; (Split Upper Solo)
+SPL-LS; (Split Lower Solo)
+SEP-S ; (Separate Solo)
 -}
 d50_key_mode_tbl :: [(U8,String)]
 d50_key_mode_tbl = zip [0..] (Split.splitOn ";" d50_key_mode_usr)
-
-d50_key_mode_usr :: String
-d50_key_mode_usr = "WHOLE;DUAL;SPLIT;SEP;WHOL-S;DUAL-S;SPL-US;SPL-LS;SEP-S"
 
 -- | Is KEY-MODE 0=WHOLE or 4=WHOL-S?
 d50_is_lower_tone_unused :: U8 -> Bool
@@ -572,9 +586,10 @@ d50_is_lower_tone_unused x = x == 0 || x == 4
 
 -- * STRUCTURE
 
--- | Tone structure indicates synthesis type for each partial (S=SYNTHESIS, P=PCM, R=RING-MOD).
+-- | Tone structure indicates synthesis type for each partial.
+--   Written as 3-character string (S=SYNTHESIS, P=PCM, R=RING-MOD).
 d50_structure_usr :: String
-d50_structure_usr = "SS;SSR;PS;PSR;SPR;PP;PPR"
+d50_structure_usr = "SS-;SSR;PS-;PSR;SPR;PP-;PPR"
 
 -- | Tone structure number diagram in plain text (zero indexed).
 --
@@ -693,7 +708,7 @@ d50_chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) d50_c
 
 -- | USR string for partial-mute value.
 d50_partial_mute_usr :: String
-d50_partial_mute_usr = "MM;SM;MS;SS"
+d50_partial_mute_usr = "00;10;01;11" -- "MM;SM;MS;SS"
 
 -- | Common parameters (4.4).
 --   This table is zero-indexed but does not include the 10-character tone name.
