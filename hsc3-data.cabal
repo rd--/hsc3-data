@@ -96,6 +96,7 @@ Library
                    Sound.SC3.Data.Modal
                    Sound.SC3.Data.PVOC
                    Sound.SC3.Data.Roland.D50
+                   Sound.SC3.Data.Roland.D50.PCM
                    Sound.SC3.Data.Roland.D50.PM
                    Sound.SC3.Data.Roland.D50.Reverb
                    Sound.SC3.Data.Timestamp
