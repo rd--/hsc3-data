@@ -386,6 +386,14 @@ d50_patch_partial_mute_sym p =
       l = u24_at p 366
   in concatMap (d50_usr_ix (error "?") d50_partial_mute_usr) [l,u]
 
+-- > d50_patch_set_partial_mute "0110" == [(366,2),(174,1)]
+d50_patch_set_partial_mute :: String -> [(U24,U8)]
+d50_patch_set_partial_mute sym =
+  let f k str = (k,d50_usr_lookup_err d50_partial_mute_usr str)
+  in case sym of
+    [c1,c2,c3,c4] -> [f 366 [c1,c2],f 174 [c3,c4]]
+    _ -> error "d50_patch_set_partial_mute?"
+
 -- | Show partial structure for lower and upper tones as 6-character string.
 --   S = Synthesis, P = PCM
 --
@@ -506,11 +514,11 @@ d50_char_to_byte c = T.reverse_lookup c d50_char_table
 
 -- * USR/STR
 
--- | USR strings naming the 12 pitch-classes.
+-- | USR 2-character strings naming the 12 pitch-classes.
 pitch_class_seq :: [String]
 pitch_class_seq = words "C C# D D# E F F# G G# A A# B"
 
--- | USR strings naming the 84 pitches from C1 to B7.
+-- | USR 3-character strings naming the 84 pitches from C1 to B7.
 --
 -- > length pitch_seq == 7 * 12
 pitch_seq :: [String]
@@ -524,6 +532,7 @@ split_point_usr = intercalate ";" (take 61 (drop 12 pitch_seq))
 wg_pitch_coarse_usr :: String
 wg_pitch_coarse_usr = intercalate ";" (take 73 pitch_seq)
 
+-- | P-ENV KF USR 4-character strings.
 wg_pitch_kf_usr :: String
 wg_pitch_kf_usr = "-1;-1/2;-1/4;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
 
@@ -537,8 +546,9 @@ wg_pitch_kf_to_enum n = fmap int_to_u8 (findIndex (== n) (fst wg_pitch_kf_rat))
 wg_pitch_kf_to_enum_err :: (Eq n,Fractional n) => n -> U8
 wg_pitch_kf_to_enum_err = fromMaybe (error "wg_pitch_kf_to_enum") . wg_pitch_kf_to_enum
 
+-- | TVF KF USR 4-character strings.
 tvf_kf_usr :: String
-tvf_kf_usr = "-1;-1/2;-4/1;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
+tvf_kf_usr = "-1;-1/2;-1/4;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
 
 -- | "<A1 - <C7;>A1 - >C7"
 bias_point_direction_usr :: String
@@ -546,11 +556,11 @@ bias_point_direction_usr =
     let p = take 64 (drop 9 pitch_seq)
     in intercalate ";" (map ('<' :) p ++ map ('>' :) p)
 
--- | EQ LF 3-character USR strings.
+-- | EQ LF USR 3-character strings.
 eq_lf_usr :: String
 eq_lf_usr = "63 ;75 ;88 ;105;125;150;175;210;250;300;350;420;500;600;700;840"
 
--- | EQ HF 3-character USR strings.
+-- | EQ HF USR 3-character strings.
 eq_hf_usr :: String
 eq_hf_usr =
     "250;300;350;420;500;600;700;840;" ++
@@ -706,7 +716,7 @@ d50_chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) d50_c
 
 -- * COMMON (TONE)
 
--- | USR string for partial-mute value.
+-- | USR 2-character string for partial-mute value.
 d50_partial_mute_usr :: String
 d50_partial_mute_usr = "00;10;01;11" -- "MM;SM;MS;SS"
 
@@ -824,7 +834,7 @@ d50_patch_parameters =
 d50_patch_groups :: [PARAM_GROUP]
 d50_patch_groups =
     [("Patch Name Edit",";;;;;;;;;;;;;;;;;",[0..17])
-    ,("MAIN","KEY-MODE;SPLIT-POINT;TONE-BALANCE",[18,19,33])
+    ,("MAIN",";SP;Bal",[18,19,33])
     ,("Tone Tune","LKey;UKey;LTune;UTune",[23,22,25,24])
     ,("Control Edit","Bend;AfPB;Port;Port;Hold",[26,27,28,20,21])
     ,("Output Mode Edit","Mode;Rev;Rbal;Vol",[29..32])
@@ -899,11 +909,22 @@ d50_parameter_value_verify (_,_,stp,_,_) x =
     then error (show ("parameter_value_verify",x,stp))
     else x
 
+-- | Given USR /str/ lookup value at index /x/, or /def/ if non-USR string.
 d50_usr_ix :: String -> String -> U8 -> String
 d50_usr_ix def str x =
   case Split.splitOn ";" str of
     [_] -> def
     e -> u8_at e x
+
+-- | Lookup index of USR string.
+--
+-- > d50_usr_lookup d50_partial_mute_usr "01" == Just 2
+d50_usr_lookup :: String -> String -> Maybe U8
+d50_usr_lookup str nm = fmap int_to_u8 (findIndex (== nm) (Split.splitOn ";" str))
+
+-- | Erroring variant.
+d50_usr_lookup_err :: String -> String -> U8
+d50_usr_lookup_err str = fromMaybe (error "d50_usr_lookup?") . d50_usr_lookup str
 
 -- | Make USR display value for value /x/ at parameter /p/.
 d50_parameter_value_usr :: D50_Parameter -> U8 -> Maybe String
