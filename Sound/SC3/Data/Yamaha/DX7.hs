@@ -1,8 +1,8 @@
- -- | Yamaha DX7
+-- | Yamaha DX7
 --
 --  GS-1 FM = 1981, DX1 & DX7 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
 --
--- <http://homepages.abdn.ac.uk/mth192/pages/dx7/sysex-format.txt>
+-- <https://github.com/asb2m10/dexed/blob/master/Documentation/sysex-format.txt>
 -- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
 module Sound.SC3.Data.Yamaha.DX7 where
 
