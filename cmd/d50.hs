@@ -66,7 +66,7 @@ print_name :: Bool -> (Int,[U8]) -> String
 print_name bnk (k,p) =
   let nm = D50.d50_patch_name_set_pp p
   in if bnk
-     then let (b,n) = D50.ix_to_bank k
+     then let (b,n) = D50.d50_ix_to_bank k
           in printf "%d%d %s" b n nm
      else nm
 

@@ -187,15 +187,15 @@ type PARAM_GROUP = (String,String,[U24])
 
 -- | Translate one-indexed (BANK-NUMBER,PATCH-NUMBER) index to zero linear index.
 --
--- > map bank_to_ix [(1,1),(2,3),(3,1),(4,7),(7,4),(8,8)] == [0,10,16,30,51,63]
-bank_to_ix :: Num n => (n,n) -> n
-bank_to_ix (p,q) = ((p - 1) * 8) + (q - 1)
+-- > map d50_bank_to_ix [(1,1),(2,3),(3,1),(4,7),(7,4),(8,8)] == [0,10,16,30,51,63]
+d50_bank_to_ix :: Num n => (n,n) -> n
+d50_bank_to_ix (p,q) = ((p - 1) * 8) + (q - 1)
 
--- | Inverse of 'bank_to_ix'.
+-- | Inverse of 'd50_bank_to_ix'.
 --
--- > map ix_to_bank [0,10,51,63] == [(1,1),(2,3),(7,4),(8,8)]
-ix_to_bank :: Integral i => i -> (i,i)
-ix_to_bank n = let (p,q) = n `divMod` 8 in (p + 1,q + 1)
+-- > map d50_ix_to_bank [0,10,51,63] == [(1,1),(2,3),(7,4),(8,8)]
+d50_ix_to_bank :: Integral i => i -> (i,i)
+d50_ix_to_bank n = let (p,q) = n `divMod` 8 in (p + 1,q + 1)
 
 -- * ADDRESS
 
@@ -263,42 +263,43 @@ d50_parameter_type_base_address = d50_addr_encode . d50_parameter_type_base_addr
 d50_partial_base_address_seq :: [D50_ADDRESS]
 d50_partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
 
--- | Base address, initial offset, number of parameters.
+-- | Base address, initial offset (ie. past tone or patch name), number of (non-name) parameters.
 --
--- > sum (map (\ty -> let (_,_,n) = parameter_type_extent ty in n) parameter_type_seq) == 312
--- > let (b,o,n) = parameter_type_extent (last parameter_type_seq) in b + o + n == 424
-parameter_type_extent :: D50_Parameter_Type -> (D50_ADDRESS,U24,U24)
-parameter_type_extent ty =
+-- > sum (map (\ty -> let (_,_,n) = d50_parameter_type_extent ty in n) d50_parameter_type_seq) == 314
+-- > 54 * 4 + 38 * 2 + 22 == 314
+-- > let (b,o,n) = d50_parameter_type_extent (last d50_parameter_type_seq) in b + o + n == 424
+d50_parameter_type_extent :: D50_Parameter_Type -> (D50_ADDRESS,U24,U24)
+d50_parameter_type_extent ty =
     case ty of
       Partial _ _ -> (d50_parameter_type_base_address ty,0,54)
-      Common _ -> (d50_parameter_type_base_address ty,10,38)
-      Patch -> (d50_parameter_type_base_address ty,20,20)
+      Common _ -> (d50_parameter_type_base_address ty,10,38) -- TONE NAME = 10-CHAR
+      Patch -> (d50_parameter_type_base_address ty,18,22) -- PATCH NAME = 18-CHAR
 
--- | D50_Parameter base address (Top address) (4.1)
-parameter_type_address_segments :: [(D50_Parameter_Type,(D50_ADDRESS,U24))]
-parameter_type_address_segments =
-    let f ty = let (b,o,n) = parameter_type_extent ty
+-- | Parameter base address (Top address) (4.1), (TYPE,(START-ADDR,END-ADDR))
+d50_parameter_type_address_segments :: [(D50_Parameter_Type,(D50_ADDRESS,D50_ADDRESS))]
+d50_parameter_type_address_segments =
+    let f ty = let (b,o,n) = d50_parameter_type_extent ty
                in (ty,(b,b + o + n - 1))
     in map f d50_parameter_type_seq
 
 -- | Split sequence into groups based on 'D50_Parameter_Type' sequence.
-parameter_segment :: [t] -> [(D50_Parameter_Type,[t])]
-parameter_segment p =
+d50_parameter_segment :: [t] -> [(D50_Parameter_Type,[t])]
+d50_parameter_segment p =
     let f (ty,(b,x)) = (ty,map (u24_at p) [b .. x])
-    in map f parameter_type_address_segments
+    in map f d50_parameter_type_address_segments
 
 -- | 4.1 Parameter base address (Top address)
 d50_parameter_base_address_tbl :: [(D50_ADDRESS,String,D50_Parameter_Type,String)]
 d50_parameter_base_address_tbl =
     let f (ty,(b,x)) = (b,d50_parameter_type_pp ty,ty,range_pp (b,x))
-    in map f parameter_type_address_segments
+    in map f d50_parameter_type_address_segments
 
 -- | Determine 'D50_Parameter_Type' of value at 'D50_ADDRESS'.
 --
 -- > mapMaybe (\n -> fmap parameter_type_pp (address_to_parameter_type n)) [0 .. 420]
 address_to_parameter_type :: D50_ADDRESS -> Maybe D50_Parameter_Type
 address_to_parameter_type a =
-    let f ty = let (b,o,n) = parameter_type_extent ty in a >= b && a < b + o + n
+    let f ty = let (b,o,n) = d50_parameter_type_extent ty in a >= b && a < b + o + n
     in find f d50_parameter_type_seq
 
 -- | Lookup parameter at address.
@@ -307,7 +308,7 @@ address_to_parameter_type a =
 d50_address_to_parameter :: D50_ADDRESS -> Maybe (D50_Parameter_Type,D50_Parameter)
 d50_address_to_parameter a =
     case address_to_parameter_type a of
-      Just ty -> let (b,_,_) = parameter_type_extent ty
+      Just ty -> let (b,_,_) = d50_parameter_type_extent ty
                      f (i,_,_,_,_) = i == a - b
                  in fmap (\p -> (ty,p)) (find f (d50_parameters_by_type ty))
       Nothing -> Nothing
@@ -330,7 +331,7 @@ d50_parameter_lookup (ty,nm) =
 -}
 d50_named_parameter_to_address :: (D50_Parameter_Type,String) -> Maybe D50_ADDRESS
 d50_named_parameter_to_address (ty,nm) =
-  let f (n,_,_,_,_) = let (b,_,_) = parameter_type_extent ty in b + n
+  let f (n,_,_,_,_) = let (b,_,_) = d50_parameter_type_extent ty in b + n
   in fmap f (d50_parameter_lookup (ty,nm))
 
 {- | The base address for the D50 work area memory.
@@ -971,7 +972,7 @@ group_pp x_seq (g_nm,p_nm_seq,ix) =
 d50_patch_group_pp :: D50_Patch -> [String]
 d50_patch_group_pp =
     let f gr pr = "" : d50_parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
-    in concat . zipWith f d50_group_seq . parameter_segment . zip d50_parameters_seq
+    in concat . zipWith f d50_group_seq . d50_parameter_segment . zip d50_parameters_seq
 
 -- | Patch name, 18-byte ASCII string.
 d50_patch_name :: D50_Patch -> String
@@ -1366,8 +1367,8 @@ d50_load_sysex_dsc fn = do
   when (b_n < 0x8CD0) (error "d50_load_sysex: sysex < 0x8CD0 (36048)")
   return (map d50_dsc_parse_err (d50_sysex_segment b))
 
-{-| Load patch data (64 patches of 448 bytes) and reverb data (16
-  decoded reverbs of 188 bytes) from D-50 SYSEX file.
+{-| Load patch data (64 448-byte patches) and reverb data (16 decoded
+  188-byte reverbs) from D-50 SYSEX file.
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > (p,r) <- d50_load_sysex sysex_fn
