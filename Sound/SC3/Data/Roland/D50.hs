@@ -283,6 +283,10 @@ d50_parameter_type_address_segments =
     in map f d50_parameter_type_seq
 
 -- | Split sequence into groups based on 'D50_Parameter_Type' sequence.
+--
+-- > p29 = p !! 29
+-- > d50_patch_name_set_pp p29
+-- > d50_parameter_segment p29
 d50_parameter_segment :: [t] -> [(D50_Parameter_Type,[t])]
 d50_parameter_segment p =
     let f (ty,(b,x)) = (ty,map (u24_at p) [b .. x])
@@ -684,21 +688,31 @@ d50_partial_parameters =
 -- | Group structure of partial parameters, as in D-50 menu system.
 d50_partial_groups :: [PARAM_GROUP]
 d50_partial_groups =
-    [("WG Pitch","Cors;Fine;KF",[0..2])
+    [("WG Pitch","Cors;Fine;KF",[0..2]) -- WG
     ,("WG Mod","LFO;ENV;Bend",[3..5]) -- WG Modulation
     ,("WG Form","Wave;PCM",[6..7]) -- WG Waveform
     ,("WG PW","PW;Velo;Aftr;LFO;LFOD",[8,9,12,10,11]) -- WG Pulse Width
-    ,("TVF","Freq;Reso;KF;BP;Blvl",[13..17])
+    ,("TVF","Freq;Reso;KF;BP;Blvl",[13..17]) -- TVF
     ,("TVF ENV 1","Dpth;Velo;DKF;TKF",[18..21]) -- TVF ENV
     ,("TVF ENV 2","T1;T2;T3;T4;T5",[22..26]) -- TVF ENV Time
     ,("TVF ENV 3","L1;L2;L3;SusL;EndL",[27..31]) -- TVF ENV Level
     ,("TVF MOD","LFO;LFOD;Aftr",[32..34]) -- TVF Modulation
-    ,("TVA","Levl;Velo;BP;Blvl",[35..38])
+    ,("TVA","Levl;Velo;BP;Blvl",[35..38]) -- TVA
     ,("TVA ENV 1","T1;T2;T3;T4;T5",[39..43]) -- TVA ENV Time
     ,("TVA ENV 2","L1;L2;L3;SusL;EndL",[44..48]) -- TVA ENV Level
     ,("TVA ENV 3","Velo;TKF",[49..50])
     ,("TVA MOD","LFO;LFOD;Aftr",[51..53]) -- TVA Modulation
     ]
+
+-- | D50 INIT-SQU partial data (PN-D50-01).
+--
+-- > length d50_partial_init_squ == length d50_partial_parameters
+d50_partial_init_squ :: [U8]
+d50_partial_init_squ =
+  [36,50,11 ,1,1,1 ,0,0 ,0,7,2,0,7 -- WG
+  ,60,0,7,27,7 ,0,0,0,0 ,0,50,50,50,50 ,100,100,100,100,0 ,2,0,7 -- TVF
+  ,100,60,27,12 ,0,50,50,50,0 ,100,100,100,100,0 ,0,0 ,4,0,7 -- TVA
+  ]
 
 -- * CHORUS
 
@@ -790,6 +804,18 @@ d50_common_groups =
     ,("EQ Edit","Lf;Lg;Hf;HQ;Hg",[37..41])
     ,("Chorus Edit","Type;Rate;Dpth;Bal",[42..45])
     ]
+
+-- | D50 INIT-SQU common data (PN-D50-01).
+--
+-- > length d50_common_init_squ == length d50_common_parameters
+d50_common_init_squ :: [U8]
+d50_common_init_squ =
+  [63,9,40,35,46,63,0,19,17,21 -- NAME
+  ,0 ,0,0 ,0,0,0,0 ,50,50,50,50,50 ,0,20,0 -- STRUCT + P-ENV + P-MOD
+  ,0,75,50,0 ,0,50,0,0 ,0,30,0,0 -- LFO 1-3
+  ,5,12,8,0,12 ,0,50,50,0 -- EQ + CHORUS
+  ,1,50 -- MUT + BAL
+  ]
 
 -- * PATCH
 
