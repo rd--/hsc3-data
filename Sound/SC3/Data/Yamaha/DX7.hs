@@ -108,14 +108,14 @@ dx7_voice_param = take 145
 -- | Voice data (# = 155 = dx7_nvoice)
 type DX7_Voice = [U8]
 
--- | Collect any out-of-range paramater data as (IX,VALUE,(MIN,MAX)) triples.
+-- | Collect any out-of-range parameter data as (IX,VALUE,(MIN,MAX)) triples.
 dx7_voice_out_of_range :: DX7_Voice -> [(U8,U8,(U8,U8))]
 dx7_voice_out_of_range d =
   let rng = map dx7_parameter_range dx7_parameter_tbl
       chk (ix,n,(l,r)) = if n >= l && n <= r then Nothing else Just (ix,n,(l,r))
   in mapMaybe chk (zip3 [0..154] d rng)
 
--- | Re-write any out-of-range paramater data to be within range.
+-- | Re-write any out-of-range parameter data to be within range.
 dx7_voice_param_correct :: DX7_Voice -> DX7_Voice
 dx7_voice_param_correct d =
   let rng = map dx7_parameter_range dx7_parameter_tbl
@@ -287,11 +287,12 @@ dx7_rewrite_op_dx7_parameter_tbl n =
 -- | Group Structure (group-name,field-names,indices)
 type Group_Structure = (String,String,[U8])
 
+-- | Operator group structure, 4;4;5;4
 operator_group_structure :: [Group_Structure]
 operator_group_structure =
     [("EG RATE","1;2;3;4",[0..3])
     ,("EG LEVEL","1;2;3;4",[4..7])
-    ,("KBD LEV SCL","BRK-PT;LFT-DEPTH;RHT-DEPTH;RHT-CURVE",[8..12])
+    ,("KBD LEV SCL","BRK-PT;LFT-DEPTH;RHT-DEPTH;LFT-CURVE;RHT-CURVE",[8..12])
     ,("OSC","MODE;FREQ-COARSE;FREQ-FINE;DETUNE",[17..20])
     ]
 
@@ -414,11 +415,20 @@ dx7_parameter_set_pp p x =
 dx7_parameter_seq_pp :: DX7_Voice -> [String]
 dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 
+-- | Group 6-operators, shared params and name.
+--
+-- > dx7_voice_grp dx7_init_voice
+dx7_voice_grp :: DX7_Voice -> [[U8]]
+dx7_voice_grp p =
+  let ix = concat [replicate 6 dx7_op_nparam :: [Int],[dx7_sh_nparam,dx7_name_nchar]]
+  in Split.splitPlaces ix p
+
+-- | DX7_Voice pretty-printer.
+--
+-- > dx7_voice_pp dx7_init_voice
 dx7_voice_pp :: DX7_Voice -> [String]
 dx7_voice_pp p =
-  let p_ix = concat [replicate 6 dx7_op_nparam :: [Int]
-                    ,[dx7_sh_nparam,dx7_name_nchar]]
-      p_grp = Split.splitPlaces p_ix p
+  let p_grp = dx7_voice_grp p
   in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (Byte.word8_at p_grp 6)
             ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
 
