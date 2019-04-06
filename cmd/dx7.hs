@@ -29,7 +29,7 @@ dx7_sysex_print_f op =
 dx7_sysex_print :: String -> [FilePath] -> IO ()
 dx7_sysex_print cmd fn =
   let print_csv = DX7.dx7_voice_to_csv . snd
-      print_hex = Byte.byte_seq_hex_pp . snd
+      print_hex = Byte.byte_seq_hex_pp False . snd
       print_parameters = unlines . DX7.dx7_parameter_seq_pp . snd
       print_voice_data_list = unlines . DX7.dx7_voice_data_list_pp . snd
       print_voice_name (k,v) = printf "%2d %s" k (DX7.dx7_voice_name '?' v)

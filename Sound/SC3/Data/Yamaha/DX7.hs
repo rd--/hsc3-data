@@ -23,6 +23,8 @@ import qualified Music.Theory.Byte as Byte {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Math.Convert as T {- hmt -}
 
+import qualified Sound.Midi.Common as M {- midi-osc -}
+
 -- | Unsigned 8-bit word.
 type U8 = Word8
 
@@ -46,14 +48,6 @@ dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam
 
 -- | Voice parameter data (# = 145 = dx7_nparam)
 type DX7_Param = [U8]
-
--- | Type-specialised 'B.pack'.
-dx7_param_pack :: DX7_Param -> B.ByteString
-dx7_param_pack = B.pack
-
--- | Type-specialised 'B.unpack'.
-dx7_param_unpack :: B.ByteString -> DX7_Param
-dx7_param_unpack = B.unpack
 
 -- | Equality ignoring indicated indices.
 dx7_param_eq_ignoring :: [U8] -> DX7_Param -> DX7_Param -> Bool
@@ -169,6 +163,15 @@ dx7_init_voice =
       nm = dx7_name_encode '?' "INIT VOICE"
   in concat [op_6_2,op_1,sh,nm]
 
+{-
+-- | Type-specialised 'B.pack'.
+dx7_param_pack :: DX7_Param -> B.ByteString
+dx7_param_pack = B.pack
+
+-- | Type-specialised 'B.unpack'.
+dx7_param_unpack :: B.ByteString -> DX7_Param
+dx7_param_unpack = B.unpack
+
 -- | Type-specialised 'B.pack'.
 dx7_voice_pack :: DX7_Voice -> B.ByteString
 dx7_voice_pack = B.pack
@@ -176,6 +179,7 @@ dx7_voice_pack = B.pack
 -- | Type-specialised 'B.unpack'.
 dx7_voice_unpack :: B.ByteString -> DX7_Voice
 dx7_voice_unpack = B.unpack
+-}
 
 -- * DX7 / BANK
 
@@ -661,9 +665,9 @@ dx7_fmt9_sysex_gen ch dat = dx7_fmt9_sysex_hdr ch ++ dat ++ [dx7_checksum dat,0x
 dx7_fmt9_sysex_dat :: [U8] -> [U8]
 dx7_fmt9_sysex_dat = take 4096 . drop 6
 
--- | 'dx7_voice_unpack' of 'B.readFile'.
+-- | 'M.u8_load'.
 dx7_read_u8 :: FilePath -> IO [U8]
-dx7_read_u8 = fmap dx7_voice_unpack . B.readFile
+dx7_read_u8 = M.u8_load
 
 {- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
      Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
@@ -709,17 +713,16 @@ dx7_read_fmt9_sysex_err = fmap (dx7_fmt9_sysex_validate_err "dx7_read_fmt9_sysex
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_write_fmt9_sysex :: FilePath -> DX7_SYSEX -> IO ()
-dx7_write_fmt9_sysex fn =
-  B.writeFile fn .
-  dx7_voice_pack .
-  dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
+dx7_write_fmt9_sysex fn = M.u8_store fn . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
 
--- | Unpack bit-packed 4096-element 'U8' sequence to 'DX7_Bank' (see cmd/dx7-unpack.c).
-dx7_unpack_bitpacked_u8 :: [U8] -> IO DX7_Bank
+-- | Unpack bit-packed 'U8' sequence to sequence of 'DX7_Voice' (see cmd/dx7-unpack.c).
+--   Input size must be a multiple of 128, output size will be a multiple of 155.
+dx7_unpack_bitpacked_u8 :: [U8] -> IO [DX7_Voice]
 dx7_unpack_bitpacked_u8 p = do
+  when ((length p `rem` 128) /= 0) (error ("dx7_unpack_bitpacked_u8? " ++ show p))
   q <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp False p)
   let r = Byte.read_hex_byte_seq q
-  when (length r /= 4960) (error ("dx7_unpack_u8: " ++ q))
+  when ((length r `rem` 155) /= 0) (error ("dx7_unpack_bitpacked_u8? " ++ q))
   return (Split.chunksOf 155 r)
 
 -- | Decode FORMAT=9 SYSEX message.
@@ -732,7 +735,7 @@ dx7_fmt9_sysex_decode = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
 > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
 > d <- dx7_load_fmt9_sysex_err fn
 > dx7_bank_verify True d
-> mapM_ (putStrLn . dx7_voice_name) d
+> mapM_ (putStrLn . dx7_voice_name '?') d
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
@@ -746,22 +749,27 @@ dx7_load_fmt9_sysex_err fn = do
   dx7_unpack_bitpacked_u8 (dx7_fmt9_sysex_dat sysex)
 
 -- | Try and load 'DX7_Voice' data from named file.
---   Will read 163 (FORMAT=0), 4096, 4104 (FORMAT=9), 4960
---   and exact multiples of 4104 element data files,
---   to load either 1 or 32 or 64 &etc. voices.
+--   Will read: 128 (BITPACKED-VOICE), 155 (UN-BITPACKED-VOICE), 163 (FORMAT=0), 4104 (FORMAT=9),
+--   and exact multiples of 128 and 1554104 element data files.
 dx7_load_sysex_try :: FilePath -> IO (Maybe [DX7_Voice])
 dx7_load_sysex_try fn = do
   x <- dx7_read_u8 fn
-  let decode_syx = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
-  case length x of
-    163 -> return (Just [dx7_fmt0_sysex_decode x])
+  let n = length x
+      is_mult m = n `rem` m == 0
+      decode_syx = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
+  case n of
     1650 -> return Nothing -- DX7-II PERF SYSEX
-    4096 -> fmap Just (dx7_unpack_bitpacked_u8 x)
     4104 -> fmap Just (decode_syx x)
-    4960 -> return (Just (Split.chunksOf 155 x))
-    n -> if n `rem` 4104 == 0
-         then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
-         else return Nothing
+    _ ->
+      if is_mult 128
+      then fmap Just (dx7_unpack_bitpacked_u8 x)
+      else if is_mult 155
+           then return (Just (Split.chunksOf 155 x))
+           else if is_mult 163
+                then return (Just (map dx7_fmt0_sysex_decode (Split.chunksOf 163 x)))
+                else if n `rem` 4104 == 0
+                     then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
+                     else return Nothing
 
 -- | Encode 'DX7_Bank' to channel /ch/ 'DX7_SYSEX'.
 dx7_fmt9_sysex_encode :: U8 -> DX7_Bank -> IO DX7_SYSEX

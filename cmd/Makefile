@@ -34,6 +34,10 @@ mk-local-c-common:
 	(cd c-common ; make)
 
 mk-d50:
-	rm -f d50
-	make d50
-	cp d50 $(prefix)/bin/hsc3-d50
+	(rm -f d50 ; make d50 ; cp d50 $(prefix)/bin/hsc3-d50)
+
+mk-dx7:
+	(rm -f dx7 ; make dx7 ; cp dx7 $(prefix)/bin/hsc3-dx7)
+
+mk-dx7-unpack:
+	(rm -f dx7-unpack ; make dx7-unpack ; cp dx7-unpack $(prefix)/bin/hsc3-dx7-unpack)

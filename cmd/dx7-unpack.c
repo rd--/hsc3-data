@@ -48,19 +48,23 @@ void read_u8_as_hex(u8 *b,int n)
 
 void do_unpack(void)
 {
-    struct dx7_bank_packed bnk;
-    u8 dat[4960];
-    read_u8_as_hex((u8*)(&bnk), 4096);
-    dx7_unpack_bank(bnk,dat);
-    print_u8_as_hex(dat,4960);
+    struct dx7_voice_packed vc;
+    u8 dat[155];
+    while(!feof(stdin)) {
+        read_u8_as_hex((u8*)(&vc), 128);
+        dx7_unpack_voice(vc,dat);
+        print_u8_as_hex(dat,155);
+    }
 }
 
 void do_pack()
 {
-    u8 dat[4960];
-    read_u8_as_hex(dat,4960);
-    struct dx7_bank_packed bnk = dx7_pack_bank(dat);
-    print_u8_as_hex((u8*)&bnk,4096);
+    u8 dat[155];
+    while(!feof(stdin)) {
+        read_u8_as_hex(dat,155);
+        struct dx7_voice_packed vc = dx7_pack_voice(dat);
+        print_u8_as_hex((u8*)&vc,128);
+    }
 }
 
 int main(int argc, char *argv[])
