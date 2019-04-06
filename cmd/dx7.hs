@@ -7,39 +7,49 @@ import qualified Music.Theory.Byte as Byte {- hmt -}
 
 import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
 
-usage :: IO ()
-usage =
-    let h = ["hsc3-dx7 cmd opt"
-            ,"  sysex add input-file output-file"
-            ,"  sysex print [csv | hex | parameters | voice-data-list | voice-names] file-name..."
-            ,"  sysex rewrite input-file output-file"
-            ,"  sysex verify file-name..."]
-    in putStrLn (unlines h)
+usage_str :: [String]
+usage_str =
+  ["hsc3-dx7 cmd opt"
+  ,"  {hex | sysex} print [csv | hex | parameters | voice-data-list | voice-names] file-name..."
+  ,"  sysex add input-file output-file"
+  ,"  sysex rewrite input-file output-file"
+  ,"  sysex verify file-name..."]
 
-dx7_sysex_print_f :: ((Int,DX7.DX7_Voice) -> String) -> [FilePath] -> IO ()
-dx7_sysex_print_f op =
+usage :: IO ()
+usage = putStrLn (unlines usage_str)
+
+type LD_F = FilePath -> IO (Maybe [DX7.DX7_Voice])
+
+dx7_print_f :: LD_F -> ((Int,DX7.DX7_Voice) -> String) -> [FilePath] -> IO ()
+dx7_print_f ld op =
   let wr fn x = case x of
                   Just bnk -> putStr (unlines (map op (zip [1::Int ..] bnk)))
                   Nothing -> hPutStrLn stderr ("ERROR: dx7_sysex_print: " ++ fn)
-  in mapM_ (\fn -> DX7.dx7_load_sysex_try fn >>= wr fn)
+  in mapM_ (\fn -> ld fn >>= wr fn)
 
 -- > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/vrc/VRC-106-B.syx"
 -- > dx7_sysex_print "voice-names" [fn]
 -- > dx7_sysex_print "csv" [fn]
-dx7_sysex_print :: String -> [FilePath] -> IO ()
-dx7_sysex_print cmd fn =
+dx7_print :: LD_F -> String -> [FilePath] -> IO ()
+dx7_print ld cmd fn =
   let print_csv = DX7.dx7_voice_to_csv . snd
       print_hex = Byte.byte_seq_hex_pp False . snd
       print_parameters = unlines . DX7.dx7_parameter_seq_pp . snd
       print_voice_data_list = unlines . DX7.dx7_voice_data_list_pp . snd
       print_voice_name (k,v) = printf "%2d %s" k (DX7.dx7_voice_name '?' v)
   in case cmd of
-    "csv" -> dx7_sysex_print_f print_csv fn
-    "hex" -> dx7_sysex_print_f print_hex fn
-    "parameters" -> dx7_sysex_print_f print_parameters fn
-    "voice-names" -> dx7_sysex_print_f print_voice_name fn
-    "voice-data-list" -> dx7_sysex_print_f print_voice_data_list fn
+    "csv" -> dx7_print_f ld print_csv fn
+    "hex" -> dx7_print_f ld print_hex fn
+    "parameters" -> dx7_print_f ld print_parameters fn
+    "voice-names" -> dx7_print_f ld print_voice_name fn
+    "voice-data-list" -> dx7_print_f ld print_voice_data_list fn
     _ -> usage
+
+dx7_hex_print :: String -> [FilePath] -> IO ()
+dx7_hex_print = dx7_print (fmap Just . DX7.dx7_load_hex)
+
+dx7_sysex_print :: String -> [FilePath] -> IO ()
+dx7_sysex_print = dx7_print DX7.dx7_load_sysex_try
 
 dx7_sysex_verify_1 :: FilePath -> IO ()
 dx7_sysex_verify_1 fn = do
@@ -68,6 +78,7 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
+    "hex":"print":cmd:fn -> dx7_hex_print cmd fn
     ["sysex","add",fn1,fn2] -> dx7_sysex_add fn1 fn2
     "sysex":"print":cmd:fn -> dx7_sysex_print cmd fn
     ["sysex","rewrite",fn1,fn2] -> dx7_sysex_rewrite fn1 fn2

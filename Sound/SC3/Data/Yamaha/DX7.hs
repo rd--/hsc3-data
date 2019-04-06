@@ -748,9 +748,16 @@ dx7_load_fmt9_sysex_err fn = do
   sysex <- dx7_read_fmt9_sysex_err fn
   dx7_unpack_bitpacked_u8 (dx7_fmt9_sysex_dat sysex)
 
--- | Try and load 'DX7_Voice' data from named file.
---   Will read: 128 (BITPACKED-VOICE), 155 (UN-BITPACKED-VOICE), 163 (FORMAT=0), 4104 (FORMAT=9),
---   and exact multiples of 128 and 1554104 element data files.
+{- | Try and load 'DX7_Voice' data from named file.
+
+Will read exact multiples of:
+
+128 (BITPACKED-VOICE),
+155 (UN-BITPACKED-VOICE),
+163 (FORMAT=0),
+4104 (FORMAT=9)
+
+-}
 dx7_load_sysex_try :: FilePath -> IO (Maybe [DX7_Voice])
 dx7_load_sysex_try fn = do
   x <- dx7_read_u8 fn
@@ -759,7 +766,7 @@ dx7_load_sysex_try fn = do
       decode_syx = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
   case n of
     1650 -> return Nothing -- DX7-II PERF SYSEX
-    4104 -> fmap Just (decode_syx x)
+    4105 -> fmap Just (decode_syx (take 4104 x))
     _ ->
       if is_mult 128
       then fmap Just (dx7_unpack_bitpacked_u8 x)
