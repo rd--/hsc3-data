@@ -42,6 +42,7 @@ Library
                    JuicyPixels,
                    language-dot,
                    midi-osc == 0.18.*,
+                   murmur-hash,
                    parsec,
                    pgm,
                    process,
@@ -116,6 +117,7 @@ Library
                    Sound.SC3.Data.Yamaha.DX7.Algorithm
                    Sound.SC3.Data.Yamaha.DX7.CART
                    Sound.SC3.Data.Yamaha.DX7.Dexed
+                   Sound.SC3.Data.Yamaha.DX7.Hash
                    Sound.SC3.Data.Yamaha.DX7.PX7
                    Sound.SC3.Data.Yamaha.TX816
 

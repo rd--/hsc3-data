@@ -74,10 +74,14 @@ dx7_nvoice :: Num n => n
 dx7_nvoice = dx7_nparam + dx7_name_nchar
 
 -- | Is /x/ in (32,126)?
+--
+-- > map fromEnum "\t\n " == [9,10,32]
 dx7_ascii_verify :: U8 -> U8
 dx7_ascii_verify x = if x < 32 || x > 126 then error "ASCII?" else x
 
--- | Replace out-of-range ASCII U8 with 63, the ASCII code for /c/.
+-- | Replace out-of-range ASCII U8 with the ASCII code for /c/.
+--
+-- > map (dx7_ascii_correct '?') [9,10,32] == [63,63,32]
 dx7_ascii_correct :: Char -> U8 -> U8
 dx7_ascii_correct c x = if x < 32 || x > 126 then dx7_ascii_verify (Byte.char_to_word8 c) else x
 

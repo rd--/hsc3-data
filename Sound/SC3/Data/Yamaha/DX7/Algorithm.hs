@@ -5,7 +5,7 @@ import Text.Printf {- base -}
 
 import Sound.SC3.Data.Yamaha.DX7
 
--- | Algorithm given as a list of (dst,src) operator edges and a list of output operators.
+-- | DX7 Algorithm given as a list of (dst,src) operator edges and a list of output operators.
 --   Operators are zero-indexed.
 type DX7_Algorithm = ([(U8,U8)],[U8])
 

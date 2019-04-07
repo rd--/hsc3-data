@@ -8,8 +8,8 @@ tx816_request_data ch cmd = [0xF0,0x43,0x2 + ch,cmd,0xF7]
 -- | Table of patch request SYSEX command numbers.
 tx816_data_request_tbl :: Num t => [(t,String)]
 tx816_data_request_tbl =
-  [(0x00,"current voice patch")
-  ,(0x01,"current performance bulk data")
-  ,(0x02,"64 performance bulk data")
-  ,(0x09,"32 voice bulk data")
-  ,(0x7D,"acknowledge")]
+  [(0x00,"CURRENT VOICE PATCH")
+  ,(0x01,"CURRENT PERFORMANCE BULK DATA")
+  ,(0x02,"64 PERFORMANCE BULK DATA")
+  ,(0x09,"32 VOICE BULK DATA")
+  ,(0x7D,"ACKNOWLEDGE")]

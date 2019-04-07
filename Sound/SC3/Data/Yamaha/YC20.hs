@@ -1,7 +1,9 @@
 -- | FOO-YC20 <https://github.com/sampov2/foo-yc20>
 module Sound.SC3.Data.Yamaha.YC20 where
 
-type U8 = Int
+import Data.Word {- base -}
+
+type U8 = Word8
 
 -- | FOO-YC20 controls, left-to-right sequence.
 --
