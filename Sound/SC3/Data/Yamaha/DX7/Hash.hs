@@ -11,26 +11,34 @@ import qualified Music.Theory.Array as T {- hmt -}
 import qualified Music.Theory.Array.CSV as T {- hmt -}
 import qualified Music.Theory.Byte as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Tuple as T {- hmt -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 
--- | Hash 145-element parameter sequence to a 23-bit word.
-dx7_param_hash32 :: DX7_Param -> Word32
+-- | DX7 parameter data hashes are 32-bit words.
+type DX7_Hash = Word32
+
+-- | Hash 145-element parameter sequence to a 32-bit word.
+dx7_param_hash32 :: DX7_Param -> DX7_Hash
 dx7_param_hash32 = Hash.asWord32 . Hash.hash32 . B.pack
 
--- | Print 'Word32' as 8-character hex string.
-word32_hex_pp :: Word32 -> String
-word32_hex_pp = printf "%08X"
+-- | Print 'DX7_Hash' as 8-character hex string.
+dx7_hash_pp :: DX7_Hash -> String
+dx7_hash_pp = printf "%08X"
+
+-- | Make hex strings for (PARAM-HASH,PARAM).
+dx7_param_hash32_str :: DX7_Param -> (String,String)
+dx7_param_hash32_str p = (dx7_hash_pp (dx7_param_hash32 p),T.byte_seq_hex_pp False p)
 
 -- | Make CSV data of (PARAM-HASH,PARAM).
 dx7_param_hash32_csv :: [DX7_Param] -> String
 dx7_param_hash32_csv x =
   let opt = (True,',',False,T.CSV_No_Align)
-      tbl = map (\p -> [word32_hex_pp (dx7_param_hash32 p),T.byte_seq_hex_pp False p]) x
+      tbl = map (T.t2_to_list . dx7_param_hash32_str) x
   in T.csv_table_pp id opt (Nothing,tbl)
 
 -- | (PARAM-HASH,(PARAM,VOICE-NAME))
-type DX7_Voice_Hash = (Word32,(DX7_Param,String))
+type DX7_Voice_Hash = (DX7_Hash,(DX7_Param,String))
 
 -- | Derive 'DX7_Voice_Hash'.
 dx7_voice_hash :: DX7_Voice -> DX7_Voice_Hash
@@ -39,7 +47,7 @@ dx7_voice_hash v =
   in (dx7_param_hash32 p,(p,dx7_voice_name '?' v))
 
 -- | (PARAM-HASH,[(PARAM,VOICE-NAME)])
-type DX7_Voice_Hash_Set = (Word32,[(DX7_Param,String)])
+type DX7_Voice_Hash_Set = (DX7_Hash,[(DX7_Param,String)])
 
 -- | Derive 'DX7_Voice_Hash_Set'.
 dx7_voice_hash_set :: [DX7_Voice] -> [DX7_Voice_Hash_Set]
@@ -55,7 +63,7 @@ dx7_voice_hash_set_collisions x =
 -- | Make regular table of names at hash set.
 dx7_voice_hash_set_names_tbl :: [DX7_Voice_Hash_Set] -> T.Table String
 dx7_voice_hash_set_names_tbl =
-  let f (h,x) = map (\(_,nm) -> [word32_hex_pp h,nm]) x
+  let f (h,x) = map (\(_,nm) -> [dx7_hash_pp h,nm]) x
   in concatMap f
 
 -- | Make CSV file string of names at hash set.
