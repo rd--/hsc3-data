@@ -18,6 +18,17 @@ import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 dx7_param_hash32 :: DX7_Param -> Word32
 dx7_param_hash32 = Hash.asWord32 . Hash.hash32 . B.pack
 
+-- | Print 'Word32' as 8-character hex string.
+word32_hex_pp :: Word32 -> String
+word32_hex_pp = printf "%08X"
+
+-- | Make CSV data of (PARAM-HASH,PARAM).
+dx7_param_hash32_csv :: [DX7_Param] -> String
+dx7_param_hash32_csv x =
+  let opt = (True,',',False,T.CSV_No_Align)
+      tbl = map (\p -> [word32_hex_pp (dx7_param_hash32 p),T.byte_seq_hex_pp False p]) x
+  in T.csv_table_pp id opt (Nothing,tbl)
+
 -- | (PARAM-HASH,(PARAM,VOICE-NAME))
 type DX7_Voice_Hash = (Word32,(DX7_Param,String))
 
@@ -41,28 +52,19 @@ dx7_voice_hash_set_collisions x =
     [] -> Nothing
     r -> Just r
 
--- | Print 'Word32' as 8-character hex string.
-word32_hex_pp :: Word32 -> String
-word32_hex_pp = printf "%08X"
-
 -- | Make regular table of names at hash set.
 dx7_voice_hash_set_names_tbl :: [DX7_Voice_Hash_Set] -> T.Table String
 dx7_voice_hash_set_names_tbl =
-  let f (h,x) = word32_hex_pp h : map snd x
-  in T.tbl_make_regular (id,"") . map f
+  let f (h,x) = map (\(_,nm) -> [word32_hex_pp h,nm]) x
+  in concatMap f
 
 -- | Make CSV file string of names at hash set.
 dx7_voice_hash_set_names_csv :: [DX7_Voice_Hash_Set] -> String
 dx7_voice_hash_set_names_csv x =
   let opt = (True,',',False,T.CSV_No_Align)
       tbl = dx7_voice_hash_set_names_tbl x
-      hdr = "HASH" : map show [1 .. length (head tbl) - 1]
-  in T.csv_table_pp id opt (Just hdr,tbl)
+  in T.csv_table_pp id opt (Nothing,tbl)
 
 -- | Make CSV file string of param at hash set.
 dx7_voice_hash_set_param_csv :: [DX7_Voice_Hash_Set] -> String
-dx7_voice_hash_set_param_csv x =
-  let opt = (True,',',False,T.CSV_No_Align)
-      tbl = map (\(h,(p,_):_) -> [word32_hex_pp h,T.byte_seq_hex_pp False p]) x
-      hdr = ["HASH","PARAM"]
-  in T.csv_table_pp id opt (Just hdr,tbl)
+dx7_voice_hash_set_param_csv = dx7_param_hash32_csv . map (fst . head . snd)
