@@ -113,6 +113,8 @@ Library
                    Sound.SC3.Data.XML.SVL
                    Sound.SC3.Data.Yamaha.DX7
                    Sound.SC3.Data.Yamaha.DX7.AFX
+                   Sound.SC3.Data.Yamaha.DX7.Algorithm
+                   Sound.SC3.Data.Yamaha.DX7.CART
                    Sound.SC3.Data.Yamaha.DX7.Dexed
                    Sound.SC3.Data.Yamaha.DX7.PX7
                    Sound.SC3.Data.Yamaha.TX816
