@@ -98,11 +98,18 @@ d50_send_bulk_data_def ch dsc = PM.pm_with_io_def (d50_send_bulk_data ch dsc)
 
 -- | Send patch data to temporary memory area, as DT1 command sequence.
 d50_send_patch_tmp_fd :: D50_Patch -> PM.PM_FD -> IO ()
-d50_send_patch_tmp_fd p fd =
+d50_send_patch_tmp_fd p fd = do
   let d = d50_dsc_gen_seq (DT1_CMD,0,0,p)
-  in PM.pm_sysex_write_seq 20 fd d
+  mapM_ (putStrLn . d50_sysex_pp) d
+  PM.pm_sysex_write_seq 20 fd d
 
--- | 'PM.pm_with_default_output' of 'd50_send_patch_tmp_fd'
+{- | 'PM.pm_with_default_output' of 'd50_send_patch_tmp_fd'
+
+> let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
+> (p,r) <- d50_load_sysex fn
+> d50_send_patch_tmp_def (p !! 0)
+
+-}
 d50_send_patch_tmp_def :: D50_Patch -> IO ()
 d50_send_patch_tmp_def = PM.pm_with_default_output . d50_send_patch_tmp_fd
 

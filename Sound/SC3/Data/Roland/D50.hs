@@ -520,22 +520,22 @@ d50_char_to_byte c = T.reverse_lookup c d50_char_table
 -- * USR/STR
 
 -- | USR 2-character strings naming the 12 pitch-classes.
-pitch_class_seq :: [String]
-pitch_class_seq = words "C C# D D# E F F# G G# A A# B"
+d50_pitch_class_seq :: [String]
+d50_pitch_class_seq = Split.chunksOf 2 " CC# DD# E FF# GG# AA# B"
 
 -- | USR 3-character strings naming the 84 pitches from C1 to B7.
 --
--- > length pitch_seq == 7 * 12
-pitch_seq :: [String]
-pitch_seq = [p ++ show o | o <- [1::Int .. 7],p <- pitch_class_seq]
+-- > length d50_pitch_seq == 7 * 12
+d50_pitch_seq :: [String]
+d50_pitch_seq = [p ++ show o | o <- [1::Int .. 7],p <- d50_pitch_class_seq]
 
 -- | "C2 - C7" as USR string.
-split_point_usr :: String
-split_point_usr = intercalate ";" (take 61 (drop 12 pitch_seq))
+d50_split_point_usr :: String
+d50_split_point_usr = intercalate ";" (take 61 (drop 12 d50_pitch_seq))
 
 -- | "C1 - C7" as USR string.
 wg_pitch_coarse_usr :: String
-wg_pitch_coarse_usr = intercalate ";" (take 73 pitch_seq)
+wg_pitch_coarse_usr = intercalate ";" (take 73 d50_pitch_seq)
 
 -- | P-ENV KF USR 4-character strings.
 wg_pitch_kf_usr :: String
@@ -558,7 +558,7 @@ tvf_kf_usr = "-1;-1/2;-1/4;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
 -- | "<A1 - <C7;>A1 - >C7"
 bias_point_direction_usr :: String
 bias_point_direction_usr =
-    let p = take 64 (drop 9 pitch_seq)
+    let p = take 64 (drop 9 d50_pitch_seq)
     in intercalate ";" (map ('<' :) p ++ map ('>' :) p)
 
 -- | EQ LF USR 3-character strings.
@@ -826,7 +826,7 @@ d50_common_init_squ =
 d50_patch_factors :: [D50_Parameter]
 d50_patch_factors =
     [(18,"Key Mode",9,0,d50_key_mode_usr)
-    ,(19,"Split Point",61,0,split_point_usr)
+    ,(19,"Split Point",61,0,d50_split_point_usr)
     ,(20,"Portamento Mode",3,0,"U;L;UL")
     ,(21,"Hold Mode",3,0,"U;L;UL")
     ,(22,"Upper Tone Key Shift",49,-24,"-24 - +24")

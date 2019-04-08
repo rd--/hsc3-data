@@ -254,6 +254,26 @@ dx7_parameter_range_usr (ix,_,n,d,_) = if ix < 125 then (d,d + T.word8_to_int8 n
 dx7_parameter_value_normalise :: DX7_Parameter -> U8 -> Float
 dx7_parameter_value_normalise (_,_,n,_,_) x = T.word8_to_float x / T.word8_to_float (n - 1)
 
+-- | USR 2-character strings naming the 12 pitch-classes.
+dx7_pitch_class_seq :: [String]
+dx7_pitch_class_seq = Split.chunksOf 2 "C C#D D#E F F#G G#A A#B "
+
+-- | USR 4-character strings naming the 120 pitches from C-1 to B8.
+--
+-- > length (dx7_pitch_seq True) == 10 * 12
+dx7_pitch_seq :: Bool -> [String]
+dx7_pitch_seq pd =
+  let oct_pp = if pd then printf "%2d" else show
+  in [p ++ oct_pp o | o <- [-1::Int .. 8],p <- dx7_pitch_class_seq]
+
+-- | The KBD-BRK-PT value of 0 is pitch A-1 which is midi note number 9.
+dx7_kbd_brk_pt_to_midi :: U8 -> U8
+dx7_kbd_brk_pt_to_midi = (+) 9
+
+-- | USR 4-char string for KBD-BRK-PT, from A-1 to C8
+dx7_kbd_brk_pt_usr :: String
+dx7_kbd_brk_pt_usr = intercalate ";" (take 100 (drop 9 (dx7_pitch_seq True)))
+
 -- | Template for six FM operators.
 --
 -- > length dx7_op_parameter_tbl == dx7_op_nparam
@@ -267,19 +287,19 @@ dx7_op_parameter_tbl =
     ,(05,"EG LEVEL 2",100,0,"")
     ,(06,"EG LEVEL 3",100,0,"")
     ,(07,"EG LEVEL 4",100,0,"")
-    ,(08,"KBD LEV SCL BRK PT",100,0,"")
+    ,(08,"KBD LEV SCL BRK PT",100,0,dx7_kbd_brk_pt_usr) -- 4-CHAR
     ,(09,"KBD LEV SCL LFT DEPTH",100,0,"")
     ,(10,"KBD LEV SCL RHT DEPTH",100,0,"")
-    ,(11,"KBD LEV SCL LFT CURVE",4,0,"-LIN;-EXP;+EXP;+LIN")
+    ,(11,"KBD LEV SCL LFT CURVE",4,0,"-LIN;-EXP;+EXP;+LIN") -- 4-CHAR (2=UNIQ)
     ,(12,"KBD LEV SCL RHT CURVE",4,0,"-LIN;-EXP;+EXP;+LIN")
-    ,(13,"KBD RATE SCALING",8,0,"")
-    ,(14,"AMP MOD SENSITIVITY",4,0,"")
-    ,(15,"KEY VEL SENSITIVITY",8,0,"")
+    ,(13,"KBD RATE SCALING",8,0,"") -- 1-CHAR
+    ,(14,"AMP MOD SENSITIVITY",4,0,"") -- 1-CHAR
+    ,(15,"KEY VEL SENSITIVITY",8,0,"") -- 1-CHAR
     ,(16,"OPERATOR OUTPUT LEVEL",100,0,"")
-    ,(17,"OSC MODE",2,0,"RATIO;FIXED")
+    ,(17,"OSC MODE",2,0,"RATIO;FIXED") -- 5-CHAR (1=UNIQ)
     ,(18,"OSC FREQ COARSE",32,0,"")
     ,(19,"OSC FREQ FINE",100,0,"")
-    ,(20,"OSC DETUNE",15,-7,"-7 - +7") -- 0x14
+    ,(20,"OSC DETUNE",15,-7,"") -- 2-CHAR 0x14=20
     ]
 
 -- | Rewrite 'dx7_op_parameter_tbl' for operator /n/.
@@ -310,6 +330,10 @@ operator_group_structure =
 dx7_op6_dx7_parameter_tbl :: [DX7_Parameter]
 dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1]
 
+-- | USR 3-CHAR string for TRANSPOSE, from C1 to C4
+dx7_transpose_usr :: String
+dx7_transpose_usr = intercalate ";" (take 49 (drop 12 (dx7_pitch_seq False)))
+
 -- | Remainder (non-operator) of parameter table.
 --
 -- > length dx7_sh_parameter_tbl == dx7_sh_nparam
@@ -323,17 +347,18 @@ dx7_sh_parameter_tbl =
     ,(131,"PITCH EG LEVEL 2",100,0,"")
     ,(132,"PITCH EG LEVEL 3",100,0,"")
     ,(133,"PITCH EG LEVEL 4",100,0,"")
-    ,(134,"ALGORITHM #",32,1,"") -- 0x86
-    ,(135,"FEEDBACK",8,0,"")
-    ,(136,"OSCILLATOR SYNC",2,0,"OFF;ON")
+    ,(134,"ALGORITHM #",32,1,"") -- 0x86=134
+    ,(135,"FEEDBACK",8,0,"") -- 1-CHAR
+    ,(136,"OSCILLATOR SYNC",2,0,"OFF;ON ") -- 3-CHAR
     ,(137,"LFO SPEED",100,0,"")
     ,(138,"LFO DELAY",100,0,"")
     ,(139,"LFO PITCH MOD DEPTH",100,0,"")
     ,(140,"LFO AMP MOD DEPTH",100,0,"")
-    ,(141,"LFO SYNC",2,0,"OFF;ON")
-    ,(142,"LFO WAVEFORM",6,0,"TR;SD;SU;SQ;SI;SH")
-    ,(143,"PITCH MOD SENSITIVITY",8,0,"")
-    ,(144,"TRANSPOSE",49,0,"12=C2")]
+    ,(141,"LFO SYNC",2,0,"OFF;ON ") -- 3-CHAR
+    ,(142,"LFO WAVEFORM",6,0,"TR;SD;SU;SQ;SI;SH") -- 2-CHAR
+    ,(143,"PITCH MOD SENSITIVITY",8,0,"") -- 1-CHAR
+    ,(144,"TRANSPOSE",49,0,dx7_transpose_usr) -- 3-CHAR
+    ]
 
 -- | Voice name data is ASCII.
 dx7_name_dx7_parameter_tbl :: [DX7_Parameter]
