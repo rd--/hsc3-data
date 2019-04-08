@@ -17,6 +17,7 @@ import Control.Monad {- base -}
 import qualified Data.ByteString as B {- bytestring -}
 import Data.Char {- base -}
 import Data.Either {- base -}
+import Data.Function {- base -}
 import Data.Int {- base -}
 import Data.List {- base -}
 import qualified Data.List.Split as Split {- split -}
@@ -388,15 +389,17 @@ d50_patch_key_mode_sym p =
 d50_patch_partial_mute_sym :: D50_Patch -> String
 d50_patch_partial_mute_sym p =
   let u = u24_at p 174
-      l = u24_at p 366
+      l = u24_at p (174 + 192)
   in concatMap (d50_usr_ix (error "?") d50_partial_mute_usr) [l,u]
 
--- > d50_patch_set_partial_mute "0110" == [(366,2),(174,1)]
-d50_patch_set_partial_mute :: String -> [(U24,U8)]
+-- | Generate 'D50_Diff' for partial mute given symbolic form.
+--
+-- > d50_patch_set_partial_mute "0110" == [(174,1),(174 + 192,2)]
+d50_patch_set_partial_mute :: String -> D50_Diff
 d50_patch_set_partial_mute sym =
   let f k str = (k,d50_usr_lookup_err d50_partial_mute_usr str)
   in case sym of
-    [c1,c2,c3,c4] -> [f 366 [c1,c2],f 174 [c3,c4]]
+    [c1,c2,c3,c4] -> [f 174 [c3,c4],f (174 + 192) [c1,c2]]
     _ -> error "d50_patch_set_partial_mute?"
 
 -- | Show partial structure for lower and upper tones as 6-character string.
@@ -906,6 +909,13 @@ type D50_Patch = [U8]
 
 -- | D50 param in sequence: U1 U2 U L1 L2 L P.
 type D50_Param = [[U8]]
+
+-- | A list of differences, ie. (ADDRESS,VALUE) pairs.
+type D50_Diff = [(D50_ADDRESS,U8)]
+
+-- | Apply 'D50_Diff' to 'D50_Patch'.
+d50_diff_apply :: D50_Patch -> D50_Diff -> D50_Patch
+d50_diff_apply p d = map snd (T.merge_by_resolve (\x _ -> x) (compare `on` fst) d (zip [0..] p))
 
 -- | Number of D50 non-name parameters.
 --
