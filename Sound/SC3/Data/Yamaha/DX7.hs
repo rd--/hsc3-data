@@ -1,6 +1,6 @@
 -- | Yamaha DX7
 --
---  GS-1 FM = 1981, DX1 & DX7 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
+--  GS-1 FM = 1981, DX1 & DX7 & DX9 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
 --
 -- <https://github.com/asb2m10/dexed/blob/master/Documentation/sysex-format.txt>
 -- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
