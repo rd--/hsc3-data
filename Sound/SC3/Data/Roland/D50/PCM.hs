@@ -1,3 +1,4 @@
+-- | D50 / PCM
 module Sound.SC3.Data.Roland.D50.PCM where
 
 import Sound.SC3.Data.Roland.D50

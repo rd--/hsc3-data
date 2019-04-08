@@ -266,16 +266,16 @@ d50_partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
 -- | Base address, initial offset (ie. past tone or patch name), number of (non-name) parameters.
 --
 -- > sum (map (\ty -> let (_,_,n) = d50_parameter_type_extent ty in n) d50_parameter_type_seq) == 314
--- > 54 * 4 + 38 * 2 + 22 == 314
 -- > let (b,o,n) = d50_parameter_type_extent (last d50_parameter_type_seq) in b + o + n == 424
 d50_parameter_type_extent :: D50_Parameter_Type -> (D50_ADDRESS,U24,U24)
 d50_parameter_type_extent ty =
     case ty of
-      Partial _ _ -> (d50_parameter_type_base_address ty,0,54)
-      Common _ -> (d50_parameter_type_base_address ty,10,38) -- TONE NAME = 10-CHAR
-      Patch -> (d50_parameter_type_base_address ty,18,22) -- PATCH NAME = 18-CHAR
+      Partial _ _ -> (d50_parameter_type_base_address ty,0,d50_partial_parameters_n)
+      Common _ -> (d50_parameter_type_base_address ty,10,d50_common_factors_n) -- TONE NAME = 10-CHAR
+      Patch -> (d50_parameter_type_base_address ty,18,d50_patch_factors_n) -- PATCH NAME = 18-CHAR
 
 -- | Parameter base address (Top address) (4.1), (TYPE,(START-ADDR,END-ADDR))
+--   Segments exclude the three NAME data segments.
 d50_parameter_type_address_segments :: [(D50_Parameter_Type,(D50_ADDRESS,D50_ADDRESS))]
 d50_parameter_type_address_segments =
     let f ty = let (b,o,n) = d50_parameter_type_extent ty
@@ -623,10 +623,14 @@ d50_structure_pp n =
 
 -- * PARTIAL
 
+-- | The number of PARTIAL parameters.
+d50_partial_parameters_n :: Num n => n
+d50_partial_parameters_n = 54
+
 -- | Partial parameters (4.3).
 --   The indices in this table are zero based.
 --
--- > length d50_partial_parameters == 54
+-- > length d50_partial_parameters == d50_partial_parameters_n
 d50_partial_parameters :: [D50_Parameter]
 d50_partial_parameters =
     [(0,"WG Pitch Coarse",73,0,wg_pitch_coarse_usr)
@@ -735,10 +739,14 @@ d50_chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) d50_c
 d50_partial_mute_usr :: String
 d50_partial_mute_usr = "00;10;01;11" -- "MM;SM;MS;SS"
 
+-- | The number of COMMON parameters, excluding the 10-character TONE NAME.
+d50_common_factors_n :: Num n => n
+d50_common_factors_n = 38
+
 -- | Common parameters (4.4).
 --   This table is zero-indexed but does not include the 10-character tone name.
 --
--- > length d50_common_factors == 38
+-- > length d50_common_factors == d50_common_factors_n
 d50_common_factors :: [D50_Parameter]
 d50_common_factors =
     [(10,"Structure No.",7,1,"1 - 7")
@@ -783,7 +791,7 @@ d50_common_factors =
 
 -- | 'd50_common_factors' preceded by 10-byte Tone name.
 --
--- > length d50_common_parameters == 48
+-- > length d50_common_parameters == 10 + d50_common_factors_n
 d50_common_parameters :: [D50_Parameter]
 d50_common_parameters =
     let ch n = (n,"Tone Name " ++ show (n + 1),64,0,d50_char_code_usr)
@@ -819,10 +827,14 @@ d50_common_init_squ =
 
 -- * PATCH
 
+-- | The number of PATCH parameters, excluding 18-charcter PATCH NAME.
+d50_patch_factors_n :: Num n => n
+d50_patch_factors_n = 22
+
 -- | 4.5 Patch Factors.
 --   This table is zero-indexed but does not include the 18-character patch name.
 --
--- > length d50_patch_factors == 22
+-- > length d50_patch_factors == d50_patch_factors_n
 d50_patch_factors :: [D50_Parameter]
 d50_patch_factors =
     [(18,"Key Mode",9,0,d50_key_mode_usr)
@@ -891,6 +903,23 @@ d50_parameter_n = 448
 
 -- | A D50 patch is a 448-byte sequence.
 type D50_Patch = [U8]
+
+-- | D50 param in sequence: U1 U2 U L1 L2 L P.
+type D50_Param = [[U8]]
+
+-- | Number of D50 non-name parameters.
+--
+-- > d50_param_n == 314
+d50_param_n :: Num n => n
+d50_param_n = d50_partial_parameters_n * 4 + d50_common_factors_n * 2 + d50_patch_factors_n
+
+-- | Check D50_Param has correct number of elements (314).
+d50_param_verify :: D50_Param -> Bool
+d50_param_verify = ((==) [54,54,38,54,54,38,22]) . map length
+
+-- | 'D50_Param' of 'D50_Patch'.
+d50_patch_param :: D50_Patch -> D50_Param
+d50_patch_param = map snd . d50_parameter_segment
 
 -- | The D50 parameter address space is sparse, ie. has unused addresses.
 --   Construct an UNUSED parameter.

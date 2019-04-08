@@ -1,3 +1,4 @@
+-- | D50 / Reverb
 module Sound.SC3.Data.Roland.D50.Reverb where
 
 import Sound.SC3.Data.Roland.D50
