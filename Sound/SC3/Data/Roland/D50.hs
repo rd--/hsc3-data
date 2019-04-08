@@ -915,7 +915,7 @@ type D50_Diff = [(D50_ADDRESS,U8)]
 
 -- | Apply 'D50_Diff' to 'D50_Patch'.
 d50_diff_apply :: D50_Patch -> D50_Diff -> D50_Patch
-d50_diff_apply p d = map snd (T.merge_by_resolve (\x _ -> x) (compare `on` fst) d (zip [0..] p))
+d50_diff_apply p d = map snd (T.merge_by_resolve (\x _ -> x) (compare `on` fst) (sort d) (zip [0..] p))
 
 -- | Number of D50 non-name parameters.
 --
