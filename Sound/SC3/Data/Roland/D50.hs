@@ -520,6 +520,10 @@ d50_byte_to_char_err = fromMaybe (error "d50_byte_to_char") . d50_byte_to_char
 d50_char_to_byte :: Char -> Maybe U8
 d50_char_to_byte c = T.reverse_lookup c d50_char_table
 
+-- | Erroring variant.
+d50_char_to_byte_err :: Char -> U8
+d50_char_to_byte_err = fromMaybe (error "d50_char_to_byte?") . d50_char_to_byte
+
 -- * USR/STR
 
 -- | USR 2-character strings naming the 12 pitch-classes.
@@ -923,13 +927,39 @@ d50_diff_apply p d = map snd (T.merge_by_resolve (\x _ -> x) (compare `on` fst) 
 d50_param_n :: Num n => n
 d50_param_n = d50_partial_parameters_n * 4 + d50_common_factors_n * 2 + d50_patch_factors_n
 
+-- | Degree of each element of 'D50_Param'.
+--
+-- > sum d50_param_places == d50_param_n
+d50_param_places :: [Int]
+d50_param_places = [54,54,38,54,54,38,22]
+
+-- | Split sequence of 'd50_param_n' U8 into 'D50_Param'
+d50_param_segment :: [U8] -> D50_Param
+d50_param_segment = Split.splitPlaces d50_param_places
+
 -- | Check D50_Param has correct number of elements (314).
 d50_param_verify :: D50_Param -> Bool
-d50_param_verify = ((==) [54,54,38,54,54,38,22]) . map length
+d50_param_verify = ((==) d50_param_places) . map length
 
 -- | 'D50_Param' of 'D50_Patch'.
 d50_patch_param :: D50_Patch -> D50_Param
 d50_patch_param = map snd . d50_parameter_segment
+
+-- | Addresses for 'D50_Param'
+d50_patch_param_addr :: [[D50_ADDRESS]]
+d50_patch_param_addr = map ((\(p,q) -> [p .. q]) . snd) d50_parameter_type_address_segments
+
+-- | Make (ADDRESS,VALUE) sequence for 'D50_Param'
+d50_patch_param_cons :: D50_Param -> [(D50_ADDRESS, U8)]
+d50_patch_param_cons p = zip (concat d50_patch_param_addr) (concat p)
+
+-- | Make (ADDRESS,VALUE) sequence for 'D50_Patch_Name_Set' and 'D50_Param'
+d50_patch_cons :: D50_Patch_Name_Set -> D50_Param -> [(D50_ADDRESS, U8)]
+d50_patch_cons nm pr = sort (d50_patch_name_set_cons nm ++ d50_patch_param_cons pr)
+
+-- | Make 'D50_Patch' given 'D50_Patch_Name_Set' and 'D50_Param'
+d50_patch_gen :: D50_Patch_Name_Set -> D50_Param -> D50_Patch
+d50_patch_gen nm pr = d50_diff_apply (replicate d50_parameter_n 0) (d50_patch_cons nm pr)
 
 -- | The D50 parameter address space is sparse, ie. has unused addresses.
 --   Construct an UNUSED parameter.
@@ -1052,14 +1082,30 @@ d50_tone_name t =
   take 10 .
   u24_drop (d50_parameter_type_base_address (Common t))
 
--- | (patch-name,upper-tone-name,lower-tone-name).
-d50_patch_name_set :: D50_Patch -> (String,String,String)
-d50_patch_name_set p = (d50_patch_name p,d50_tone_name Upper p,d50_tone_name Lower p)
+-- | (UPPER-TONE-NAME,LOWER-TONE-NAME,PATCH-NAME), ie. in address sequence.
+type D50_Patch_Name_Set = (String,String,String)
+
+-- | Addresses for 'D50_Patch_Name_Set'
+d50_patch_name_set_addr :: [[D50_ADDRESS]]
+d50_patch_name_set_addr =
+  let i = map d50_parameter_type_base_address [Common Upper,Common Lower,Patch]
+      j = [10,10,18]
+  in zipWith (\x y -> [x .. x + y]) i j
+
+d50_patch_name_set_cons :: D50_Patch_Name_Set -> [(D50_ADDRESS, U8)]
+d50_patch_name_set_cons (u,l,p) =
+  zip
+  (concat d50_patch_name_set_addr)
+  (map d50_char_to_byte_err (concat [u,l,p]))
+
+-- | 'D50_Patch_Name_Set' of 'D50_Patch'.
+d50_patch_name_set :: D50_Patch -> D50_Patch_Name_Set
+d50_patch_name_set p = (d50_tone_name Upper p,d50_tone_name Lower p,d50_patch_name p)
 
 -- | Patch name set pretty printed.
 d50_patch_name_set_pp :: D50_Patch -> String
 d50_patch_name_set_pp p =
-  let (n,u,l) = d50_patch_name_set p
+  let (u,l,n) = d50_patch_name_set p
   in concat [n," U: ",u," L: ",l]
 
 -- * SYSEX
