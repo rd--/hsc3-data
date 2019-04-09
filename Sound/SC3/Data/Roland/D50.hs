@@ -1085,6 +1085,12 @@ d50_tone_name t =
 -- | (UPPER-TONE-NAME,LOWER-TONE-NAME,PATCH-NAME), ie. in address sequence.
 type D50_Patch_Name_Set = (String,String,String)
 
+-- | Empty names, all characters are /c/.
+--
+-- > d50_patch_name_set_nil '-' == ("----------","----------","------------------")
+d50_patch_name_set_nil :: Char -> D50_Patch_Name_Set
+d50_patch_name_set_nil c = (replicate 10 c,replicate 10 c,replicate 18 c)
+
 -- | Addresses for 'D50_Patch_Name_Set'
 d50_patch_name_set_addr :: [[D50_ADDRESS]]
 d50_patch_name_set_addr =
