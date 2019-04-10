@@ -15,7 +15,10 @@ import Sound.SC3.Data.Roland.D50.Hash {- hsc3-data -}
 -- * SYX-DB-TREE
 
 -- | (SYX-NAME,FILE-NAME,[(PATCH-INDEX/ONE-INDEXED,PATCH)])
-type D50_SYX_DB_TREE = [(String, FilePath, [(Int, D50_Patch)])]
+type D50_SYX_DAT = (String, FilePath, [(Int, D50_Patch)])
+
+-- | Sequence of SYX-DAT
+type D50_SYX_DB_TREE = [D50_SYX_DAT]
 
 -- | Scan /dir/ for ".syx" files and make DB tree.
 d50_syx_db_tree :: FilePath -> IO D50_SYX_DB_TREE
@@ -45,8 +48,8 @@ d50_syx_vc_patch :: D50_SYX_VC -> D50_Patch
 d50_syx_vc_patch (_,_,_,p,_,_,_) = p
 
 -- | CSV entry for (PATCH-HASH,PATCH-PARAM)
-vc_hash_params_csv :: D50_SYX_VC -> [String]
-vc_hash_params_csv (_,_,_,_,_,h,r) = [d50_hash_pp h,T.byte_seq_hex_pp False (concat r)]
+vc_hash_param_csv :: D50_SYX_VC -> [String]
+vc_hash_param_csv (_,_,_,_,_,h,r) = [d50_hash_pp h,T.byte_seq_hex_pp False (concat r)]
 
 -- | CSV entry for (PATCH-HASH,PATCH-NAME-SET)
 vc_hash_names_csv :: D50_SYX_VC -> [String]
@@ -55,24 +58,27 @@ vc_hash_names_csv (_,_,_,_,(u,l,p),h,_) = [d50_hash_pp h,u,l,p]
 -- | SYX DB.
 type D50_SYX_DB = [D50_SYX_VC]
 
+-- | Flatten D50_SYX_DAT.
+d50_syx_dat_seq :: D50_SYX_DAT -> [D50_SYX_VC]
+d50_syx_dat_seq (nm,fn,vc) =
+  let (ix,p) = unzip vc
+      n = map d50_patch_name_set p
+      h = map d50_patch_hash p
+      r = map d50_patch_param p
+  in zip7 (repeat nm) (repeat fn) ix p n h r
+
 -- | Scan /dir/ for ".syx" files and make DB.
 d50_syx_db :: FilePath -> IO D50_SYX_DB
 d50_syx_db dir = do
-  let f (nm,fn,vc) =
-        let (ix,p) = unzip vc
-            n = map d50_patch_name_set p
-            h = map d50_patch_hash p
-            r = map d50_patch_param p
-        in zip7 (repeat nm) (repeat fn) ix p n h r
   t <- d50_syx_db_tree dir
-  return (concatMap f t)
+  return (concatMap d50_syx_dat_seq t)
 
 -- | Write SYX-DB to files at /dir/.
---   The DB is stored as two CSV files, d50-names and d50-params.
+--   The DB is stored as two CSV files, d50-names and d50-param.
 db_store :: FilePath -> D50_SYX_DB -> IO ()
 db_store dir db = do
   T.csv_table_write_def id (dir </> "d50-names.csv") (map vc_hash_names_csv db)
-  T.csv_table_write_def id (dir </> "d50-params.csv") (map vc_hash_params_csv db)
+  T.csv_table_write_def id (dir </> "d50-param.csv") (map vc_hash_param_csv db)
 
 -- | Lookup DB by hash.
 d50_syx_db_get :: D50_SYX_DB -> D50_Hash -> D50_SYX_VC
@@ -87,7 +93,7 @@ type D50_Hash_DB = ([(D50_Hash,D50_Patch_Name_Set)],[(D50_Hash,D50_Param)])
 d50_hash_db_load :: FilePath -> IO D50_Hash_DB
 d50_hash_db_load dir = do
   nm <- T.csv_table_read_def id (dir </> "d50-names.csv")
-  pr <- T.csv_table_read_def id (dir </> "d50-params.csv")
+  pr <- T.csv_table_read_def id (dir </> "d50-param.csv")
   let nm_f [h,u,l,n] = (d50_hash_parse h,(u,l,n))
       nm_f _ = error "d50_hash_db_load: nm_f?"
       pr_f [h,r] = (d50_hash_parse h,d50_param_segment (T.read_hex_byte_seq r))

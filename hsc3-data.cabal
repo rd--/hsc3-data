@@ -118,6 +118,7 @@ Library
                    Sound.SC3.Data.Yamaha.DX7.AFX
                    Sound.SC3.Data.Yamaha.DX7.Algorithm
                    Sound.SC3.Data.Yamaha.DX7.CART
+                   Sound.SC3.Data.Yamaha.DX7.DB
                    Sound.SC3.Data.Yamaha.DX7.Dexed
                    Sound.SC3.Data.Yamaha.DX7.Hash
                    Sound.SC3.Data.Yamaha.DX7.PX7

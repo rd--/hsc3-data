@@ -22,6 +22,7 @@ import qualified System.Process as Process {- process -}
 import qualified Music.Theory.Byte as Byte {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Math.Convert as T {- hmt -}
+import qualified Music.Theory.String as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 
@@ -487,6 +488,9 @@ dx7_function_parameters_tbl =
 -- | Extract 10 character voice name from 'DX7_Voice'.
 dx7_voice_name :: Char -> DX7_Voice -> String
 dx7_voice_name c v = map (dx7_ascii_char c . Byte.word8_at v) [145 .. 154]
+
+dx7_voice_name_dtw :: DX7_Voice -> String
+dx7_voice_name_dtw = T.delete_trailing_whitespace . dx7_voice_name '?'
 
 -- | Encode ASCII name to U8 sequence.
 dx7_name_encode :: Char -> String -> [U8]
