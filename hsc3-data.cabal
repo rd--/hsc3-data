@@ -97,6 +97,7 @@ Library
                    Sound.SC3.Data.Modal
                    Sound.SC3.Data.PVOC
                    Sound.SC3.Data.Roland.D50
+                   Sound.SC3.Data.Roland.D50.DB
                    Sound.SC3.Data.Roland.D50.Hash
                    Sound.SC3.Data.Roland.D50.PCM
                    Sound.SC3.Data.Roland.D50.PM

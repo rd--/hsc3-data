@@ -276,7 +276,7 @@ d50_parameter_type_extent ty =
       Patch -> (d50_parameter_type_base_address ty,18,d50_patch_factors_n) -- PATCH NAME = 18-CHAR
 
 -- | Parameter base address (Top address) (4.1), (TYPE,(START-ADDR,END-ADDR))
---   Segments exclude the three NAME data segments.
+--   Segments INCLUDE the three NAME data segments.
 d50_parameter_type_address_segments :: [(D50_Parameter_Type,(D50_ADDRESS,D50_ADDRESS))]
 d50_parameter_type_address_segments =
     let f ty = let (b,o,n) = d50_parameter_type_extent ty
@@ -284,6 +284,7 @@ d50_parameter_type_address_segments =
     in map f d50_parameter_type_seq
 
 -- | Split sequence into groups based on 'D50_Parameter_Type' sequence.
+--   Segments INCLUDE the NAME data segments.
 --
 -- > p29 = p !! 29
 -- > d50_patch_name_set_pp p29
@@ -941,13 +942,20 @@ d50_param_segment = Split.splitPlaces d50_param_places
 d50_param_verify :: D50_Param -> Bool
 d50_param_verify = ((==) d50_param_places) . map length
 
+-- | Addresses for 'D50_Param'
+--
+-- > map length d50_patch_param_addr == d50_param_places
+-- > map 
+d50_patch_param_addr :: [[D50_ADDRESS]]
+d50_patch_param_addr =
+  let f x (_,(p,q)) = drop x [p .. q]
+  in zipWith f [0,0,10,0,0,10,18] d50_parameter_type_address_segments
+
 -- | 'D50_Param' of 'D50_Patch'.
 d50_patch_param :: D50_Patch -> D50_Param
-d50_patch_param = map snd . d50_parameter_segment
-
--- | Addresses for 'D50_Param'
-d50_patch_param_addr :: [[D50_ADDRESS]]
-d50_patch_param_addr = map ((\(p,q) -> [p .. q]) . snd) d50_parameter_type_address_segments
+d50_patch_param p =
+  let f = map (u24_at p)
+  in map f d50_patch_param_addr
 
 -- | Make (ADDRESS,VALUE) sequence for 'D50_Param'
 d50_patch_param_cons :: D50_Param -> [(D50_ADDRESS, U8)]
@@ -966,7 +974,7 @@ d50_patch_gen nm pr = d50_diff_apply (replicate d50_parameter_n 0) (d50_patch_co
 d50_unused_parameter :: U24 -> D50_Parameter
 d50_unused_parameter ix = (ix,"UNUSED",1,0,"")
 
--- | Complete 'D50_Parameter' sequence, including all /unused/ parmaters.
+-- | Complete 'D50_Parameter' sequence, including all /unused/ parameters.
 --
 -- > length d50_parameters_seq == d50_parameter_n
 -- > map parameter_ix d50_parameters_seq == [0 .. d50_parameter_n - 1]
@@ -1092,12 +1100,17 @@ d50_patch_name_set_nil :: Char -> D50_Patch_Name_Set
 d50_patch_name_set_nil c = (replicate 10 c,replicate 10 c,replicate 18 c)
 
 -- | Addresses for 'D50_Patch_Name_Set'
+--
+-- > sum (map length d50_patch_name_set_addr) == 38
 d50_patch_name_set_addr :: [[D50_ADDRESS]]
 d50_patch_name_set_addr =
   let i = map d50_parameter_type_base_address [Common Upper,Common Lower,Patch]
       j = [10,10,18]
-  in zipWith (\x y -> [x .. x + y]) i j
+  in zipWith (\x y -> [x .. x + y - 1]) i j
 
+-- | Make (ADDRESS,VALUE) set for 'D50_Patch_Name_Set'
+--
+-- > d50_diff_csv_e (d50_patch_name_set_cons (d50_patch_name_set_nil '-'))
 d50_patch_name_set_cons :: D50_Patch_Name_Set -> [(D50_ADDRESS, U8)]
 d50_patch_name_set_cons (u,l,p) =
   zip
@@ -1417,15 +1430,15 @@ d50_parameter_csv (a,x) (ty,p) =
                        ,d50_parameter_value_usr_def "??" p x]
 
 -- | Given sequence of parameter values, generate /CSV/ of patch, unused param are Left.
-d50_patch_csv_e :: D50_Patch -> [Either D50_ADDRESS String]
-d50_patch_csv_e =
+d50_diff_csv_e :: D50_Diff -> [Either D50_ADDRESS String]
+d50_diff_csv_e =
     let f (a,v) =
           case d50_address_to_parameter a of
             Just p -> Right (d50_parameter_csv (a,v) p)
             _ -> if v == 0
                  then Left a
-                 else error ("d50_patch_csv: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v))
-    in map f . zip [0 ..]
+                 else error ("d50_diff_csv_e: VALUE NOT ZERO AT NON-PARAMETER ADDRESS" ++ show (a,v))
+    in map f
 
 {- | 'd50_patch_csv_e', if /u/ write unused entries as empty rows, else discard them.
 
@@ -1438,7 +1451,8 @@ d50_patch_csv u =
   let hdr = "ADDRESS,PARAMETER-TYPE,INDEX,NAME,VALUE,RANGE,VALUE-USER"
   in (hdr :) .
      (if u then map (either (\a -> show a ++ ",,,,,,") id) else rights) .
-     d50_patch_csv_e
+     d50_diff_csv_e .
+     zip [0..]
 
 -- * HEX I/O
 
@@ -1499,3 +1513,17 @@ d50_load_sysex fn = do
   case d50_bulk_data_transfer_parse (d50_dsc_seq_join dsc) of
     Just r -> return r
     Nothing -> error "d50_load_sysex?"
+
+{-
+let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
+(p,_) <- d50_load_sysex sysex_fn
+p0 = p !! 0
+d50_patch_group_pp p0
+n = d50_patch_name_set p0
+r = d50_patch_param p0
+d50_diff_csv_e (d50_patch_name_set_cons n)
+map (d50_parameter_name . u24_at d50_parameters_seq) (map fst (d50_patch_param_cons r))
+d50_diff_csv_e (d50_patch_param_cons r)
+d50_patch_group_pp (d50_patch_gen n r)
+-}
+
