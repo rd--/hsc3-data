@@ -1,10 +1,9 @@
 import Control.Monad {- base -}
 import Control.Exception {- base -}
-import Data.Maybe {- base -}
-import System.Environment {- base -}
-import System.Exit {- base -}
 
 import UI.HSCurses.Curses {- hscurses -}
+
+import Music.Theory.Opt {- hmt -}
 
 import Sound.OSC.FD {- hosc -}
 
@@ -23,34 +22,20 @@ proc_msg w m =
           set_str w (fromIntegral x,fromIntegral y) (ascii_to_string str)
       _ -> return ()
 
-usage :: IO ()
-usage = putStrLn "text-osc [-p port-number]" >> exitSuccess
+help :: [String]
+help = ["text-osc"]
+
+opt_def :: [OPT_USR]
+opt_def = [("port","57350","int","UDP port number")]
 
 main :: IO ()
 main = do
-  a <- getArgs
-  when (has_opt "-h" a) usage
-  let p' = fromMaybe 57350 (get_opt_arg_read "-p" a)
+  (o,_a) <- get_opt_arg help opt_def
   initCurses
   w <- initScr
   let f fd = forever (recvMessage fd >>= maybe (return ()) (proc_msg w))
-      t = udpServer "127.0.0.1" p'
+      t = udpServer "127.0.0.1" (opt_read o "port")
   finally (withTransport t f) endWin
-
--- ...
-
-has_opt :: Eq a => a -> [a] -> Bool
-has_opt nm a = nm `elem` a
-
-get_opt_arg :: Eq a => a -> [a] -> Maybe a
-get_opt_arg nm a =
-    case a of
-      [p] -> if p == nm then error "get_opt_arg: no arg" else Nothing
-      p:q:a' -> if p == nm then Just q else get_opt_arg nm (q:a')
-      _ -> Nothing
-
-get_opt_arg_read :: Read a => String -> [String] -> Maybe a
-get_opt_arg_read nm = fmap read . get_opt_arg nm
 
 {-
 fd <- openUDP "127.0.0.1" 57350

@@ -7,7 +7,9 @@ Read incoming OSC messages and maintain curses window.
 `/set_str x y txt` writes `txt` at line `x` and column `y`.
 
 ~~~~
-$ hsc3-text-osc -h
-text-osc [-p port-number]
+$ hsc3-text-osc --help
+text-osc [opt]
+
+  port:int -- UDP port number; default=57350
 $
 ~~~~
