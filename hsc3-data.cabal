@@ -104,6 +104,7 @@ Library
                    Sound.SC3.Data.Roland.D50.PCM
                    Sound.SC3.Data.Roland.D50.PM
                    Sound.SC3.Data.Roland.D50.Reverb
+                   Sound.SC3.Data.SFZ
                    Sound.SC3.Data.Timestamp
                    Sound.SC3.Data.Trace
                    Sound.SC3.Data.URandom

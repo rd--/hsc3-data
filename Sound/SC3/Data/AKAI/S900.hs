@@ -188,9 +188,11 @@ fn = "/home/rohan/AKAI/ANALOG.img"
 r <- s900_read_img fn
 (e,d) = unzip r
 e
-let s = d !! 8
+let s = d !! 2
 s900_sf_hdr (take 60 s)
 x = s900_sf_data_unpack 1800 (drop 60 s)
+length x
 import Sound.SC3.Plot
 plotTable1 (map i12_to_int x)
+plotTable1 (map i12_to_int (take 45 (drop 0 x)))
 -}
