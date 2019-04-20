@@ -14,78 +14,23 @@ Hamamatsu, JP, 1987.
 module Sound.SC3.Data.Roland.D50 where
 
 import Control.Monad {- base -}
-import qualified Data.ByteString as B {- bytestring -}
 import Data.Char {- base -}
 import Data.Either {- base -}
 import Data.Function {- base -}
-import Data.Int {- base -}
 import Data.List {- base -}
-import qualified Data.List.Split as Split {- split -}
 import Data.Maybe {- base -}
-import Data.Word {- base -}
 import Text.Printf {- base -}
 
+import qualified Data.ByteString as B {- bytestring -}
+import qualified Data.List.Split as Split {- split -}
+
 import qualified Music.Theory.Byte as T {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Tuple as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Constant as M {- midi-osc -}
 
--- * UTIL
-
--- | 8-bit unsigned integer, ie. parameter values, midi data etc.
-type U8 = Word8
-
--- | 8-bit signed integer, ie. USR-OFFSET
-type I8 = Int8
-
--- | 24-bit unsigned integer, ie. ADDRESS and related offsets and extents.
-type U24 = Word32
-
-int_to_u8 :: Int -> U8
-int_to_u8 = fromMaybe (error "int_to_u8") . T.int_to_word8_maybe
-
-u24_max :: Num n => n
-u24_max = 16777215 -- 2^24 - 1
-
-int_to_u24 :: Int -> U24
-int_to_u24 n = if n < 0 || n > u24_max then error "int_to_u24" else fromIntegral n
-
-u8_to_i8 :: U8 -> I8
-u8_to_i8 = T.word8_to_int8
-
-u8_to_u24 :: U8 -> U24
-u8_to_u24 = T.word8_to_word32
-
-u8_length :: [t] -> U8
-u8_length = int_to_u8 . length
-
-u8_at :: [t] -> U8 -> t
-u8_at = genericIndex
-
-u24_length :: [t] -> U24
-u24_length = int_to_u24 . length
-
-u24_at :: [t] -> U24 -> t
-u24_at = genericIndex
-
-u24_drop :: U24 -> [t] -> [t]
-u24_drop = genericDrop
-
-u24_split_at :: U24 -> [t] -> ([t], [t])
-u24_split_at = genericSplitAt
-
--- | Unpack 'U24' to 'U8', MSB-LSB.
-u24_unpack :: U24 -> [U8]
-u24_unpack = T.t3_to_list . M.bits_21_sep_be
-
--- | Pack 'U24' from three 'U8', MSB-LSB.
---
--- > map u24_pack [[0x02,0x00,0x00],[0x02,0x0F,0x00]] == [0x8000,0x8780]
-u24_pack :: [U8] -> U24
-u24_pack = M.bits_21_join_be . T.t3_from_list
+import Sound.SC3.Data.Byte {- hsc3-data -}
 
 -- | Range as @p - q@.
 --
@@ -169,7 +114,7 @@ d50_parameter_type_sym ty =
 
 -- * PARAMETER
 
--- | (INDEX,NAME,STEPS,USR-OFFSET,USR-STRING)
+-- | (INDEX:U24,NAME,STEPS:U8,USR-OFFSET:I8,USR-STRING)
 type D50_Parameter = (U24,String,U8,I8,String)
 
 d50_parameter_ix :: D50_Parameter -> U24
@@ -1197,7 +1142,7 @@ d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.k_Sysex_End]
 -- | Generate ADDR/SIZE category of D-50 SYSEX messages.
 d50_addr_sz_cmd_gen :: D50_SYSEX_CMD -> U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_addr_sz_cmd_gen cmd ch addr sz =
-    let dat = u24_unpack addr ++ u24_unpack sz
+    let dat = u21_unpack_be addr ++ u21_unpack_be sz
     in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]
 
 -- | Generate WSD command SYSEX.
@@ -1293,14 +1238,14 @@ d50_data_chk (dat_chk,dat_chk_n) =
 d50_data_addr :: ([U8],U24) -> Maybe (U24,[U8],U24)
 d50_data_addr (dat,dat_n) =
     case dat of
-      a0:a1:a2:dat' -> Just (u24_pack [a0,a1,a2],dat',dat_n - 3)
+      a0:a1:a2:dat' -> Just (u21_pack_be [a0,a1,a2],dat',dat_n - 3)
       _ -> Nothing
 
 -- | Parse addr/size command from SYSEX.
 d50_addr_sz_cmd_parse :: D50_Sysex -> Maybe (U8,D50_SYSEX_CMD,D50_ADDRESS,U24)
 d50_addr_sz_cmd_parse syx =
   case d50_cmd_parse syx of
-    Just (ch,cmd,[a1,a2,a3,s1,s2,s3],6) -> Just (ch,cmd,u24_pack [a1,a2,a3],u24_pack [s1,s2,s3])
+    Just (ch,cmd,[a1,a2,a3,s1,s2,s3],6) -> Just (ch,cmd,u21_pack_be [a1,a2,a3],u21_pack_be [s1,s2,s3])
     _ -> Nothing
 
 -- * D50 DSC SYSEX (DT1|DAT)
@@ -1342,7 +1287,7 @@ d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 -- > d50_sysex_pp (d50_dsc_gen (DT1_CMD,0,409,[0x10])) == "F0410014120003191054F7"
 d50_dsc_gen :: D50_DSC -> D50_Sysex
 d50_dsc_gen (cmd,ch,a,d) =
-    let dat = u24_unpack a ++ d
+    let dat = u21_unpack_be a ++ d
     in if length d > 256
        then error "d50_dsc_gen: #DATA > 256"
        else concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk dat]

@@ -3,6 +3,7 @@ module Sound.SC3.Data.Roland.D50.PM where
 
 import qualified Sound.Midi.PM as PM {- midi-osc -}
 
+import Sound.SC3.Data.Byte {- hsc3-data -}
 import Sound.SC3.Data.Roland.D50 {- hsc3-data -}
 
 -- | Send ACK sysex.
