@@ -57,6 +57,8 @@ sfz_parse_pitch s =
     Just n -> n
     _ -> T.pitch_to_midi (T.parse_iso_pitch_err s)
 
+-- | An opcode is written key=value.
+--
 -- > sfz_parse_opcode "pitch_keycenter=C4"
 sfz_parse_opcode :: String -> SFZ_Opcode
 sfz_parse_opcode s =
@@ -64,7 +66,7 @@ sfz_parse_opcode s =
     (k,'=':v) -> (k,v)
     _ -> error "sfz_parse_opcode?"
 
--- | Sections tokens (<group> and <region>) start with <.
+-- | Section tokens (<group> and <region>) start with <.
 sfz_is_section :: String -> Bool
 sfz_is_section s =
   case s of
@@ -77,6 +79,7 @@ sfz_tokens_group =
   filter (not . null) .
   (Split.split . Split.keepDelimsL . Split.whenElt) sfz_is_section
 
+-- | Collate grouped token sequence into regions.
 sfz_collate :: [[String]] -> [SFZ_Region]
 sfz_collate =
   let recur gr tk =
@@ -87,6 +90,7 @@ sfz_collate =
           _ -> error "sfz_collate?"
   in recur []
 
+-- | Load tokens, group and collate into regions.
 sfz_load_regions :: FilePath -> IO [SFZ_Region]
 sfz_load_regions fn = do
   tk <- sfz_load_tokens fn
@@ -94,23 +98,26 @@ sfz_load_regions fn = do
 
 -- * LOOKUP
 
+-- | Lookup in region opcodes, then in group if not located.
 sfz_region_lookup :: SFZ_Region -> String -> Maybe String
 sfz_region_lookup (gr,c) k =
   case lookup k c of
     Just r -> Just r
     Nothing -> lookup k gr
 
+-- | Erroring variant.
 sfz_region_lookup_err :: SFZ_Region -> String -> String
 sfz_region_lookup_err r = fromMaybe (error "sfz_region_lookup?") . sfz_region_lookup r
 
+-- | Lookup with default value and parser.
 sfz_region_lookup_f :: t -> (String -> t) -> SFZ_Region -> String -> t
 sfz_region_lookup_f z f r = maybe z f . sfz_region_lookup r
 
+-- | Lookup default value and read instance.
 sfz_region_lookup_read :: Read t => t -> SFZ_Region -> String -> t
 sfz_region_lookup_read z = sfz_region_lookup_f z read
 
-sfz_region_sample :: SFZ_Region -> String
-sfz_region_sample r = sfz_region_lookup_err r "sample"
+-- * NAMED
 
 sfz_region_volume :: SFZ_Region -> Double
 sfz_region_volume r = sfz_region_lookup_read 0 r "volume"
@@ -118,8 +125,26 @@ sfz_region_volume r = sfz_region_lookup_read 0 r "volume"
 sfz_region_pan :: SFZ_Region -> Double
 sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 
+sfz_region_sample :: SFZ_Region -> FilePath
+sfz_region_sample r = sfz_region_lookup_err r "sample"
+
 sfz_region_pitch_keycenter :: SFZ_Region -> Int
 sfz_region_pitch_keycenter r = sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_keycenter"
+
+sfz_region_loop_mode :: SFZ_Region -> Maybe String
+sfz_region_loop_mode r = sfz_region_lookup r "loop_mode"
+
+sfz_region_loop_start :: SFZ_Region -> Int
+sfz_region_loop_start r = sfz_region_lookup_read 60 r "loop_start"
+
+sfz_region_loop_end :: SFZ_Region -> Int
+sfz_region_loop_end r = sfz_region_lookup_read 60 r "loop_end"
+
+sfz_region_ampeg_attack :: SFZ_Region -> Double
+sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
+
+sfz_region_ampeg_release :: SFZ_Region -> Double
+sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 
 {-
 
@@ -130,6 +155,9 @@ sfz_region_sample r
 sfz_region_volume r
 sfz_region_pan r
 sfz_region_pitch_keycenter r
-
-
+sfz_region_loop_mode r
+sfz_region_loop_start r
+sfz_region_loop_end r
+sfz_region_ampeg_attack r
+sfz_region_ampeg_release r
 -}
