@@ -18,7 +18,7 @@ akp_kgrp_chunks :: CHUNK -> [CHUNK]
 akp_kgrp_chunks ch =
   case ch of
     (("kgrp",344),dat) -> riff_parse_chunk_seq dat
-    _ -> error "akp_prg_parse?"
+    _ -> error "akp_kgrp_chunks?"
 
 -- | Read AKP file.
 --   The structure is a sequence of six header CHUNKS followed by a sequence of kgrp CHUNKS.
