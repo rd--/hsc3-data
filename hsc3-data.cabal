@@ -57,7 +57,8 @@ Library
                    xml,
                    zmidi-core
   GHC-Options:     -Wall -fwarn-tabs
-  Exposed-modules: Sound.SC3.Data.AKAI.S900
+  Exposed-modules: Sound.SC3.Data.AKAI.AKP
+                   Sound.SC3.Data.AKAI.S900
                    Sound.SC3.Data.Array.CSV
                    Sound.SC3.Data.ATS
                    Sound.SC3.Data.Bitmap.Font.BDF

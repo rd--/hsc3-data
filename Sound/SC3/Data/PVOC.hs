@@ -1,43 +1,16 @@
 -- | <http://www.csounds.com/manual/html/pvanal.html>
 module Sound.SC3.Data.PVOC where
 
-import Data.Char {- base -}
-import Data.List {- base -}
-import Numeric {- base -}
 import Data.Word {- base -}
 
 import qualified Data.ByteString.Lazy as L {- bytestring -}
-import qualified Data.List.Split as Split {- split -}
 import qualified Data.Vector.Unboxed as V {- vector -}
 
 import qualified Sound.OSC.Coding.Byte as O {- hosc -}
 import qualified Sound.OSC.Coding.Convert as O {- hosc -}
 
+import qualified Sound.File.RIFF as R {- hsc3-sf -}
 import qualified Sound.File.WAVE as W {- hsc3-sf -}
-
--- | RIFF
-
--- | Hex pretty-printer, upper-case, pad-left.
---
--- > map (show_hex_uc 2) [0x00,0x0F,0xF0] == ["00","0F","F0"]
-show_hex_uc :: (Show n,Integral n) => Int -> n -> String
-show_hex_uc n =
-  let pad_left k l = replicate (n - length l) k ++ l
-  in pad_left '0' . map toUpper . flip showHex ""
-
--- | Split GUID into 4-2-2-2-8 structure.
-riff_guid_segment :: [Word8] -> [[Word8]]
-riff_guid_segment = Split.splitPlaces [4::Int,2,2,2,8]
-
--- | Pretty print GUID, with grouping and byte-ordering.
---
--- > riff_guid_pp pvx_guid_u8 == pvx_guid_text
-riff_guid_pp :: [Word8] -> String
-riff_guid_pp w =
-    let f op = concatMap (show_hex_uc 2) . op
-        w' = riff_guid_segment w
-        w'' = zipWith f (replicate 3 reverse ++ replicate 2 id) w'
-    in intercalate "-" w''
 
 -- | PVOC-EX files
 
@@ -47,9 +20,6 @@ pvx_guid_text = "8312B9C2-2E6E-11D4-A824-DE5B96C3AB21"
 -- > map (show_hex_uc 2) pvx_guid_u8
 pvx_guid_u8 :: [Word8]
 pvx_guid_u8 = [194,185,18,131,110,46,212,17,168,36,222,91,150,195,171,33]
-
-decode_guid :: L.ByteString -> String
-decode_guid = riff_guid_pp . L.unpack
 
 data PVOC_WORDFORMAT =
     PVOC_IEEE_FLOAT | PVOC_IEEE_DOUBLE
@@ -105,35 +75,35 @@ fmt_pvoc_80_pp = plain_record_pp . show
 fmt_pvoc_80_parse_dat :: L.ByteString -> WAVE_FMT_PVOC_80
 fmt_pvoc_80_parse_dat dat =
     WAVE_FMT_PVOC_80
-    (O.decode_word16_le (W.section 16 2 dat))
-    (O.decode_word16_le (W.section 18 2 dat))
-    (O.decode_word32_le (W.section 20 4 dat))
-    (decode_guid (W.section 24 16 dat))
-    (O.decode_word32_le (W.section 40 4 dat))
-    (O.decode_word32_le (W.section 44 4 dat))
-    (O.word16_to_enum (O.decode_word16_le (W.section 48 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (W.section 50 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (W.section 52 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (W.section 54 2 dat)))
-    (O.decode_word32_le (W.section 56 4 dat))
-    (O.decode_word32_le (W.section 60 4 dat))
-    (O.decode_word32_le (W.section 64 4 dat))
-    (O.decode_word32_le (W.section 68 4 dat))
-    (O.decode_f32_le (W.section 72 4 dat))
-    (O.decode_f32_le (W.section 76 4 dat))
+    (O.decode_word16_le (R.section 16 2 dat))
+    (O.decode_word16_le (R.section 18 2 dat))
+    (O.decode_word32_le (R.section 20 4 dat))
+    (R.decode_guid (R.section 24 16 dat))
+    (O.decode_word32_le (R.section 40 4 dat))
+    (O.decode_word32_le (R.section 44 4 dat))
+    (O.word16_to_enum (O.decode_word16_le (R.section 48 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (R.section 50 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (R.section 52 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (R.section 54 2 dat)))
+    (O.decode_word32_le (R.section 56 4 dat))
+    (O.decode_word32_le (R.section 60 4 dat))
+    (O.decode_word32_le (R.section 64 4 dat))
+    (O.decode_word32_le (R.section 68 4 dat))
+    (O.decode_f32_le (R.section 72 4 dat))
+    (O.decode_f32_le (R.section 76 4 dat))
 
 fmt_pvoc_80_check_guid :: WAVE_FMT_PVOC_80 -> Bool
 fmt_pvoc_80_check_guid f = subFormat f /= pvx_guid_text
 
 type PVOC_HDR = (W.WAVE_FMT_16,WAVE_FMT_PVOC_80)
 
-fmt_pvoc_80_parse :: W.CHUNK -> PVOC_HDR
+fmt_pvoc_80_parse :: R.CHUNK -> PVOC_HDR
 fmt_pvoc_80_parse ((ty,sz),dat) =
     case (ty,sz) of
       ("fmt ",80) -> (W.wave_fmt_16_parse_dat dat,fmt_pvoc_80_parse_dat dat)
       _ -> error "fmt_pvoc_80_parse"
 
-type PVOC_RAW = (PVOC_HDR,W.CHUNK)
+type PVOC_RAW = (PVOC_HDR,R.CHUNK)
 
 pvoc_nc :: PVOC_HDR -> Int
 pvoc_nc = O.word16_to_int . W.numChannels . fst
@@ -150,14 +120,14 @@ pvoc_data_parse_f32 ((wv,pv),((ty,sz),dat)) =
         nf = n `div` (nc * nb * 2)
     in if ty /= "data" || wWordFormat pv /= PVOC_IEEE_FLOAT || dwDataSize pv /= 32
        then error "pvoc_data_parse_f32"
-       else (n,nf,V.generate n (\i -> O.decode_f32_le (W.section_int (i * 4) 4 dat)))
+       else (n,nf,V.generate n (\i -> O.decode_f32_le (R.section_int (i * 4) 4 dat)))
 
 type PVOC_VEC_F32 = (PVOC_HDR,(Int,Int,V.Vector Float))
 
 pvoc_load_vec_f32 :: FilePath -> IO PVOC_VEC_F32
 pvoc_load_vec_f32 fn = do
   c <- W.wave_load_ch fn
-  case (W.find_chunk "fmt " c,W.find_chunk "data" c) of
+  case (R.find_chunk "fmt " c,R.find_chunk "data" c) of
     (Just fmt,Just dat) -> let hdr = fmt_pvoc_80_parse fmt
                                vec = pvoc_data_parse_f32 (hdr,dat)
                            in return (hdr,vec)
