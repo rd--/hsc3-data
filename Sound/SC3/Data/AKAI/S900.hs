@@ -8,6 +8,7 @@ module Sound.SC3.Data.AKAI.S900 where
 import Control.Monad {- base -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
+import System.FilePath {- filepath -}
 
 import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
@@ -15,6 +16,11 @@ import qualified Data.List.Split as Split {- split -}
 import qualified Music.Theory.List as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
+
+import qualified Sound.OSC.Coding.Convert as O {- hosc -}
+
+import qualified Sound.File.Header as SF {- hsc3-sf -}
+import qualified Sound.File.WAVE as SF {- hsc3-sf -}
 
 import Sound.SC3.Data.Byte {- hsc3-data -}
 
@@ -33,6 +39,9 @@ Length   Format      Description
 
 -- | (FILE-NAME,FILE-TYPE,FILE-LENGTH,STARTING-BLOCK)
 type S900_DISK_ENT = (String,Char,U24,U16)
+
+s900_disk_ent_type :: S900_DISK_ENT -> Char
+s900_disk_ent_type (_,ty,_,_) = ty
 
 -- | NIL entry, ie. all zeroes.
 s900_disk_ent_nil :: S900_DISK_ENT
@@ -183,16 +192,34 @@ s900_sf_data_unpack n d =
       r = u32_drop n d
   in map u12_as_i12 (map u12_pack (zip p0 q) ++ map u12_pack (zip p1 r))
 
+s900_sf_write_wav :: FilePath -> [U8] -> IO ()
+s900_sf_write_wav dir d = do
+  let hdr = s900_sf_hdr (take 60 d)
+      (nm,nf,sr,_,_,_,_,_) = hdr
+      dat = s900_sf_data_unpack nf (drop 60 d)
+      sf_hdr = SF.Header (O.word32_to_int nf) SF.Linear16 (O.word16_to_int sr) 1
+  SF.wave_store_i16 (dir </> nm <.> "wav") sf_hdr [dat]
+
+s900_sf_export :: FilePath -> FilePath -> IO ()
+s900_sf_export dir fn = do
+  r <- s900_read_img fn
+  let f (e,d) = if s900_disk_ent_type e == 'S'
+                then print (e,s900_sf_hdr (take 60 d)) >> s900_sf_write_wav dir d
+                else print "?"
+  mapM_ f r
+
 {-
-fn = "/home/rohan/AKAI/ANALOG.img"
+
+fn = "/home/rohan/AKAI/SL-502.img"
+s900_sf_export "/tmp/" fn
 r <- s900_read_img fn
 (e,d) = unzip r
-e
-let s = d !! 2
+filter ((==) 'S' . s900_disk_ent_type) e
+let s = d !! 16
 s900_sf_hdr (take 60 s)
 x = s900_sf_data_unpack 1800 (drop 60 s)
 length x
 import Sound.SC3.Plot
 plotTable1 (map i12_to_int x)
-plotTable1 (map i12_to_int (take 45 (drop 0 x)))
+plotTable1 (map i12_to_int (take 128 (drop 0 x)))
 -}
