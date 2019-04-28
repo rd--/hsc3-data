@@ -1066,6 +1066,14 @@ d50_patch_name_set_cons (u,l,p) =
 d50_patch_name_set :: D50_Patch -> D50_Patch_Name_Set
 d50_patch_name_set p = (d50_tone_name Upper p,d50_tone_name Lower p,d50_patch_name p)
 
+-- | Match names using 'isInfixOf', case-insenstive if /cs/ is False.
+--   Empty names match everything, so ("","",p) matches only on /p/.
+d50_patch_name_match :: Bool -> D50_Patch_Name_Set -> D50_Patch_Name_Set -> Bool
+d50_patch_name_match cs (u1,l1,p1) (u2,l2,p2) =
+  let c x = if cs then x else map toLower x
+      m x y = c x `isInfixOf` c y
+  in m u1 u2 && m l1 l2 && m p1 p2
+
 -- | Patch name set pretty printed.
 d50_patch_name_set_pp :: D50_Patch -> String
 d50_patch_name_set_pp p =
@@ -1082,7 +1090,7 @@ d50_sysex_pp :: D50_Sysex -> String
 d50_sysex_pp = T.byte_seq_hex_pp False
 
 -- | Segment byte-sequence into SYSEX messages, no verification,
--- ie. seperate before each @0xF0@.
+-- ie. separate before each @0xF0@.
 d50_sysex_segment :: [U8] -> [D50_Sysex]
 d50_sysex_segment = tail . T.split_before 0xF0
 

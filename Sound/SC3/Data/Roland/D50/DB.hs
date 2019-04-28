@@ -39,13 +39,29 @@ d50_syx_db_tree_get t nm =
 -- | (SYX-NAME,FILE-NAME,PATCH-INDEX,PATCH,PATCH-NAME-SET,PATCH-HASH,PATCH-PARAM)
 type D50_SYX_VC = (String, FilePath, Int, D50_Patch, D50_Patch_Name_Set, D50_Hash, D50_Param)
 
--- | Get hash.
-d50_syx_vc_hash :: D50_SYX_VC -> D50_Hash
-d50_syx_vc_hash (_,_,_,_,_,h,_) = h
+-- | Get SYSEX name.
+d50_syx_vc_syx_name :: D50_SYX_VC -> String
+d50_syx_vc_syx_name (nm,_,_,_,_,_,_) = nm
+
+-- | Get SYSEX file-name.
+d50_syx_vc_syx_file_name :: D50_SYX_VC -> String
+d50_syx_vc_syx_file_name (_,fn,_,_,_,_,_) = fn
 
 -- | Get patch.
 d50_syx_vc_patch :: D50_SYX_VC -> D50_Patch
 d50_syx_vc_patch (_,_,_,p,_,_,_) = p
+
+-- | Get name set.
+d50_syx_vc_name_set :: D50_SYX_VC -> D50_Patch_Name_Set
+d50_syx_vc_name_set (_,_,_,_,nm,_,_) = nm
+
+-- | Get patch-name.
+d50_syx_vc_patch_name :: D50_SYX_VC -> String
+d50_syx_vc_patch_name (_,_,_,_,(_,_,nm),_,_) = nm
+
+-- | Get hash.
+d50_syx_vc_hash :: D50_SYX_VC -> D50_Hash
+d50_syx_vc_hash (_,_,_,_,_,h,_) = h
 
 -- | CSV entry for (PATCH-HASH,PATCH-PARAM)
 vc_hash_param_csv :: D50_SYX_VC -> [String]
@@ -83,6 +99,10 @@ db_store dir db = do
 -- | Lookup DB by hash.
 d50_syx_db_get :: D50_SYX_DB -> D50_Hash -> D50_SYX_VC
 d50_syx_db_get db h = T.unlist1_err (filter ((== h) . d50_syx_vc_hash) db)
+
+-- | Select entries from DB by name, flag is 'True' for case-sensitive matching.
+d50_syx_db_match :: Bool -> D50_SYX_DB -> D50_Patch_Name_Set -> [D50_SYX_VC]
+d50_syx_db_match cs db nm = filter (d50_patch_name_match cs nm . d50_syx_vc_name_set) db
 
 -- * HASH-DB
 
