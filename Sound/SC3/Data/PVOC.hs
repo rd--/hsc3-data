@@ -9,8 +9,8 @@ import qualified Data.Vector.Unboxed as V {- vector -}
 import qualified Sound.OSC.Coding.Byte as O {- hosc -}
 import qualified Sound.OSC.Coding.Convert as O {- hosc -}
 
-import qualified Sound.File.RIFF as R {- hsc3-sf -}
-import qualified Sound.File.WAVE as W {- hsc3-sf -}
+import qualified Sound.File.RIFF as RIFF {- hsc3-sf -}
+import qualified Sound.File.WAVE as WAVE {- hsc3-sf -}
 
 -- | PVOC-EX files
 
@@ -53,7 +53,7 @@ data WAVE_FMT_PVOC_80 =
     ,dwDataSize :: Word32
     ,wWordFormat :: PVOC_WORDFORMAT
     ,wAnalFormat :: PVOC_FRAMETYPE
-    ,wSourceFormat :: W.WAVE_FORMAT
+    ,wSourceFormat :: WAVE.WAVE_FORMAT
     ,wWindowType :: PVOC_WINDOWTYPE
     ,nAnalysisBins :: Word32
     ,dwWinlen :: Word32
@@ -75,38 +75,38 @@ fmt_pvoc_80_pp = plain_record_pp . show
 fmt_pvoc_80_parse_dat :: L.ByteString -> WAVE_FMT_PVOC_80
 fmt_pvoc_80_parse_dat dat =
     WAVE_FMT_PVOC_80
-    (O.decode_word16_le (R.section 16 2 dat))
-    (O.decode_word16_le (R.section 18 2 dat))
-    (O.decode_word32_le (R.section 20 4 dat))
-    (R.decode_guid (R.section 24 16 dat))
-    (O.decode_word32_le (R.section 40 4 dat))
-    (O.decode_word32_le (R.section 44 4 dat))
-    (O.word16_to_enum (O.decode_word16_le (R.section 48 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (R.section 50 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (R.section 52 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (R.section 54 2 dat)))
-    (O.decode_word32_le (R.section 56 4 dat))
-    (O.decode_word32_le (R.section 60 4 dat))
-    (O.decode_word32_le (R.section 64 4 dat))
-    (O.decode_word32_le (R.section 68 4 dat))
-    (O.decode_f32_le (R.section 72 4 dat))
-    (O.decode_f32_le (R.section 76 4 dat))
+    (O.decode_word16_le (RIFF.section 16 2 dat))
+    (O.decode_word16_le (RIFF.section 18 2 dat))
+    (O.decode_word32_le (RIFF.section 20 4 dat))
+    (RIFF.decode_guid (RIFF.section 24 16 dat))
+    (O.decode_word32_le (RIFF.section 40 4 dat))
+    (O.decode_word32_le (RIFF.section 44 4 dat))
+    (O.word16_to_enum (O.decode_word16_le (RIFF.section 48 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (RIFF.section 50 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (RIFF.section 52 2 dat)))
+    (O.word16_to_enum (O.decode_word16_le (RIFF.section 54 2 dat)))
+    (O.decode_word32_le (RIFF.section 56 4 dat))
+    (O.decode_word32_le (RIFF.section 60 4 dat))
+    (O.decode_word32_le (RIFF.section 64 4 dat))
+    (O.decode_word32_le (RIFF.section 68 4 dat))
+    (O.decode_f32_le (RIFF.section 72 4 dat))
+    (O.decode_f32_le (RIFF.section 76 4 dat))
 
 fmt_pvoc_80_check_guid :: WAVE_FMT_PVOC_80 -> Bool
 fmt_pvoc_80_check_guid f = subFormat f /= pvx_guid_text
 
-type PVOC_HDR = (W.WAVE_FMT_16,WAVE_FMT_PVOC_80)
+type PVOC_HDR = (WAVE.WAVE_FMT_16,WAVE_FMT_PVOC_80)
 
-fmt_pvoc_80_parse :: R.CHUNK -> PVOC_HDR
+fmt_pvoc_80_parse :: RIFF.CHUNK -> PVOC_HDR
 fmt_pvoc_80_parse ((ty,sz),dat) =
     case (ty,sz) of
-      ("fmt ",80) -> (W.wave_fmt_16_parse_dat dat,fmt_pvoc_80_parse_dat dat)
+      ("fmt ",80) -> (WAVE.wave_fmt_16_parse_dat 16 dat,fmt_pvoc_80_parse_dat dat)
       _ -> error "fmt_pvoc_80_parse"
 
-type PVOC_RAW = (PVOC_HDR,R.CHUNK)
+type PVOC_RAW = (PVOC_HDR,RIFF.CHUNK)
 
 pvoc_nc :: PVOC_HDR -> Int
-pvoc_nc = O.word16_to_int . W.numChannels . fst
+pvoc_nc = O.word16_to_int . WAVE.numChannels . fst
 
 pvoc_nb :: PVOC_HDR -> Int
 pvoc_nb = O.word32_to_int . nAnalysisBins . snd
@@ -115,19 +115,19 @@ pvoc_nb = O.word32_to_int . nAnalysisBins . snd
 pvoc_data_parse_f32 :: PVOC_RAW -> (Int,Int,V.Vector Float)
 pvoc_data_parse_f32 ((wv,pv),((ty,sz),dat)) =
     let n = O.word32_to_int sz `div` 4
-        nc = O.word16_to_int (W.numChannels wv)
+        nc = O.word16_to_int (WAVE.numChannels wv)
         nb = O.word32_to_int (nAnalysisBins pv)
         nf = n `div` (nc * nb * 2)
     in if ty /= "data" || wWordFormat pv /= PVOC_IEEE_FLOAT || dwDataSize pv /= 32
        then error "pvoc_data_parse_f32"
-       else (n,nf,V.generate n (\i -> O.decode_f32_le (R.section_int (i * 4) 4 dat)))
+       else (n,nf,V.generate n (\i -> O.decode_f32_le (RIFF.section_int (i * 4) 4 dat)))
 
 type PVOC_VEC_F32 = (PVOC_HDR,(Int,Int,V.Vector Float))
 
 pvoc_load_vec_f32 :: FilePath -> IO PVOC_VEC_F32
 pvoc_load_vec_f32 fn = do
-  c <- W.wave_load_ch fn
-  case (R.find_chunk "fmt " c,R.find_chunk "data" c) of
+  c <- WAVE.wave_load_ch fn
+  case (RIFF.find_chunk "fmt " c,RIFF.find_chunk "data" c) of
     (Just fmt,Just dat) -> let hdr = fmt_pvoc_80_parse fmt
                                vec = pvoc_data_parse_f32 (hdr,dat)
                            in return (hdr,vec)

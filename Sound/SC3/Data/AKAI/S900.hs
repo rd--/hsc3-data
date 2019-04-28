@@ -1,6 +1,7 @@
 {- | AKAI S900
 
-<http://mda.smartelectronix.com/akai/akaiinfo.htm>
+- <http://mda.smartelectronix.com/akai/akaiinfo.htm>
+- akaiutil-3.6.2 (17-MAR-2019)
 
 -}
 module Sound.SC3.Data.AKAI.S900 where

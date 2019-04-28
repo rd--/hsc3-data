@@ -6,7 +6,7 @@
 module Sound.SC3.Data.AKAI.AKP where
 
 import Control.Monad {- base -}
-import Data.Int {- base -}
+--import Data.Int {- base -}
 import Data.Word {- base -}
 import System.IO {- base -}
 
