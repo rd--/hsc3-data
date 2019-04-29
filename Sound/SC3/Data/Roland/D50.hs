@@ -377,6 +377,15 @@ d50_patch_structure_sym p =
       l = u24_at p 330
   in concatMap (d50_usr_ix (error "?") d50_structure_usr) [l,u]
 
+-- | One-line summary text for patch.
+--   NAME KEY-MODE STRUCTURE PARTIAL-MUTE.
+d50_patch_summary :: D50_Patch -> String
+d50_patch_summary p =
+  unwords [d50_patch_name p
+          ,d50_patch_key_mode_sym p
+          ,d50_patch_structure_sym p
+          ,d50_patch_partial_mute_sym p]
+
 -- * REVERB
 
 -- | Size of stored (encoded) reverb data segment (376-bytes).

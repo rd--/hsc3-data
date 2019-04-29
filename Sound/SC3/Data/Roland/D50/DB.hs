@@ -100,13 +100,21 @@ db_store dir db = do
   T.csv_table_write_def id (dir </> "d50-names.csv") (map vc_hash_names_csv db)
   T.csv_table_write_def id (dir </> "d50-param.csv") (map vc_hash_param_csv db)
 
--- | Lookup DB by hash.
-d50_syx_db_get :: D50_SYX_DB -> D50_Hash -> D50_SYX_VC
-d50_syx_db_get db h = T.unlist1_err (filter ((== h) . d50_syx_vc_hash) db)
+-- | Select entried from DB by hash.
+d50_syx_db_get :: D50_SYX_DB -> D50_Hash -> [D50_SYX_VC]
+d50_syx_db_get db h = filter ((== h) . d50_syx_vc_hash) db
+
+-- | Variant requiring unique match.
+d50_syx_db_get1 :: D50_SYX_DB -> D50_Hash -> D50_SYX_VC
+d50_syx_db_get1 db = T.unlist1_err . d50_syx_db_get db
 
 -- | Select entries from DB by name, flag is 'True' for case-sensitive matching.
 d50_syx_db_match :: Bool -> D50_SYX_DB -> D50_Patch_Name_Set -> [D50_SYX_VC]
 d50_syx_db_match cs db nm = filter (d50_patch_name_match cs nm . d50_syx_vc_name_set) db
+
+-- | Variant requiring unique match.
+d50_syx_db_match1 :: Bool -> D50_SYX_DB -> D50_Patch_Name_Set -> D50_SYX_VC
+d50_syx_db_match1 cs db = T.unlist1_err . d50_syx_db_match cs db
 
 -- * HASH-DB
 

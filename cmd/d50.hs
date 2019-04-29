@@ -9,6 +9,7 @@ import qualified Sound.Midi.PM as PM {- midi-osc -}
 import Sound.SC3.Data.Byte {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50.DB as D50 {- hsc3-data -}
+import qualified Sound.SC3.Data.Roland.D50.Hash as D50 {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50.PM as D50 {- hsc3-data -}
 
 -- * COMMON
@@ -130,15 +131,25 @@ transfer_send_bulk_sysex fn = do
   dsc <- D50.d50_load_sysex_dsc fn
   D50.d50_send_bulk_data_def 0 dsc
 
--- > sysex_db_search False "/home/rohan/sw/hsc3-data/data/roland/d50" ("-","-","FAIRLIGHT")
-sysex_db_search :: Bool -> FilePath -> D50.D50_Patch_Name_Set -> IO ()
-sysex_db_search cs dir nm_nil = do
+syx_vc_pp :: D50.D50_SYX_VC -> String
+syx_vc_pp (syx_nm,_,ix,p,_,hsh,_) =
+  printf "%-20s - %02d - %s - %08X" syx_nm ix (D50.d50_patch_summary p) hsh
+
+-- > sysex_db_search_name False "/home/rohan/sw/hsc3-data/data/roland/d50" ("-","-","FAIRLIGHT")
+sysex_db_search_name :: Bool -> FilePath -> D50.D50_Patch_Name_Set -> IO ()
+sysex_db_search_name cs dir nm_nil = do
   db <- D50.d50_syx_db dir
   let from_nil x = if x == "-" then "" else x
       nm = let (l_nm,u_nm,p_nm) = nm_nil in (from_nil l_nm,from_nil u_nm,from_nil p_nm)
       vc = D50.d50_syx_db_match cs db nm
-      pp (syx_nm,_,ix,_,(_,_,p_nm),hsh,_) = printf "%-16s - %02d - %s - %08X" syx_nm ix p_nm hsh
-  putStrLn (unlines (map pp vc))
+  putStrLn (unlines (map syx_vc_pp vc))
+
+-- > sysex_db_search_hash "/home/rohan/sw/hsc3-data/data/roland/d50" ["31EDB7E6","DB726918"]
+sysex_db_search_hash :: FilePath -> [String] -> IO ()
+sysex_db_search_hash dir h = do
+  db <- D50.d50_syx_db dir
+  let vc = concatMap (D50.d50_syx_db_get db) (map D50.d50_hash_parse h)
+  putStrLn (unlines (map syx_vc_pp vc))
 
 -- * MAIN
 
@@ -150,7 +161,8 @@ usage =
   ,"sysex load-on-program-change sysex-file"
   ,"sysex print {ix | all} {csv | hex | name | pp-group} sysex-file..."
   ,"sysex send {tmp | d50-ix} sysex-ix sysex-file"
-  ,"sysex-db search cs|ci sysex-dir lower-name|- upper-name|- patch-name|-"
+  ,"sysex-db search hash sysex-dir hash..."
+  ,"sysex-db search name cs|ci sysex-dir lower-name|- upper-name|- patch-name|-"
   ,"transfer receive bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
   ,"transfer send bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
   ]
@@ -168,7 +180,8 @@ main = do
     ["sysex","load-on-program-change",fn] -> PM.pm_with_midi (lpc_run fn)
     "sysex":"print":ix:ty:fn_seq -> sysex_print (parse_d50_ix "all" ix) ty fn_seq
     ["sysex","send",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix "tmp" d50_ix) (read sysex_ix) fn
-    ["sysex-db","search",cr,dir,l_nm,u_nm,p_nm] -> sysex_db_search (cr == "cs") dir (l_nm,u_nm,p_nm)
+    "sysex-db":"search":"hash":dir:h -> sysex_db_search_hash dir h
+    ["sysex-db","search","name",cr,dir,l,u,p] -> sysex_db_search_name (cr == "cs") dir (l,u,p)
     ["transfer","receive","bulk","hex",p_fn,r_fn] -> transfer_recv_bulk_hex p_fn r_fn
     ["transfer","receive","bulk","sysex",fn] -> transfer_recv_bulk_sysex fn
     ["transfer","send","bulk","sysex",fn] -> transfer_send_bulk_sysex fn
