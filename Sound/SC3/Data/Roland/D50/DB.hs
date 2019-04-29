@@ -47,6 +47,10 @@ d50_syx_vc_syx_name (nm,_,_,_,_,_,_) = nm
 d50_syx_vc_syx_file_name :: D50_SYX_VC -> String
 d50_syx_vc_syx_file_name (_,fn,_,_,_,_,_) = fn
 
+-- | Get patch index (1-64).
+d50_syx_vc_ix :: D50_SYX_VC -> Int
+d50_syx_vc_ix (_,_,ix,_,_,_,_) = ix
+
 -- | Get patch.
 d50_syx_vc_patch :: D50_SYX_VC -> D50_Patch
 d50_syx_vc_patch (_,_,_,p,_,_,_) = p

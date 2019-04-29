@@ -85,12 +85,35 @@ d50_partial_ix_sym ix = case ix of {One -> "1";Two -> "2"}
 --   Four 'Partial's (U1,U2,L1,L2), two 'Common' (U,L), or 'Patch'.
 data D50_Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
 
+-- | Symbolic names for the seven parameter types, U1 U2 U L1 L2 L P.
+type D50_Parameter_Type_Sym = String
+
+-- | Table mapping names to parameter types.
+d50_parameter_type_sym_tbl :: [(D50_Parameter_Type_Sym,D50_Parameter_Type)]
+d50_parameter_type_sym_tbl =
+  [("U1",Partial Upper One)
+  ,("U2",Partial Upper Two)
+  ,("U",Common Upper)
+  ,("L1",Partial Lower One)
+  ,("L2",Partial Lower Two)
+  ,("L",Common Lower)
+  ,("P",Patch)]
+
 -- | All 'D50_Parameter_Type' in sequence, ie. in ascending ADDRESS order).
 d50_parameter_type_seq :: [D50_Parameter_Type]
-d50_parameter_type_seq =
-    [Partial Upper One,Partial Upper Two,Common Upper
-    ,Partial Lower One,Partial Lower Two,Common Lower
-    ,Patch]
+d50_parameter_type_seq = map snd d50_parameter_type_sym_tbl
+
+-- | Reverse lookup of 'd50_parameter_type_sym_tbl'.
+--
+-- > map d50_parameter_type_sym d50_parameter_type_seq
+d50_parameter_type_sym :: D50_Parameter_Type -> D50_Parameter_Type_Sym
+d50_parameter_type_sym v = T.reverse_lookup_err v d50_parameter_type_sym_tbl
+
+-- | Lookup 'd50_parameter_type_sym_tbl'.
+--
+-- > map d50_parameter_type_read ["L1","U"] == [Partial Lower One,Common Upper]
+d50_parameter_type_read :: D50_Parameter_Type_Sym -> D50_Parameter_Type
+d50_parameter_type_read = flip T.lookup_err d50_parameter_type_sym_tbl
 
 -- | Pretty printer for 'D50_Parameter_Type'.
 --
@@ -101,16 +124,6 @@ d50_parameter_type_pp ty =
     Partial tn ix -> unwords [show tn,"Partial",d50_partial_ix_sym ix]
     Common tn -> unwords [show tn,"Common"]
     Patch -> "Patch"
-
--- | Short symbolic names for parameter types: U1 U2 U L1 L2 L P.
---
--- > map d50_parameter_type_sym d50_parameter_type_seq
-d50_parameter_type_sym :: D50_Parameter_Type -> String
-d50_parameter_type_sym ty =
-  case ty of
-    Partial tn ix -> d50_tone_sym tn ++ d50_partial_ix_sym ix
-    Common tn -> d50_tone_sym tn
-    Patch -> "P"
 
 -- * PARAMETER
 
@@ -328,11 +341,14 @@ d50_patch_key_mode_sym p =
   let k = u24_at p 402
   in d50_usr_ix (error "?") d50_key_mode_usr k
 
--- | Show partial mute for lower and upper tones as 4-character string.
---   0 = Muted, 1 = Sounding
+-- | Partial mute for lower and upper tones as 4-character string.
+--   Sequence = L1 L2 U1 U2; 0 = Muted, 1 = Sounding
+type D50_Mute_Sym = String
+
+-- | Generate 'D50_Mute_Sym' for patch.
 --
 -- > d50_patch_partial_mute_sym p == "1111"
-d50_patch_partial_mute_sym :: D50_Patch -> String
+d50_patch_partial_mute_sym :: D50_Patch -> D50_Mute_Sym
 d50_patch_partial_mute_sym p =
   let u = u24_at p 174
       l = u24_at p (174 + 192)
@@ -340,19 +356,22 @@ d50_patch_partial_mute_sym p =
 
 -- | Generate 'D50_Diff' for partial mute given symbolic form.
 --
--- > d50_patch_set_partial_mute "0110" == [(174,1),(174 + 192,2)]
-d50_patch_set_partial_mute :: String -> D50_Diff
-d50_patch_set_partial_mute sym =
+-- > d50_partial_mute_sym_to_diff "0110" == [(174,1),(174 + 192,2)]
+d50_partial_mute_sym_to_diff :: D50_Mute_Sym -> D50_Diff
+d50_partial_mute_sym_to_diff sym =
   let f k str = (k,d50_usr_lookup_err d50_partial_mute_usr str)
   in case sym of
     [c1,c2,c3,c4] -> [f 174 [c3,c4],f (174 + 192) [c1,c2]]
-    _ -> error "d50_patch_set_partial_mute?"
+    _ -> error "d50_partial_mute_sym_to_diff?"
 
--- | Show partial structure for lower and upper tones as 6-character string.
---   S = Synthesis, P = PCM
+-- | Partial structure for lower and upper tones as 6-character string.
+--   S = Synthesis, P = PCM, R = RINGMOD.
+type D50_Structure_Sym = String
+
+-- | Generate 'D50_Structure_Sym' for patch.
 --
 -- > d50_patch_structure_sym p == "SS SS "
-d50_patch_structure_sym :: D50_Patch -> String
+d50_patch_structure_sym :: D50_Patch -> D50_Structure_Sym
 d50_patch_structure_sym p =
   let u = u24_at p 138
       l = u24_at p 330
