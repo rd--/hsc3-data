@@ -139,9 +139,6 @@ d50_parameter_name (_,nm,_,_,_) = nm
 d50_parameter_user_offset :: D50_Parameter -> I8
 d50_parameter_user_offset (_,_,_,o,_) = o
 
--- | (GROUP-NAME,PARAMETER-NAME-SEQ,PARAMETER-IX-SEQ)
-type PARAM_GROUP = (String,String,[U24])
-
 -- * Patch Bank
 
 -- | Translate one-indexed (BANK-NUMBER,PATCH-NUMBER) index to zero linear index.
@@ -500,35 +497,62 @@ d50_char_to_byte_err = fromMaybe (error "d50_char_to_byte?") . d50_char_to_byte
 
 -- * USR/STR
 
--- | USR 2-character strings naming the 12 pitch-classes.
+-- | Centering string spacer, bias SPACE to right if /rhs/ is True.
+--
+-- > let r = [[" 4  "," 34 ","234 ","1234"],["  4 "," 34 "," 234","1234"]]
+-- > map (\rhs -> map (d50_str_pad_centre rhs 4) (words "4 34 234 1234")) [True,False] == r
+d50_str_pad_centre :: Bool -> Int -> String -> String
+d50_str_pad_centre rhs k s =
+  let n = length s
+      (p1,p2) = (k - n) `divMod` 2
+      p3 = p1 + p2
+  in replicate (if rhs then p1 else p3) ' ' ++ s ++ replicate (if rhs then p3 else p1) ' '
+
+-- | Pad first to left to n-spaces, and then to right to n+m spaces.
+--
+-- > map (d50_str_pad_lr 3 1) (words "0 5 10 20 100") == ["  0 ","  5 "," 10 "," 20 ","100 "]
+d50_str_pad_lr :: Int -> Int -> String -> String
+d50_str_pad_lr n m s = T.pad_right ' ' (n + m) (T.pad_left ' ' n s)
+
+-- | USR 2-CHAR strings naming the 12 pitch-classes.
 d50_pitch_class_seq :: [String]
 d50_pitch_class_seq = Split.chunksOf 2 " CC# DD# E FF# GG# AA# B"
 
--- | USR 3-character strings naming the 84 pitches from C1 to B7.
+-- | USR 3-CHAR strings naming the 84 pitches from C1 to B7.
 --
 -- > length d50_pitch_seq == 7 * 12
 d50_pitch_seq :: [String]
 d50_pitch_seq = [p ++ show o | o <- [1::Int .. 7],p <- d50_pitch_class_seq]
 
--- | "C2 - C7" as USR string.
+-- | "C2 - C7" as USR 3-CHAR string.
+--
+-- > length d50_split_point_usr == (61 * 3) + 60
 d50_split_point_usr :: String
 d50_split_point_usr = intercalate ";" (take 61 (drop 12 d50_pitch_seq))
 
--- | "C1 - C7" as USR string.
+-- | "C1 - C7" as USR 3-CHAR string.
+--
+-- > length wg_pitch_coarse_usr == (73 * 3) + 72
 wg_pitch_coarse_usr :: String
 wg_pitch_coarse_usr = intercalate ";" (take 73 d50_pitch_seq)
 
--- | P-ENV KF USR 4-character strings.
+-- | P-ENV KF USR 3-CHAR strings.
+--
+-- > length wg_pitch_kf_usr == (17 * 3) + 16
 wg_pitch_kf_usr :: String
-wg_pitch_kf_usr = "-1;-1/2;-1/4;0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;1;5/4;3/2;2;s1;s2"
+wg_pitch_kf_usr = " -1;-/2;-/4;  0;1/8;1/4;3/8;1/2;5/6;3/4;7/8;  1;5/4;3/2;  2; s1; s2"
 
+-- | Ratios and S form of WG KF.
 wg_pitch_kf_rat :: Fractional n => ([n],[String])
 wg_pitch_kf_rat = ([-1,1/2,-1/4,0,1/8,1/4,3/8,1/2,5/6,3/4,7/8,1,5/4,3/2,2],["S1","S2"])
 
+-- | Lookup ratio in 'wg_pitch_kf_rat'.
+--
 -- > mapMaybe wg_pitch_kf_to_enum [1/8,1/4,1] == [4,5,11]
 wg_pitch_kf_to_enum :: (Eq n,Fractional n) => n -> Maybe U8
 wg_pitch_kf_to_enum n = fmap int_to_u8 (findIndex (== n) (fst wg_pitch_kf_rat))
 
+-- | Erroring variant.
 wg_pitch_kf_to_enum_err :: (Eq n,Fractional n) => n -> U8
 wg_pitch_kf_to_enum_err = fromMaybe (error "wg_pitch_kf_to_enum") . wg_pitch_kf_to_enum
 
@@ -537,16 +561,20 @@ tvf_kf_usr :: String
 tvf_kf_usr = "-1;-1/2;-1/4;0;1/8;1/4;3/8;1/2;5/8;3/4;7/8;1;5/4;3/2;2"
 
 -- | "<A1 - <C7;>A1 - >C7"
+--
+-- > length bias_point_direction_usr == (128 * 4) + 127
 bias_point_direction_usr :: String
 bias_point_direction_usr =
     let p = take 64 (drop 9 d50_pitch_seq)
     in intercalate ";" (map ('<' :) p ++ map ('>' :) p)
 
--- | EQ LF USR 3-character strings.
+-- | EQ LF USR 3-CHAR strings.
+--
+-- > length eq_lf_usr == (16 * 3) + 15
 eq_lf_usr :: String
 eq_lf_usr = "63 ;75 ;88 ;105;125;150;175;210;250;300;350;420;500;600;700;840"
 
--- | EQ HF USR 3-character strings.
+-- | EQ HF USR 3-CHAR strings.
 eq_hf_usr :: String
 eq_hf_usr =
     "250;300;350;420;500;600;700;840;" ++
@@ -610,6 +638,7 @@ d50_partial_parameters_n = 54
 
 -- | Partial parameters (4.3).
 --   The indices in this table are zero based.
+--   The names are as written in the "D-50 MIDI Implementation" manual sections 4-4 and 4-5.
 --
 -- > length d50_partial_parameters == d50_partial_parameters_n
 d50_partial_parameters :: [D50_Parameter]
@@ -619,36 +648,36 @@ d50_partial_parameters =
     ,(2,"WG Pitch Keyfollow",17,0,wg_pitch_kf_usr)
     ,(3,"WG Mod LFO Mode",4,0,"OFF;(+);(~);A&L")
     ,(4,"WG Mod P-ENV Mode",3,0,"OFF;(+);(-)")
-    ,(5,"WG Mod Bender Mode",3,0,"OFF;KF;NORMAL")
-    ,(6,"WG Waveform",2,0,"SQU;SAW")
-    ,(7,"WG PCM Wave No.",100,1,"1 - 100")
-    ,(8,"WG Pulse Width",101,0,"0 - 100")
-    ,(9,"WG PW Velocity Range",15,-7,"-7 - +7")
-    ,(10,"WG PW LFO Select",6,0,"+1;-1;+2;-2;+3;-3")
-    ,(11,"WG PW LFO Depth",101,0,"0 - 100")
-    ,(12,"WG PW Aftertouch Range",15,-7,"-7 - +7")
-    ,(13,"TVF Cutoff Frequency",101,0,"0 - 100")
-    ,(14,"TVF Resonance",31,0,"0 - 30")
-    ,(15,"TVF Keyfollow",15,0,tvf_kf_usr)
-    ,(16,"TVF Bias Point/Direction",128,0,bias_point_direction_usr)
-    ,(17,"TVF Bias Level",15,-7,"-7 - +7")
-    ,(18,"TVF ENV Depth",101,0,"0 - 100")
-    ,(19,"TVF ENV Velocity Range",101,0,"0 - 100")
-    ,(20,"TVF ENV Depth Keyfollow",5,0,"0 - 4")
-    ,(21,"TVF ENV Time Keyfollow",11,0,"0 - 10")
-    ,(22,"TVF ENV Time 1",101,0,"0 - 100")
-    ,(23,"TVF ENV Time 2",101,0,"0 - 100")
-    ,(24,"TVF ENV Time 3",101,0,"0 - 100")
-    ,(25,"TVF ENV Time 4",101,0,"0 - 100")
-    ,(26,"TVF ENV Time 5",101,0,"0 - 100")
-    ,(27,"TVF ENV Level 1",101,0,"0 - 100")
-    ,(28,"TVF ENV Level 2",101,0,"0 - 100")
-    ,(29,"TVF ENV Level 3",101,0,"0 - 100")
-    ,(30,"TVF ENV Sustain Level",101,0,"0 - 100")
-    ,(31,"TVF ENV End Level",2,0,"0;100")
-    ,(32,"TVF Mod LFO Select",6,0,"+1;-1;+2;-2;+3;-3")
-    ,(33,"TVF Mod LFO Depth",101,0,"0 - 100")
-    ,(34,"TVF Mod Aftertouch Range",15,-7,"-7 - +7")
+    ,(5,"WG Mod Bender Mode",3,0,"OFF;KF;NOM") -- NOM=NORMAL
+    ,(6,"WG Waveform",2,0,"SQU;SAW") -- S
+    ,(7,"WG PCM Wave No.",100,1,"1 - 100") -- P
+    ,(8,"WG Pulse Width",101,0,"0 - 100") -- S
+    ,(9,"WG PW Velocity Range",15,-7,"-7 - +7") -- S
+    ,(10,"WG PW LFO Select",6,0,"+1;-1;+2;-2;+3;-3") -- S
+    ,(11,"WG PW LFO Depth",101,0,"0 - 100") -- S
+    ,(12,"WG PW Aftertouch Range",15,-7,"-7 - +7") -- S
+    ,(13,"TVF Cutoff Frequency",101,0,"0 - 100") -- S
+    ,(14,"TVF Resonance",31,0,"0 - 30") -- S
+    ,(15,"TVF Keyfollow",15,0,tvf_kf_usr) -- S
+    ,(16,"TVF Bias Point/Direction",128,0,bias_point_direction_usr) -- S
+    ,(17,"TVF Bias Level",15,-7,"-7 - +7") -- S
+    ,(18,"TVF ENV Depth",101,0,"0 - 100") -- S
+    ,(19,"TVF ENV Velocity Range",101,0,"0 - 100") -- S
+    ,(20,"TVF ENV Depth Keyfollow",5,0,"0 - 4") -- S
+    ,(21,"TVF ENV Time Keyfollow",11,0,"0 - 10") -- S
+    ,(22,"TVF ENV Time 1",101,0,"0 - 100") -- S
+    ,(23,"TVF ENV Time 2",101,0,"0 - 100") -- S
+    ,(24,"TVF ENV Time 3",101,0,"0 - 100") -- S
+    ,(25,"TVF ENV Time 4",101,0,"0 - 100") -- S
+    ,(26,"TVF ENV Time 5",101,0,"0 - 100") -- S
+    ,(27,"TVF ENV Level 1",101,0,"0 - 100") -- S
+    ,(28,"TVF ENV Level 2",101,0,"0 - 100") -- S
+    ,(29,"TVF ENV Level 3",101,0,"0 - 100") -- S
+    ,(30,"TVF ENV Sustain Level",101,0,"0 - 100") -- S
+    ,(31,"TVF ENV End Level",2,0,"0;100") -- S
+    ,(32,"TVF Mod LFO Select",6,0,"+1;-1;+2;-2;+3;-3") -- S
+    ,(33,"TVF Mod LFO Depth",101,0,"0 - 100") -- S
+    ,(34,"TVF Mod Aftertouch Range",15,-7,"-7 - +7") -- S
     ,(35,"TVA Level",101,0,"0 - 100")
     ,(36,"TVA Velocity Range",101,-50,"-50 - +50")
     ,(37,"TVA Bias Point/Direction",128,0,bias_point_direction_usr)
@@ -665,12 +694,38 @@ d50_partial_parameters =
     ,(48,"TVA ENV End Level",2,0,"0;100")
     ,(49,"TVA ENV T1 Velo Follow",5,0,"0 - 4")
     ,(50,"TVA ENV Time Keyfollow",5,0,"0 - 4")
-    ,(51,"TVA Mod LFO Select",6,0,"+1;-1;+2;-2;+3;-3")
-    ,(52,"TVA Mod LFO Depth",101,0,"0 - 100")
-    ,(53,"TVA Mod Aftertouch Range",15,-7,"-7 - +7")
+    ,(51,"TVA Mod LFO Select",6,0,"+1;-1;+2;-2;+3;-3") -- S
+    ,(52,"TVA Mod LFO Depth",101,0,"0 - 100") -- S
+    ,(53,"TVA Mod Aftertouch Range",15,-7,"-7 - +7") -- S
     ]
 
+-- | Parameter indices that apply only if Part is S/P.
+--
+-- let (s,p) = d50_partial_SP_only in (length s,length p) == (31,1)
+d50_partial_SP_only :: ([U24],[U24])
+d50_partial_SP_only = (concat [[6],[8..34],[51..53]],[7])
+
+-- | CHAR-count required for each parameter value.
+d50_partial_char :: [Int]
+d50_partial_char =
+  [3,3,3, 3,3,3, 3,6, 3,3,3,2,3 -- WG
+  ,3,2,3,4,3, 3,3,2,2, 3,3,3,3,3, 3,3,3,3,3, 3,3,3 -- TVF
+  ]
+
+{- | (GROUP-NAME,PARAMETER-NAME-SEQ,PARAMETER-IX-SEQ)
+
+The names are as given in the D-50 editor display (40-CHAR).
+The GROUP-NAME (9-CHAR) is printed at the right of the first line.
+The PARAMETER-NAME-SEQ (4-CHAR) is semi-colon separated in left to right sequence.
+
+-}
+type PARAM_GROUP = (String,String,[U24])
+
 -- | Group structure of partial parameters, as in D-50 menu system.
+--
+-- > maximum (map (\(nm,_,_) -> length nm) d50_partial_groups) == 9
+-- > maximum (map (\(_,_,ix) -> length ix) d50_partial_groups) == 5
+-- > concatMap (\(_,_,ix) -> ix) d50_partial_groups == [0 .. 9] ++ [12,10,11] ++ [13 .. 53]
 d50_partial_groups :: [PARAM_GROUP]
 d50_partial_groups =
     [("WG Pitch","Cors;Fine;KF",[0..2]) -- WG
@@ -688,6 +743,23 @@ d50_partial_groups =
     ,("TVA ENV 3","Velo;TKF",[49..50])
     ,("TVA MOD","LFO;LFOD;Aftr",[51..53]) -- TVA Modulation
     ]
+
+-- | (FAMILY-NAME,PARAMETER-NAME-SEQ,PARAMETER-IX-SEQ)
+type PARAM_FAMILY = (String, [String], [U24])
+
+-- | Given family names and group lengths convert to families.
+d50_param_groups_to_families :: [String] -> [Int] -> [PARAM_GROUP] -> [PARAM_FAMILY]
+d50_param_groups_to_families fm pl gr =
+  let spl = Split.splitPlaces pl
+      (_,nm,ix) = unzip3 gr
+  in zip3 fm (map (concatMap (Split.splitOn ";")) (spl nm)) (map concat (spl ix))
+
+-- | Partial data in families.
+--
+-- > maximum (concatMap (\(_,nm,_) -> map length nm) d50_partial_families) == 4
+-- > putStrLn $ unlines $ map (\(_,nm,_) -> unwords nm) d50_partial_families
+d50_partial_families :: [PARAM_FAMILY]
+d50_partial_families = d50_param_groups_to_families (words "WG TVF TVA") [4,5,5] d50_partial_groups
 
 -- | D50 INIT-SQU partial data (PN-D50-01).
 --
@@ -794,6 +866,14 @@ d50_common_groups =
     ,("Chorus Edit","Type;Rate;Dpth;Bal",[42..45])
     ]
 
+-- | Common data in families.
+--
+-- > maximum (concatMap (\(_,nm,_) -> map length nm) d50_common_families) == 4
+-- > putStrLn $ unlines $ map (\(_,nm,_) -> unwords nm) d50_common_families
+d50_common_families :: [PARAM_FAMILY]
+d50_common_families =
+  d50_param_groups_to_families (words "NAME STR+P LFO EQ+CH") [1,5,3,2] d50_common_groups
+
 -- | D50 INIT-SQU common data (PN-D50-01).
 --
 -- > length d50_common_init_squ == length d50_common_parameters
@@ -854,12 +934,20 @@ d50_patch_parameters =
 d50_patch_groups :: [PARAM_GROUP]
 d50_patch_groups =
     [("Patch Name Edit",";;;;;;;;;;;;;;;;;",[0..17])
-    ,("MAIN",";SP;Bal",[18,19,33])
-    ,("Tone Tune","LKey;UKey;LTune;UTune",[23,22,25,24])
+    ,("MAIN","KeyM;SP;Bal",[18,19,33])
+    ,("Tone Tune","LKey;UKey;LTun;UTun",[23,22,25,24])
     ,("Control Edit","Bend;AfPB;Port;Port;Hold",[26,27,28,20,21])
     ,("Output Mode Edit","Mode;Rev;Rbal;Vol",[29..32])
     ,("Chase Edit","Mode;Levl;Time",[34..36])
     ]
+
+-- | Patch data in families.
+--
+-- > maximum (concatMap (\(_,nm,_) -> map length nm) d50_patch_families) == 4
+-- > putStrLn $ unlines $ map (\(_,nm,_) -> unwords nm) d50_patch_families
+d50_patch_families :: [PARAM_FAMILY]
+d50_patch_families =
+  d50_param_groups_to_families (words "NAME MN+TN EDT") [1,2,3] d50_patch_groups
 
 -- * PARAMETER
 
@@ -1032,10 +1120,11 @@ d50_group_seq =
     let tn = [d50_partial_groups,d50_partial_groups,d50_common_groups]
     in concat [tn,tn,[d50_patch_groups]]
 
-group_pp :: [(D50_Parameter,U8)] -> PARAM_GROUP -> String
-group_pp x_seq (g_nm,p_nm_seq,ix) =
-    let f p_nm (p,x) = let x' = d50_parameter_value_usr_def "??" p x
-                       in if null p_nm {- ie. CHAR -} then x' else concat [p_nm,"=",x']
+-- | Pretty printer for parameter group.
+d50_group_pp :: [(D50_Parameter,U8)] -> PARAM_GROUP -> String
+d50_group_pp x_seq (g_nm,p_nm_seq,ix) =
+    let f p_nm (p,x) = let x_def = d50_parameter_value_usr_def "??" p x
+                       in if null p_nm {- ie. CHAR -} then x_def else concat [p_nm,"=",x_def]
         gr_p = zipWith f (Split.splitOn ";" p_nm_seq) (map (u24_at x_seq) ix)
     in T.pad_right ' ' 16 g_nm ++ " -> " ++ unwords gr_p
 
@@ -1047,8 +1136,32 @@ group_pp x_seq (g_nm,p_nm_seq,ix) =
 -}
 d50_patch_group_pp :: D50_Patch -> [String]
 d50_patch_group_pp =
-    let f gr pr = "" : d50_parameter_type_pp (fst pr) : map (group_pp (snd pr)) gr
+    let f gr pr = "" : d50_parameter_type_pp (fst pr) : map (d50_group_pp (snd pr)) gr
     in concat . zipWith f d50_group_seq . d50_parameter_segment . zip d50_parameters_seq
+
+-- | 'PARAM_GROUP' in ADDRESS sequence.
+--
+-- > maximum (map (\(nm,_,_) -> length nm) (concat d50_family_seq)) == 5
+d50_family_seq :: [[PARAM_FAMILY]]
+d50_family_seq =
+    let tn = [d50_partial_families,d50_partial_families,d50_common_families]
+    in concat [tn,tn,[d50_patch_families]]
+
+-- | Pretty printer for parameter family.
+d50_family_pp :: [(D50_Parameter,U8)] -> PARAM_FAMILY -> [String]
+d50_family_pp x_seq (_fm,nm,ix) =
+    let f (p,x) = d50_parameter_value_usr_def "??" p x
+    in [unwords (map (T.pad_right ' ' 4) nm)
+       ,unwords (map (\n -> d50_str_pad_centre True 4 (f (u24_at x_seq n))) ix)
+       ,""]
+
+-- | Pretty printer for D-50 patch following family structure (ie. concise layout).
+--
+-- > writeFile (dir ++ "d50.family.text") (unlines (d50_patch_family_pp p))
+d50_patch_family_pp :: D50_Patch -> [String]
+d50_patch_family_pp =
+    let f fm pr = "" : d50_parameter_type_pp (fst pr) : concatMap (d50_family_pp (snd pr)) fm
+    in concat . zipWith f d50_family_seq . d50_parameter_segment . zip d50_parameters_seq
 
 -- | Patch name, 18-byte ASCII string.
 d50_patch_name :: D50_Patch -> String
