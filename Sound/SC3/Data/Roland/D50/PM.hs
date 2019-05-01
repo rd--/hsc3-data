@@ -81,7 +81,7 @@ d50_recv_bulk_data ch = do
 -- | Send each 'D50_DSC' then wait for 'ACK'.
 d50_send_dat_seq :: [D50_DSC] -> (PM.PM_FD,PM.PM_FD) -> IO ()
 d50_send_dat_seq dsc (in_fd,out_fd) =
-  let f e = d50_send_dsc (dsc_set_cmd DAT_CMD e) out_fd >>
+  let f e = d50_send_dsc (d50_dsc_set_cmd DAT_CMD e) out_fd >>
             d50_recv_ack in_fd
   in mapM_ f dsc
 

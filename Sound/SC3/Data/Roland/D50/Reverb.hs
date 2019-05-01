@@ -1,7 +1,45 @@
 -- | D50 / Reverb
 module Sound.SC3.Data.Roland.D50.Reverb where
 
-import Sound.SC3.Data.Roland.D50
+import Data.Char {- base -}
+import Data.List {- base -}
+import Data.Maybe {- base -}
+
+import Sound.SC3.Data.Byte {- hsc3-data -}
+
+-- | (REVERB-INDEX,NAME)
+type D50_REVERB_NAME = (U8,String)
+
+-- | Reverbs 1-16 are shared (common) reverb types, 17-32 are user (bank) reverb types.
+d50_reverb_type_shared :: [D50_REVERB_NAME]
+d50_reverb_type_shared =
+  [(01,"Small Hall")
+  ,(02,"Medium Hall")
+  ,(03,"Large Hall")
+  ,(04,"Chapel")
+  ,(05,"Box")
+  ,(06,"Small Metal Room")
+  ,(07,"Small Room")
+  ,(08,"Medium Room")
+  ,(09,"Medium Large Room")
+  ,(10,"Large Room")
+  ,(11,"Single Delay (102 ms)")
+  ,(12,"Cross Delay (180 ms)")
+  ,(13,"Cross Delay (224 ms)")
+  ,(14,"Cross Delay (148-296 ms)")
+  ,(15,"Short Gate (200 ms)")
+  ,(16,"Long Gate (480 ms)")]
+
+-- | USR string variant of 'd50_reverb_type_shared', with indices for 17-32.
+d50_reverb_type_usr :: String
+d50_reverb_type_usr =
+  let rw c =
+        case c of
+          ' ' -> Just '-'
+          '(' -> Nothing
+          ')' -> Nothing
+          _ -> Just (toUpper c)
+  in intercalate ";" (map (mapMaybe rw . snd) d50_reverb_type_shared ++ map show [17::U8 .. 32])
 
 -- | Reverb from PN-D50-00 (ie. FACTORY PRESET)
 d50_reverb_type_PN_D50_00 :: [D50_REVERB_NAME]
