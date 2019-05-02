@@ -683,7 +683,7 @@ d50_partial_parameters =
 
 -- | Parameter indices that apply only if Part is S/P.
 --
--- let (s,p) = d50_partial_SP_only in (length s,length p) == (31,1)
+-- > let (s,p) = d50_partial_SP_only in (length s,length p) == (31,1)
 d50_partial_SP_only :: ([U24],[U24])
 d50_partial_SP_only = (concat [[6],[8..34],[51..53]],[7])
 

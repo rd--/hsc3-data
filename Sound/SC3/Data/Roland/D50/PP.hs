@@ -81,6 +81,8 @@ d50_partial_groups =
 
 -- | Group structure of common parameters, as in D-50 menu system.
 --   PMut (partial-mute) and PBal (partial-balance) are not in the menu system.
+--
+-- > concatMap (\(_,_,ix) -> ix) d50_common_groups == [0 .. 10] ++ [46,47] ++ [11 .. 45]
 d50_common_groups :: [PARAM_GROUP]
 d50_common_groups =
     [("Tone Name Edit",";;;;;;;;;",[0..9])
@@ -98,6 +100,8 @@ d50_common_groups =
 
 -- | Group structure of patch parameters.
 --   KeyM (key-mode), SP (split-point) and Bal (tone-balance) are not in the menu system.
+--
+-- > concatMap (\(_,_,ix) -> ix) d50_patch_groups
 d50_patch_groups :: [PARAM_GROUP]
 d50_patch_groups =
     [("Patch Name Edit",";;;;;;;;;;;;;;;;;",[0..17])
@@ -161,73 +165,63 @@ d50_param_name_abbrev nm =
 
 -- * AREA
 
--- | (AREA-NAME,[(NAME,IX,CHAR-WIDTH)])
-type PARAM_AREA = (String, [(String,U24,Int)])
+-- | [(NAME,IX,CHAR-WIDTH)]
+type PARAM_AREA = [(String,U24,Int)]
 
--- | Given area names and group lengths convert to areas.
-d50_param_groups_to_areas :: [String] -> [Int] -> [(U24,Int)] -> [PARAM_GROUP] -> [PARAM_AREA]
-d50_param_groups_to_areas fm pl wd gr =
+-- | Given area names and group lengths and char-width table convert to areas.
+--   Widths are 3 CHAR unless specified.
+d50_param_groups_to_areas :: [Int] -> [(U24,Int)] -> [PARAM_GROUP] -> [PARAM_AREA]
+d50_param_groups_to_areas pl wd gr =
   let spl = Split.splitPlaces pl
       (_,g_nm,g_ix) = unzip3 gr
       a_nm = map (concatMap (Split.splitOn ";")) (spl g_nm)
       a_ix = map concat (spl g_ix)
       f nm ix = (nm,ix,fromMaybe 3 (lookup ix wd))
-  in zip fm (zipWith (zipWith f) a_nm a_ix)
+  in zipWith (zipWith f) a_nm a_ix
 
 -- | Partial data in areas.
---
--- > maximum (concatMap (\(_,ar) -> map (length . fst) ar) d50_partial_areas) == 4
--- > putStrLn $ unlines $ map (\(_,ar) -> unwords (map (d50_param_name_abbrev . fst) ar)) d50_partial_areas
 d50_partial_areas :: [PARAM_AREA]
 d50_partial_areas =
   let wd = [(7,6),(16,4),(37,4)]
-  in d50_param_groups_to_areas (words "WG TVF TVA") [4,5,5] wd d50_partial_groups
+  in d50_param_groups_to_areas [4,5,5] wd d50_partial_groups
 
 -- | Common data in areas.
---
--- > maximum (concatMap (\(_,nm,_) -> map length nm) d50_common_areas) == 4
--- > putStrLn $ unlines $ map (\(_,nm,_) -> unwords nm) d50_common_areas
 d50_common_areas :: [PARAM_AREA]
 d50_common_areas =
-  d50_param_groups_to_areas (words "NAME STR+P LFO+EQ+CH") [1,5,5] [] d50_common_groups
+  d50_param_groups_to_areas [1,5,5] [] d50_common_groups
 
 -- | Patch data in areas.
---
--- > maximum (concatMap (\(_,ar) -> map (length . fst) ar) d50_patch_areas) == 6
--- > putStrLn $ unlines $ map (\(_,ar) -> unwords (map fst ar)) d50_patch_areas
 d50_patch_areas :: [PARAM_AREA]
 d50_patch_areas =
-  d50_param_groups_to_areas (words "NAME PDAT") [1,5] [(18,6)] d50_patch_groups
+  d50_param_groups_to_areas [1,5] [(18,6)] d50_patch_groups
 
 -- | 'PARAM_AREA' in ADDRESS sequence.
---
--- > maximum (map (\(nm,_,_) -> length nm) (concat d50_area_seq)) == 5
 d50_area_seq :: [[PARAM_AREA]]
 d50_area_seq =
     let tn = [d50_partial_areas,d50_partial_areas,d50_common_areas]
     in concat [tn,tn,[d50_patch_areas]]
 
 -- | Pretty printer for HEADER for parameter area.
+--
+-- > putStrLn$unlines$map d50_area_hdr_pp (concat [d50_partial_areas,d50_common_areas,d50_patch_areas])
 d50_area_hdr_pp :: PARAM_AREA -> String
-d50_area_hdr_pp (_,dat) =
+d50_area_hdr_pp dat =
     let (nm,_,wd) = unzip3 dat
     in unwords (zipWith (T.pad_left ' ') wd (map (map toUpper . d50_param_name_abbrev) nm))
 
 -- | Pretty printer for DATA parameter area.
 d50_area_dat_pp :: [(D50_Parameter,U8)] -> PARAM_AREA -> String
-d50_area_dat_pp x_seq (_,dat) =
+d50_area_dat_pp x_seq dat =
     let (_,ix,wd) = unzip3 dat
-        f (p,x) = d50_parameter_value_usr_def "?" p x
-    in unwords (zipWith (\k n -> T.pad_left ' ' k (f (u24_at x_seq n))) wd ix)
+        f n = let (p,x) = u24_at x_seq n in d50_parameter_value_usr_def "?" p x
+    in unwords (zipWith (\k n -> T.pad_left ' ' k (f n)) wd ix)
 
-{- | Pretty printer for D-50 patch following area structure (ie. concise layout).
-
-> dir = "/home/rohan/uc/invisible/light/d50/"
-> p:_ <- d50_load_hex (dir ++ "d50.hex.text")
-> writeFile (dir ++ "d50.area.text") (unlines (d50_patch_area_pp p))
--}
-d50_patch_area_pp :: D50_Patch -> [String]
-d50_patch_area_pp p =
+-- | Make area structure text, entries are of the form (HEADER,[DATA]).
+--   The number of DATA entries is 4 for PART (U1 U2 L1 L2), 2 for COMMON (U L) and 1 for PATCH.
+--   The number of sets for is 3 for PART, 2 for COMMON and 1 for PATCH.
+--   NAME data, ie. for UPPER LOWER and PATCH, is excluded.
+d50_patch_area_gen :: D50_Patch -> [[(String, [String])]]
+d50_patch_area_gen p =
   let pr_seg = map snd (d50_parameter_segment (zip d50_parameters_seq p))
       mk_dat ar pr = map (d50_area_dat_pp pr) ar
       reorder lst =
@@ -240,9 +234,21 @@ d50_patch_area_pp p =
       hdr_ln = map d50_area_hdr_pp (concat [d50_partial_areas,d50_common_areas,d50_patch_areas])
       hdr_ix = [0,1,2, 4,5, 7]
       hdr_sq = map (hdr_ln !!) hdr_ix
+  in Split.splitPlaces ([3,2,1] :: [Int]) (zip hdr_sq dat_sq)
+
+{- | Pretty printer for D-50 patch following area structure (ie. concise layout).
+
+> dir = "/home/rohan/uc/invisible/light/d50/"
+> p:_ <- d50_load_hex (dir ++ "d50.hex.text")
+> putStrLn (unlines (d50_patch_area_pp p))
+-}
+d50_patch_area_pp :: D50_Patch -> [String]
+d50_patch_area_pp p =
+  let (hdr_sq,dat_sq) = unzip (concat (d50_patch_area_gen p))
   in concat (intersperse [""] (zipWith (:) hdr_sq dat_sq))
 
---    concat . map (zzz d50_area_seq) . map snd . d50_parameter_segment . zip d50_parameters_seq
+d50_area_names :: [[String]]
+d50_area_names = [words "WG TVF TVA",words "NAME STR+P LFO+EQ+CH",words "NAME PDAT"]
 
 -- * CSV
 

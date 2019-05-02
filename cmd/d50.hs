@@ -11,6 +11,7 @@ import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50.DB as D50 {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50.Hash as D50 {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50.PM as D50 {- hsc3-data -}
+import qualified Sound.SC3.Data.Roland.D50.PP as D50 {- hsc3-data -}
 
 -- * COMMON
 
@@ -25,9 +26,6 @@ sleep_ms = pauseThread . ms_to_sec
 send_sysex_def :: [[U8]] -> IO ()
 send_sysex_def x = void (PM.pm_with_default_output (\fd -> PM.pm_sysex_write_seq 10 fd x))
 
-patch_pp :: [U8] -> IO ()
-patch_pp = putStrLn. unlines . D50.d50_patch_group_pp
-
 pm_run_proc :: Int -> PM.PM_FD -> PM.PROC_F -> IO ()
 pm_run_proc dt fd proc_f =
     let recur = do
@@ -40,9 +38,10 @@ pm_run_proc dt fd proc_f =
 
 lpc_recv_midi :: ([D50.D50_Patch], PM.PM_FD) -> PM.PROC_F
 lpc_recv_midi (p,fd) m =
-    case m of
-      Left (0xC0,n,0) -> patch_pp (u8_at p n) >> D50.d50_send_patch_tmp_fd (u8_at p n) fd
-      _ -> return ()
+  let pp = putStrLn. unlines . D50.d50_patch_group_pp
+  in case m of
+       Left (0xC0,n,0) -> pp (u8_at p n) >> D50.d50_send_patch_tmp_fd (u8_at p n) fd
+       _ -> return ()
 
 -- > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 -- > lpc_run fn
@@ -73,6 +72,7 @@ dat_print :: Bool -> Maybe Int -> String -> [D50.D50_Patch] -> IO ()
 dat_print bnk ix ty v =
   let f pp = d50_print_dat ix pp v
   in case ty of
+       "pp-area" -> f (D50.d50_patch_area_pp . snd)
        "csv" -> f (D50.d50_patch_csv True . snd)
        "hex" -> f (return . D50.d50_sysex_pp . snd)
        "name" -> f (return . print_name bnk)
@@ -155,16 +155,19 @@ sysex_db_search_hash dir h = do
 
 usage :: [String]
 usage =
-  ["hex print {ix | all} {csv | hex | name | pp-group} text-file..."
+  ["hex print pp-select pp-type text-file..."
   ,"hex send ix text-file"
   ,"set wg-pitch-kf ratio"
   ,"sysex load-on-program-change sysex-file"
-  ,"sysex print {ix | all} {csv | hex | name | pp-group} sysex-file..."
+  ,"sysex print pp-select pp-type sysex-file..."
   ,"sysex send {tmp | d50-ix} sysex-ix sysex-file"
   ,"sysex-db search hash sysex-dir hash..."
   ,"sysex-db search name cs|ci sysex-dir lower-name|- upper-name|- patch-name|-"
   ,"transfer receive bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
   ,"transfer send bulk {hex | sysex} {patch-file reverb-file | sysex-file}"
+  ,""
+  ,"  pp-select = {ix | all}"
+  ,"  pp-type = {csv | hex | name | pp-area | pp-group}"
   ]
 
 usage_wr :: IO ()
