@@ -211,16 +211,10 @@ s900_sf_export dir fn = do
 
 {-
 
-fn = "/home/rohan/AKAI/SL-502.img"
+fn = "/home/rohan/SYN/AKAI/SL-502.img"
 s900_sf_export "/tmp/" fn
 r <- s900_read_img fn
 (e,d) = unzip r
 filter ((==) 'S' . s900_disk_ent_type) e
-let s = d !! 16
-s900_sf_hdr (take 60 s)
-x = s900_sf_data_unpack 1800 (drop 60 s)
-length x
-import Sound.SC3.Plot
-plotTable1 (map i12_to_int x)
-plotTable1 (map i12_to_int (take 128 (drop 0 x)))
+
 -}

@@ -18,6 +18,7 @@ import qualified Music.Theory.Math.Convert as T {- hmt -}
 import Sound.File.RIFF {- hsc3-sf -}
 
 -- | The kgrp CHUNK data is a sequence of nine CHUNKs.
+--   KLOC,ENV-{AMP,FLT,AUX},FILT,ZONE-{1,2,3,4},
 akp_kgrp_chunks :: CHUNK -> [CHUNK]
 akp_kgrp_chunks ch =
   case ch of
@@ -42,15 +43,14 @@ akp_load_ch fn = withFile fn ReadMode akp_read_ch
 -- * PRG
 
 -- | (MIDI-PRG-NUMBER,KEYGROUP-COUNT)
-akp_prg_parse :: CHUNK -> (Word8,Word8)
-akp_prg_parse ch =
-  case ch of
-    (("prg ",6),dat) -> (L.index dat 1,L.index dat 2)
-    _ -> error "akp_prg_parse?"
+type AKP_PRG = (Word8,Word8)
 
--- * TUNE (22-BYTES)
+akp_prg_parse :: L.ByteString -> AKP_PRG
+akp_prg_parse dat = (L.index dat 1,L.index dat 2)
 
-{-
+-- * TUNE (24-BYTES)
+
+{- | TUNE DATA
 
  1	Semitone Tune (0) -36 -> 36
  2	Fine Tune (0) -50 -> 50
@@ -72,10 +72,56 @@ akp_prg_parse ch =
 18	Aftertouch (0) -12 -> 12
 
 -}
+type AKP_TUNE = ((Word8, Word8), [Word8], (Word8, Word8), Word8, Word8)
+
+-- | TUNE default values.
+akp_tune_def :: AKP_TUNE
+akp_tune_def = ((0,0),[0,0,0,0,0,0,0,0,0,0,0,0],(2,2),0,0)
+
+-- | TUNE parser.
+akp_tune_parse :: L.ByteString -> AKP_TUNE
+akp_tune_parse dat =
+  let ix = L.index dat
+      sec n m = L.unpack (L.take (m - n + 1) (L.drop n dat))
+  in ((ix 1,ix 2),sec 3 14,(ix 15,ix 16),ix 17,ix 18)
+
+-- * LFO
+
+akp_wave_tbl :: [(Word8,String)]
+akp_wave_tbl =
+  [(0,"SINE")
+  ,(1,"TRIANGLE")
+  ,(2,"SQUARE"),(3,"SQUARE+"),(4,"SQUARE-")
+  ,(5,"SAW BI"),(6,"SAW UP"),(7,"SAW DOWN")
+  ,(8,"RANDOM")]
+
+{- | AKP LFO (14-BYTES)
+
+ 1	Waveform (1)
+ 2	Rate (43) 0 -> 100
+ 3	Delay (0) 0 -> 100
+ 4	Depth (0) 0 -> 100
+ 5	LFO Sync (0) 0 = OFF, 1 = ON
+ 7	Modwheel (15) 0 -> 100
+ 8	Aftertouch (0) 0 -> 100
+ 9	Rate Mod (0) -100 -> 100
+10	Delay Mod (0) -100 -> 100
+11	Depth Mod (0) -100 -> 100
+
+-}
+type AKP_LFO = (Word8,Word8,Word8,Word8,Word8,(Word8,Word8),(Word8,Word8,Word8))
+
+akp_lfo_def :: AKP_LFO
+akp_lfo_def = (1,43,0,0,0,(15,0),(0,0,0))
+
+akp_lfo_parse :: L.ByteString -> AKP_LFO
+akp_lfo_parse dat =
+  let ix = L.index dat
+  in (ix 1,ix 2,ix 3,ix 4,ix 5,(ix 7,ix 8),(ix 9,ix 10,ix 11))
 
 -- * KLOC (16-BYTES)
 
-{-
+{- | AKP KLOC
 
  4	low note (21) 21 -> 127
  5	high note (127) 21 -> 127
@@ -89,19 +135,19 @@ akp_prg_parse ch =
 13	Zone Xfade (0) 0 = OFF, 1 = ON
 14	Mute Group
 
+(LOW,HIGH,TUNE,FINE-TUNE)
+
 -}
+type AKP_KLOC = (Word8,Word8,Word8,Word8)
 
-akp_kloc_parse :: CHUNK -> (Word8,Word8,Word8,Word8)
-akp_kloc_parse ch =
-  case ch of
-    (("kloc",16),dat) ->
-      let ix = L.index dat
-      in (ix 4,ix 5,ix 6,ix 7)
-    _ -> error "akp_kloc_parse?"
+akp_kloc_parse :: L.ByteString -> AKP_KLOC
+akp_kloc_parse dat =
+  let ix = L.index dat
+  in (ix 4,ix 5,ix 6,ix 7)
 
--- * ENV-AMP (18-BYTES)
+-- * ENV (18-BYTES)
 
-{-
+{- | AKP ENV
 
 1	Attack (0) 0 -> 100
 3	Decay (50) 0 -> 100
@@ -109,17 +155,17 @@ akp_kloc_parse ch =
 6	Sustain (100) 0 -> 100
 
 -}
+type AKP_ENV = (Word8,Word8,Word8,Word8)
 
--- | (ATTACK,DECAY,RELEASE,SUSTAIN)
-akp_env_parse :: CHUNK -> (Word8,Word8,Word8,Word8)
-akp_env_parse ch =
-  case ch of
-    (("env ",18),dat) ->
-      let ix = L.index dat
-      in (ix 1,ix 3,ix 4,ix 6)
-    _ -> error "akp_env_parse?"
+akp_env_def :: AKP_ENV
+akp_env_def = (0,50,15,100)
 
--- * ZONE (46-BYTES)
+akp_env_parse :: L.ByteString -> AKP_ENV
+akp_env_parse dat =
+  let ix = L.index dat
+  in (ix 1,ix 3,ix 4,ix 6)
+
+-- * ZONE (48-BYTES)
 
 akp_playback_tbl :: [(Word8,String)]
 akp_playback_tbl =
@@ -129,7 +175,7 @@ akp_playback_tbl =
   ,(3,"LOOP UNTIL REL")
   ,(4,"AS SAMPLE")]
 
-{-
+{- | AKP ZONE
 
 1	Number of chars in Sample Name
 2 - 21  Sample Name (pad with 00h) (if first character = 00h then no sample assigned)
@@ -146,30 +192,49 @@ akp_playback_tbl =
 44	Velocity->Start LSB (0) }
 45	Velocity->Start MSB (0) } -9999 -> 9999
 
+(NAME,..,..,FINE-TUNE,TUNE,..,PAN,PLAYBACK,..,LEVEL)
+
 -}
+type AKP_ZONE = (String,Word8,Word8,Word8,Word8,Word8)
 
--- | (NAME,FINE-TUNE,TUNE,PAN,PLAYBACK,LEVEL)
-akp_zone_parse :: CHUNK -> (String,Word8,Word8,Word8,Word8,Word8)
-akp_zone_parse ch =
+akp_zone_parse :: L.ByteString -> AKP_ZONE
+akp_zone_parse dat =
+  let ix = L.index dat
+      nm_n = ix 1
+      nm = map T.word8_to_char (L.unpack (section 2 (T.word8_to_int64 nm_n) dat))
+  in (nm,ix 36,ix 37,ix 39,ix 40,ix 42)
+
+-- * CH
+
+data AKP_CH =
+    AKP_PRG AKP_PRG
+  | AKP_TUNE AKP_TUNE
+  | AKP_LFO AKP_LFO
+  | AKP_KLOC AKP_KLOC
+  | AKP_ENV AKP_ENV
+  | AKP_ZONE AKP_ZONE
+  | AKP_NO_PARSE CHUNK_HDR
+  deriving (Show)
+
+akp_ch_parse :: CHUNK -> AKP_CH
+akp_ch_parse ch =
   case ch of
-    (("zone",48),dat) ->
-      let ix = L.index dat
-          nm_n = ix 1
-          nm = map T.word8_to_char (L.unpack (section 2 (T.word8_to_int64 nm_n) dat))
-      in (nm,ix 36,ix 37,ix 39,ix 40,ix 42)
-    _ -> error "akp_zone_parse?"
-
+    (("prg ",06),dat) -> AKP_PRG (akp_prg_parse dat)
+    (("tune",24),dat) -> AKP_TUNE (akp_tune_parse dat)
+    (("lfo ",14),dat) -> AKP_LFO (akp_lfo_parse dat)
+    (("kloc",16),dat) -> AKP_KLOC (akp_kloc_parse dat)
+    (("env ",18),dat) -> AKP_ENV (akp_env_parse dat)
+    (("zone",48),dat) -> AKP_ZONE (akp_zone_parse dat)
+    (hdr,_) -> AKP_NO_PARSE hdr
 
 {-
 
-fn = "/home/rohan/EMU/UNIVERSE OF SOUNDS FAVOURITES/ARIEL PAD/S50_ARIEL.akp"
+fn = "/home/rohan/SYN/EMU/UNIVERSE OF SOUNDS FAVOURITES/ARIEL PAD/S50_ARIEL.akp"
 (hdr,kgrp) <- akp_load_ch fn
 map fst hdr
-akp_prg_parse (hdr !! 0)
+map akp_ch_parse hdr
 k = kgrp !! 0
 map fst k
-akp_kloc_parse (k !! 0)
-akp_env_parse (k !! 1)
-akp_zone_parse (k !! 5)
+map akp_ch_parse k
 
 -}
