@@ -221,6 +221,14 @@ d50_parameter_type_base_address_t3 ty =
 d50_parameter_type_base_address :: D50_Parameter_Type -> D50_ADDRESS
 d50_parameter_type_base_address = d50_addr_encode . d50_parameter_type_base_address_t3
 
+-- | List of name address segments.
+d50_name_address_segments :: [(D50_ADDRESS,U24)]
+d50_name_address_segments = [(0x080,10),(0x140,10),(0x180,18)]
+
+-- | Is /addr/ in any of the D50 name address segments?
+d50_is_name_address :: D50_ADDRESS -> Bool
+d50_is_name_address n = let f (p,q) = n >= p && n < (p + q) in any f d50_name_address_segments
+
 -- | Base-address for partials U1, U2, L1 and L2.
 d50_partial_base_address_seq :: [D50_ADDRESS]
 d50_partial_base_address_seq = [0x000,0x040,0x0C0,0x100]
@@ -298,9 +306,7 @@ d50_parameter_lookup (ty,nm) =
 {- | Get 'D50_ADDRESS' of named parameter.
 
 > d50_named_parameter_to_address (Patch,"Lower Tone Fine Tune") == Just 409
-> d50_named_parameter_to_address (Patch,"Patch Name 1") == Just 384
 > d50_named_parameter_to_address (Patch,"Key Mode") == Just 402
-> d50_named_parameter_to_address (Common Upper,"Tone Name 1") == Just 128
 > d50_named_parameter_to_address (Common Lower,"Structure No.") == Just 330
 > d50_named_parameter_to_address (Common Upper,"Partial Mute") == Just 174
 
@@ -753,29 +759,21 @@ d50_common_factors =
     ,(47,"Partial Balance",101,0,"0 - 100")
     ]
 
--- | 'd50_common_factors' preceded by 10-byte Tone name.
---
--- > length d50_common_parameters == 10 + d50_common_factors_n
-d50_common_parameters :: [D50_Parameter]
-d50_common_parameters =
-    let ch n = (n,"Tone Name " ++ show (n + 1),64,0,d50_char_code_usr)
-    in map ch [0 .. 9] ++ d50_common_factors
-
 -- | D50 INIT-SQU common data (PN-D50-01).
 --
--- > length d50_common_init_squ == length d50_common_parameters
-d50_common_init_squ :: [U8]
+-- > length (snd d50_common_init_squ) == length d50_common_factors
+d50_common_init_squ :: (String,[U8])
 d50_common_init_squ =
-  [63,9,40,35,46,63,0,19,17,21 -- NAME
-  ,0 ,0,0 ,0,0,0,0 ,50,50,50,50,50 ,0,20,0 -- STRUCT + P-ENV + P-MOD
-  ,0,75,50,0 ,0,50,0,0 ,0,30,0,0 -- LFO 1-3
-  ,5,12,8,0,12 ,0,50,50,0 -- EQ + CHORUS
-  ,1,50 -- MUT + BAL
-  ]
+  ("-Init- SQU"
+  ,[0 ,0,0 ,0,0,0,0 ,50,50,50,50,50 ,0,20,0 -- STRUCT + P-ENV + P-MOD
+   ,0,75,50,0 ,0,50,0,0 ,0,30,0,0 -- LFO 1-3
+   ,5,12,8,0,12 ,0,50,50,0 -- EQ + CHORUS
+   ,1,50 -- MUT + BAL
+   ])
 
 -- * PATCH
 
--- | The number of PATCH parameters, excluding 18-charcter PATCH NAME.
+-- | The number of PATCH parameters, excluding 18-character PATCH NAME.
 d50_patch_factors_n :: Num n => n
 d50_patch_factors_n = 22
 
@@ -809,39 +807,33 @@ d50_patch_factors =
     ,(39,"Midi Transmit Prog. Change",101,0,"OFF | 1 - 100")
     ]
 
--- | 'd50_patch_factors' preceded by 18-character patch name.
---
--- > length d50_patch_parameters == 40
-d50_patch_parameters :: [D50_Parameter]
-d50_patch_parameters =
-    let ch n = (n,"Patch Name " ++ show (n + 1),64,0,d50_char_code_usr)
-    in map ch [0 .. 17] ++ d50_patch_factors
-
 -- * PARAMETER
 
 -- | Complete set of /used/ 'D50_Parameter's.
---   The table is zero-indexed and sparse.
+--   Excludes NAME data.
+--   The table grouped U1 U2 U L1 L2 L P and is zero-indexed and is sparse.
 --
--- > length d50_parameters == 352
--- > nub $ sort $ map parameter_user_offset d50_parameters
--- > putStrLn $ unlines $ map show d50_parameters
-d50_parameters :: [D50_Parameter]
+-- > map length d50_parameters == [54,54,38,54,54,38,22]
+-- > length (concat d50_parameters) == 314
+-- > nub $ sort $ map d50_parameter_user_offset $ concat d50_parameters
+-- > putStrLn $ unlines $ map show $ concat d50_parameters
+d50_parameters :: [[D50_Parameter]]
 d50_parameters =
     let f i = map (\(ix,nm,stp,usr_diff,usr_str) -> (ix + i,nm,stp,usr_diff,usr_str))
         a = map d50_parameter_type_base_address d50_parameter_type_seq
-        p = [d50_partial_parameters,d50_partial_parameters,d50_common_parameters
-            ,d50_partial_parameters,d50_partial_parameters,d50_common_parameters
-            ,d50_patch_parameters]
-    in concat (zipWith f a p)
+        p = [d50_partial_parameters,d50_partial_parameters,d50_common_factors
+            ,d50_partial_parameters,d50_partial_parameters,d50_common_factors
+            ,d50_patch_factors]
+    in zipWith f a p
 
--- | The number of D50 patch parameters, including unused.
+-- | The number of D50 patch parameters, including NAMES and unused.
 d50_parameter_n :: Num n => n
 d50_parameter_n = 448
 
 -- | A D50 patch is a 448-byte sequence.
 type D50_Patch = [U8]
 
--- | D50 param in sequence: U1 U2 U L1 L2 L P.
+-- | D50 param in sequence: U1 U2 U L1 L2 L P.  Excludes NAME data.
 type D50_Param = [[U8]]
 
 -- | A list of differences, ie. (ADDRESS,VALUE) pairs.
@@ -897,6 +889,10 @@ d50_patch_cons nm pr = sort (d50_patch_name_set_cons nm ++ d50_patch_param_cons 
 d50_patch_gen :: D50_Patch_Name_Set -> D50_Param -> D50_Patch
 d50_patch_gen nm pr = d50_diff_apply (replicate d50_parameter_n 0) (d50_patch_cons nm pr)
 
+-- | Construct parameter for character in a name.
+d50_name_parameter :: U24 -> D50_Parameter
+d50_name_parameter ix = (ix,"NAME CHAR " ++ show ix,64,0,d50_char_code_usr)
+
 -- | The D50 parameter address space is sparse, ie. has unused addresses.
 --   Construct an UNUSED parameter.
 d50_unused_parameter :: U24 -> D50_Parameter
@@ -905,7 +901,7 @@ d50_unused_parameter ix = (ix,"UNUSED",1,0,"")
 -- | Complete 'D50_Parameter' sequence, including all /unused/ parameters.
 --
 -- > length d50_parameters_seq == d50_parameter_n
--- > map parameter_ix d50_parameters_seq == [0 .. d50_parameter_n - 1]
+-- > map d50_parameter_ix d50_parameters_seq == [0 .. d50_parameter_n - 1]
 d50_parameters_seq :: [D50_Parameter]
 d50_parameters_seq =
     let recur n sq =
@@ -913,16 +909,19 @@ d50_parameters_seq =
               [] -> []
               p:sq' -> if n == d50_parameter_ix p
                        then p : recur (n + 1) sq'
-                       else d50_unused_parameter n : recur (n + 1) sq
-    in recur 0 d50_parameters ++ map d50_unused_parameter [424..447]
+                       else let x = if d50_is_name_address n
+                                    then d50_name_parameter n
+                                    else d50_unused_parameter n
+                            in x : recur (n + 1) sq
+    in recur 0 (concat d50_parameters) ++ map d50_unused_parameter [424..447]
 
 -- | Parameters of indicated type.
 d50_parameters_by_type :: D50_Parameter_Type -> [D50_Parameter]
 d50_parameters_by_type ty =
     case ty of
       Partial _ _ -> d50_partial_parameters
-      Common _ -> d50_common_parameters
-      Patch -> d50_patch_parameters
+      Common _ -> d50_common_factors
+      Patch -> d50_patch_factors
 
 -- * PARAMETER
 
