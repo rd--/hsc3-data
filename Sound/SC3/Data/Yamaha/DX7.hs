@@ -589,17 +589,17 @@ dx7_param_to_fmt0_sysex p = dx7_fmt0_sysex_encode True 0 (dx7_param_to_dx7_voice
 -- * B: SYSEX Message: FORMAT=9: Bank Data (32 VOICES, 4104 BYTES)
 
 {-
-     11110000  F0   STATUS BYTE - START SYSEX
-     0iiiiiii  43   YAMAHA ID
-     0sssnnnn  00   SUB-STATUS = 0x00 & CHANNEL NUMBER
-     0fffffff  09   FORMAT NUMBER = 9
-     0bbbbbbb  20   BYTE COUNT MS
-     0bbbbbbb  00   BYTE COUNT LS = 4096
-     0ddddddd  **   DATA BYTE 1
+     11110000  F0  240  STATUS BYTE - START SYSEX
+     0iiiiiii  43  067  YAMAHA ID
+     0sssnnnn  00  000  SUB-STATUS = 0x00 & CHANNEL NUMBER
+     0fffffff  09  009  FORMAT NUMBER = 9
+     0bbbbbbb  20  032  BYTE COUNT MS
+     0bbbbbbb  00  000  BYTE COUNT LS = 4096
+     0ddddddd  **       DATA BYTE 1
      ....
-     0ddddddd  **   DATA BYTE 4096
-     0eeeeeee  **   CHECKSUM (OF 4096 DATA BYTES)
-     11110111  F7   STATUS - END SYSEX
+     0ddddddd  **       DATA BYTE 4096
+     0eeeeeee  **       CHECKSUM (OF 4096 DATA BYTES)
+     11110111  F7  247  STATUS - END SYSEX
 -}
 
 -- | 6-byte header sequence for FORMAT=9 DX7 sysex data.
