@@ -156,38 +156,3 @@
 83  19  PROTECT     memory protect --- bit0=INT. bit1=CRT.
         MSTUNE      master tune
         PPCBUF      PROGRAMMABLE PROGRAM CHANGE TRANS SET BUFFER
-
-INTERNAL PERFORMANCE MEMORIES
-
-P-01  Warm String Section   I-01  Warm Stg A    I-49  Warm Stg B
-P-02  Mallet Brass          I-63  XyloBrass     I-25  MalletHorn
-P-03  String Bass-Guitar    I-27  StringBass    I-57  GuitarBox
-P-04  Dual Clavimettie      I-22  ClaviStuff    I-48  Clavinette
-P-05  Rich Grand Piano      I-09  EbonyIvory
-P-06  Stereo EletricPiano   I-50  KnockRoad     I-62  HardRoads
-P-07  Tubular Bell Wah      I-43  BellWahh A    I-56  BellWahh B
-P-08  Electric Rock Organ   I-32  Shorgan       I-41  TapOrgan
-P-09  Jamaica Mallet Band   I-28  SteelCans     I-21  EchoMallet
-P-10  Mono Poly Synth       I-07  FMilters      I-35  ClariSolo
-P-11  Dual Octave Trumpets  I-14  Trumpet A     I-24  Trumpet  B
-P-12  Angels                I-10  Whisper A     I-53  Whisper B
-P-13  Acoustic PickGuitar   I-03  PickGuitar    I-40  Titeguitar
-P-14  Multi Brass Ensemble  I-46  SilvaTrmpt    I-54  SilvaBrass
-P-15  St. Elmos StringBell  I-01  Warm Stg A    I-20  ST.Elmo's
-P-16  Phasar Whasars        I-07  FMilters      I-17  Phasers
-P-17  Bass Piano Split      I-39  SkweekBass    I-62  HardRoads
-P-18  Grand Harpsichord     I-64  HarpsiWire    I-52  HarpsiBox
-P-19  Sea Songs             I-34  ElectoComb    I-51  LateDown
-P-20  FM WireStrung Piano   I-31  WireStrung    I-05  FullTines
-P-21  Cello Quartet         I-44  EleCello A    I-60  EleCello B
-P-22  Touch Jazz Organ      I-12  TouchOrgan
-P-23  DoubleHarp-SongFlute  I-11  HarpStrum     I-16  SongFlute
-P-24  SynthBrass Ensemble   I-04  Analog-X      I-42  PitchaPad
-P-25  Orchestral Violins    I-61  HallOrch B    I-58  HallOrch A
-P-26  Stereo TinePiano      I-05  FullTines
-P-27  PianoBell Ensemble    I-19  Ensemble      I-15  PianoBells
-P-28  MultiPercussionSplit  I-23  MultiPerc     I-23  MultiPerc
-P-29  Temple Gong - Shami   I-38  TempleGong    I-29  Koto
-P-30  Dual Piano            I-36  PianoBrite    I-45  PianoForte
-P-31  Stereo Vibraphone     I-18  VibraPhone    I-18  VibraPhone
-P-32  Orchestral Whallop    I-47  Wallop A      I-55  Wallop B

@@ -2,6 +2,7 @@
 module Sound.SC3.Data.Yamaha.DX7.DX7II where
 
 import Data.Maybe {- base -}
+import Text.Printf {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
@@ -52,17 +53,17 @@ dx7ii_pf_grp_n = [3,3,2,1,1,2,1,2,2,3,3,4,4]
 dx7ii_pf_grp :: [U8] -> [[U8]]
 dx7ii_pf_grp = Split.splitPlaces dx7ii_pf_grp_n
 
--- > map length dx7ii_pf_name_grp == dx7ii_pf_grp_n
-dx7ii_pf_name_grp :: [[String]]
-dx7ii_pf_name_grp =
+-- > map length dx7ii_pf_param_grp == dx7ii_pf_grp_n
+dx7ii_pf_param_grp :: [[String]]
+dx7ii_pf_param_grp =
   map words
   ["PLMD VNMA VNMB","MCTB MCKY MCSW","DDTN SPPT"
   ,"FDMP","SFSW","FSAS FSW","SPRNG","NSFTA NSFTB","BLNC TVLM","CSLD1 CSLD2 CSSW"
   ,"PNMD PANRNG PANASN","PNEGR1 PNEGR2 PNEGR3 PNEGR4","PNEGL1 PNEGL2 PNEGL3 PNEGL4"]
 
--- > maximum (map (length . snd) dx7ii_pf_name_tbl) == 6
-dx7ii_pf_name_tbl :: [(U8,String)]
-dx7ii_pf_name_tbl = zip [0..] (concat dx7ii_pf_name_grp)
+-- > maximum (map (length . snd) dx7ii_pf_param_tbl) == 6
+dx7ii_pf_param_tbl :: [(U8,String)]
+dx7ii_pf_param_tbl = zip [0..] (concat dx7ii_pf_param_grp)
 
 -- * SYSEX
 
@@ -109,19 +110,38 @@ dx7ii_8973PM_parse syx =
     [hdr,dat,_,[0xF7]] -> dx7ii_assert (dx7ii_8973PM_hdr_verify 0 hdr) (Split.chunksOf 51 dat)
     _ -> error "dx7ii_8973PM_parse?"
 
+dx7ii_8973PM_load :: FilePath -> IO [[U8]]
+dx7ii_8973PM_load = fmap dx7ii_8973PM_parse . dx7_read_u8
+
+dx7ii_8973PM_summary :: [DX7_Voice] -> Int -> [U8] -> String
+dx7ii_8973PM_summary vc n pf =
+  let vc_nm k = dx7_voice_name '?' (Byte.word8_at vc k)
+      (ix_a,ix_b) = (pf !! 1,pf !! 2)
+  in printf
+     "P-%02d  %s  %-6s  I-%02d  %s  I-%02d  %s"
+     n (dx7ii_pf_name pf) (dx7ii_pf_plmd_usr pf) (ix_a + 1) (vc_nm ix_a) (ix_b + 1) (vc_nm ix_b)
+
+dx7ii_8973PM_summary_wr :: [FilePath] -> [FilePath] -> IO ()
+dx7ii_8973PM_summary_wr vc_fn pf_fn = do
+  vc <- mapM dx7_load_fmt9_sysex_err vc_fn
+  pf <- mapM dx7ii_8973PM_load pf_fn
+  let str = zipWith (dx7ii_8973PM_summary (concat vc)) [1..] (concat pf)
+  putStrLn $ unlines $ str
+
 {-
 
 let dir = "/home/rohan/sw/hsc3-data/data/yamaha/dx7ii/rom/"
-let fn_a = dir ++ "DX7II-PFA.syx"
-let fn_b = dir ++ "DX7II-PFB.syx"
+let vc_fn = map (dir ++) (words "DX7II-32A.syx DX7II-64A.syx DX7II-32B.syx DX7II-64B.syx")
+let pf_fn = map (dir ++) (words "DX7II-PFA.syx DX7II-PFB.syx")
 
-a <- dx7_read_u8 fn_a
-length a == 1650
-let p = dx7ii_8973PM_parse a
-map dx7ii_pf_name p
-map dx7ii_pf_plmd_usr p
-map dx7ii_pf_grp p
-map (!! 6) p
+dx7ii_8973PM_summary_wr vc_fn pf_fn
+
+pf <- Music.Theory.Monad.concatMapM dx7ii_8973PM_load pf_fn
+length pf == 64
+map dx7ii_pf_name pf
+map dx7ii_pf_plmd_usr pf
+map ((!! 0) . dx7ii_pf_grp) pf
+map (!! 6) pf
 
 -}
 
