@@ -1,6 +1,7 @@
 -- | Yamaha DX7
 --
---  GS-1 FM = 1981, DX1 & DX7 & DX9 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S = 1987
+--  6-OP: GS-1 FM = 1981, DX1 & DX7 = 1983, TX816 = 1984, DX7-IID = 1986, DX7S & TX802 = 1987
+--  4-OP: DX9 = 1983, DX21 & DX100 = 1985, DX11 & TX81Z = 1987
 --
 -- <https://github.com/asb2m10/dexed/blob/master/Documentation/sysex-format.txt>
 -- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
@@ -40,7 +41,7 @@ dx7_op_nparam = 21
 dx7_sh_nparam :: Num n => n
 dx7_sh_nparam = 19
 
--- | Number of voice parameters.
+-- | Number of voice parameters, ie. (6 * 21) + 19
 --
 -- > dx7_nparam == 145
 -- > dx7_nparam + dx7_name_nchar == 155
@@ -209,21 +210,16 @@ dx7_bank_from :: Int -> [DX7_Voice] -> DX7_Bank
 dx7_bank_from i = take_extending_with dx7_init_voice 32 . drop i
 
 -- | Yamaha manufacturer ID.
---
--- > import Music.Theory.Bits {- hmt -}
--- > gen_bitseq_pp 8 yamaha_id == "01000011"
---
--- > :set -XBinaryLiterals
--- > (yamaha_id == 67,yamaha_id == 0x43,yamaha_id == 0b01000011)
-yamaha_id :: U8
-yamaha_id = 0x43
+dx7_yamaha_id :: U8
+dx7_yamaha_id = 0x43
 
 -- | DX7 checksum function.
 dx7_checksum :: [U8] -> U8
 dx7_checksum d = (complement (sum (map ((.&.) 0x7F) d)) + 1) .&. 0x7F
 
-usr_str_tbl :: [(String,String)]
-usr_str_tbl =
+-- | Table of (TYPE,ENUM-SEQ).
+dx7_usr_str_tbl :: [(String,String)]
+dx7_usr_str_tbl =
     [("BOOL","OFF;ON")
     ,("CURVE","-LIN;-EXP;+EXP;+LIN")
     ,("LFO-WAVE","TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD")
@@ -705,7 +701,7 @@ dx7_load_fmt9_sysex_err fn = do
 
 Will read exact multiples of:
 
-128 (BITPACKED-VOICE),
+128 (BITPACKED-VOICE;32=4096),
 155 (UN-BITPACKED-VOICE),
 163 (FORMAT=0),
 4104 (FORMAT=9)

@@ -125,6 +125,7 @@ Library
                    Sound.SC3.Data.Yamaha.DX7.CART
                    Sound.SC3.Data.Yamaha.DX7.DB
                    Sound.SC3.Data.Yamaha.DX7.Dexed
+                   Sound.SC3.Data.Yamaha.DX7.DX7II
                    Sound.SC3.Data.Yamaha.DX7.Hash
                    Sound.SC3.Data.Yamaha.DX7.PX7
                    Sound.SC3.Data.Yamaha.TX816
