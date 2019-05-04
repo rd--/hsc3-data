@@ -44,7 +44,7 @@ u32_pack_le (p,q,r,s) = u32_pack_be (s,r,q,p)
 --
 -- > map u21_pack_be [(0x02,0x00,0x00),(0x02,0x0F,0x00)] == [0x8000,0x8780]
 u21_pack_be :: (U8,U8,U8) -> U24
-u21_pack_be = M.bits_21_join_be -- shiftL (M.u8_to_u32 p) 14 .|. shiftL (M.u8_to_u32 q) 7 .|. M.u8_to_u32 r
+u21_pack_be = M.bits_21_join_be
 
 u21_pack_le :: (U8,U8,U8) -> U24
 u21_pack_le (p,q,r) = u21_pack_be (r,q,p)

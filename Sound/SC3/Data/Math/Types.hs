@@ -51,6 +51,9 @@ u7_to_u12 = fromIntegral
 u7_to_i12 :: U7 -> I12
 u7_to_i12 = fromIntegral
 
+u7_to_f32 :: U7 -> F32
+u7_to_f32 = fromIntegral
+
 -- | Type-specialised 'fromIntegral'.
 u8_to_u12 :: U8 -> U12
 u8_to_u12 = fromIntegral
@@ -66,6 +69,9 @@ u8_to_i16 = fromIntegral
 
 u8_to_u24 :: U8 -> U24
 u8_to_u24 = fromIntegral
+
+u8_to_f32 :: U8 -> F32
+u8_to_f32 = fromIntegral
 
 int_to_u8_def :: U8 -> Int -> U8
 int_to_u8_def d x = if x < 0 || x > 255 then d else fromIntegral x
@@ -88,6 +94,9 @@ u12_as_i12 x = let y = u12_to_i12_err x in if y >= 2048 then y - 2048 * 2 else y
 u12_to_int :: U12 -> Int
 u12_to_int = fromIntegral
 
+u12_to_f32 :: U12 -> F32
+u12_to_f32 = fromIntegral
+
 u16_to_u24 :: U16 -> U24
 u16_to_u24 = fromIntegral
 
@@ -106,11 +115,23 @@ i8_to_u8_err x = i8_to_u8_def (error ("i8_to_u8: " ++ show x)) x
 i12_to_int :: I12 -> Int
 i12_to_int = fromIntegral
 
+f32_to_u7_def :: U7 -> F32 -> U7
+f32_to_u7_def d x = if x < 0 || x > 127 then d else floor x
+
+f32_to_u7_err :: F32 -> U7
+f32_to_u7_err x = f32_to_u7_def (error ("f32_to_u7: " ++ show x)) x
+
 f32_to_u8_def :: U8 -> F32 -> U8
 f32_to_u8_def d x = if x < 0 || x > 255 then d else floor x
 
 f32_to_u8_err :: F32 -> U8
 f32_to_u8_err = f32_to_u8_def (error "f32_to_u8?")
+
+f32_to_u12_def :: U12 -> F32 -> U12
+f32_to_u12_def d x = if x < 0 || x > 4095 then d else floor x
+
+f32_to_u12_err :: F32 -> U12
+f32_to_u12_err x = f32_to_u12_def (error ("f32_to_u12: " ++ show x)) x
 
 f32_to_i8_def :: I8 -> F32 -> I8
 f32_to_i8_def d x = if x < (-128) || x > 127 then d else floor x
@@ -125,6 +146,9 @@ f32_to_i16_err :: F32 -> I16
 f32_to_i16_err x = f32_to_i16_def (error ("f32_to_i16: " ++ show x)) x
 
 -- * LIST
+
+u7_at :: [t] -> U7 -> t
+u7_at = genericIndex
 
 u8_length :: [t] -> U8
 u8_length = int_to_u8_err . length
