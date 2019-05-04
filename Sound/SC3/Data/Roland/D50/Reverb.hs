@@ -5,7 +5,7 @@ import Data.Char {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
-import Sound.SC3.Data.Byte {- hsc3-data -}
+import Sound.SC3.Data.Math.Types {- hsc3-data -}
 
 -- | (REVERB-INDEX,NAME)
 type D50_REVERB_NAME = (U8,String)

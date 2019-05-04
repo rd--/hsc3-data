@@ -1,13 +1,13 @@
 5-1. Voice Parameter (VCED FORMAT) - Add-8
 
-  0  R1     EG RATE1                         99
-  1  R2     EG RATE2                         99
-  2  R3     EG RATE3                         99
-  3  R4     EG RATE4                         99
-  4  L1     EG LEVEL1                        99
-  5  L2     EG LEVEL2                        99
-  6  L3     EG LEVEL3                        99
-  7  L4     EG LEVEL4                        00
+  0  R1     EG RATE 1                        99
+  1  R2     EG RATE 2                        99
+  2  R3     EG RATE 3                        99
+  3  R4     EG RATE 4                        99
+  4  L1     EG LEVEL 1                       99
+  5  L2     EG LEVEL 2                       99
+  6  L3     EG LEVEL 3                       99
+  7  L4     EG LEVEL 4                       00
   8  BP     BREAK POINT                      39
   9  LD     LEFT DEPTH                        0
  10  RD     RIGHT DEPTH                       0
@@ -22,14 +22,14 @@
  19  PF     FREQUENCY FINE                    0
  20  PD     DETUNE                            7
 ...
-126  PR1    PEG RATE1                        99
-127  PR2    PEG RATE2                        99
-128  PR3    PEG RATE3                        99
-129  PR4    PEG RATE4                        99
-130  PL1    PEG LEVEL1                       50
-131  PL2    PEG LEVEL2                       50
-132  PL3    PEG LEVEL3                       50
-133  PL4    PEG LEVEL4                       50
+126  PR1    PEG RATE 1                       99
+127  PR2    PEG RATE 2                       99
+128  PR3    PEG RATE 3                       99
+129  PR4    PEG RATE 4                       99
+130  PL1    PEG LEVEL 1                      50
+131  PL2    PEG LEVEL 2                      50
+132  PL3    PEG LEVEL 3                      50
+133  PL4    PEG LEVEL 4                      50
 134  ALS    ALGORITHM SELECTOR                0
 135  FBL    FEED BACK LEVEL                   0
 136  OPI    OSC.PHASE INIT                    1

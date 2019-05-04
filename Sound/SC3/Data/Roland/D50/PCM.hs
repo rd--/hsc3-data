@@ -1,7 +1,7 @@
 -- | D50 / PCM
 module Sound.SC3.Data.Roland.D50.PCM where
 
-import Sound.SC3.Data.Byte {- hsc3-data -}
+import Sound.SC3.Data.Math.Types {- hsc3-data -}
 
 -- | (WG-PCM-WAVE-NUMBER,INDICATION:PCM-NAME)
 d50_pcm_wave_tbl :: [(U8,String)]

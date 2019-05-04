@@ -10,7 +10,7 @@ import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.List as T {- hmt -}
 
-import Sound.SC3.Data.Byte {- hsc3-data -}
+import Sound.SC3.Data.Math.Types {- hsc3-data -}
 import Sound.SC3.Data.Roland.D50 {- hsc3-data -}
 
 -- * STRUCTURE

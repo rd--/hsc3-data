@@ -15,6 +15,7 @@ import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Tuple as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 
@@ -24,6 +25,7 @@ import qualified Sound.File.Header as SF {- hsc3-sf -}
 import qualified Sound.File.WAVE as SF {- hsc3-sf -}
 
 import Sound.SC3.Data.Byte {- hsc3-data -}
+import Sound.SC3.Data.Math.Types {- hsc3-data -}
 
 {- * 2. S900/S950 disk format
 
@@ -74,10 +76,10 @@ s900_disk_ent_parse :: [U8] -> Maybe S900_DISK_ENT
 s900_disk_ent_parse d =
   if s900_disk_ent_is_nil d
   then Nothing
-  else let [nm,unused,ty,len,blk,s900_id] = s900_segment [10,6,1,3,2,2] d
+  else let [nm,unused,ty,[len1,len2,len3],[blk1,blk2],s900_id] = s900_segment [10,6,1,3,2,2] d
        in if unused /= [0,0,0,0,0,0] || s900_id /= [0,0]
           then error "s900_disk_ent_parse?"
-          else Just (map M.u8_to_char nm,M.u8_to_char (ty !! 0),u24_pack_le len,u16_pack_le blk)
+          else Just (map M.u8_to_char nm,M.u8_to_char (ty !! 0),u24_pack_le (len1,len2,len3),u16_pack_le (blk1,blk2))
 
 -- | Read the non-NIL instances of the 64 possible 24-byte S900_DISK_ENT fields.
 s900_disk_ent :: [U8] -> [S900_DISK_ENT]
@@ -103,7 +105,7 @@ s900_img_blk_map_parse d =
   let n = length d
       z = drop 1536 d
       m = if n == s900_low_density_n then take 1600 z else take 3200 z
-  in map u16_pack_le (Split.chunksOf 2 m)
+  in map (u16_pack_le . T.t2_from_list) (Split.chunksOf 2 m)
 
 -- | The marker at the block map to indicate there are no further blocks.
 --
@@ -172,10 +174,10 @@ type S900_SF_HDR = (String,U32,U16,U16,Char,U32,U32,U32)
 -- | Parse 60-byte S900 sound file header.
 s900_sf_hdr :: [U8] -> S900_SF_HDR
 s900_sf_hdr d =
-  let [fn,_u1,ns,sr,tn,_u2,lp,_u3,em,sm,ll,_u4] = s900_segment [10,6,4,2,2,2,1,1,4,4,4,20] d
+  let [fn,_u1,[ns1,ns2,ns3,ns4],[sr1,sr2],[tn1,tn2],_u2,lp,_u3,[em1,em2,em3,em4],[sm1,sm2,sm3,sm4],[ll1,ll2,ll3,ll4],_u4] = s900_segment [10,6,4,2,2,2,1,1,4,4,4,20] d
   in (map M.u8_to_char fn
-     ,u32_pack_le ns,u16_pack_le sr,u16_pack_le tn
-     ,M.u8_to_char (lp !! 0),u32_pack_le em,u32_pack_le sm,u32_pack_le ll)
+     ,u32_pack_le (ns1,ns2,ns3,ns4),u16_pack_le (sr1,sr2),u16_pack_le (tn1,tn2)
+     ,M.u8_to_char (lp !! 0),u32_pack_le (em1,em2,em3,em4),u32_pack_le (sm1,sm2,sm3,sm4),u32_pack_le (ll1,ll2,ll3,ll4))
 
 {- | Unpack N + N/2 bytes of 12-bit signed sample data.
 
@@ -191,7 +193,7 @@ s900_sf_data_unpack n d =
   let (p,q) = unzip (T.adj2 2 (u32_take n d))
       (p0,p1) = (map M.u8_hi p,map M.u8_lo p)
       r = u32_drop n d
-  in map u12_as_i12 (map u12_pack (zip p0 q) ++ map u12_pack (zip p1 r))
+  in map u12_as_i12 (map u12_pack_le (zip p0 q) ++ map u12_pack_le (zip p1 r))
 
 s900_sf_write_wav :: FilePath -> [U8] -> IO ()
 s900_sf_write_wav dir d = do
