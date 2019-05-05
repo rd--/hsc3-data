@@ -148,7 +148,7 @@ sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 
 {-
 
-fn = "/home/rohan/FAIRLIGHT/CHORAL/mmm.sfz"
+fn = "/home/rohan/SYN/FAIRLIGHT/CHORAL/mmm.sfz"
 r:_ <- sfz_load_regions fn
 map (sfz_region_lookup r) ["sample","volume","pan"]
 sfz_region_sample r

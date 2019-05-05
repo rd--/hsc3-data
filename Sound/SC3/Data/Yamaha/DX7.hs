@@ -93,6 +93,9 @@ dx7_ascii_correct c x = if x < 32 || x > 126 then dx7_ascii_verify (Byte.char_to
 dx7_ascii_char :: Char -> U8 -> Char
 dx7_ascii_char c = Byte.word8_to_char . dx7_ascii_correct c
 
+-- | Voice data (VCED #=155)
+type DX7_Voice = [U8]
+
 -- | Given 145-byte 'DX7_Param' sequence and a 10 ASCII character name, make 'DX7_Voice'.
 dx7_param_to_dx7_voice :: String -> DX7_Param -> DX7_Voice
 dx7_param_to_dx7_voice nm =
@@ -104,9 +107,6 @@ dx7_param_to_dx7_voice nm =
 --   ie. delete the 10 ASCII character voice-name.
 dx7_voice_param :: DX7_Voice -> DX7_Param
 dx7_voice_param = take 145
-
--- | Voice data (# = 155 = dx7_nvoice)
-type DX7_Voice = [U8]
 
 -- | Collect any out-of-range parameter data as (IX,VALUE,(MIN,MAX)) triples.
 dx7_voice_out_of_range :: DX7_Voice -> [(U8,U8,(U8,U8))]
@@ -222,7 +222,7 @@ dx7_usr_str_tbl :: [(String,String)]
 dx7_usr_str_tbl =
     [("BOOL","OFF;ON")
     ,("CURVE","-LIN;-EXP;+EXP;+LIN")
-    ,("LFO-WAVE","TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD")
+    ,("LFO-WAVE","TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD") -- SAW S/HOLD
     ,("MODE","RATIO;FIXED")]
 
 -- | (DX7-IX,NAME,STEPS,USR_DIFF,USR_STR)
@@ -701,8 +701,8 @@ dx7_load_fmt9_sysex_err fn = do
 
 Will read exact multiples of:
 
-128 (BITPACKED-VOICE;32=4096),
-155 (UN-BITPACKED-VOICE),
+128 (VMEM;BITPACKED-VOICE;32=4096),
+155 (VCED;UN-BITPACKED-VOICE),
 163 (FORMAT=0),
 4104 (FORMAT=9)
 

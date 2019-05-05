@@ -47,56 +47,56 @@
 
 5-2. Additional Parameters (ACED format)
 
-  0        OP6 scaling mode normal/fraction
-  1        OP5 scaling mode normal/fraction
-  2        OP4 scaling mode normal/fraction
-  3        OP3 scaling mode normal/fraction
-  4        OP2 scaling mode normal/fraction
-  5        OP1 scaling mode norma!/fraction
-  6        OP6 amplitude modulation sensitivity
-  7        OP5 amplitude modulation sensitivity
-  8        OP4 amplitude modulation sensitivity
-  9        OP3 amplitude modulation sensitivity
- 10        OP2 amplitude modulation sensitivity
- 11        OP1 amplitude modulation sensitivity
- 12        pitch EG range 8va/4va/lva/1/2va
- 13        LFO key trigger (delay) single/multi
- 14        pitch EG by velocity switch off/on:0/1
+  0  SCM6       OP6 scaling mode normal/fraction
+  1  SCM5       OP5 scaling mode normal/fraction
+  2  SCM4       OP4 scaling mode normal/fraction
+  3  SCM3       OP3 scaling mode normal/fraction
+  4  SCM2       OP2 scaling mode normal/fraction
+  5  SCM1       OP1 scaling mode norma!/fraction
+  6  AMS6       OP6 amplitude modulation sensitivity
+  7  AMS5       OP5 amplitude modulation sensitivity
+  8  AMS4       OP4 amplitude modulation sensitivity
+  9  AMS3       OP3 amplitude modulation sensitivity
+ 10  AMS2       OP2 amplitude modulation sensitivity
+ 11  AMS1       OP1 amplitude modulation sensitivity
+ 12  PEGR       pitch EG range 8va/4va/1va/1/2va
+ 13  LTRG       LFO key trigger (delay) single/multi
+ 14  VPSW       pitch EG by velocity switch off/on:0/1
  15  PMOD
- 16        pitch bend range
- 17                   step
- 18                   mode low/high/k.on
+ 16  PBR        pitch bend range
+ 17  PBS                   step
+ 18  PBM                   mode low/high/k.on
  19  RNDP
- 20        portamento mode rtn/fllw fngrd/flltm
- 21                   step
- 22                   time
- 23        modulation wheel pitch mod range
- 24                         amplitude mod range
- 25                         EG bias range
- 26        foot controler 1 pitch mod range
- 27                       amplitude mod range
- 28                       EG bias range
- 29                       volume range
- 30        breath controler pitch mod range
- 31                         amplitude mod range
- 32                         EG bias range
- 33                         pitch bias range
- 34        after touch pitch mod range
- 35                    amplitude mod range
- 36                    EG bias range
- 37                    pitch bias range
+ 20  PORM       portamento mode rtn/fllw fngrd/flltm
+ 21  PQNT                  step
+ 22  POS                   time
+ 23  MWPM       modulation wheel pitch mod range
+ 24  MWAM                        amplitude mod range
+ 25  MWEB                        EG bias range
+ 26  FC1PM      foot controler 1 pitch mod range
+ 27  FC1AM                     amplitude mod range
+ 28  FC1EB                     EG bias range
+ 29  FC1VL                     volume range
+ 30  BCPM       breath controler pitch mod range
+ 31  BCAM                        amplitude mod range
+ 32  BCEB                        EG bias range
+ 33  BCPB                        pitch bias range
+ 34  ATPM       after touch pitch mod range
+ 35  ATAM                   amplitude mod range
+ 36  ATEB                   EG bias range
+ 37  ATPB                   pitch bias range
  38  PGRS
  ..
- 64        pitch mod. range
- 65        amp   mod. range
- 66        EG    bias range
- 67        volume     range
- 68        pitch mod. range
- 69        amp   mod. range
- 70        EG    bias range
- 71        volume     range
+ 64  FC2PM      pitch mod. range
+ 65  FC2AM      amp   mod. range
+ 66  FC2EB      EG    bias range
+ 67  FC2VL      volume     range
+ 68  MCPM       pitch mod. range
+ 69  MCAM       amp   mod. range
+ 70  MCEB       EG    bias range
+ 71  MCVL       volume     range
  72  UDTN
- 73        foot cntl.1 use as CS1 switch off/on:0/1
+ 73  FCCS1      foot cntl.1 use as CS1 switch off/on:0/1
 
 5-3. PERFORMANCE Parameters (PCED, PMEM format)
 

@@ -1,11 +1,13 @@
 -- | DX7 / Algorithm
 module Sound.SC3.Data.Yamaha.DX7.Algorithm where
 
+import Data.Maybe {- base -}
 import Text.Printf {- base -}
 
 import Sound.SC3.Data.Yamaha.DX7
 
--- | DX7 Algorithm given as a list of (dst,src) operator edges and a list of output operators.
+-- | DX7 Algorithm.
+--   List of (dst,src) operator edges and a list of output (carrier) operators.
 --   Operators are zero-indexed.
 type DX7_Algorithm = ([(U8,U8)],[U8])
 
@@ -26,22 +28,22 @@ dx7_algorithms =
   ,([(0,1),(2,3),(2,4),(2,5),(1,1)],[0,2]) -- 12
   ,([(0,1),(2,3),(2,4),(2,5),(5,5)],[0,2])
   ,([(0,1),(2,3),(3,4),(3,5),(5,5)],[0,2]) -- 14
-  ,([(0,1),(2,3),(3,4),(3,5),(1,1)],[0,2])
+  ,([(0,1),(2,3),(3,4),(3,5),(1,1)],[0,2]) -- 15
   ,([(0,1),(0,2),(0,4),(2,3),(4,5),(5,5)],[0])
   ,([(0,1),(0,2),(0,4),(2,3),(4,5),(1,1)],[0])
   ,([(0,1),(0,2),(0,3),(3,4),(4,5),(2,2)],[0])
   ,([(0,1),(1,2),(3,5),(4,5),(5,5)],[0,3,4])
-  ,([(0,2),(1,2),(3,4),(3,5),(2,2)],[0,1,3])
+  ,([(0,2),(1,2),(3,4),(3,5),(2,2)],[0,1,3]) -- 20
   ,([(0,2),(1,2),(3,5),(4,5),(2,2)],[0,1,3,4])
   ,([(0,1),(2,5),(3,5),(4,5),(5,5)],[0,2,3,4])
   ,([(1,2),(3,5),(4,5),(5,5)],[0,1,3,4])
   ,([(2,5),(3,5),(4,5),(5,5)],[0,1,2,3,4])
-  ,([(3,5),(4,5),(5,5)],[0,1,2,3,4])
+  ,([(3,5),(4,5),(5,5)],[0,1,2,3,4]) -- 25
   ,([(1,2),(3,4),(3,5),(5,5)],[0,1,3])
   ,([(1,2),(3,4),(3,5),(2,2)],[0,1,3])
   ,([(0,1),(2,3),(3,4),(4,4)],[0,2,5])
   ,([(2,3),(4,5),(5,5)],[0,1,2,4])
-  ,([(2,3),(3,4),(4,4)],[0,1,2,5])
+  ,([(2,3),(3,4),(4,4)],[0,1,2,5]) -- 30
   ,([(4,5),(5,5)],[0,1,2,3,4])
   ,([(5,5)],[0,1,2,3,4,5])]
 
@@ -83,3 +85,18 @@ dx7_algorithm_dot (e,o) =
      ,map e_f e
      ,map o_f o
      ,["}"]]
+
+-- | Table of (OP,[ALG]) indicating carriers.  One-indexed.
+dx7_carrier_tbl :: (Num n,Enum n) => [(n,[n])]
+dx7_carrier_tbl =
+  let c = map (map (+ 1) . snd) dx7_algorithms
+      f n (k,o) = if n `elem` o then Just k else Nothing
+      x = map (\n -> mapMaybe (f n) (zip [1..] c)) [1..6]
+  in zip [1..] x
+
+-- | Is OP at ALG a carrier.  Zero-indexed.
+dx7_is_carrier :: U8 -> U8 -> Bool
+dx7_is_carrier op alg =
+  case lookup (op + 1) dx7_carrier_tbl of
+    Just alg_l -> (alg + 1) `elem` alg_l
+    Nothing -> error "dx7_carrier"

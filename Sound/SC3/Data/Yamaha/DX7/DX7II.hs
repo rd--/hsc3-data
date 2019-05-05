@@ -13,6 +13,37 @@ import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 dx7ii_assert :: Bool -> t -> t
 dx7ii_assert e r = if e then r else error "dx7ii_assert?"
 
+-- * 5-2. Additional Parameters (ACED format)
+
+-- > length dx7ii_aced_param_nm
+dx7ii_aced_param_nm :: [String]
+dx7ii_aced_param_nm =
+  concat [map (\n -> "SCM" ++ show n) [6::Int,5 .. 1]
+         ,map (\n -> "AMS" ++ show n) [6::Int,5 .. 1]
+         ,["PEGR", "LTRG", "VPSW", "PMOD"
+          ,"PBR", "PBS", "PBM", "RNDP"
+          ,"PORM", "PQNT", "POS"
+          ,"MWPM", "MWAM", "MWEB"
+          ,"FC1PM", "FC1AM", "FC1EB", "FC1VL"
+          ,"BCPM", "BCAM", "BCEB", "BCPB"
+          ,"ATPM", "ATAM", "ATEB", "ATPB"
+          ,"PGRS"
+          ,"FC2PM", "FC2AM", "FC2EB", "FC2VL"
+          ,"MCPM", "MCAM", "MCEB", "MCVL"
+          ,"UDTN", "FCCS1"]]
+
+dx7ii_aced_usr_str :: [(String,String)]
+dx7ii_aced_usr_str =
+  [("PEGR","8VA;4VA;1VA;1/2VA")
+  ,("LTRG","SINGLE;MULTI")
+  ,("VPSW","OFF;ON")
+  ,("PMOD","POLYPHONIC;MONOPHONIC;UNISON-POLY;UNISON-MONO")
+  ,("PBM","NORMAL;LOW;HIGH;K.ON")
+  ,("PORM","RTN-FNGRD;FLLW-FLLTM") -- RETAIN-FINGERED;FOLLOW-FULLTIME
+  ,("BCPB","-50 - 49")
+  ,("ATPB","-50 - 49")
+  ,("FCCS1","OFF;ON")]
+
 -- * 5-3. PERFORMANCE PARAMETERS (PCED / PMEM - 51-BYTES)
 
 -- | PEFORMANCE NAME is 20-CHAR (31 - 51)

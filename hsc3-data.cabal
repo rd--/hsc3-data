@@ -129,7 +129,8 @@ Library
                    Sound.SC3.Data.Yamaha.DX7.DX7II
                    Sound.SC3.Data.Yamaha.DX7.Hash
                    Sound.SC3.Data.Yamaha.DX7.PX7
-                   Sound.SC3.Data.Yamaha.TX816
+                   Sound.SC3.Data.Yamaha.DX7.TX7
+                   Sound.SC3.Data.Yamaha.DX7.TX816
 
 Source-Repository  head
   Type:            darcs
