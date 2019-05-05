@@ -213,7 +213,9 @@ pf <- Music.Theory.Monad.concatMapM dx7ii_8973PM_load pf_fn
 length pf == 64
 
 import Music.Theory.Array.Text {- hmt -}
-tbl = table_split [17,14] (dx7ii_pced_pp_tbl pf)
-putStrLn $ unlines $ concatMap (table_pp table_opt_simple) tbl
+tbl = dx7ii_pced_pp_tbl pf
+putStrLn $ unlines $ table_pp table_opt_simple tbl
+tbl_pt = table_split [17,14] tbl
+putStrLn $ unlines $ concatMap (table_pp table_opt_simple) tbl_pt
 -}
 
