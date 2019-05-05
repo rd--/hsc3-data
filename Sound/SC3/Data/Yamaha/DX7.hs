@@ -217,19 +217,46 @@ dx7_yamaha_id = 0x43
 dx7_checksum :: [U8] -> U8
 dx7_checksum d = (complement (sum (map ((.&.) 0x7F) d)) + 1) .&. 0x7F
 
--- | Table of (TYPE,ENUM-SEQ).
-dx7_usr_str_tbl :: [(String,String)]
-dx7_usr_str_tbl =
+-- | ; separated sequence of USR display values.
+type DX7_USR = String
+
+-- | Make (IX,STR) table from USR.
+dx7_usr_str_tbl :: DX7_USR -> [(U8,String)]
+dx7_usr_str_tbl = zip [0..] . Split.splitOn ";"
+
+-- | Lookup IX at USR.
+dx7_usr_str_ix :: DX7_USR -> U8 -> String
+dx7_usr_str_ix s k =
+  fromMaybe (error ("dx7_usr_str_ix: " ++ show (s,k)))
+  (lookup k (dx7_usr_str_tbl s))
+
+-- | Table of (TYPE,USR).
+dx7_typ_usr_str_tbl :: [(String,DX7_USR)]
+dx7_typ_usr_str_tbl =
     [("BOOL","OFF;ON")
     ,("CURVE","-LIN;-EXP;+EXP;+LIN")
-    ,("LFO-WAVE","TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD") -- SAW S/HOLD
+    ,("LFO-WAVE","TR;SD;SU;SQ;SI;SH") -- TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD
     ,("MODE","RATIO;FIXED")]
+
+-- | Lookup USR string for TYPE.
+dx7_typ_usr_str :: String -> DX7_USR
+dx7_typ_usr_str ty = T.lookup_err ty dx7_typ_usr_str_tbl
+
+-- | Show with '+' prefix if positive.
+dx7_usr_signed :: (Num n,Show n,Ord n) => n -> String
+dx7_usr_signed n = if n <= 0 then show n else '+' : show n
+
+-- | USR string for range.
+--
+-- > dx7_usr_range True (-50,49)
+dx7_usr_range :: Bool -> (Int,Int) -> DX7_USR
+dx7_usr_range sgn (p,q) = intercalate ";" (map (if sgn then dx7_usr_signed else show) [p .. q])
 
 -- | (DX7-IX,NAME,STEPS,USR_DIFF,USR_STR)
 --
 -- All parameters except the NAME data are in the range (0,STEPS-1).
 -- NAME data is in (32,126), ie. the ASCII printable characters.
-type DX7_Parameter = (U8,String,U8,I8,String)
+type DX7_Parameter = (U8,String,U8,I8,DX7_USR)
 
 dx7_parameter_ix :: DX7_Parameter -> U8
 dx7_parameter_ix (n,_,_,_,_) = n
@@ -268,7 +295,7 @@ dx7_kbd_brk_pt_to_midi :: U8 -> U8
 dx7_kbd_brk_pt_to_midi = (+) 9
 
 -- | USR 4-char string for KBD-BRK-PT, from A-1 to C8
-dx7_kbd_brk_pt_usr :: String
+dx7_kbd_brk_pt_usr :: DX7_USR
 dx7_kbd_brk_pt_usr = intercalate ";" (take 100 (drop 9 (dx7_pitch_seq True)))
 
 -- | Template for six FM operators.
@@ -287,13 +314,13 @@ dx7_op_parameter_tbl =
     ,(08,"KBD LEV SCL BRK PT",100,0,dx7_kbd_brk_pt_usr) -- 4-CHAR
     ,(09,"KBD LEV SCL LFT DEPTH",100,0,"")
     ,(10,"KBD LEV SCL RHT DEPTH",100,0,"")
-    ,(11,"KBD LEV SCL LFT CURVE",4,0,"-LIN;-EXP;+EXP;+LIN") -- 4-CHAR (2=UNIQ)
-    ,(12,"KBD LEV SCL RHT CURVE",4,0,"-LIN;-EXP;+EXP;+LIN")
+    ,(11,"KBD LEV SCL LFT CURVE",4,0,dx7_typ_usr_str "CURVE") -- 4-CHAR (2=UNIQ)
+    ,(12,"KBD LEV SCL RHT CURVE",4,0,dx7_typ_usr_str "CURVE")
     ,(13,"KBD RATE SCALING",8,0,"") -- 1-CHAR
     ,(14,"AMP MOD SENSITIVITY",4,0,"") -- 1-CHAR
     ,(15,"KEY VEL SENSITIVITY",8,0,"") -- 1-CHAR
     ,(16,"OPERATOR OUTPUT LEVEL",100,0,"")
-    ,(17,"OSC MODE",2,0,"RATIO;FIXED") -- 5-CHAR (1=UNIQ)
+    ,(17,"OSC MODE",2,0,dx7_typ_usr_str "MODE") -- 5-CHAR (1=UNIQ)
     ,(18,"OSC FREQ COARSE",32,0,"")
     ,(19,"OSC FREQ FINE",100,0,"")
     ,(20,"OSC DETUNE",15,-7,"") -- 2-CHAR 0x14=20
@@ -328,7 +355,7 @@ dx7_op6_dx7_parameter_tbl :: [DX7_Parameter]
 dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1]
 
 -- | USR 3-CHAR string for TRANSPOSE, from C1 to C4
-dx7_transpose_usr :: String
+dx7_transpose_usr :: DX7_USR
 dx7_transpose_usr = intercalate ";" (take 49 (drop 12 (dx7_pitch_seq False)))
 
 -- | Remainder (non-operator) of parameter table.
@@ -346,13 +373,13 @@ dx7_sh_parameter_tbl =
     ,(133,"PITCH EG LEVEL 4",100,0,"")
     ,(134,"ALGORITHM #",32,1,"") -- 0x86=134
     ,(135,"FEEDBACK",8,0,"") -- 1-CHAR
-    ,(136,"OSCILLATOR SYNC",2,0,"OFF;ON ") -- 3-CHAR
+    ,(136,"OSCILLATOR SYNC",2,0,dx7_typ_usr_str "BOOL") -- 3-CHAR
     ,(137,"LFO SPEED",100,0,"")
     ,(138,"LFO DELAY",100,0,"")
     ,(139,"LFO PITCH MOD DEPTH",100,0,"")
     ,(140,"LFO AMP MOD DEPTH",100,0,"")
-    ,(141,"LFO SYNC",2,0,"OFF;ON ") -- 3-CHAR
-    ,(142,"LFO WAVEFORM",6,0,"TR;SD;SU;SQ;SI;SH") -- 2-CHAR
+    ,(141,"LFO SYNC",2,0,dx7_typ_usr_str "BOOL") -- 3-CHAR
+    ,(142,"LFO WAVEFORM",6,0,dx7_typ_usr_str "LFO-WAVE") -- 2-CHAR
     ,(143,"PITCH MOD SENSITIVITY",8,0,"") -- 1-CHAR
     ,(144,"TRANSPOSE",49,0,dx7_transpose_usr) -- 3-CHAR
     ]
