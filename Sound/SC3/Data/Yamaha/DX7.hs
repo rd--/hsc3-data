@@ -16,6 +16,7 @@ import Data.Word {- base -}
 import Text.Printf {- base -}
 
 import qualified Data.ByteString as B {- bytestring -}
+import qualified Data.ByteString.Lazy as L {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
@@ -26,6 +27,8 @@ import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Music.Theory.String as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
+
+import qualified Sound.File.NeXT as SF {- hsc3-sf -}
 
 -- | Unsigned 8-bit word.
 type U8 = Word8
@@ -914,6 +917,33 @@ dx7_data_request_sysex_fmt0 n = dx7_data_request_sysex n 0x00
 dx7_data_request_sysex_fmt9 :: U8 -> DX7_SYSEX
 dx7_data_request_sysex_fmt9 n = dx7_data_request_sysex n 0x09
 
+-- * NeXT/AU
+
+{- | Write VCED data to NeXT/AU audio file.
+     Data is encoded as signed 8-bit linear PCM.
+
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+> d <- dx7_load_fmt9_sysex_err fn
+> dx7_store_au "/tmp/dx7.snd" d
+-}
+dx7_store_au :: FilePath -> [DX7_Voice] -> IO ()
+dx7_store_au fn vc = do
+  let dat = L.pack (concat vc)
+      hdr = SF.Header (length vc * 155) SF.Linear8 155 1
+  SF.au_write_b fn hdr dat
+
+{- | Read VCED data from NeXT/AU audio file.
+     Data must be encoded as signed 8-bit linear PCM.
+
+> vc <- dx7_load_au "/tmp/dx7.snd"
+> dx7_voice_set_verify True vc
+-}
+dx7_load_au :: FilePath -> IO [DX7_Voice]
+dx7_load_au fn = do
+  (SF.Header nf enc _sr nc,dat) <- SF.au_read_b fn
+  when (nf `mod` 155 /= 0 || enc /= SF.Linear8 || nc /= 1) (error "dx7_load_au?")
+  return (Split.chunksOf 155 (L.unpack dat))
+
 -- * TEXT/HEX
 
 -- | Read sequence of unpacked 155 voice-data parameters from text file.
@@ -925,7 +955,8 @@ dx7_load_hex fn = do
   dx7_voice_set_verify chk_rng d
   return d
 
-{- | Write sequence of unpacked 155 voice-data parameters to text file.
+{- | Write VCED (sequence of unpacked 155 voice-data) parameters to text file.
+     Values are written as 2-CHAR hex.
 
 > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
 > d <- dx7_load_fmt9_sysex_err fn
