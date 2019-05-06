@@ -113,10 +113,16 @@ dx7ii_pced_usr_str_tbl =
   ,(20 {-PNMD-}  ,"MX;11;10;01") -- MIX;0N-ON;ON-OFF;OFF-ON
   ,(22 {-PNASN-},"LFO;VEL;KEY")] -- VELOCITY
 
+dx7ii_pced_get :: DX7II_PCED -> U8 -> U8
+dx7ii_pced_get = Byte.word8_at
+
+dx7ii_pced_get_by_nm :: DX7II_PCED -> String -> U8
+dx7ii_pced_get_by_nm pf nm = dx7ii_pced_get pf (dx7ii_pced_param_ix nm)
+
 -- | Get USR string for indexed parameter at PCED.
 dx7ii_pced_get_usr :: DX7II_PCED -> U8 -> String
 dx7ii_pced_get_usr pf ix =
-  let k = Byte.word8_at pf ix
+  let k = dx7ii_pced_get pf ix
   in case lookup ix dx7ii_pced_usr_str_tbl of
        Just usr -> dx7_usr_str_ix usr k
        _ -> show k
@@ -176,16 +182,16 @@ dx7ii_8973PM_hdr ch =
 dx7ii_8973PM_hdr_verify :: U8 -> [U8] -> Bool
 dx7ii_8973PM_hdr_verify ch h = h == concat (dx7ii_8973PM_hdr ch)
 
-dx7ii_8973PM_parse :: [U8] -> [[U8]]
+dx7ii_8973PM_parse :: [U8] -> [DX7II_PCED]
 dx7ii_8973PM_parse syx =
   case Split.splitPlaces dx7ii_8973PM_grp syx of
     [hdr,dat,_,[0xF7]] -> dx7ii_assert (dx7ii_8973PM_hdr_verify 0 hdr) (Split.chunksOf 51 dat)
     _ -> error "dx7ii_8973PM_parse?"
 
-dx7ii_8973PM_load :: FilePath -> IO [[U8]]
+dx7ii_8973PM_load :: FilePath -> IO [DX7II_PCED]
 dx7ii_8973PM_load = fmap dx7ii_8973PM_parse . dx7_read_u8
 
-dx7ii_8973PM_summary :: [DX7_Voice] -> Int -> [U8] -> String
+dx7ii_8973PM_summary :: [DX7_Voice] -> Int -> DX7II_PCED -> String
 dx7ii_8973PM_summary vc n pf =
   let vc_nm k = dx7_voice_name '?' (Byte.word8_at vc k)
       (ix_a,ix_b) = (pf !! 1,pf !! 2)
