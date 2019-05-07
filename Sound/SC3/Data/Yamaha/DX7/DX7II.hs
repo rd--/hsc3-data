@@ -11,6 +11,7 @@ import qualified Music.Theory.Show as Show {- hmt -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 
+-- | Error if /e/ is false else /r/.
 dx7ii_assert :: Bool -> t -> t
 dx7ii_assert e r = if e then r else error "dx7ii_assert?"
 
@@ -35,6 +36,7 @@ dx7ii_aced_param_nm =
           ,"MCPM", "MCAM", "MCEB", "MCVL"
           ,"UDTN", "FCCS1"]]
 
+-- | ACED USR strings for named parameters.
 dx7ii_aced_usr_str :: [(String,DX7_USR)]
 dx7ii_aced_usr_str =
   [("PEGR","8VA;4VA;1VA;1/2VA")
@@ -72,6 +74,7 @@ dx7ii_pced_param_grp =
   ,"FDMP","SFSW","FSAS FSW","SPRNG","NSFTA NSFTB","BLNC TVLM","CSLD1 CSLD2 CSSW"
   ,"PNMD PNRNG PNASN","PNEGR1 PNEGR2 PNEGR3 PNEGR4","PNEGL1 PNEGL2 PNEGL3 PNEGL4"]
 
+-- | Abbreviated PCED parameter names.
 dx7ii_pced_param_abbrev :: [String]
 dx7ii_pced_param_abbrev =
   concatMap words
@@ -111,11 +114,13 @@ dx7ii_pced_usr_str_tbl =
   ,(15 {-BLNC-}  ,dx7_usr_range True (-50,50))
   ,(19 {-CSSW-}  ,intercalate ";" (map (Show.show_bin (Just 4)) [0::Int .. 15]))
   ,(20 {-PNMD-}  ,"MX;11;10;01") -- MIX;0N-ON;ON-OFF;OFF-ON
-  ,(22 {-PNASN-},"LFO;VEL;KEY")] -- VELOCITY
+  ,(22 {-PNASN-} ,"LFO;VEL;KEY")] -- VELOCITY
 
+-- | Synonym for 'genericIndex'
 dx7ii_pced_get :: DX7II_PCED -> U8 -> U8
 dx7ii_pced_get = Byte.word8_at
 
+-- | Get parameter value by name.
 dx7ii_pced_get_by_nm :: DX7II_PCED -> String -> U8
 dx7ii_pced_get_by_nm pf nm = dx7ii_pced_get pf (dx7ii_pced_param_ix nm)
 
@@ -137,11 +142,29 @@ dx7ii_pced_get_usr_by_nm pf nm = dx7ii_pced_get_usr pf (dx7ii_pced_param_ix nm)
 dx7ii_pced_ddtn_cents :: Fractional n => U8 -> (n,n)
 dx7ii_pced_ddtn_cents x = let y = (fromIntegral x / 8.0) * 25.0 in (negate y,y)
 
+-- | Table of PCED data in USR format.
 dx7ii_pced_pp_tbl :: [DX7II_PCED] -> [[String]]
 dx7ii_pced_pp_tbl pf_seq =
   let hdr = dx7ii_pced_param_abbrev
       dat = map (\pf -> map (dx7ii_pced_get_usr pf) [0 .. 30]) pf_seq
   in hdr : dat
+
+-- | PCED summary: P-IX P-NAME PLMD A-IX A-NAME B-IX B-NAME
+dx7ii_pced_summary :: [DX7_Voice] -> (Int,DX7II_PCED) -> String
+dx7ii_pced_summary vc (n,pf) =
+  let vc_nm k = dx7_voice_name '?' (Byte.word8_at vc k)
+      (ix_a,ix_b) = (pf !! 1,pf !! 2)
+  in printf
+     "P-%02d  %s  %-6s  A-%03d  %s  B-%03d  %s"
+     n (dx7ii_pced_name pf) (dx7ii_pced_get_usr_by_nm pf "PLMD")
+     (ix_a + 1) (vc_nm ix_a) (ix_b + 1) (vc_nm ix_b)
+
+-- | 'dx7ii_pced_summary' for sequence.
+dx7ii_pced_summarise :: ([DX7_Voice],[DX7II_PCED]) -> [String]
+dx7ii_pced_summarise (vc,pf) =
+  let hdr = ["P-IX  P-NAME                PLMD    A-IX   A-NAME      B-IX   B-NAME   "
+            ,"----  --------------------  ------  -----  ----------  -----  ---------"]
+  in hdr ++ map (dx7ii_pced_summary vc) (zip [1..] pf)
 
 -- * SYSEX
 
@@ -165,10 +188,11 @@ dx7ii_ubd_request_sysex ch s1 s2 =
 
 -- * SYSEX - 8973PM
 
+-- | Group structure (byte-counts) for 8973PM sysex.
 dx7ii_8973PM_grp :: [Int]
 dx7ii_8973PM_grp = [4+2+4+6,1632,1,1]
 
--- | 8973PM header (SYSEX-HDR:4,BYTE-COUNT:2,CLASSIFICATION:4,FORMAT:6)
+-- | 8973PM header (SYSEX-HDR=4,BYTE-COUNT=2,CLASSIFICATION=4,FORMAT=6)
 --
 -- > Sound.Midi.Common.bits_7_join_le (0x6A,0x0C) == 1642
 dx7ii_8973PM_hdr :: U8 -> [[U8]]
@@ -179,32 +203,29 @@ dx7ii_8973PM_hdr ch =
   ,[0x38,0x39,0x37,0x33,0x50,0x4D] -- "8973PM"
   ]
 
+-- | Verify that byte-data is a 8973PM header at indicated channel.
 dx7ii_8973PM_hdr_verify :: U8 -> [U8] -> Bool
 dx7ii_8973PM_hdr_verify ch h = h == concat (dx7ii_8973PM_hdr ch)
 
+-- | Parse 8973PM sysex to list of PCED.
 dx7ii_8973PM_parse :: [U8] -> [DX7II_PCED]
 dx7ii_8973PM_parse syx =
   case Split.splitPlaces dx7ii_8973PM_grp syx of
     [hdr,dat,_,[0xF7]] -> dx7ii_assert (dx7ii_8973PM_hdr_verify 0 hdr) (Split.chunksOf 51 dat)
     _ -> error "dx7ii_8973PM_parse?"
 
+-- | Load 8973PM sysex file.
 dx7ii_8973PM_load :: FilePath -> IO [DX7II_PCED]
 dx7ii_8973PM_load = fmap dx7ii_8973PM_parse . dx7_read_u8
 
-dx7ii_8973PM_summary :: [DX7_Voice] -> Int -> DX7II_PCED -> String
-dx7ii_8973PM_summary vc n pf =
-  let vc_nm k = dx7_voice_name '?' (Byte.word8_at vc k)
-      (ix_a,ix_b) = (pf !! 1,pf !! 2)
-  in printf
-     "P-%02d  %s  %-6s  A-%03d  %s  B-%03d  %s"
-     n (dx7ii_pced_name pf) (dx7ii_pced_get_usr_by_nm pf "PLMD")
-     (ix_a + 1) (vc_nm ix_a) (ix_b + 1) (vc_nm ix_b)
+-- * HL
 
-dx7ii_8973PM_summary_wr :: [FilePath] -> [FilePath] -> IO ()
-dx7ii_8973PM_summary_wr vc_fn pf_fn = do
+-- | Load VCED voice sysex files and PCED performance sysex files and print summary
+dx7ii_pced_summary_syx :: [FilePath] -> [FilePath] -> IO ()
+dx7ii_pced_summary_syx vc_fn pf_fn = do
   vc <- mapM dx7_load_fmt9_sysex_err vc_fn
   pf <- mapM dx7ii_8973PM_load pf_fn
-  let str = zipWith (dx7ii_8973PM_summary (concat vc)) [1..] (concat pf)
+  let str = dx7ii_pced_summarise (concat vc,concat pf)
   putStrLn $ unlines $ str
 
 {-
@@ -213,7 +234,7 @@ let dir = "/home/rohan/sw/hsc3-data/data/yamaha/dx7ii/rom/"
 let vc_fn = map (dir ++) (words "DX7II-32A.syx DX7II-64A.syx DX7II-32B.syx DX7II-64B.syx")
 let pf_fn = map (dir ++) (words "DX7II-PFA.syx DX7II-PFB.syx")
 
-dx7ii_8973PM_summary_wr vc_fn pf_fn
+dx7ii_pced_summary_syx vc_fn pf_fn
 
 pf <- Music.Theory.Monad.concatMapM dx7ii_8973PM_load pf_fn
 length pf == 64
