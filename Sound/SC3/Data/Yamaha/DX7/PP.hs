@@ -18,6 +18,19 @@ import qualified Sound.File.NeXT as SF {- hsc3-sf -}
 import Sound.SC3.Data.Yamaha.DX7
 import Sound.SC3.Data.Yamaha.DX7.DX7II
 
+-- * ENUM
+
+-- | Generate list of possible parameter USR values, in sequence.
+--
+-- > map dx7_parameter_enum_usr dx7_op_parameter_tbl
+dx7_parameter_enum_usr :: DX7_Parameter -> [String]
+dx7_parameter_enum_usr (_,_,stp,d,u) =
+  if u == "ASCII"
+  then map (return . toEnum) [32 .. 126]
+  else case Split.splitOn ";" u of
+         [_] -> map (\x -> show (T.word8_to_int8 x + d)) [0 .. stp - 1]
+         e -> e
+
 -- * CHAR COUNTING
 
 -- | Maximum CHAR widths for USR representation of OP param.
@@ -196,3 +209,70 @@ dx7_load_au fn = do
   when (nf `mod` 155 /= 0 || enc /= SF.Linear8 || nc /= 1) (error "dx7_load_au?")
   return (Split.chunksOf 155 (L.unpack dat))
 
+-- * HTML
+
+dx7_enum_html :: Int -> U8 -> U8 -> [String] -> [String]
+dx7_enum_html wd z k e =
+  let sel = printf "<select id=\"P%d\" style=\"width:%dem\">" z wd
+      opt (ix,txt) = printf
+                     "<option value=\"%d\"%s>%s</option>"
+                     ix (if ix == k then " selected" else "") txt
+  in sel : map opt (zip [0 ..] e) ++ ["</select>"]
+
+dx7_parameter_html :: Int -> DX7_Parameter -> U8 -> [String]
+dx7_parameter_html wd p k =
+  dx7_enum_html wd (dx7_parameter_ix p) k (dx7_parameter_enum_usr p)
+
+dx7_html_pre :: [String]
+dx7_html_pre =
+  ["<html>"
+  ,"<head>"
+  ,"<style>"
+  ,"body {"
+  ,"  background-color:black;"
+  ,"  font-family: monospace;"
+  ,"}"
+  ,"select {"
+  ,"  background-color:black;"
+  ,"  color:white;"
+  ,"  font-family: monospace;"
+  ,"  border: 0;"
+  ,"  -webkit-appearance:none;"
+  ,"}"
+  ,"</style>"
+  ,"</head>"
+  ,"<body>"
+  ,"<form>"]
+
+dx7_html_post :: [String]
+dx7_html_post =
+  ["</form>"
+  ,"</body>"
+  ,"</html>"]
+
+dx7_html_br :: [[String]] -> [String]
+dx7_html_br = intercalate ["<br />"]
+
+dx7_op_parameter_html :: U8 -> [U8] -> [String]
+dx7_op_parameter_html k p =
+  concat (zipWith3
+           dx7_parameter_html
+           dx7_op_char_count
+           (dx7_rewrite_op_dx7_parameter_tbl k)
+           p)
+
+dx7_sh_parameter_html :: [U8] -> [String]
+dx7_sh_parameter_html p =
+  concat (zipWith3
+          dx7_parameter_html
+          dx7_sh_char_count
+          dx7_sh_parameter_tbl
+          p)
+
+-- > dx7_voice_html_wr "/tmp/t.html" dx7_init_voice
+dx7_voice_html_wr :: FilePath -> DX7_Voice -> IO ()
+dx7_voice_html_wr fn vc = do
+  let [op6,op5,op4,op3,op2,op1,sh,_] = dx7_voice_grp vc
+      op_html = zipWith dx7_op_parameter_html [6,5,4,3,2,1] [op6,op5,op4,op3,op2,op1]
+      pr = dx7_html_br (op_html ++ [[],dx7_sh_parameter_html sh])
+  writeFile fn (unlines (dx7_html_pre ++ pr ++ dx7_html_post))

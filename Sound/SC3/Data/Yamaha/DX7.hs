@@ -156,6 +156,9 @@ dx7_init_pitch_eg = [99,99,99,99,50,50,50,50]
 dx7_init_lfo :: [U8]
 dx7_init_lfo = [35,0,0,0,1,0]
 
+dx7_init_sh :: [U8]
+dx7_init_sh = dx7_init_pitch_eg ++ [0,0,1] ++ dx7_init_lfo ++ [3,24]
+
 -- | DX7 INIT VOICE, from DX7-II CART 64-B.
 --
 -- > dx7_voice_verify True dx7_init_voice == True
@@ -165,9 +168,8 @@ dx7_init_voice :: DX7_Voice
 dx7_init_voice =
   let op_6_2 = concat (replicate 5 (dx7_init_op 0))
       op_1 = dx7_init_op 99
-      sh = dx7_init_pitch_eg ++ [0,0,1] ++ dx7_init_lfo ++ [3,24]
       nm = dx7_name_encode '?' "INIT VOICE"
-  in concat [op_6_2,op_1,sh,nm]
+  in concat [op_6_2,op_1,dx7_init_sh,nm]
 
 {-
 -- | Type-specialised 'B.pack'.
