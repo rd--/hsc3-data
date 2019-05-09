@@ -269,20 +269,25 @@ dx7_sh_parameter_html p =
           dx7_sh_parameter_tbl
           p)
 
+dx7_lbl_html :: (Int,String) -> String
+dx7_lbl_html (z,txt) =
+  printf
+  "<select id=\"%s\" style=\"width:%dem\" disabled><option>%s</option></select>"
+  txt z txt
+
 dx7_op_hdr_html :: [String]
-dx7_op_hdr_html =
-  let lbl (z,txt) = printf "<select id=\"%s\" style=\"width:%dem\" disabled><option>%s</option></select>" txt z txt
-  in map lbl (zip dx7_op_char_count (map fst dx7ii_op_parameter_names))
+dx7_op_hdr_html = map dx7_lbl_html (zip dx7_op_char_count (map fst dx7ii_op_parameter_names))
 
 dx7_sh_hdr_html :: [String]
-dx7_sh_hdr_html =
-  let lbl (z,txt) = printf "<select id=\"%s\" style=\"width:%dem\" disabled><option>%s</option></select>" txt z txt
-  in map lbl (zip dx7_sh_char_count (map fst dx7ii_sh_parameter_names))
+dx7_sh_hdr_html = map dx7_lbl_html (zip dx7_sh_char_count (map fst dx7ii_sh_parameter_names))
 
 -- > dx7_voice_html_wr "/tmp/t.html" dx7_init_voice
 dx7_voice_html_wr :: FilePath -> DX7_Voice -> IO ()
 dx7_voice_html_wr fn vc = do
   let [op6,op5,op4,op3,op2,op1,sh,_] = dx7_voice_grp vc
+      nm = dx7_lbl_html (10,dx7_voice_name '?' vc)
       op_html = zipWith dx7_op_parameter_html [6,5,4,3,2,1] [op6,op5,op4,op3,op2,op1]
-      pr = dx7_html_br (dx7_op_hdr_html : op_html ++ [[],dx7_sh_hdr_html,dx7_sh_parameter_html sh])
+      pr = dx7_html_br (concat [[[nm],[]]
+                               ,dx7_op_hdr_html : op_html
+                               ,[[],dx7_sh_hdr_html,dx7_sh_parameter_html sh]])
   writeFile fn (unlines (dx7_html_pre ++ pr ++ dx7_html_post))
