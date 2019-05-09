@@ -109,6 +109,7 @@ dx7_hash_db_store db dir = do
 type DX7_Hash_DB = ([(DX7_Hash,String)],[(DX7_Hash,DX7_Param)])
 
 -- | Load HASH-DB from /dir/.
+--   The DB is permitted to have unnamed parameters.
 --
 -- > dir = "/home/rohan/rd/j/2019-04-07"
 -- > db <- dx7_hash_db_load dir
@@ -123,14 +124,33 @@ dx7_hash_db_load dir = do
       pr_f _ = error "dx7_hash_db_load: pr_f?"
   return (map nm_f nm,map pr_f pr)
 
--- | Get NAMES and PARAM given HASH.
+-- | Get NAMES (perhaps empty) and PARAM given HASH.
 dx7_hash_db_get :: DX7_Hash_DB -> DX7_Hash -> ([String],DX7_Param)
 dx7_hash_db_get (nm,pr) h =
   (map snd (filter ((== h) . fst) nm)
   ,T.lookup_err h pr)
 
+-- | Extract voices from DB.  First name is applied. Un-named voices are given default.
+dx7_hash_db_vc :: String -> DX7_Hash_DB -> [DX7_Voice]
+dx7_hash_db_vc df (nm,pr) =
+  let f (h,p) = dx7_param_to_dx7_voice (T.lookup_def h df nm) p
+  in map f pr
+
+-- | Get subset of DB matching NAME using given equality function and case-fold function.
+--   ie. eq_f could be (==), 'isInfixOf', 'isPrefixOf' &etc.
+--       cf_f could be 'id' or 'toLower'
+--
+-- > lc = dx7_hash_db_locate (isInfixOf,Data.Char.toLower) db "FAIR"
+-- > vc = dx7_hash_db_vc "----------" lc
+dx7_hash_db_locate :: (String -> String -> Bool,Char -> Char) -> DX7_Hash_DB -> String -> DX7_Hash_DB
+dx7_hash_db_locate (eq_f,cf_f) (nm,pr) x =
+  let f p q = map cf_f p `eq_f` map cf_f q
+      nm' = filter (f x . snd) nm
+      pr' = filter ((`elem` (map fst nm')) . fst) pr
+  in (nm',pr')
+
 -- | Get all PARAM having NAME.
 dx7_hash_db_search :: DX7_Hash_DB -> String -> [DX7_Voice]
 dx7_hash_db_search (nm,pr) x =
-  let h = map fst (filter ((== x) . snd) nm)
-  in map (dx7_param_to_dx7_voice x . snd) (filter ((`elem` h) . fst) pr)
+ let h = map fst (filter ((== x) . snd) nm)
+ in map (dx7_param_to_dx7_voice x . snd) (filter ((`elem` h) . fst) pr)
