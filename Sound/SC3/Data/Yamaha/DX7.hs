@@ -16,7 +16,6 @@ import Data.Word {- base -}
 import Text.Printf {- base -}
 
 import qualified Data.ByteString as B {- bytestring -}
-import qualified Data.ByteString.Lazy as L {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
@@ -24,11 +23,10 @@ import qualified System.Process as Process {- process -}
 import qualified Music.Theory.Byte as Byte {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Math.Convert as T {- hmt -}
+import qualified Music.Theory.Show as Show {- hmt -}
 import qualified Music.Theory.String as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
-
-import qualified Sound.File.NeXT as SF {- hsc3-sf -}
 
 -- | Unsigned 8-bit word.
 type U8 = Word8
@@ -445,36 +443,6 @@ dx7_parameter_index nm =
     fmap dx7_parameter_ix $
     find ((== nm) . dx7_parameter_nm) dx7_parameter_tbl
 
--- | Pretty print value give 'DX7_Parameter'.
-dx7_parameter_value_pp :: DX7_Parameter -> U8 -> String
-dx7_parameter_value_pp p x =
-  let (_,_,stp,d,u) = p
-      (x_clip,err) = if x >= stp
-                     then (stp - 1,printf "(ERROR BYTE=0x%02X)" x)
-                     else (x,"")
-      r = if u == "ASCII"
-          then ['\'',dx7_ascii_char '?' x_clip,'\'']
-          else case Split.splitOn ";" u of
-                 [_] -> printf "%02d" (T.word8_to_int8 x_clip + d)
-                 e -> Byte.word8_at e x_clip
-  in r ++ err
-
-dx7_parameter_pp :: Bool -> DX7_Parameter -> U8 -> String
-dx7_parameter_pp with_ix p x =
-  let (ix,nm,_,_,_) = p
-  in if with_ix
-     then printf "%03d: %s = %s" ix nm (dx7_parameter_value_pp p x)
-     else printf "%s = %s" nm (dx7_parameter_value_pp p x)
-
-dx7_parameter_set_pp :: DX7_Parameter -> [U8] -> String
-dx7_parameter_set_pp p x =
-  let (_,nm,_,_,_) = p
-  in printf "%s = %s" nm (intercalate "," (map (dx7_parameter_value_pp p) x))
-
--- | Print complete parameter sequence.
-dx7_parameter_seq_pp :: DX7_Voice -> [String]
-dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
-
 -- | Group 6-operators, shared params and name.
 --
 -- > dx7_voice_grp dx7_init_voice
@@ -482,32 +450,6 @@ dx7_voice_grp :: DX7_Voice -> [[U8]]
 dx7_voice_grp p =
   let ix = concat [replicate 6 dx7_op_nparam :: [Int],[dx7_sh_nparam,dx7_name_nchar]]
   in Split.splitPlaces ix p
-
--- | DX7_Voice pretty-printer.
---
--- > dx7_voice_pp dx7_init_voice
-dx7_voice_pp :: DX7_Voice -> [String]
-dx7_voice_pp p =
-  let p_grp = dx7_voice_grp p
-  in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (Byte.word8_at p_grp 6)
-            ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
-
-dx7_function_parameters_tbl :: [DX7_Parameter]
-dx7_function_parameters_tbl =
-    [(64,"MODE CHANGE",2,0,"POLY;MONO")
-    ,(65,"PITCH BEND RANGE",13,0,"")
-    ,(66,"PITCH BEND STEP",13,0,"")
-    ,(67,"PORTAMENTO MODE ",2,0,"RETAIN;FOLLOW")
-    ,(68,"PORTAMENTO GLISS",2,0,"")
-    ,(69,"PORTAMENTO TIME ",100,0,"")
-    ,(70,"MOD WHEEL RANGE ",100,0,"")
-    ,(71,"MOD WHEEL ASSIGN",8,0,"PITCH;AMP;EG-BIAS")
-    ,(72,"FOOT CONTROL RANGE",100,0,"")
-    ,(73,"FOOT CONTROL ASSIGN",8,0,"")
-    ,(74,"BREATH CONT RANGE",100,0,"")
-    ,(75,"BREATH CONT ASSIGN",8,0,"")
-    ,(76,"AFTERTOUCH RANGE",100,0,"")
-    ,(77,"AFTERTOUCH ASSIGN",8,0,"")]
 
 -- * Voice
 
@@ -551,28 +493,17 @@ dx7_voice_data_list =
   ,(""
    ,["KEY TRANSPOSE"],[144])]
 
--- | Plain text voice data list.
---
--- > putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
-dx7_voice_data_list_pp :: DX7_Voice -> [String]
-dx7_voice_data_list_pp d =
-  let op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
-      op_ix_pp n = map
-                   (dx7_parameter_value_pp (Byte.word8_at dx7_op_parameter_tbl n))
-                   (map (Byte.word8_at d) (op_ix_set n))
-      is_op_ix n = n < 126
-      ix_val n =
-        if is_op_ix n
-        then intercalate "," (op_ix_pp n)
-        else dx7_parameter_value_pp (Byte.word8_at dx7_sh_parameter_tbl (n - 126)) (Byte.word8_at d n)
-      pp z nm ix = concat [z,nm,"=",ix_val ix]
-      f (grp,nm,ix) =
-        if null grp
-        then zipWith (pp "") nm ix
-        else grp : zipWith (pp "  ") nm ix
-      vc_nm = "NAME=" ++ dx7_voice_name '?' d
-  in vc_nm : concatMap f dx7_voice_data_list
+-- * SYSEX
 
+-- | Shift right by four places.
+--
+-- > map dx7_substatus [0x10,0x20] == [0x01,0x02]
+dx7_substatus :: U8 -> U8
+dx7_substatus = flip shiftR 4
+
+-- | 'M.u8_load'.
+dx7_read_u8 :: FilePath -> IO [U8]
+dx7_read_u8 = M.u8_load
 
 -- * SYSEX Message: FORMAT=0: Voice Data (163-BYTES)
 
@@ -644,10 +575,6 @@ dx7_fmt9_sysex_gen ch dat = dx7_fmt9_sysex_hdr ch ++ dat ++ [dx7_checksum dat,0x
 dx7_fmt9_sysex_dat :: [U8] -> [U8]
 dx7_fmt9_sysex_dat = take 4096 . drop 6
 
--- | 'M.u8_load'.
-dx7_read_u8 :: FilePath -> IO [U8]
-dx7_read_u8 = M.u8_load
-
 {- | Verify U8 sequence is FORMAT=9 DX7 sysex data.
      Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 
@@ -696,7 +623,8 @@ dx7_write_fmt9_sysex fn = M.u8_store fn . dx7_fmt9_sysex_validate_err "dx7_write
 
 -- | Unpack bit-packed 'U8' sequence to sequence of 'DX7_Voice' (see cmd/dx7-unpack.c).
 --   Input size must be a multiple of 128, output size will be a multiple of 155.
-dx7_unpack_bitpacked_u8 :: [U8] -> IO [DX7_Voice]
+--   IO because the bit packing is done by an external process.
+dx7_unpack_bitpacked_u8 :: DX7_SYSEX -> IO [DX7_Voice]
 dx7_unpack_bitpacked_u8 p = do
   when ((length p `rem` 128) /= 0) (error ("dx7_unpack_bitpacked_u8? " ++ show p))
   q <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp False p)
@@ -706,8 +634,17 @@ dx7_unpack_bitpacked_u8 p = do
 
 -- | Decode FORMAT=9 SYSEX message.
 --   IO because the bit un-packing is done by an external process.
-dx7_fmt9_sysex_decode :: [U8] -> IO DX7_Bank
+dx7_fmt9_sysex_decode :: DX7_SYSEX -> IO DX7_Bank
 dx7_fmt9_sysex_decode = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
+
+-- | Encode 'DX7_Bank' to channel /ch/ FORMAT=9 'DX7_SYSEX'.
+dx7_fmt9_sysex_encode :: U8 -> DX7_Bank -> IO DX7_SYSEX
+dx7_fmt9_sysex_encode ch bnk = do
+  let dat = concat bnk
+      dat_str = Byte.byte_seq_hex_pp False dat ++ "\n"
+  when (length dat /= 4960) (error "dx7_fmt9_sysex_encode")
+  syx <- Process.readProcess "hsc3-dx7-unpack" ["pack"] dat_str
+  return (dx7_fmt9_sysex_gen ch (Byte.read_hex_byte_seq syx))
 
 {- | Read binary FORMAT=9 sysex file and unpack voice data.
 
@@ -733,8 +670,8 @@ Will read exact multiples of:
 
 128 (VMEM;BITPACKED-VOICE;32=4096),
 155 (VCED;UN-BITPACKED-VOICE),
-163 (FORMAT=0),
-4104 (FORMAT=9)
+163 (FORMAT=0 SYSEX),
+4104 (FORMAT=9 SYSEX)
 
 To truncate a long FORMAT=9 sysex file use:
 xxd -u -p -c 4104 -l 4104 x.syx | xxd -r -p > y.syx
@@ -758,15 +695,6 @@ dx7_load_sysex_try fn = do
                 else if n `rem` 4104 == 0
                      then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
                      else return Nothing
-
--- | Encode 'DX7_Bank' to channel /ch/ 'DX7_SYSEX'.
-dx7_fmt9_sysex_encode :: U8 -> DX7_Bank -> IO DX7_SYSEX
-dx7_fmt9_sysex_encode ch bnk = do
-  let dat = concat bnk
-      dat_str = Byte.byte_seq_hex_pp False dat ++ "\n"
-  when (length dat /= 4960) (error "dx7_fmt9_sysex_encode")
-  syx <- Process.readProcess "hsc3-dx7-unpack" ["pack"] dat_str
-  return (dx7_fmt9_sysex_gen ch (Byte.read_hex_byte_seq syx))
 
 {- | Write binary DX7 FORMAT=9 sysex file.
 
@@ -837,69 +765,27 @@ dx7_param_change_sysex ch param_ix param_data =
 
 -- * E: Function Parameters: (GROUP=2)
 
-{-
-64         MONO/POLY MODE CHANGE  0-1      O=POLY
-65         PITCH BEND RANGE       0-12
-66           "    "   STEP        0-12
-67         PORTAMENTO MODE        0-1      0=RETAIN 1=FOLLOW
-68              "     GLISS       0-1
-69              "     TIME        0-99
-70         MOD WHEEL RANGE        0-99
-71          "    "   ASSIGN       0-7     b0: pitch,  b1:amp, b2: EG bias
-72         FOOT CONTROL RANGE     0-99
-73          "     "     ASSIGN    0-7           "
-74         BREATH CONT RANGE      0-99
-75           "     "   ASSIGN     0-7           "
-76         AFTERTOUCH RANGE       0-99
-77             "      ASSIGN      0-7           "
--}
+-- | B0=PITCH, B1=AMP, B2=EG-BIAS
+dx7_ctl_assign_usr :: DX7_USR
+dx7_ctl_assign_usr = intercalate ";" (map (Show.show_bin (Just 3)) [0::Int .. 7])
 
--- * Microtune Parameter Change Message (DX7s DX7II)
-
--- | Constant for per-octave mode (ie. tune all pitch-classes equally).
---
--- > gen_bitseq_pp 8 dx7_microtune_octave == "01111101"
-dx7_microtune_octave :: U8
-dx7_microtune_octave = 0x7D
-
--- | Constant for full gamut mode (ie. tune all notes distinctly).
---
--- > gen_bitseq_pp 8 dx7_microtune_full == "01111110"
-dx7_microtune_full :: U8
-dx7_microtune_full = 0x7E
-
--- | DX7 tuning units are 64 steps per semi-tone.
---
--- > map dx7_tuning_units_to_cents [0,16,32,48,64] == [0,25,50,75,100]
-dx7_tuning_units_to_cents :: U8 -> U8
-dx7_tuning_units_to_cents x = floor (T.word8_to_double x * (100 / 64))
-
-{- | Microtune parameter change sysex
-
-md = 0x7D | 0x7E
-d1 = key number (0-11 for Octave, 0-127 for Full)
-d2 = midi note number (13 - 108)
-d3 = fine tuning (0 - 63)
-
-The fine tuning parameter is in Yamaha tuning units away from note d2 in 12 ET.
-There are 64 tuning units per half step, 12 * 64 = 768 per octave.
-
-If d3 < 33, it is displayed on the LCD as a positive offset from note d2.
-Otherwise, it is be displayed as a negative offset -31 to -1 from note d2 + 1.
-
-> let r = [0xF0,0x43,0x10,0x18,0x7E,0x3C,0x3C,0x00,0xF7]
-> dx7_microtune_parameter_change_sysex 0 dx7_microtune_full 60 60 0 == r
-
--}
-dx7_microtune_parameter_change_sysex :: U8 -> U8 -> U8 -> U8 -> U8 -> [U8]
-dx7_microtune_parameter_change_sysex ch md d1 d2 d3 =
-  dx7_parameter_change_sysex ch (6,0) md [d1,d2,d3]
-
--- | Shift right by four places.
---
--- > map dx7_substatus [0x10,0x20] == [0x01,0x02]
-dx7_substatus :: U8 -> U8
-dx7_substatus = flip shiftR 4
+-- | DX7 function parameters, not stored with voice data.
+dx7_function_parameters_tbl :: [DX7_Parameter]
+dx7_function_parameters_tbl =
+    [(64,"MODE CHANGE",2,0,"POLY;MONO")
+    ,(65,"PITCH BEND RANGE",13,0,"")
+    ,(66,"PITCH BEND STEP",13,0,"")
+    ,(67,"PORTAMENTO MODE ",2,0,"RETAIN;FOLLOW")
+    ,(68,"PORTAMENTO GLISS",2,0,"OFF;ON") -- ?
+    ,(69,"PORTAMENTO TIME ",100,0,"")
+    ,(70,"MOD WHEEL RANGE ",100,0,"")
+    ,(71,"MOD WHEEL ASSIGN",8,0,dx7_ctl_assign_usr)
+    ,(72,"FOOT CONTROL RANGE",100,0,"")
+    ,(73,"FOOT CONTROL ASSIGN",8,0,dx7_ctl_assign_usr)
+    ,(74,"BREATH CONT RANGE",100,0,"")
+    ,(75,"BREATH CONT ASSIGN",8,0,dx7_ctl_assign_usr)
+    ,(76,"AFTERTOUCH RANGE",100,0,"")
+    ,(77,"AFTERTOUCH ASSIGN",8,0,dx7_ctl_assign_usr)]
 
 -- * REQUEST SYSEX
 
@@ -916,33 +802,6 @@ dx7_data_request_sysex_fmt0 n = dx7_data_request_sysex n 0x00
 -- | Request 32-voice data as FORMAT=9 sysex.
 dx7_data_request_sysex_fmt9 :: U8 -> DX7_SYSEX
 dx7_data_request_sysex_fmt9 n = dx7_data_request_sysex n 0x09
-
--- * NeXT/AU
-
-{- | Write VCED data to NeXT/AU audio file.
-     Data is encoded as signed 8-bit linear PCM.
-
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
-> d <- dx7_load_fmt9_sysex_err fn
-> dx7_store_au "/tmp/dx7.snd" d
--}
-dx7_store_au :: FilePath -> [DX7_Voice] -> IO ()
-dx7_store_au fn vc = do
-  let dat = L.pack (concat vc)
-      hdr = SF.Header (length vc * 155) SF.Linear8 155 1
-  SF.au_write_b fn hdr dat
-
-{- | Read VCED data from NeXT/AU audio file.
-     Data must be encoded as signed 8-bit linear PCM.
-
-> vc <- dx7_load_au "/tmp/dx7.snd"
-> dx7_voice_set_verify True vc
--}
-dx7_load_au :: FilePath -> IO [DX7_Voice]
-dx7_load_au fn = do
-  (SF.Header nf enc _sr nc,dat) <- SF.au_read_b fn
-  when (nf `mod` 155 /= 0 || enc /= SF.Linear8 || nc /= 1) (error "dx7_load_au?")
-  return (Split.chunksOf 155 (L.unpack dat))
 
 -- * TEXT/HEX
 
@@ -974,46 +833,6 @@ dx7_store_hex chk_rng fn v = do
 -- | Variant that runs 'dx7_voice_param_correct' on /v/.
 dx7_store_hex_correct :: FilePath -> [DX7_Voice] -> IO ()
 dx7_store_hex_correct fn = dx7_store_hex True fn . map dx7_voice_param_correct
-
--- * TEXT/CSV
-
--- | Encode 'DX7_Voice' as CSV entry.
---   The first column is the voice name as an ASCII string, followed by the parameters in sequence.
---   Parameters are written as decimal integers.
-dx7_voice_to_csv :: DX7_Voice -> String
-dx7_voice_to_csv v =
-  let nm = map (\c -> if c == ',' then '_' else c) . dx7_voice_name '?'
-  in intercalate "," (nm v : map show (dx7_voice_param v))
-
--- | Decode 'DX7_Voice' from CSV entry.
-dx7_voice_from_csv :: String -> DX7_Voice
-dx7_voice_from_csv str =
-  case Split.splitOn "," str of
-    nm:p -> dx7_param_to_dx7_voice nm (map read p)
-    _ -> error "dx7_voice_from_csv?"
-
-{- | Write sequence of 'DX7_Voice' to CSV file.
-
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
-> d <- dx7_load_fmt9_sysex_err fn
-> dx7_store_csv True "/tmp/dx7.csv" d
-> r <- dx7_load_csv "/tmp/dx7.csv"
-> r == d
-
--}
-dx7_store_csv :: Bool -> FilePath -> [DX7_Voice] -> IO ()
-dx7_store_csv chk_rng fn v = do
-  dx7_voice_set_verify chk_rng v
-  writeFile fn (unlines (map dx7_voice_to_csv v))
-
--- | Read sequence of 'DX7_Voice' from CSV file.
-dx7_load_csv :: FilePath -> IO [DX7_Voice]
-dx7_load_csv fn = do
-  s <- readFile fn
-  let v = map dx7_voice_from_csv (lines s)
-      chk_rng = False
-  dx7_voice_set_verify chk_rng v
-  return v
 
 -- * UTIL
 

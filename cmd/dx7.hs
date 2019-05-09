@@ -1,4 +1,5 @@
 import Control.Monad {- base -}
+import Data.List {- base -}
 import System.Environment {- base -}
 import System.IO {- base -}
 import Text.Printf {- base -}
@@ -7,7 +8,9 @@ import qualified Music.Theory.Array.CSV as T {- hmt -}
 import qualified Music.Theory.Byte as T {- hmt -}
 
 import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
+import qualified Sound.SC3.Data.Yamaha.DX7.DB as DX7 {- hsc3-data -}
 import qualified Sound.SC3.Data.Yamaha.DX7.Hash as DX7 {- hsc3-data -}
+import qualified Sound.SC3.Data.Yamaha.DX7.PP as DX7 {- hsc3-data -}
 
 usage_str :: [String]
 usage_str =
@@ -40,14 +43,14 @@ dx7_print ld cmd fn =
   let print_csv = DX7.dx7_voice_to_csv . snd
       print_hex pr_h (_,v) =
         if pr_h
-        then let (h,p) = DX7.dx7_param_hash32_str (DX7.dx7_voice_param v) in concat [h,",",p]
+        then intercalate "," (DX7.dx7_hash_vc_param_csv (DX7.dx7_hash_vc v))
         else T.byte_seq_hex_pp False v
       print_parameters = unlines . DX7.dx7_parameter_seq_pp . snd
       print_voice_data_list = unlines . DX7.dx7_voice_data_list_pp . snd
       print_voice_name pr_h (k,v) =
         let nm = DX7.dx7_voice_name '?' v
         in if pr_h
-           then let (h,_) = DX7.dx7_voice_hash v
+           then let h = DX7.dx7_voice_hash v
                 in printf "%s,%s" (DX7.dx7_hash_pp h) (T.csv_quote_if_req nm)
            else printf "%2d %s" k nm
       print_f f = dx7_print_f ld f fn

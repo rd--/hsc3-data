@@ -4,7 +4,7 @@ import System.Environment {- base -}
 
 import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Math as T {- hmt -}
+import qualified Music.Theory.Show as T {- hmt -}
 
 import Sound.SC3.Common.Buffer {- hsc3 -}
 

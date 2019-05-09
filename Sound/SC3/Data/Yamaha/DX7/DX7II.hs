@@ -7,6 +7,7 @@ import Text.Printf {- base -}
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
+import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Music.Theory.Show as Show {- hmt -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
@@ -14,6 +15,47 @@ import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 -- | Error if /e/ is false else /r/.
 dx7ii_assert :: Bool -> t -> t
 dx7ii_assert e r = if e then r else error "dx7ii_assert?"
+
+-- * Microtune Parameter Change Message (DX7s DX7II)
+
+-- | Constant for per-octave mode (ie. tune all pitch-classes equally).
+--
+-- > gen_bitseq_pp 8 dx7_microtune_octave == "01111101"
+dx7ii_microtune_octave :: U8
+dx7ii_microtune_octave = 0x7D
+
+-- | Constant for full gamut mode (ie. tune all notes distinctly).
+--
+-- > gen_bitseq_pp 8 dx7_microtune_full == "01111110"
+dx7ii_microtune_full :: U8
+dx7ii_microtune_full = 0x7E
+
+-- | DX7 tuning units are 64 steps per semi-tone.
+--
+-- > map dx7_tuning_units_to_cents [0,16,32,48,64] == [0,25,50,75,100]
+dx7ii_tuning_units_to_cents :: U8 -> U8
+dx7ii_tuning_units_to_cents x = floor (T.word8_to_double x * (100 / 64))
+
+{- | Microtune parameter change sysex
+
+md = 0x7D | 0x7E
+d1 = key number (0-11 for Octave, 0-127 for Full)
+d2 = midi note number (13 - 108)
+d3 = fine tuning (0 - 63)
+
+The fine tuning parameter is in Yamaha tuning units away from note d2 in 12 ET.
+There are 64 tuning units per half step, 12 * 64 = 768 per octave.
+
+If d3 < 33, it is displayed on the LCD as a positive offset from note d2.
+Otherwise, it is be displayed as a negative offset -31 to -1 from note d2 + 1.
+
+> let r = [0xF0,0x43,0x10,0x18,0x7E,0x3C,0x3C,0x00,0xF7]
+> dx7ii_microtune_parameter_change_sysex 0 dx7ii_microtune_full 60 60 0 == r
+
+-}
+dx7ii_microtune_parameter_change_sysex :: U8 -> U8 -> U8 -> U8 -> U8 -> [U8]
+dx7ii_microtune_parameter_change_sysex ch md d1 d2 d3 =
+  dx7_parameter_change_sysex ch (6,0) md [d1,d2,d3]
 
 -- * 5-2. Additional Parameters (ACED format)
 
