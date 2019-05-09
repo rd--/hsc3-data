@@ -7,6 +7,7 @@ import System.FilePath {- filepath -}
 import qualified Music.Theory.Array.CSV as T {- hmt -}
 import qualified Music.Theory.Byte as T {- hmt -}
 import qualified Music.Theory.Directory as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 import Sound.SC3.Data.Yamaha.DX7.Hash {- hsc3-data -}
@@ -102,14 +103,16 @@ dx7_hash_db_store db dir = do
   T.csv_table_write_def id (dir </> "dx7-names.csv") (map dx7_hash_vc_name_csv u)
   T.csv_table_write_def id (dir </> "dx7-param.csv") (map dx7_hash_vc_param_csv u)
 
+-- * HASH-DB
+
 -- | HASH-DB
 type DX7_Hash_DB = ([(DX7_Hash,String)],[(DX7_Hash,DX7_Param)])
 
 -- | Load HASH-DB from /dir/.
 --
 -- > dir = "/home/rohan/rd/j/2019-04-07"
--- > (n,r) <- dx7_hash_db_load dir
--- > (length n,length r) == (38041,30270)
+-- > db <- dx7_hash_db_load dir
+-- > (length (fst db),length (snd db)) == (38041,30270)
 dx7_hash_db_load :: FilePath -> IO DX7_Hash_DB
 dx7_hash_db_load dir = do
   nm <- T.csv_table_read_def id (dir </> "dx7-names.csv")
@@ -119,3 +122,15 @@ dx7_hash_db_load dir = do
       pr_f [h,r] = (dx7_hash_parse h,T.read_hex_byte_seq r)
       pr_f _ = error "dx7_hash_db_load: pr_f?"
   return (map nm_f nm,map pr_f pr)
+
+-- | Get NAMES and PARAM given HASH.
+dx7_hash_db_get :: DX7_Hash_DB -> DX7_Hash -> ([String],DX7_Param)
+dx7_hash_db_get (nm,pr) h =
+  (map snd (filter ((== h) . fst) nm)
+  ,T.lookup_err h pr)
+
+-- | Get all PARAM having NAME.
+dx7_hash_db_search :: DX7_Hash_DB -> String -> [DX7_Voice]
+dx7_hash_db_search (nm,pr) x =
+  let h = map fst (filter ((== x) . snd) nm)
+  in map (dx7_param_to_dx7_voice x . snd) (filter ((`elem` h) . fst) pr)

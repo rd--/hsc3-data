@@ -60,6 +60,7 @@ dx7_voice_concise_str v =
       sh_str = "" : T.table_pp (True,True,False," ",False) sh
   in nm : (op_str ++ sh_str)
 
+-- | Concise PP of sequence of voices.
 dx7_voice_concise_seq :: [DX7_Voice] -> String
 dx7_voice_concise_seq = unlines . intercalate [""] . map dx7_voice_concise_str
 
