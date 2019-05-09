@@ -13,7 +13,6 @@ import Data.Int {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
-import Text.Printf {- base -}
 
 import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
@@ -281,15 +280,13 @@ dx7_parameter_value_normalise (_,_,n,_,_) x = T.word8_to_float x / T.word8_to_fl
 
 -- | USR 2-character strings naming the 12 pitch-classes.
 dx7_pitch_class_seq :: [String]
-dx7_pitch_class_seq = Split.chunksOf 2 "C C#D D#E F F#G G#A A#B "
+dx7_pitch_class_seq = Split.splitOn ";" "C;C#;D;D#;E;F;F#;G;G#;A;A#;B"
 
 -- | USR 4-character strings naming the 120 pitches from C-1 to B8.
 --
--- > length (dx7_pitch_seq True) == 10 * 12
-dx7_pitch_seq :: Bool -> [String]
-dx7_pitch_seq pd =
-  let oct_pp = if pd then printf "%2d" else show
-  in [p ++ oct_pp o | o <- [-1::Int .. 8],p <- dx7_pitch_class_seq]
+-- > length dx7_pitch_seq) == 10 * 12
+dx7_pitch_seq :: [String]
+dx7_pitch_seq = [p ++ show o | o <- [-1::Int .. 8],p <- dx7_pitch_class_seq]
 
 -- | The KBD-BRK-PT value of 0 is pitch A-1 which is midi note number 9.
 dx7_kbd_brk_pt_to_midi :: U8 -> U8
@@ -297,7 +294,7 @@ dx7_kbd_brk_pt_to_midi = (+) 9
 
 -- | USR 4-char string for KBD-BRK-PT, from A-1 to C8
 dx7_kbd_brk_pt_usr :: DX7_USR
-dx7_kbd_brk_pt_usr = intercalate ";" (take 100 (drop 9 (dx7_pitch_seq True)))
+dx7_kbd_brk_pt_usr = intercalate ";" (take 100 (drop 9 dx7_pitch_seq))
 
 -- | Template for six FM operators.
 --
@@ -316,7 +313,7 @@ dx7_op_parameter_tbl =
     ,(09,"KBD LEV SCL LFT DEPTH",100,0,"")
     ,(10,"KBD LEV SCL RHT DEPTH",100,0,"")
     ,(11,"KBD LEV SCL LFT CURVE",4,0,dx7_typ_usr_str "CURVE") -- 4-CHAR (2=UNIQ)
-    ,(12,"KBD LEV SCL RHT CURVE",4,0,dx7_typ_usr_str "CURVE")
+    ,(12,"KBD LEV SCL RHT CURVE",4,0,dx7_typ_usr_str "CURVE") -- 4-CHAR
     ,(13,"KBD RATE SCALING",8,0,"") -- 1-CHAR
     ,(14,"AMP MOD SENSITIVITY",4,0,"") -- 1-CHAR
     ,(15,"KEY VEL SENSITIVITY",8,0,"") -- 1-CHAR
@@ -357,7 +354,7 @@ dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1
 
 -- | USR 3-CHAR string for TRANSPOSE, from C1 to C4
 dx7_transpose_usr :: DX7_USR
-dx7_transpose_usr = intercalate ";" (take 49 (drop 12 (dx7_pitch_seq False)))
+dx7_transpose_usr = intercalate ";" (take 49 (drop 12 dx7_pitch_seq))
 
 -- | Remainder (non-operator) of parameter table.
 --
@@ -421,6 +418,12 @@ dx7_parameter_tbl =
          ,dx7_sh_parameter_tbl
          ,dx7_name_dx7_parameter_tbl]
 
+-- | Lookup DX7_Parameter given index.
+dx7_parameter_get :: U8 -> DX7_Parameter
+dx7_parameter_get n =
+    fromMaybe (error "dx7_parameter_get") $
+    find ((== n) . dx7_parameter_ix) dx7_parameter_tbl
+
 -- | Lookup parameter name given index.
 --
 -- > dx7_parameter_name 0x14 == "OP 6 OSC DETUNE"
@@ -428,10 +431,7 @@ dx7_parameter_tbl =
 -- > dx7_parameter_name 0x86 == "ALGORITHM #"
 -- > dx7_parameter_name 0x90 == "TRANSPOSE"
 dx7_parameter_name :: U8 -> String
-dx7_parameter_name n =
-    fromMaybe (error "dx7_parameter_name") $
-    fmap dx7_parameter_nm $
-    find ((== n) . dx7_parameter_ix) dx7_parameter_tbl
+dx7_parameter_name = dx7_parameter_nm . dx7_parameter_get
 
 -- | Lookup parameter index given name.
 --
@@ -443,13 +443,14 @@ dx7_parameter_index nm =
     fmap dx7_parameter_ix $
     find ((== nm) . dx7_parameter_nm) dx7_parameter_tbl
 
--- | Group 6-operators, shared params and name.
+dx7_voice_grp_places :: [Int]
+dx7_voice_grp_places = concat [replicate 6 dx7_op_nparam,[dx7_sh_nparam,dx7_name_nchar]]
+
+-- | Group 6-operators (in sequence 6-1), shared params and name.
 --
 -- > dx7_voice_grp dx7_init_voice
 dx7_voice_grp :: DX7_Voice -> [[U8]]
-dx7_voice_grp p =
-  let ix = concat [replicate 6 dx7_op_nparam :: [Int],[dx7_sh_nparam,dx7_name_nchar]]
-  in Split.splitPlaces ix p
+dx7_voice_grp = Split.splitPlaces dx7_voice_grp_places
 
 -- * Voice
 
@@ -579,7 +580,7 @@ dx7_fmt9_sysex_dat = take 4096 . drop 6
      Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 
 > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
-> d <- dx7_read_u8 rom1a_fn
+> d <- dx7_read_u8 fn
 > dx7_fmt9_sysex_verify 0 d == (True,True,True,True)
 
 -}
@@ -652,6 +653,7 @@ dx7_fmt9_sysex_encode ch bnk = do
 > d <- dx7_load_fmt9_sysex_err fn
 > dx7_bank_verify True d
 > mapM_ (putStrLn . dx7_voice_name '?') d
+> import 
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d

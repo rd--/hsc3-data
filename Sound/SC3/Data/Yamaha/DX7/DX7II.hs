@@ -16,6 +16,60 @@ import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 dx7ii_assert :: Bool -> t -> t
 dx7ii_assert e r = if e then r else error "dx7ii_assert?"
 
+-- * VCED
+
+-- | DX7 OP param names (short,long).
+--
+-- > length dx7ii_op_parameter_names == dx7_op_nparam
+dx7ii_op_parameter_names :: [(String,String)]
+dx7ii_op_parameter_names =
+  [("R1","EG RATE 1")
+  ,("R2","EG RATE 2")
+  ,("R3","EG RATE 3")
+  ,("R4","EG RATE 4")
+  ,("L1","EG LEVEL 1")
+  ,("L2","EG LEVEL 2")
+  ,("L3","EG LEVEL 3")
+  ,("L4","EG LEVEL 4")
+  ,("BP","BREAK POINT")
+  ,("LD","LEFT DEPTH")
+  ,("RD","RIGHT DEPTH")
+  ,("LC","LEFT CURVE")
+  ,("RC","RIGHT CURVE")
+  ,("RS","RATE SCALING")
+  ,("AMS","MODULATION SENSITIVITY")
+  ,("TS","TOUCH SENSITIVITY")
+  ,("TL","TOTAL LEVEL")
+  ,("PM","FREQUENCY MODE")
+  ,("PC","FREQUENCY COURSE")
+  ,("PF","FREQUENCY FINE")
+  ,("PD","DETUNE")]
+
+-- | DX7 SH param names (short,long).
+--
+-- > length dx7ii_sh_parameter_names == dx7_sh_nparam
+dx7ii_sh_parameter_names :: [(String,String)]
+dx7ii_sh_parameter_names =
+  [("PR1" ,"PEG RATE 1")
+  ,("PR2" ,"PEG RATE 2")
+  ,("PR3" ,"PEG RATE 3")
+  ,("PR4" ,"PEG RATE 4")
+  ,("PL1" ,"PEG LEVEL 1")
+  ,("PL2" ,"PEG LEVEL 2")
+  ,("PL3" ,"PEG LEVEL 3")
+  ,("PL4" ,"PEG LEVEL 4")
+  ,("ALS" ,"ALGORITHM SELECTOR")
+  ,("FBL" ,"FEED BACK LEVEL")
+  ,("OPI" ,"OSC.PHASE INIT")
+  ,("LFS" ,"LFO SPEED")
+  ,("LFD" ,"LFO DELAY TIME")
+  ,("LPMD","PITCH MODULATION DEPTH")
+  ,("LAMD","AMPLITUDE MODULATION DEPTH")
+  ,("LFKS","LFO KEY SYNC")
+  ,("LFW" ,"LFO WAVE")
+  ,("LPMS","LFO PITCH MODULATION SENSITIVITY")
+  ,("TRNP","TRANSPOSE")]
+
 -- * Microtune Parameter Change Message (DX7s DX7II)
 
 -- | Constant for per-octave mode (ie. tune all pitch-classes equally).

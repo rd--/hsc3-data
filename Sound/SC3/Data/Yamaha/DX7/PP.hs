@@ -8,12 +8,60 @@ import Text.Printf {- base -}
 import qualified Data.ByteString.Lazy as L {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
+import qualified Music.Theory.Array.Text as T {- hmt -}
 import qualified Music.Theory.Byte as Byte {- hmt -}
+import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Math.Convert as T {- hmt -}
 
 import qualified Sound.File.NeXT as SF {- hsc3-sf -}
 
 import Sound.SC3.Data.Yamaha.DX7
+import Sound.SC3.Data.Yamaha.DX7.DX7II
+
+-- * CHAR COUNTING
+
+-- | Maximum CHAR widths for USR representation of OP param.
+--
+-- > length dx7_op_char_count == 21
+-- > sum dx7_op_char_count == 48
+dx7_op_char_count :: [Int]
+dx7_op_char_count = [2,2,2,2, 2,2,2,2, 4,2,2,4,4,1, 1,1,2, 5,2,2,2]
+
+-- | Maximum CHAR widths for USR representation of SH param.
+--
+-- > length dx7_sh_char_count == 19
+-- > sum dx7_sh_char_count == 39
+dx7_sh_char_count :: [Int]
+dx7_sh_char_count = [2,2,2,2, 2,2,2,2, 2,1,3, 2,2,2,2,3,2, 1,3]
+
+-- * CONCISE
+
+-- | Concise OP and SH TABLEs for voice data.
+dx7_voice_concise_tbl :: DX7_Voice -> (String,T.TABLE,T.TABLE)
+dx7_voice_concise_tbl v =
+  let [o6,o5,o4,o3,o2,o1,sh,nm] = dx7_voice_grp v
+      w_fn k l = zipWith (\s i -> T.pad_left ' ' i s) l k
+      o_hdr = "OP" : map fst dx7ii_op_parameter_names
+      o_fn i = (show i :) . map (\(k,x) -> dx7_parameter_value_pp (dx7_parameter_get k) x) . zip [0..]
+      o_tbl = w_fn (2 : dx7_op_char_count) o_hdr : zipWith o_fn [6::U8,5,4,3,2,1] [o6,o5,o4,o3,o2,o1]
+      sh_rw s = if head s == 'P' then tail s else s
+      sh_hdr = "" : map (sh_rw . fst) dx7ii_sh_parameter_names
+      sh_fn = ("SH" :) . map (\(k,x) -> dx7_parameter_value_pp (dx7_parameter_get k) x) . zip [126..]
+      sh_tbl = [w_fn (2 : dx7_sh_char_count) sh_hdr,sh_fn sh]
+  in (map (dx7_ascii_char '?') nm,o_tbl,sh_tbl)
+
+-- | Concise PP using parameter names from DX7II manual.
+--
+-- > putStrLn $ unlines $ "" : dx7_voice_concise_str dx7_init_voice
+dx7_voice_concise_str :: DX7_Voice -> [String]
+dx7_voice_concise_str v =
+  let (nm,op,sh) = dx7_voice_concise_tbl v
+      op_str = "" : T.table_pp (True,True,False," ",False) op
+      sh_str = "" : T.table_pp (True,True,False," ",False) sh
+  in nm : (op_str ++ sh_str)
+
+dx7_voice_concise_seq :: [DX7_Voice] -> String
+dx7_voice_concise_seq = unlines . intercalate [""] . map dx7_voice_concise_str
 
 -- * PLAIN
 
@@ -27,7 +75,7 @@ dx7_parameter_value_pp p x =
       r = if u == "ASCII"
           then ['\'',dx7_ascii_char '?' x_clip,'\'']
           else case Split.splitOn ";" u of
-                 [_] -> printf "%02d" (T.word8_to_int8 x_clip + d)
+                 [_] -> printf "%2d" (T.word8_to_int8 x_clip + d)
                  e -> Byte.word8_at e x_clip
   in r ++ err
 
