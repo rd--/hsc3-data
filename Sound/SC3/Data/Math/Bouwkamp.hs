@@ -20,8 +20,6 @@ import qualified Data.CG.Minus as CG {- hcg-minus -}
 import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
 import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
 
-import qualified Render.CG.Minus.Picture as CG {- hcg-minus-cairo -}
-
 import qualified Music.Theory.List as T {- hmt -}
 
 type Pt = (Int,Int)
@@ -116,14 +114,22 @@ gen_poly h = let f = map (to_pt h) . sq_corners_cw in map f
 gen_clr :: Int -> [CG.Ca]
 gen_clr = map (\(r,g,b) -> CG.rgba_to_ca (r,g,b,1)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
 
-gen_pdf :: Maybe [CG.Ca] -> Int -> String -> [Sq] -> IO ()
-gen_pdf m_clr sz nm sq = do
+gen_pic :: Maybe [CG.Ca] -> Int -> [Sq] -> CG.Picture Double
+gen_pic m_clr sz sq = do
   let p = gen_poly sz sq
       black_pen = CG.Pen 0.1 (CG.rgba_to_ca (0,0,0,1)) CG.no_dash
-      i = case m_clr of
-            Just clr_seq -> zipWith (CG.polygon_f) clr_seq p
-            Nothing -> map (CG.polygon_l black_pen) p
+    in case m_clr of
+         Just clr_seq -> zipWith (CG.polygon_f) clr_seq p
+         Nothing -> map (CG.polygon_l black_pen) p
+
+{-
+import qualified Render.CG.Minus.Picture as CG {- hcg-minus-cairo -}
+
+gen_pdf :: Maybe [CG.Ca] -> Int -> String -> [Sq] -> IO ()
+gen_pdf m_clr sz nm sq = do
+  let i = gen_pic m_clr sz sq
   CG.picture_to_pdf_and_svg 4 nm i
+-}
 
 -- * CSV
 

@@ -37,7 +37,7 @@ dexed_non_dx7_param :: [Ctrl]
 dexed_non_dx7_param =
   [Ctrl {label="Cutoff", idx=0} -- non-DX7
   ,Ctrl {label="Resonance", idx=1} -- non-DX7
-  ,Ctrl {label="Output", idx=2} -- non-DX7
+  ,Ctrl {label="Output", idx=2} -- non-DX7 -- VOL
   ,Ctrl {label="MASTER TUNE ADJ", idx=3} -- non-DX7
   ,Ctrl {label="OP1 SWITCH", idx=44} -- non-DX7
   ,Ctrl {label="OP2 SWITCH", idx=66} -- non-DX7

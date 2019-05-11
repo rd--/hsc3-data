@@ -30,7 +30,6 @@ Library
                    Glob,
                    graphviz,
                    hcg-minus == 0.18.*,
-                   hcg-minus-cairo == 0.18.*,
                    HCodecs,
                    hmt == 0.18.*,
                    hosc == 0.18.*,
