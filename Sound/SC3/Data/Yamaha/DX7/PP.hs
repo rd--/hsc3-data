@@ -223,12 +223,28 @@ dx7_parameter_html :: Int -> DX7_Parameter -> U8 -> [String]
 dx7_parameter_html wd p k =
   dx7_enum_html wd (dx7_parameter_ix p) k (dx7_parameter_enum_usr p)
 
-dx7_html_pre :: [String]
-dx7_html_pre =
-  ["<html>"
-  ,"<head>"
-  ,"<style>"
-  ,"body {"
+dx7_js :: [String]
+dx7_js =
+  ["window.onload = function () {"
+  ,"    var d = window.document;"
+  ,"    var ws = new WebSocket('ws://localhost:9160/');"
+  ,"    var sel = d.getElementsByTagName('select');"
+  ,"    for(i = 0; i < sel.length; i++) {"
+  ,"        sel[i].addEventListener('change', (e) => {"
+  ,"            var k = e.target.getAttribute('id');"
+  ,"            var addr = ['/',k.charAt(0)].join('');"
+  ,"            var d1 = parseInt(k.slice(1));"
+  ,"            var d2 = parseInt(e.target.value);"
+  ,"            ws.send(JSON.stringify([addr,d1,d2]));"
+  ,"            console.log(k,d2);"
+  ,"        });"
+  ,"    };"
+  ,"};"
+  ]
+
+dx7_css :: [String]
+dx7_css =
+  ["body {"
   ,"  background-color:black;"
   ,"  font-family: monospace;"
   ,"}"
@@ -239,7 +255,14 @@ dx7_html_pre =
   ,"  border: 0;"
   ,"  -webkit-appearance:none;"
   ,"}"
-  ,"</style>"
+  ]
+
+dx7_html_pre :: [String]
+dx7_html_pre =
+  ["<html>"
+  ,"<head>"
+  ,"<style>",unlines dx7_css,"</style>"
+  ,"<script>",unlines dx7_js,"</script>"
   ,"</head>"
   ,"<body>"
   ,"<form>"]
