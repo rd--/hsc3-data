@@ -29,21 +29,31 @@ ui_elem_html e =
     UI_Enum wd z k lst -> ui_enum_html wd z k lst
     UI_LineBreak -> ["<br />"]
 
-type UI_Plain = [String]
-
-ui_plain_to_elem :: [[UI_Plain]] -> [UI_Elem]
+-- | Enumerations given as (char-wd,enum-lst) pairs.
+--   Null entries are interpreted as line-breaks.
+--   Unary entries are interpreted as labels.
+ui_plain_to_elem :: [(Int,[String])] -> [UI_Elem]
 ui_plain_to_elem tbl =
-  let acc_f (l,p) e = case e of
-                        [] -> ((l,p),(-1,e))
-                        [_] -> ((l+1,p),(l,e))
-                        _ -> ((l,p+1),(p,e))
-      (_,lst) = mapAccumL acc_f (0,0) (intercalate [[]] tbl)
-      ui_f (z,e) =
+  let acc_f (l,p) (wd,e) =
+        case e of
+          [] -> ((l,p),(-1,(wd,e)))
+          [_] -> ((l+1,p),(l,(wd,e)))
+          _ -> ((l,p+1),(p,(wd,e)))
+      (_,lst) = mapAccumL acc_f (0,0) tbl
+      ui_f (z,(wd,e)) =
         case e of
           [] -> UI_LineBreak
-          [s] -> UI_Label (length s) z s
-          _ -> UI_Enum (maximum (map length e)) z 0 e
+          [s] -> UI_Label wd z s
+          _ -> UI_Enum wd z 0 e
   in map ui_f lst
+
+-- | Derive widths for plain data.
+ui_plain_derive_width :: [[String]] -> [(Int,[String])]
+ui_plain_derive_width = map (\e -> (maximum (map length e),e))
+
+-- | Plain text input.
+ui_text_to_elem :: [[String]] -> [UI_Elem]
+ui_text_to_elem = ui_plain_to_elem . ui_plain_derive_width
 
 ui_css :: [String]
 ui_css =
@@ -60,11 +70,11 @@ ui_css =
   ,"}"
   ]
 
-ui_js :: [String]
-ui_js =
+ui_js :: Int -> [String]
+ui_js ws_p =
   ["window.onload = function () {"
   ,"    var d = window.document;"
-  ,"    var ws = new WebSocket('ws://localhost:9160/');"
+  ,"    var ws = new WebSocket('ws://localhost:" ++ show ws_p ++ "/');"
   ,"    var sel = d.getElementsByTagName('select');"
   ,"    for(i = 0; i < sel.length; i++) {"
   ,"        sel[i].addEventListener('change', (e) => {"
@@ -79,14 +89,14 @@ ui_js =
   ,"};"
   ]
 
-ui_html_pre :: String -> [String]
-ui_html_pre nm =
+ui_html_pre :: Int -> String -> [String]
+ui_html_pre ws_p nm =
   ["<!DOCTYPE html>"
   ,"<html lang=\"en\">"
   ,"<head>"
   ,"<title>",nm,"</title>"
   ,"<style>",unlines ui_css,"</style>"
-  ,"<script>",unlines ui_js,"</script>"
+  ,"<script>",unlines (ui_js ws_p),"</script>"
   ,"</head>"
   ,"<body>"
   ,"<form>"]
@@ -97,13 +107,13 @@ ui_html_post =
   ,"</body>"
   ,"</html>"]
 
-ui_html :: String -> [UI_Elem] -> [String]
-ui_html nm lst =
-  concat [ui_html_pre nm
+ui_html :: Int -> String -> [UI_Elem] -> [String]
+ui_html ws_p nm lst =
+  concat [ui_html_pre ws_p nm
          ,concatMap ui_elem_html lst
          ,ui_html_post]
 
--- > pln = [[["R1"],words "A B C"],[],[["R2"],words "D E F",words "G H I"]]
--- > ui_html_wr "/tmp/t.html" "test" (ui_plain_to_elem pln)
-ui_html_wr :: FilePath -> String -> [UI_Elem] -> IO ()
-ui_html_wr fn nm lst = writeFile fn (unlines (ui_html nm lst))
+-- > txt = [["R1"],words "A B C",[],["R2"],words "D E F",words "G H I"]
+-- > ui_html_wr 9160 "/tmp/t.html" "test" (ui_text_to_elem txt)
+ui_html_wr :: Int -> FilePath -> String -> [UI_Elem] -> IO ()
+ui_html_wr ws_p fn nm lst = writeFile fn (unlines (ui_html ws_p nm lst))
