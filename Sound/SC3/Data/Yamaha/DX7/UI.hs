@@ -3,11 +3,10 @@ module Sound.SC3.Data.Yamaha.DX7.UI where
 
 import Data.List {- base -}
 
+import Sound.SC3.Data.UI.HTML
 import Sound.SC3.Data.Yamaha.DX7
 import Sound.SC3.Data.Yamaha.DX7.PP
 import Sound.SC3.Data.Yamaha.DX7.DX7II
-
-import Sound.SC3.Data.UI.HTML
 
 u8_to_int :: U8 -> Int
 u8_to_int = fromIntegral
@@ -43,7 +42,6 @@ dx7_sh_hdr_ui =
 dx7_ui_br :: [[UI_Elem]] -> [UI_Elem]
 dx7_ui_br = intercalate [UI_LineBreak]
 
--- > ui_html_wr "/tmp/t.html" "test" (dx7_voice_ui dx7_init_voice)
 dx7_voice_ui :: DX7_Voice -> [UI_Elem]
 dx7_voice_ui vc = do
   let [op6,op5,op4,op3,op2,op1,sh,_] = dx7_voice_grp vc
@@ -56,3 +54,7 @@ dx7_voice_ui vc = do
                          ,[[UI_LineBreak]
                           ,dx7_sh_hdr_ui
                           ,dx7_sh_parameter_ui sh]])
+
+-- > dx7_voice_ui_wr "/tmp/t.html" dx7_init_voice
+dx7_voice_ui_wr :: FilePath -> DX7_Voice -> IO ()
+dx7_voice_ui_wr fn vc = ui_html_wr fn (dx7_voice_name '?' vc) (dx7_voice_ui vc)
