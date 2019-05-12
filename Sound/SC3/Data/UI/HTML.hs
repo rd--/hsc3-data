@@ -3,17 +3,17 @@ module Sound.SC3.Data.UI.HTML where
 import Data.List {- base -}
 import Text.Printf {- base -}
 
--- | wd = char-width ; z = uid
-ui_lbl_html :: Int -> Int -> String -> String
-ui_lbl_html wd z txt =
+-- | h = height:n-line ; w = width:n-char ; z = uid ; lbl = label
+ui_lbl_html :: Int -> Int -> Int -> String -> String
+ui_lbl_html h w z lbl =
   printf
-  "<select id=\"L%d\" style=\"width:%dem\" disabled><option>%s</option></select>"
-  z wd txt
+  "<select id=\"L%d\" style=\"width:%dem\" size=\"%d\" disabled><option>%s</option></select>"
+  z w h lbl
 
--- | wd = char-width ; z = uid ; k = initial-ix ; e = enumeration
-ui_enum_html :: Int -> Int -> Int -> [String] -> [String]
-ui_enum_html wd z k e =
-  let sel = printf "<select id=\"P%d\" style=\"width:%dem\">" z wd
+-- | k = initial-ix ; e = enumeration
+ui_enum_html :: Int -> Int -> Int -> Int -> [String] -> [String]
+ui_enum_html h w z k e =
+  let sel = printf "<select id=\"P%d\" style=\"width:%dem\" size=\"%d\">" z w h
       opt (ix,txt) = printf
                      "<option value=\"%d\"%s>%s</option>"
                      ix (if ix == k then " selected" else "") txt
@@ -22,11 +22,11 @@ ui_enum_html wd z k e =
 data UI_Elem = UI_Label Int Int String | UI_Enum Int Int Int [String] | UI_LineBreak
   deriving (Eq,Show)
 
-ui_elem_html :: UI_Elem -> [String]
-ui_elem_html e =
+ui_elem_html :: Int -> UI_Elem -> [String]
+ui_elem_html h e =
   case e of
-    UI_Label wd z txt -> [ui_lbl_html wd z txt]
-    UI_Enum wd z k lst -> ui_enum_html wd z k lst
+    UI_Label wd z txt -> [ui_lbl_html h wd z txt]
+    UI_Enum wd z k lst -> ui_enum_html h wd z k lst
     UI_LineBreak -> ["<br />"]
 
 -- | Enumerations given as (char-wd,enum-lst) pairs.
@@ -68,6 +68,9 @@ ui_css =
   ,"  border: 0;"
   ,"  -webkit-appearance:none;"
   ,"}"
+  ,"select::-webkit-scrollbar {"
+  ,"  display: none;"
+  ,"}"
   ]
 
 ui_js :: Int -> [String]
@@ -107,13 +110,13 @@ ui_html_post =
   ,"</body>"
   ,"</html>"]
 
-ui_html :: Int -> String -> [UI_Elem] -> [String]
-ui_html ws_p nm lst =
+ui_html :: Int -> Int -> String -> [UI_Elem] -> [String]
+ui_html ws_p h nm lst =
   concat [ui_html_pre ws_p nm
-         ,concatMap ui_elem_html lst
+         ,concatMap (ui_elem_html h) lst
          ,ui_html_post]
 
 -- > txt = [["R1"],words "A B C",[],["R2"],words "D E F",words "G H I"]
--- > ui_html_wr 9160 "/tmp/t.html" "test" (ui_text_to_elem txt)
-ui_html_wr :: Int -> FilePath -> String -> [UI_Elem] -> IO ()
-ui_html_wr ws_p fn nm lst = writeFile fn (unlines (ui_html ws_p nm lst))
+-- > ui_html_wr 9160 1 "/tmp/t.html" "test" (ui_text_to_elem txt)
+ui_html_wr :: Int -> Int -> FilePath -> String -> [UI_Elem] -> IO ()
+ui_html_wr ws_p h fn nm lst = writeFile fn (unlines (ui_html ws_p h nm lst))
