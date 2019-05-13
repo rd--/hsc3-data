@@ -5,13 +5,144 @@ import Data.Char {- base -}
 import Data.Either {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
+import Text.Printf {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
+import qualified Music.Theory.Byte as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 
 import Sound.SC3.Data.Math.Types {- hsc3-data -}
 import Sound.SC3.Data.Roland.D50 {- hsc3-data -}
+
+-- | Pretty printer for 'D50_Parameter_Type'.
+--
+-- > map d50_parameter_type_pp d50_parameter_type_seq
+-- > mapMaybe (\n -> fmap d50_parameter_type_pp (d50_address_to_parameter_type n)) [0 .. 420]
+d50_parameter_type_pp :: D50_Parameter_Type -> String
+d50_parameter_type_pp ty =
+  case ty of
+    Partial tn ix -> unwords [show tn,"Partial",d50_partial_ix_sym ix]
+    Common tn -> unwords [show tn,"Common"]
+    Patch -> "Patch"
+
+-- | Show address as 5-element hexadecimal.
+--
+-- > map (d50_addr_pp . d50_addr_read) (words "02-00-00 02-03-40 03-5C-40 03-60-00 03-62-78 04-0C-08")
+d50_addr_pp :: D50_ADDRESS -> String
+d50_addr_pp x = printf "%05X" x
+
+-- | Range as @p - q@.
+--
+-- > d50_range_pp (-7,7) == "-7 - +7"
+-- > d50_range_pp (1,100) == "1 - 100"
+d50_range_pp :: (Num n,Ord n,Show n) => (n,n) -> String
+d50_range_pp (p,q) =
+  let q_sign = if p < 0 && q > 0 then "+" else ""
+  in concat [show p," - ",q_sign,show q]
+
+
+-- | 4.1 Parameter base address (Top address)
+d50_parameter_base_address_tbl :: [(D50_ADDRESS,String,D50_Parameter_Type,String)]
+d50_parameter_base_address_tbl =
+    let f (ty,(b,x)) = (b,d50_parameter_type_pp ty,ty,d50_range_pp (b,x))
+    in map f d50_parameter_type_address_segments
+
+-- | Patch name set pretty printed.
+d50_patch_name_set_pp :: D50_Patch -> String
+d50_patch_name_set_pp p =
+  let (u,l,n) = d50_patch_name_set p
+  in concat [n," U: ",u," L: ",l]
+
+-- | Alias for 'T.byte_seq_hex_pp'
+d50_sysex_pp :: D50_Sysex -> String
+d50_sysex_pp = T.byte_seq_hex_pp False
+
+-- * SYM
+
+-- | Upper -> U, Lower -> L.
+d50_tone_sym :: Tone -> String
+d50_tone_sym tn = case tn of {Upper -> "U";Lower -> "L"}
+
+-- | One -> 1, Two -> 2.
+d50_partial_ix_sym :: Partial_Ix -> String
+d50_partial_ix_sym ix = case ix of {One -> "1";Two -> "2"}
+
+-- | Symbolic names for the seven parameter types, U1 U2 U L1 L2 L P.
+type D50_Parameter_Type_Sym = String
+
+-- | Table mapping names to parameter types.
+d50_parameter_type_sym_tbl :: [(D50_Parameter_Type_Sym,D50_Parameter_Type)]
+d50_parameter_type_sym_tbl =
+  let sym = words "U1 U2 U L1 L2 L P"
+  in zip sym d50_parameter_type_seq
+
+-- | Reverse lookup of 'd50_parameter_type_sym_tbl'.
+--
+-- > map d50_parameter_type_sym d50_parameter_type_seq
+d50_parameter_type_sym :: D50_Parameter_Type -> D50_Parameter_Type_Sym
+d50_parameter_type_sym v = T.reverse_lookup_err v d50_parameter_type_sym_tbl
+
+-- | Lookup 'd50_parameter_type_sym_tbl'.
+--
+-- > map d50_parameter_type_read ["L1","U"] == [Partial Lower One,Common Upper]
+d50_parameter_type_read :: D50_Parameter_Type_Sym -> D50_Parameter_Type
+d50_parameter_type_read = flip T.lookup_err d50_parameter_type_sym_tbl
+
+-- | Show 6-CHAR key mode string.
+--
+-- > d50_patch_key_mode_sym p == "DUAL"
+d50_patch_key_mode_sym :: D50_Patch -> String
+d50_patch_key_mode_sym p =
+  let k = u24_at p 402
+  in d50_usr_ix (error "?") d50_key_mode_usr k
+
+-- | Partial mute for lower and upper tones as 4-CHAR string.
+--   Sequence = L1 L2 U1 U2; 0 = Muted, 1 = Sounding
+type D50_Mute_Sym = String
+
+-- | Generate 4-CHAR 'D50_Mute_Sym' for patch.
+--
+-- > d50_patch_partial_mute_sym p == "1111"
+d50_patch_partial_mute_sym :: D50_Patch -> D50_Mute_Sym
+d50_patch_partial_mute_sym p =
+  let u = u24_at p 174
+      l = u24_at p (174 + 192)
+  in concatMap (d50_usr_ix (error "?") d50_partial_mute_usr) [l,u]
+
+-- | Generate 'D50_Diff' for partial mute given symbolic form.
+--
+-- > d50_partial_mute_sym_to_diff "0110" == [(174,1),(174 + 192,2)]
+d50_partial_mute_sym_to_diff :: D50_Mute_Sym -> D50_Diff
+d50_partial_mute_sym_to_diff sym =
+  let f k str = (k,d50_usr_lookup_err d50_partial_mute_usr str)
+  in case sym of
+    [c1,c2,c3,c4] -> [f 174 [c3,c4],f (174 + 192) [c1,c2]]
+    _ -> error "d50_partial_mute_sym_to_diff?"
+
+-- | Partial structure for lower and upper tones as 6-character string.
+--   S = Synthesis, P = PCM, R = RINGMOD.
+type D50_Structure_Sym = String
+
+-- | Generate 'D50_Structure_Sym' for patch.
+--
+-- > d50_patch_structure_sym p == "SS SS "
+d50_patch_structure_sym :: D50_Patch -> D50_Structure_Sym
+d50_patch_structure_sym p =
+  let u = u24_at p 138
+      l = u24_at p 330
+  in concatMap (d50_usr_ix (error "?") d50_structure_usr) [l,u]
+
+-- | One-line summary text for patch.
+--   NAME KEY-MODE STRUCTURE PARTIAL-MUTE.
+d50_patch_summary :: D50_Patch -> String
+d50_patch_summary p =
+  printf
+  "%18s %6s %6s %4s"
+  (d50_patch_name p)
+  (d50_patch_key_mode_sym p)
+  (d50_patch_structure_sym p)
+  (d50_patch_partial_mute_sym p)
 
 -- * STRUCTURE
 
