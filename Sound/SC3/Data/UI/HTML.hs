@@ -55,9 +55,11 @@ ui_plain_derive_width = map (\e -> (maximum (map length e),e))
 ui_text_to_elem :: [[String]] -> [UI_Elem]
 ui_text_to_elem = ui_plain_to_elem . ui_plain_derive_width
 
+-- | CSS font=monospace bg=black fg=white border=off scrollbar=off
 ui_css :: [String]
 ui_css =
-  ["body {"
+  [""
+  ,"body {"
   ,"  background-color:black;"
   ,"  font-family: monospace;"
   ,"}"
@@ -73,28 +75,38 @@ ui_css =
   ,"}"
   ]
 
+-- | JS osc=[/P,d1,d2] ctl-edit=send-osc recv-osc=ctl-set
 ui_js :: Int -> [String]
 ui_js ws_p =
-  ["window.onload = function () {"
-  ,"    var d = window.document;"
-  ,"    var ws = new WebSocket('ws://localhost:" ++ show ws_p ++ "/');"
-  ,"    var sel = d.getElementsByTagName('select');"
-  ,"    for(i = 0; i < sel.length; i++) {"
-  ,"        sel[i].addEventListener('change', (e) => {"
-  ,"            var k = e.target.getAttribute('id');"
-  ,"            var addr = ['/',k.charAt(0)].join('');"
-  ,"            var d1 = parseInt(k.slice(1));"
-  ,"            var d2 = parseInt(e.target.value);"
-  ,"            ws.send(JSON.stringify([addr,d1,d2]));"
-  ,"            console.log(k,d2);"
-  ,"        });"
-  ,"    };"
+  [""
+  ,"window.onload = function () {"
+  ,"  var d = window.document;"
+  ,"  var ws = new WebSocket('ws://localhost:" ++ show ws_p ++ "/');"
+  ,"  var sel = d.getElementsByTagName('select');"
+  ,"  for(i = 0; i < sel.length; i++) {"
+  ,"    sel[i].addEventListener('change', (e) => {"
+  ,"      var k = e.target.getAttribute('id');"
+  ,"      var addr = ['/',k.charAt(0)].join('');"
+  ,"      var d1 = parseInt(k.slice(1));"
+  ,"      var d2 = parseInt(e.target.value);"
+  ,"      ws.send(JSON.stringify([addr,d1,d2]));"
+  ,"      console.log(k,d2);"
+  ,"    });"
+  ,"  };"
+  ,"  ws.onmessage = function(e) {"
+  ,"    var m = JSON.parse(e.data);"
+  ,"    var k = [m[0].charAt(1),m[1].toString()].join('');"
+  ,"    var sel = d.getElementById(k);"
+  ,"    sel.value = m[2];"
+  ,"  };"
   ,"};"
   ]
 
+-- | HTML pre-amble ws_p=websocket-port nm=document-title css=ui_css js=ui_js
 ui_html_pre :: Int -> String -> [String]
 ui_html_pre ws_p nm =
-  ["<!DOCTYPE html>"
+  [""
+  ,"<!DOCTYPE html>"
   ,"<html lang=\"en\">"
   ,"<head>"
   ,"<title>",nm,"</title>"
@@ -102,20 +114,27 @@ ui_html_pre ws_p nm =
   ,"<script>",unlines (ui_js ws_p),"</script>"
   ,"</head>"
   ,"<body>"
-  ,"<form>"]
+  ,"<form>"
+  ]
 
+-- | HTML post-able
 ui_html_post :: [String]
 ui_html_post =
-  ["</form>"
+  [""
+  ,"</form>"
   ,"</body>"
-  ,"</html>"]
+  ,"</html>"
+  ]
 
+-- | Generate HTML for UI.
 ui_html :: Int -> Int -> String -> [UI_Elem] -> [String]
 ui_html ws_p h nm lst =
   concat [ui_html_pre ws_p nm
          ,concatMap (ui_elem_html h) lst
          ,ui_html_post]
 
+-- | 'writeFile' of 'ui_html'.
+--
 -- > txt = [["R1"],words "A B C",[],["R2"],words "D E F",words "G H I"]
 -- > ui_html_wr 9160 1 "/tmp/t.html" "test" (ui_text_to_elem txt)
 ui_html_wr :: Int -> Int -> FilePath -> String -> [UI_Elem] -> IO ()

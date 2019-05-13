@@ -6,7 +6,7 @@ import Sound.OSC {- hosc -}
 
 import qualified Sound.Midi.PM as PM {- midi-osc -}
 
-import Sound.SC3.Data.Byte {- hsc3-data -}
+import Sound.SC3.Data.Math.Types {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50.DB as D50 {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50.Hash as D50 {- hsc3-data -}
