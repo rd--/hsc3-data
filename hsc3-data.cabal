@@ -110,6 +110,7 @@ Library
                    Sound.SC3.Data.Timestamp
                    Sound.SC3.Data.Trace
                    Sound.SC3.Data.UI.HTML
+                   Sound.SC3.Data.UI.ST
                    Sound.SC3.Data.URandom
                    Sound.SC3.Data.Vowel
                    Sound.SC3.Data.VST
