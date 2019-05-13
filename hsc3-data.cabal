@@ -16,8 +16,7 @@ Cabal-Version:     >= 1.8
 Data-files:        README
 
 Library
-  Build-Depends:   aeson,
-                   array,
+  Build-Depends:   array,
                    base >= 4.8 && < 5,
                    binary,
                    bitwise,
@@ -33,6 +32,7 @@ Library
                    HCodecs,
                    hmt == 0.18.*,
                    hosc == 0.18.*,
+                   hosc-json == 0.18.*,
                    hsc3 == 0.18.*,
                    hsc3-lang == 0.18.*,
                    hsc3-plot == 0.18.*,
@@ -52,6 +52,7 @@ Library
                    time,
                    unordered-containers,
                    vector,
+                   websockets,
                    X11,
                    xml,
                    zmidi-core
@@ -83,7 +84,6 @@ Library
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Image.Type
-                   Sound.SC3.Data.JSON
                    Sound.SC3.Data.LPC
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Bouwkamp
@@ -111,6 +111,7 @@ Library
                    Sound.SC3.Data.Trace
                    Sound.SC3.Data.UI.HTML
                    Sound.SC3.Data.UI.ST
+                   Sound.SC3.Data.UI.WS
                    Sound.SC3.Data.URandom
                    Sound.SC3.Data.Vowel
                    Sound.SC3.Data.VST
