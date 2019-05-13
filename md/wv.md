@@ -1,6 +1,6 @@
 # wv
 
-GTK3/WEBKIT2 minimal viewer.
+GTK3/WEBKIT2 minimal viewer, <https://github.com/zserge/webview>
 
 ~~~~
 $ hsc3-wv -h

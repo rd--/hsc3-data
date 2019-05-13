@@ -1,4 +1,7 @@
+/* https://github.com/zserge/webview */
+
 #define WEBVIEW_IMPLEMENTATION
+#define WEBVIEW_GTK
 #include "webview.h"
 
 int main(int argc, char *argv[]) {

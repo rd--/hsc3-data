@@ -20,7 +20,7 @@ include ~/sw/hsc3/mk/cmd.mk
 dx7-unpack: dx7-unpack.c
 	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c c-common/lib-c-common.a
 
-WV_OPT = -I ~/opt/src/webview -DWEBVIEW_GTK=1 `pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0`
+WV_OPT = -I ~/opt/src/webview `pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0`
 
 wv: wv.c
 	gcc $(WV_OPT) wv.c -o wv
