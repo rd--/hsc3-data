@@ -688,7 +688,7 @@ d50_patch_factors =
 
 -- | Complete set of /used/ 'D50_Parameter's.
 --   Excludes NAME data.
---   The table grouped U1 U2 U L1 L2 L P and is zero-indexed and is sparse.
+--   The table is grouped U1,U2,U,L1,L2,L,P and is zero-indexed and is sparse.
 --
 -- > map length d50_parameters == [54,54,38,54,54,38,22]
 -- > length (concat d50_parameters) == 314

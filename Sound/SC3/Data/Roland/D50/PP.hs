@@ -9,11 +9,14 @@ import Text.Printf {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
+import qualified Music.Theory.Array.Text as T {- hmt -}
 import qualified Music.Theory.Byte as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 
 import Sound.SC3.Data.Math.Types {- hsc3-data -}
 import Sound.SC3.Data.Roland.D50 {- hsc3-data -}
+
+-- * TYPE-PP
 
 -- | Pretty printer for 'D50_Parameter_Type'.
 --
@@ -35,18 +38,11 @@ d50_addr_pp x = printf "%05X" x
 -- | Range as @p - q@.
 --
 -- > d50_range_pp (-7,7) == "-7 - +7"
--- > d50_range_pp (1,100) == "1 - 100"
+-- > d50_range_pp (0,100) == "0 - 100"
 d50_range_pp :: (Num n,Ord n,Show n) => (n,n) -> String
 d50_range_pp (p,q) =
   let q_sign = if p < 0 && q > 0 then "+" else ""
   in concat [show p," - ",q_sign,show q]
-
-
--- | 4.1 Parameter base address (Top address)
-d50_parameter_base_address_tbl :: [(D50_ADDRESS,String,D50_Parameter_Type,String)]
-d50_parameter_base_address_tbl =
-    let f (ty,(b,x)) = (b,d50_parameter_type_pp ty,ty,d50_range_pp (b,x))
-    in map f d50_parameter_type_address_segments
 
 -- | Patch name set pretty printed.
 d50_patch_name_set_pp :: D50_Patch -> String
@@ -57,6 +53,38 @@ d50_patch_name_set_pp p =
 -- | Alias for 'T.byte_seq_hex_pp'
 d50_sysex_pp :: D50_Sysex -> String
 d50_sysex_pp = T.byte_seq_hex_pp False
+
+-- * STRUCTURE
+
+-- | Tone structure number diagram in plain text (zero indexed).
+--
+-- > map d50_structure_pp [0 .. 6]
+d50_structure_pp :: U8 -> String
+d50_structure_pp n =
+    case n + 1 of
+      1 -> "S1 + S2"
+      2 -> "S1 + RMOD (S1 + S2)"
+      3 -> "P1 + S2"
+      4 -> "P1 + RMOD (P1 + S2)"
+      5 -> "S1 + RMOD (S1 + P2)"
+      6 -> "P1 + P2"
+      7 -> "P1 + RMOD (P1 + P2)"
+      _ -> error "structure_text: ix?"
+
+-- * CHORUS
+
+-- | USR string variant of 'd50_chorus_type_enum'.
+d50_chorus_type_usr :: String
+d50_chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) d50_chorus_type_enum)
+
+-- | Names of chorus types (1-8). (6-8 CHAR)
+d50_chorus_type_enum :: [String]
+d50_chorus_type_enum =
+    ["Chorus 1","Chorus 2"
+    ,"Flanger1","Flanger2"
+    ,"FBChorus" -- Feedback Chorus
+    ,"Tremolo","C Trem" -- Chorus Tremolo
+    ,"Dimensn"] -- Dimension
 
 -- * SYM
 
@@ -71,23 +99,11 @@ d50_partial_ix_sym ix = case ix of {One -> "1";Two -> "2"}
 -- | Symbolic names for the seven parameter types, U1 U2 U L1 L2 L P.
 type D50_Parameter_Type_Sym = String
 
--- | Table mapping names to parameter types.
-d50_parameter_type_sym_tbl :: [(D50_Parameter_Type_Sym,D50_Parameter_Type)]
-d50_parameter_type_sym_tbl =
-  let sym = words "U1 U2 U L1 L2 L P"
-  in zip sym d50_parameter_type_seq
-
 -- | Reverse lookup of 'd50_parameter_type_sym_tbl'.
 --
 -- > map d50_parameter_type_sym d50_parameter_type_seq
 d50_parameter_type_sym :: D50_Parameter_Type -> D50_Parameter_Type_Sym
 d50_parameter_type_sym v = T.reverse_lookup_err v d50_parameter_type_sym_tbl
-
--- | Lookup 'd50_parameter_type_sym_tbl'.
---
--- > map d50_parameter_type_read ["L1","U"] == [Partial Lower One,Common Upper]
-d50_parameter_type_read :: D50_Parameter_Type_Sym -> D50_Parameter_Type
-d50_parameter_type_read = flip T.lookup_err d50_parameter_type_sym_tbl
 
 -- | Show 6-CHAR key mode string.
 --
@@ -133,6 +149,26 @@ d50_patch_structure_sym p =
       l = u24_at p 330
   in concatMap (d50_usr_ix (error "?") d50_structure_usr) [l,u]
 
+-- * TBL
+
+-- | 4.1 Parameter base address (Top address)
+d50_parameter_base_address_tbl :: [(D50_ADDRESS,String,D50_Parameter_Type,String)]
+d50_parameter_base_address_tbl =
+    let f (ty,(b,x)) = (b,d50_parameter_type_pp ty,ty,d50_range_pp (b,x))
+    in map f d50_parameter_type_address_segments
+
+-- | Table mapping names to parameter types.
+d50_parameter_type_sym_tbl :: [(D50_Parameter_Type_Sym,D50_Parameter_Type)]
+d50_parameter_type_sym_tbl =
+  let sym = words "U1 U2 U L1 L2 L P"
+  in zip sym d50_parameter_type_seq
+
+-- | Lookup 'd50_parameter_type_sym_tbl'.
+--
+-- > map d50_parameter_type_read ["L1","U"] == [Partial Lower One,Common Upper]
+d50_parameter_type_read :: D50_Parameter_Type_Sym -> D50_Parameter_Type
+d50_parameter_type_read = flip T.lookup_err d50_parameter_type_sym_tbl
+
 -- | One-line summary text for patch.
 --   NAME KEY-MODE STRUCTURE PARTIAL-MUTE.
 d50_patch_summary :: D50_Patch -> String
@@ -143,38 +179,6 @@ d50_patch_summary p =
   (d50_patch_key_mode_sym p)
   (d50_patch_structure_sym p)
   (d50_patch_partial_mute_sym p)
-
--- * STRUCTURE
-
--- | Tone structure number diagram in plain text (zero indexed).
---
--- > map d50_structure_pp [0 .. 6]
-d50_structure_pp :: U8 -> String
-d50_structure_pp n =
-    case n + 1 of
-      1 -> "S1 + S2"
-      2 -> "S1 + RMOD (S1 + S2)"
-      3 -> "P1 + S2"
-      4 -> "P1 + RMOD (P1 + S2)"
-      5 -> "S1 + RMOD (S1 + P2)"
-      6 -> "P1 + P2"
-      7 -> "P1 + RMOD (P1 + P2)"
-      _ -> error "structure_text: ix?"
-
--- | USR string variant of 'd50_chorus_type_enum'.
-d50_chorus_type_usr :: String
-d50_chorus_type_usr = intercalate ";" (map (map toUpper . filter (/= ' ')) d50_chorus_type_enum)
-
--- * CHORUS
-
--- | Names of chorus types (1-8). (6-8 CHAR)
-d50_chorus_type_enum :: [String]
-d50_chorus_type_enum =
-    ["Chorus 1","Chorus 2"
-    ,"Flanger1","Flanger2"
-    ,"FBChorus" -- Feedback Chorus
-    ,"Tremolo","C Trem" -- Chorus Tremolo
-    ,"Dimensn"] -- Dimension
 
 -- * GROUP / PAGE
 
@@ -187,7 +191,7 @@ Parameters are re-ordered to be in the same sequence they are stored.
 Non-menu parameters are added.
 
 -}
-type PARAM_GROUP = (Int,String,String,[U24])
+type D50_PARAM_GROUP = (Int,String,String,[U24])
 
 -- | Group structure of partial parameters, as in D-50 menu system.
 --   The "WG PW" page is re-ordered.
@@ -195,7 +199,7 @@ type PARAM_GROUP = (Int,String,String,[U24])
 -- > maximum (map (\(_,nm,_,_) -> length nm) d50_partial_groups) == 9
 -- > maximum (map (\(_,_,_,ix) -> length ix) d50_partial_groups) == 5
 -- > concatMap (\(_,_,_,ix) -> ix) d50_partial_groups == [0 .. 53]
-d50_partial_groups :: [PARAM_GROUP]
+d50_partial_groups :: [D50_PARAM_GROUP]
 d50_partial_groups =
     [(01,"WG Pitch","Cors;Fine;KF",[0..2]) -- WG
     ,(02,"WG Mod","LFO;ENV;Bend",[3..5]) -- WG Modulation
@@ -217,7 +221,7 @@ d50_partial_groups =
 --   PMut (partial-mute) and PBal (partial-balance) are not in the menu system.
 --
 -- > concatMap (\(_,_,ix) -> ix) d50_common_groups == [10 .. 47]
-d50_common_groups :: [PARAM_GROUP]
+d50_common_groups :: [D50_PARAM_GROUP]
 d50_common_groups =
     [(02,"Structure","Str",[10]) -- 01 = Tone Name Edit
     ,(03,"P-ENV Edit 1","Velo;TKF",[11..12])
@@ -236,7 +240,7 @@ d50_common_groups =
 --   KeyM (key-mode), SP (split-point) and Bal (tone-balance) are not in the menu system.
 --
 -- > concatMap (\(_,_,_,ix) -> ix) d50_patch_groups == [18 .. 36]
-d50_patch_groups :: [PARAM_GROUP]
+d50_patch_groups :: [D50_PARAM_GROUP]
 d50_patch_groups =
     [(05,"Mode","KeyMod;Spl",[18,19]) -- NON-MENU -- 01 = Patch Name Edit
     ,(03,"Control Edit","PrtM;Hold",[20,21]) -- RE-ORDERED
@@ -247,16 +251,16 @@ d50_patch_groups =
     ,(07,"MIDI Channel","TxCH;SepCH;TxPRG",[37..39])
     ]
 
--- | 'PARAM_GROUP' in ADDRESS sequence.
+-- | 'D50_PARAM_GROUP' in ADDRESS sequence.
 --
 -- > maximum (map (\(nm,_,_) -> length nm) (concat d50_group_seq)) == 16
-d50_group_seq :: [[PARAM_GROUP]]
+d50_group_seq :: [[D50_PARAM_GROUP]]
 d50_group_seq =
     let tn = [d50_partial_groups,d50_partial_groups,d50_common_groups]
     in concat [tn,tn,[d50_patch_groups]]
 
 -- | Pretty printer for parameter group.
-d50_group_pp :: [(D50_Parameter,U8)] -> PARAM_GROUP -> String
+d50_group_pp :: [(D50_Parameter,U8)] -> D50_PARAM_GROUP -> String
 d50_group_pp x_seq (_g_ix,g_nm,p_nm_seq,ix) =
     let f p_nm (p,x) = let x_def = d50_parameter_value_usr_def "?" p x
                        in if null p_nm {- ie. CHAR -} then x_def else concat [p_nm,"=",x_def]
@@ -279,9 +283,14 @@ d50_patch_group_pp =
 
 -- | The parameter names as displayed in the menu system and given in the GROUP data above.
 --
--- > zip (map d50_parameter_name d50_parameters) d50_param_usr_name_seq
+-- > length d50_param_usr_name_seq == 7
+-- > map length d50_param_usr_name_seq == [54,54,38,54,54,38,22] -- U1,U2,UC,L1,L2,LC,P
+-- > zipWith zip (map (map d50_parameter_name) d50_parameters) d50_param_usr_name_seq
 d50_param_usr_name_seq :: [[String]]
-d50_param_usr_name_seq = Split.splitPlaces d50_param_places (concatMap (Split.splitOn ";" . \(_,_,nm,_) -> nm) (concat d50_group_seq))
+d50_param_usr_name_seq =
+  Split.splitPlaces
+  d50_param_places
+  (concatMap (Split.splitOn ";" . \(_,_,nm,_) -> nm) (concat d50_group_seq))
 
 -- | Table to abbreviate further (to 3 CHAR) the already abbreviated parameter names.
 --   There are no entries for cases where the abbreviation is simply the first three letters, ie.
@@ -304,27 +313,35 @@ d50_param_usr_name_abbrev nm =
     Nothing -> take 3 nm
     Just r -> r
 
--- * AREA
+-- * CONCISE-AREA
 
--- | [(NAME,IX,CHAR-WIDTH)]
-type PARAM_AREA = [(String,U24,Int)]
+-- | [(NAME,ADDR-IX,CHAR-WIDTH)]
+type D50_PARAM_AREA = [(String,U24,Int)]
 
-d50_param_areas_gen :: Int -> [(U24,Int)] -> [Int] -> [PARAM_AREA]
+param_area_addr :: D50_PARAM_AREA -> [U24]
+param_area_addr = map (\(_,k,_) -> k)
+
+-- | nm_ix=U1,U2,UC,L1,L2,LC,P ; wd=non-3-char-width ; pl = param-groups
+d50_param_areas_gen :: Int -> [(U24,Int)] -> [Int] -> [D50_PARAM_AREA]
 d50_param_areas_gen nm_ix wd pl =
   let dat = zip3 (d50_param_usr_name_seq !! nm_ix) [0..] (map (\n -> fromMaybe 3 (lookup n wd)) [0..])
   in Split.splitPlaces pl dat
 
--- | 'PARAM_AREA' in ADDRESS sequence.
-d50_partial_areas :: [PARAM_AREA]
+-- | Partial 'D50_PARAM_AREA' in ADDRESS sequence.
+--
+-- > concatMap param_area_addr d50_partial_areas == [0 .. 53]
+d50_partial_areas :: [D50_PARAM_AREA]
 d50_partial_areas = d50_param_areas_gen 0 [(7,6),(16,4),(37,4)] [13,22,19]
 
-d50_common_areas :: [PARAM_AREA]
+-- > concatMap param_area_addr d50_common_areas == [0 .. 37]
+d50_common_areas :: [D50_PARAM_AREA]
 d50_common_areas = d50_param_areas_gen 2 [] [17,21]
 
-d50_patch_areas :: [PARAM_AREA]
+-- > concatMap param_area_addr d50_patch_areas == [0 .. 21]
+d50_patch_areas :: [D50_PARAM_AREA]
 d50_patch_areas = d50_param_areas_gen 6 [(0,6)] [19,3]
 
-d50_area_seq :: [[PARAM_AREA]]
+d50_area_seq :: [[D50_PARAM_AREA]]
 d50_area_seq =
   [d50_partial_areas,d50_partial_areas,d50_common_areas
   ,d50_partial_areas,d50_partial_areas,d50_common_areas
@@ -332,18 +349,26 @@ d50_area_seq =
 
 -- | Pretty printer for HEADER for parameter area.
 --
--- > putStrLn$unlines$map d50_area_hdr_pp (concat [d50_partial_areas,d50_common_areas,d50_patch_areas])
-d50_area_hdr_pp :: PARAM_AREA -> String
+-- > let a = concat [d50_partial_areas,d50_common_areas,d50_patch_areas]
+-- > putStrLn $ unlines $ map (unwords . d50_area_hdr_pp) a
+d50_area_hdr_pp :: D50_PARAM_AREA -> [String]
 d50_area_hdr_pp dat =
     let (nm,_,wd) = unzip3 dat
-    in unwords (zipWith (T.pad_left ' ') wd (map (map toUpper . d50_param_usr_name_abbrev) nm))
+    in zipWith (T.pad_left ' ') wd (map (map toUpper . d50_param_usr_name_abbrev) nm)
 
 -- | Pretty printer for DATA parameter area.
-d50_area_dat_pp :: [(D50_Parameter,U8)] -> PARAM_AREA -> String
+d50_area_dat_pp :: [(D50_Parameter,U8)] -> D50_PARAM_AREA -> String
 d50_area_dat_pp x_seq dat =
     let (_,ix,wd) = unzip3 dat
         f n = let (p,x) = u24_at x_seq n in d50_parameter_value_usr_def "?" p x
     in unwords (zipWith (\k n -> T.pad_left ' ' k (f n)) wd ix)
+
+-- | U1,U2,UC,L1,L2,LC,P -> U1,U2,L1,L2,UC,LC,P
+d50_ptype_reorder :: [t] -> [t]
+d50_ptype_reorder lst =
+  case lst of
+    [u1,u2,uc,l1,l2,lc,pm] -> [u1,u2,l1,l2,uc,lc,pm]
+    _ -> error "d50_ptype_reorder?"
 
 -- | Make area structure text, entries are of the form (HEADER,[DATA]).
 --   The number of DATA entries is 4 for PART (U1 U2 L1 L2), 2 for COMMON (U L) and 1 for PATCH.
@@ -355,26 +380,52 @@ d50_patch_area_gen :: D50_Patch -> [[(String, [String])]]
 d50_patch_area_gen p =
   let pr_seg = zipWith zip d50_parameters (d50_patch_param p)
       mk_dat ar pr = map (d50_area_dat_pp pr) ar
-      reorder lst =
-        case lst of
-          [u1,u2,uc,l1,l2,lc,pm] -> [u1,u2,l1,l2,uc,lc,pm]
-          _ -> error "d50_patch_area_pp?"
-      dat_ln = concat (zipWith mk_dat (reorder d50_area_seq) (reorder pr_seg))
+      dat_ln = concat (zipWith mk_dat (d50_ptype_reorder d50_area_seq) (d50_ptype_reorder pr_seg))
       dat_ix = [0,3,6,9, 1,4,7,10, 2,5,8,11, 12,14, 13,15, 16, 17]
       dat_sq = Split.splitPlaces ([4,4,4,2,2,1,1] :: [Int]) (map (dat_ln !!) dat_ix)
-      hdr_sq = map d50_area_hdr_pp (concat [d50_partial_areas,d50_common_areas,d50_patch_areas])
+      hdr_sq = map
+               (unwords . d50_area_hdr_pp)
+               (concat [d50_partial_areas,d50_common_areas,d50_patch_areas])
   in Split.splitPlaces ([3,2,2] :: [Int]) (zip hdr_sq dat_sq)
 
 {- | Pretty printer for D-50 patch following area structure (ie. concise layout).
 
 > dir = "/home/rohan/uc/invisible/light/d50/"
 > p:_ <- d50_load_hex (dir ++ "d50.hex.text")
+> d50_patch_name_set p
 > putStrLn (unlines (d50_patch_area_pp p))
 -}
 d50_patch_area_pp :: D50_Patch -> [String]
 d50_patch_area_pp p =
   let (hdr_sq,dat_sq) = unzip (concat (d50_patch_area_gen p))
   in concat (intersperse [""] (zipWith (:) hdr_sq dat_sq))
+
+-- * CONCISE-TABLE
+
+-- | USR-NAME for (PART,COMMON,PATCH)
+d50_param_usr_name_typ :: ([String], [String], [String])
+d50_param_usr_name_typ = let x = d50_param_usr_name_seq in (x !! 0,x !! 2,x !! 6)
+
+d50_param_usr :: D50_Param -> [[String]]
+d50_param_usr = zipWith (zipWith (d50_parameter_value_usr_def "?")) d50_parameters
+
+d50_patch_param_usr :: D50_Patch -> [[String]]
+d50_patch_param_usr = d50_param_usr . d50_patch_param
+
+d50_patch_tbl_usr :: D50_Patch -> (T.TABLE,T.TABLE,T.TABLE)
+d50_patch_tbl_usr p =
+  let (h1,h2,h3) = d50_param_usr_name_typ
+      h_f = map d50_param_usr_name_abbrev
+  in case d50_patch_param_usr p of
+       [u1,u2,uc,l1,l2,lc,pm] -> (h_f h1 : [u1,u2,l1,l2],h_f h2 : [uc,lc],[h_f h3,pm])
+       _ -> error "d50_patch_tbl_usr?"
+
+-- > putStrLn (unlines (d50_patch_tbl_str p))
+d50_patch_tbl_str :: D50_Patch -> [String]
+d50_patch_tbl_str p =
+  let (t1,t2,t3) = d50_patch_tbl_usr p
+      f = ("" :) . T.table_pp (True,True,False," ",False)
+  in intercalate [""] (map f [t1,t2,t3])
 
 -- * CSV
 
@@ -420,10 +471,13 @@ d50_patch_csv u =
 -- > map sum d50_partial_char == [41,64,52]
 d50_partial_char :: [[Int]]
 d50_partial_char =
-  [[3,3,3, 3,3,3, 3,6, 3,3,3,2,3] -- WG
-  ,[3,2,3,4,3, 3,3,2,2, 3,3,3,3,3, 3,3,3,3,3, 3,3,3] -- TVF
+  [[3,3,3, 3,3,3, 3,6, 3,3,3,2,3] -- WG -- 0
+  ,[3,2,3,4,3, 3,3,2,2, 3,3,3,3,3, 3,3,3,3,3, 3,3,3] -- TVF -- 13
   ,[3,3,4,3, 3,3,3,3,3, 3,3,3,3,3, 1,1,2,3,2] -- TVA
   ]
+
+d50_partial_char_exc :: [(Int,Int)]
+d50_partial_char_exc = filter ((/= 3) . snd) (zip [0..] (concat d50_partial_char))
 
 -- | CHAR-count required for each parameter value, grouped in areas.
 --
@@ -437,3 +491,6 @@ d50_common_char =
   ,[3,3,3,3, 3,3,3,3, 3,3,3,3] -- LFO
   ,[3,3, 3,3,3, 1,3,3,3, 2,3] -- EQ+CH
   ]
+
+d50_common_char_exc :: [(Int,Int)]
+d50_common_char_exc = filter ((/= 3) . snd) (zip [0..] (concat d50_common_char))
