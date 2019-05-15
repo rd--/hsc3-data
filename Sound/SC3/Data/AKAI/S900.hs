@@ -8,7 +8,6 @@ module Sound.SC3.Data.AKAI.S900 where
 
 import Control.Monad {- base -}
 import Data.Maybe {- base -}
-import Data.Word {- base -}
 import System.FilePath {- filepath -}
 
 import qualified Data.ByteString as B {- bytestring -}
@@ -62,12 +61,15 @@ s900_low_density_n = 2 * 80 * 5 * s900_sector_n
 s900_high_density_n :: Num n => n
 s900_high_density_n = s900_low_density_n * 2
 
-s900_load_img :: FilePath -> IO [Word8]
+-- | Load U8 IMG data.
+s900_load_img :: FilePath -> IO [U8]
 s900_load_img = fmap B.unpack . B.readFile
 
+-- | Predicate to test if data is a nil entry.
 s900_disk_ent_is_nil :: [U8] -> Bool
 s900_disk_ent_is_nil d = d == replicate 24 0
 
+-- | Run checks and then segment data.
 s900_segment :: [Int] -> [U8] -> [[U8]]
 s900_segment n d = if sum n /= length d then error "s900_segment?" else Split.splitPlaces n d
 
@@ -79,7 +81,9 @@ s900_disk_ent_parse d =
   else let [nm,unused,ty,[len1,len2,len3],[blk1,blk2],s900_id] = s900_segment [10,6,1,3,2,2] d
        in if unused /= [0,0,0,0,0,0] || s900_id /= [0,0]
           then error "s900_disk_ent_parse?"
-          else Just (map M.u8_to_char nm,M.u8_to_char (ty !! 0),u24_pack_le (len1,len2,len3),u16_pack_le (blk1,blk2))
+          else Just (map M.u8_to_char nm,M.u8_to_char (ty !! 0)
+                    ,u24_pack_le (len1,len2,len3)
+                    ,u16_pack_le (blk1,blk2))
 
 -- | Read the non-NIL instances of the 64 possible 24-byte S900_DISK_ENT fields.
 s900_disk_ent :: [U8] -> [S900_DISK_ENT]
@@ -174,10 +178,17 @@ type S900_SF_HDR = (String,U32,U16,U16,Char,U32,U32,U32)
 -- | Parse 60-byte S900 sound file header.
 s900_sf_hdr :: [U8] -> S900_SF_HDR
 s900_sf_hdr d =
-  let [fn,_u1,[ns1,ns2,ns3,ns4],[sr1,sr2],[tn1,tn2],_u2,lp,_u3,[em1,em2,em3,em4],[sm1,sm2,sm3,sm4],[ll1,ll2,ll3,ll4],_u4] = s900_segment [10,6,4,2,2,2,1,1,4,4,4,20] d
+  let pl = [10,6,4,2,2,2,1,1,4,4,4,20]
+      [fn,_u1,ns,[sr1,sr2],[tn1,tn2],_u2,lp,_u3,em,sm,ll,_u4] = s900_segment pl d
+      [ns1,ns2,ns3,ns4] = ns
+      [em1,em2,em3,em4] = em
+      [sm1,sm2,sm3,sm4] = sm
+      [ll1,ll2,ll3,ll4] = ll
   in (map M.u8_to_char fn
      ,u32_pack_le (ns1,ns2,ns3,ns4),u16_pack_le (sr1,sr2),u16_pack_le (tn1,tn2)
-     ,M.u8_to_char (lp !! 0),u32_pack_le (em1,em2,em3,em4),u32_pack_le (sm1,sm2,sm3,sm4),u32_pack_le (ll1,ll2,ll3,ll4))
+     ,M.u8_to_char (lp !! 0)
+     ,u32_pack_le (em1,em2,em3,em4),u32_pack_le (sm1,sm2,sm3,sm4)
+     ,u32_pack_le (ll1,ll2,ll3,ll4))
 
 {- | Unpack N + N/2 bytes of 12-bit signed sample data.
 
@@ -210,13 +221,3 @@ s900_sf_export dir fn = do
                 then print (e,s900_sf_hdr (take 60 d)) >> s900_sf_write_wav dir d
                 else print "?"
   mapM_ f r
-
-{-
-
-fn = "/home/rohan/SYN/AKAI/SL-502.img"
-s900_sf_export "/tmp/" fn
-r <- s900_read_img fn
-(e,d) = unzip r
-filter ((==) 'S' . s900_disk_ent_type) e
-
--}
