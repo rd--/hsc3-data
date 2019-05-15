@@ -41,7 +41,7 @@ sfz_is_comment ln =
     _ -> False
 
 -- | Read a file, remove comments, parse into tokens.
---   Requires file names not include white space.
+--   Requires file names not include white space, which however they may...
 sfz_load_tokens :: FilePath -> IO [String]
 sfz_load_tokens fn = do
   s <- readFile fn
@@ -80,6 +80,7 @@ sfz_tokens_group =
   (Split.split . Split.keepDelimsL . Split.whenElt) sfz_is_section
 
 -- | Collate grouped token sequence into regions.
+--   <group> opcodes are reset at each <group>.
 sfz_collate :: [[String]] -> [SFZ_Region]
 sfz_collate =
   let recur gr tk =
@@ -148,7 +149,7 @@ sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 
 {-
 
-fn = "/home/rohan/SYN/FAIRLIGHT/CHORAL/mmm.sfz"
+fn = "/home/rohan/rd/j/2019-04-21/FAIRLIGHT/PLUCKED/koto.sfz"
 r:_ <- sfz_load_regions fn
 map (sfz_region_lookup r) ["sample","volume","pan"]
 sfz_region_sample r
@@ -160,4 +161,5 @@ sfz_region_loop_start r
 sfz_region_loop_end r
 sfz_region_ampeg_attack r
 sfz_region_ampeg_release r
+
 -}

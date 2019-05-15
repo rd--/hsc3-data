@@ -26,7 +26,7 @@ import qualified Sound.File.WAVE as SF {- hsc3-sf -}
 import Sound.SC3.Data.Byte {- hsc3-data -}
 import Sound.SC3.Data.Math.Types {- hsc3-data -}
 
-{- * 2. S900/S950 disk format
+{- * 2. S900/S950 disk format (.IMG)
 
 Length   Format      Description
    -----------------------------------------------------------
@@ -155,7 +155,7 @@ s900_read_img fn = do
       6                 0
       4     unsigned    Number of sample words
       2     unsigned    Sample rate (Hz)
-      2     unsigned    Tuning (16ths of a semitone, C4=960)
+      2     unsigned    Tuning (16ths of a semitone, C4=960=60*16)
       2                 0
       1     ASCII       Loop mode (O=one-shot, L=loop, A=alt)
       1                 0
