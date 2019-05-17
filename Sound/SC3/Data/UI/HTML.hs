@@ -109,6 +109,7 @@ ui_html_pre ws_p nm =
   ,"<!DOCTYPE html>"
   ,"<html lang=\"en\">"
   ,"<head>"
+  ,"<meta charset=\"utf-8\"/>"
   ,"<title>",nm,"</title>"
   ,"<style>",unlines ui_css,"</style>"
   ,"<script>",unlines (ui_js ws_p),"</script>"
