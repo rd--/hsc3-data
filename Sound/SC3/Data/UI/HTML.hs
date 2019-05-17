@@ -3,6 +3,8 @@ module Sound.SC3.Data.UI.HTML where
 import Data.List {- base -}
 import Text.Printf {- base -}
 
+import System.Process {- process -}
+
 -- | h = height:n-line ; w = width:n-char ; z = uid ; lbl = label
 ui_lbl_html :: Int -> Int -> Int -> String -> String
 ui_lbl_html h w z lbl =
@@ -140,3 +142,9 @@ ui_html ws_p h nm lst =
 -- > ui_html_wr 9160 1 "/tmp/t.html" "test" (ui_text_to_elem txt)
 ui_html_wr :: Int -> Int -> FilePath -> String -> [UI_Elem] -> IO ()
 ui_html_wr ws_p h fn nm lst = writeFile fn (unlines (ui_html ws_p h nm lst))
+
+ui_hsc3_wv_uri :: String -> (Int,Int) -> Bool -> IO ()
+ui_hsc3_wv_uri uri (w,h) rs = callProcess "hsc3-wv" [uri,show w,show h,show rs]
+
+ui_hsc3_wv_fn :: FilePath -> (Int,Int) -> Bool -> IO ()
+ui_hsc3_wv_fn fn = ui_hsc3_wv_uri ("file://" ++ fn)
