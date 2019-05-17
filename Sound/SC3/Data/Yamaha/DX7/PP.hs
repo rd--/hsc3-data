@@ -125,15 +125,16 @@ dx7_voice_pp p =
 -- > putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
 dx7_voice_data_list_pp :: DX7_Voice -> [String]
 dx7_voice_data_list_pp d =
-  let op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
+  let u8_at = Byte.word8_at
+      op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
       op_ix_pp n = map
-                   (dx7_parameter_value_pp (Byte.word8_at dx7_op_parameter_tbl n))
-                   (map (Byte.word8_at d) (op_ix_set n))
+                   (dx7_parameter_value_pp (u8_at dx7_op_parameter_tbl n))
+                   (map (u8_at d) (op_ix_set n))
       is_op_ix n = n < 126
       ix_val n =
         if is_op_ix n
         then intercalate "," (op_ix_pp n)
-        else dx7_parameter_value_pp (Byte.word8_at dx7_sh_parameter_tbl (n - 126)) (Byte.word8_at d n)
+        else dx7_parameter_value_pp (u8_at dx7_sh_parameter_tbl (n - 126)) (u8_at d n)
       pp z nm ix = concat [z,nm,"=",ix_val ix]
       f (grp,nm,ix) =
         if null grp

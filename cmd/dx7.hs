@@ -4,6 +4,8 @@ import System.Environment {- base -}
 import System.IO {- base -}
 import Text.Printf {- base -}
 
+import Data.List.Split {- split -}
+
 import qualified Music.Theory.Array.CSV as T {- hmt -}
 import qualified Music.Theory.Byte as T {- hmt -}
 
@@ -15,12 +17,13 @@ import qualified Sound.SC3.Data.Yamaha.DX7.PP as DX7 {- hsc3-data -}
 usage_str :: [String]
 usage_str =
   ["hsc3-dx7 cmd opt"
-  ,"  {hex | sysex} print print-cmd file-name..."
+  ,"  {hex | sysex} print all|ix print-cmd file-name..."
   ,"  sysex add input-file output-file"
   ,"  sysex rewrite input-file output-file"
   ,"  sysex verify file-name..."
   ,""
-  ,"  print-cmd = csv | hash-hex | hash-names | hex | names | parameters | voice-data-list"
+  ,"    print-cmd = concise | csv | hash-hex | hash-names | hex | names | parameters | voice-data-list"
+  ,"    ix = list-of-int (one-indexed)"
   ]
 
 usage :: IO ()
@@ -28,19 +31,23 @@ usage = putStrLn (unlines usage_str)
 
 type LD_F = FilePath -> IO (Maybe [DX7.DX7_Voice])
 
-dx7_print_f :: LD_F -> ((Int,DX7.DX7_Voice) -> String) -> [FilePath] -> IO ()
-dx7_print_f ld op =
-  let wr fn x = case x of
-                  Just bnk -> putStr (unlines (map op (zip [1::Int ..] bnk)))
-                  Nothing -> hPutStrLn stderr ("ERROR: dx7_sysex_print: " ++ fn)
-  in mapM_ (\fn -> ld fn >>= wr fn)
+type SEL = Maybe [Int]
+
+dx7_print_f :: SEL -> LD_F -> ((Int,DX7.DX7_Voice) -> String) -> [FilePath] -> IO ()
+dx7_print_f sel ld_f op =
+  let sel_f x = maybe x (\r -> filter (\(k,_) -> k `elem` r) x) sel
+      wr_f fn x = case x of
+                    Just bnk -> putStr (unlines (map op (sel_f (zip [1::Int ..] bnk))))
+                    Nothing -> hPutStrLn stderr ("ERROR: dx7_sysex_print: " ++ fn)
+  in mapM_ (\fn -> ld_f fn >>= wr_f fn)
 
 -- > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/vrc/VRC-106-B.syx"
--- > dx7_sysex_print "names" [fn]
--- > dx7_sysex_print "hash-names" [fn]
-dx7_print :: LD_F -> String -> [FilePath] -> IO ()
-dx7_print ld cmd fn =
-  let print_csv = DX7.dx7_voice_to_csv . snd
+-- > dx7_sysex_print (Just [1,32]) "names" [fn]
+-- > dx7_sysex_print (Just [2,31]) "hash-names" [fn]
+dx7_print :: SEL -> LD_F -> String -> [FilePath] -> IO ()
+dx7_print sel ld cmd fn =
+  let print_concise = unlines . DX7.dx7_voice_concise_str . snd
+      print_csv = DX7.dx7_voice_to_csv . snd
       print_hex pr_h (_,v) =
         if pr_h
         then intercalate "," (DX7.dx7_hash_vc_param_csv (DX7.dx7_hash_vc v))
@@ -53,8 +60,9 @@ dx7_print ld cmd fn =
            then let h = DX7.dx7_voice_hash v
                 in printf "%s,%s" (DX7.dx7_hash_pp h) (T.csv_quote_if_req nm)
            else printf "%2d %s" k nm
-      print_f f = dx7_print_f ld f fn
+      print_f f = dx7_print_f sel ld f fn
   in case cmd of
+    "concise" -> print_f print_concise
     "csv" -> print_f print_csv
     "hash-hex" -> print_f (print_hex True)
     "hash-names" -> print_f (print_voice_name True)
@@ -64,11 +72,11 @@ dx7_print ld cmd fn =
     "voice-data-list" -> print_f print_voice_data_list
     _ -> usage
 
-dx7_hex_print :: String -> [FilePath] -> IO ()
-dx7_hex_print = dx7_print (fmap Just . DX7.dx7_load_hex)
+dx7_hex_print :: SEL -> String -> [FilePath] -> IO ()
+dx7_hex_print sel = dx7_print sel (fmap Just . DX7.dx7_load_hex)
 
-dx7_sysex_print :: String -> [FilePath] -> IO ()
-dx7_sysex_print = dx7_print DX7.dx7_load_sysex_try
+dx7_sysex_print :: SEL -> String -> [FilePath] -> IO ()
+dx7_sysex_print sel = dx7_print sel DX7.dx7_load_sysex_try
 
 dx7_sysex_verify_1 :: FilePath -> IO ()
 dx7_sysex_verify_1 fn = do
@@ -96,10 +104,11 @@ dx7_sysex_rewrite fn1 fn2 = do
 main :: IO ()
 main = do
   a <- getArgs
+  let sel_f x = if x == "all" then Nothing else Just (map read (splitOn "," x))
   case a of
-    "hex":"print":cmd:fn -> dx7_hex_print cmd fn
+    "hex":"print":sel:cmd:fn -> dx7_hex_print (sel_f sel) cmd fn
     ["sysex","add",fn1,fn2] -> dx7_sysex_add fn1 fn2
-    "sysex":"print":cmd:fn -> dx7_sysex_print cmd fn
+    "sysex":"print":sel:cmd:fn -> dx7_sysex_print (sel_f sel) cmd fn
     ["sysex","rewrite",fn1,fn2] -> dx7_sysex_rewrite fn1 fn2
     "sysex":"verify":fn -> dx7_sysex_verify fn
     _ -> usage
