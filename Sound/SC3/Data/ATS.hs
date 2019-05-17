@@ -189,7 +189,7 @@ ats_write_au ats_fn au_fn = do
   d <- ats_read_f64 ats_fn
   let ats_hdr = ats_parse_header d
       sr = round (ats_sample_rate ats_hdr)
-      au_hdr = AU.Header (length d) AU.Float sr 1
+      au_hdr = AU.SF_Header (length d) AU.Float sr 1
   AU.au_write au_fn au_hdr [d]
 
 -- | Run 'ats_write_au' and then 'SC3.b_allocRead.

@@ -195,7 +195,7 @@ dx7_load_csv fn = do
 dx7_store_au :: FilePath -> [DX7_Voice] -> IO ()
 dx7_store_au fn vc = do
   let dat = L.pack (concat vc)
-      hdr = SF.Header (length vc * 155) SF.Linear8 155 1
+      hdr = SF.SF_Header (length vc * 155) SF.Linear8 155 1
   SF.au_write_b fn hdr dat
 
 {- | Read VCED data from NeXT/AU audio file.
@@ -206,6 +206,6 @@ dx7_store_au fn vc = do
 -}
 dx7_load_au :: FilePath -> IO [DX7_Voice]
 dx7_load_au fn = do
-  (SF.Header nf enc _sr nc,dat) <- SF.au_read_b fn
+  (SF.SF_Header nf enc _sr nc,dat) <- SF.au_read_b fn
   when (nf `mod` 155 /= 0 || enc /= SF.Linear8 || nc /= 1) (error "dx7_load_au?")
   return (Split.chunksOf 155 (L.unpack dat))

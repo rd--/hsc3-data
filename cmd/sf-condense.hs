@@ -18,7 +18,7 @@ vec_summary w v (l,r) =
     let v' = vec_segment v (l,r)
     in vec_sum (vec_abs v') / w
 
-read_vec_f32 :: FilePath -> IO (SF.Header,V.Vector Float)
+read_vec_f32 :: FilePath -> IO (SF.SF_Header,V.Vector Float)
 read_vec_f32 fn = do
   (hdr,Just vec) <- SF.read_vec fn
   return (hdr,vec)

@@ -8,7 +8,7 @@ pgm_to_au pgm_fn au_fn = do
   img <- I.pgm_load_0 pgm_fn
   let (nr,nc) = I.pgm_dimensions img
       img' = I.pgm_to_pgmf img
-      hdr = AU.Header nc AU.Float 1 nr
+      hdr = AU.SF_Header nc AU.Float 1 nr
       v = I.pgmf_to_vec (nr,nc) img'
   AU.au_write_f32_vec au_fn (hdr,v)
 

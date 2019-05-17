@@ -211,7 +211,7 @@ s900_sf_write_wav dir d = do
   let hdr = s900_sf_hdr (take 60 d)
       (nm,nf,sr,_,_,_,_,_) = hdr
       dat = s900_sf_data_unpack nf (drop 60 d)
-      sf_hdr = SF.Header (O.word32_to_int nf) SF.Linear16 (O.word16_to_int sr) 1
+      sf_hdr = SF.SF_Header (O.word32_to_int nf) SF.Linear16 (O.word16_to_int sr) 1
   SF.wave_store_i16 (dir </> nm <.> "wav") sf_hdr [dat]
 
 s900_sf_export :: FilePath -> FilePath -> IO ()

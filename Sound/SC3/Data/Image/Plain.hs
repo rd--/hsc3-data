@@ -167,15 +167,15 @@ img_gs_write_sf :: (RGB24 -> Double) -> FilePath -> IMAGE -> IO ()
 img_gs_write_sf to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
-        hdr = SF.Header h w 44100 SF.fmt_au_f32_be
+        hdr = SF.SF_Header h w 44100 SF.fmt_au_f32_be
     in SF.write_vec fn hdr v
 
--- | Write greyscale image as audio file.  Each row is stored as a channel.
+-- | Write greyscale image as NeXT audio file.  Each row is stored as a channel.
 img_gs_write_au :: (RGB24 -> Float) -> FilePath -> IMAGE -> IO ()
 img_gs_write_au to_gs fn i =
     let (w,h) = img_dimensions i
         v = img_gs_vec_co to_gs i
-        hdr = AU.Header w AU.Float 44100 h
+        hdr = AU.SF_Header w AU.Float 44100 h
     in AU.au_write_f32_vec fn (hdr,v)
 
 img_from_gs :: T.Dimensions -> [[GREY]] -> IMAGE
@@ -195,14 +195,14 @@ ro_derive_dimensions ro =
 img_gs_read_sf :: FilePath -> IO IMAGE
 img_gs_read_sf fn = do
   (hdr,ro) <- SF.read fn
-  let SF.Header nc nf _ _ = hdr
+  let SF.SF_Header nc nf _ _ = hdr
   return (img_from_gs (nf,nc) (map (map realToFrac) ro))
 
 -- | Read NeXT audio file as image, channels are rows.
 img_gs_read_au :: FilePath -> IO IMAGE
 img_gs_read_au fn = do
   (hdr,ro) <- AU.au_read fn
-  let AU.Header nf _ _ nc = hdr
+  let AU.SF_Header nf _ _ nc = hdr
   return (img_from_gs (nf,nc) ro)
 
 -- | Write 8-bit or 16-bit PGM5 file.

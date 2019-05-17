@@ -42,6 +42,7 @@ dx7_print_f sel ld_f op =
   in mapM_ (\fn -> ld_f fn >>= wr_f fn)
 
 -- > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/vrc/VRC-106-B.syx"
+-- > dx7_sysex_print (Just [1]) "concise" [fn]
 -- > dx7_sysex_print (Just [1,32]) "names" [fn]
 -- > dx7_sysex_print (Just [2,31]) "hash-names" [fn]
 dx7_print :: SEL -> LD_F -> String -> [FilePath] -> IO ()

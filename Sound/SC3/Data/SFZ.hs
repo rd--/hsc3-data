@@ -21,6 +21,7 @@ import Data.Maybe {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
+import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Pitch as T {- hmt -}
 import qualified Music.Theory.Read as T {- hmt -}
 
@@ -134,6 +135,12 @@ sfz_region_pitch_keycenter r = sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_k
 
 sfz_region_loop_mode :: SFZ_Region -> Maybe String
 sfz_region_loop_mode r = sfz_region_lookup r "loop_mode"
+
+sfz_loop_mode_sym_tbl :: [(String, Char)]
+sfz_loop_mode_sym_tbl = [("no_loop",'N'),("one_shot",'O'),("loop_continuous",'C'),("loop_sustain",'S')]
+
+sfz_region_loop_mode_sym :: SFZ_Region -> Maybe Char
+sfz_region_loop_mode_sym = fmap (flip T.lookup_err sfz_loop_mode_sym_tbl) . sfz_region_loop_mode
 
 sfz_region_loop_start :: SFZ_Region -> Int
 sfz_region_loop_start r = sfz_region_lookup_read 60 r "loop_start"

@@ -22,7 +22,7 @@ pbm_to_tbl avg_f nrm pbm_fn au_fn = do
             T.collate_on snd fst .
             snd .
             P.pbm_to_bitindices $ i
-  SF.write au_fn (SF.Header 1 nc 1 SF.fmt_au_f32_be) [tbl]
+  SF.write au_fn (SF.SF_Header 1 nc 1 SF.fmt_au_f32_be) [tbl]
   return ()
 
 help :: String
