@@ -77,6 +77,7 @@ Library
                    Sound.SC3.Data.Chemistry.XYZ
                    Sound.SC3.Data.CMUdict
                    Sound.SC3.Data.Colour
+                   Sound.SC3.Data.Fairlight.CMI
                    Sound.SC3.Data.Geography.Core
                    Sound.SC3.Data.Geography.G
                    Sound.SC3.Data.Gnus
