@@ -98,10 +98,11 @@ fmt_pvoc_80_check_guid f = subFormat f /= pvx_guid_text
 type PVOC_HDR = (WAVE.WAVE_FMT_16,WAVE_FMT_PVOC_80)
 
 fmt_pvoc_80_parse :: RIFF.CHUNK -> PVOC_HDR
-fmt_pvoc_80_parse ((ty,sz),dat) =
-    case (ty,sz) of
-      ("fmt ",80) -> (WAVE.wave_fmt_16_parse_dat 16 dat,fmt_pvoc_80_parse_dat dat)
-      _ -> error "fmt_pvoc_80_parse"
+fmt_pvoc_80_parse ch =
+  let ((ty,sz),dat) = ch
+  in case (ty,sz) of
+       ("fmt ",80) -> (WAVE.wave_fmt_16_parse ch,fmt_pvoc_80_parse_dat dat)
+       _ -> error "fmt_pvoc_80_parse"
 
 type PVOC_RAW = (PVOC_HDR,RIFF.CHUNK)
 
