@@ -7,7 +7,9 @@
 volume : float : db : 0 : -144 6
 pan : float : linear : 0 : -100 100
 sample : string : file-name
-pitch_keycenter : int | string : midi-note-number | iso-pitch-name : 60 : 0 127
+key|lokey|hikey|pitch_keycenter : int|string : midi-note-number|iso-pitch-name : 0|127|60 : 0 127
+tune : int : cents : 0 : -100 100
+transpose : int : linear : 0 : -127 127
 loop_mode : string : no_loop one_shot loop_continuous loop_sustain
 loop_start : int : frame-number : 0 : 0 2^32
 loop_end : int : frame-number : 0 : 0 2^32
