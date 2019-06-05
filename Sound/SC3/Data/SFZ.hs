@@ -141,8 +141,11 @@ sfz_region_loop_mode r = sfz_region_lookup r "loop_mode"
 sfz_loop_mode_sym_tbl :: [(String, Char)]
 sfz_loop_mode_sym_tbl = [("no_loop",'N'),("one_shot",'O'),("loop_continuous",'C'),("loop_sustain",'S')]
 
+sfz_loop_mode_sym :: String -> Char
+sfz_loop_mode_sym = flip T.lookup_err sfz_loop_mode_sym_tbl
+
 sfz_region_loop_mode_sym :: SFZ_Region -> Maybe Char
-sfz_region_loop_mode_sym = fmap (flip T.lookup_err sfz_loop_mode_sym_tbl) . sfz_region_loop_mode
+sfz_region_loop_mode_sym = fmap sfz_loop_mode_sym . sfz_region_loop_mode
 
 sfz_region_loop_start :: SFZ_Region -> Int
 sfz_region_loop_start r = sfz_region_lookup_read 60 r "loop_start"

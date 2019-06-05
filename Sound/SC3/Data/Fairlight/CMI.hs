@@ -46,15 +46,15 @@ cmi_sfz_parse l =
     _ -> error "cmi_sfz_parse?"
 
 -- | Load SFZ and SND-HEADER data.
-cmi_load_dat :: FilePath -> String -> IO CMI_DAT
-cmi_load_dat dir nm = do
+cmi_load_dat :: String -> FilePath -> String -> IO CMI_DAT
+cmi_load_dat ext dir nm = do
   sfz_rgn <- sfz_load_regions (dir </> nm <.> "sfz")
-  snd_hdr <- au_header (dir </> nm <.> "snd")
+  snd_hdr <- au_header (dir </> nm <.> ext)
   return (sfz_rgn,snd_hdr)
 
 -- | Load and parse SFZ.
-cmi_load_sfz :: FilePath -> String -> IO CMI_SFZ
-cmi_load_sfz dir = fmap cmi_sfz_parse . cmi_load_dat dir
+cmi_load_sfz :: String -> FilePath -> String -> IO CMI_SFZ
+cmi_load_sfz ext dir = fmap cmi_sfz_parse . cmi_load_dat ext dir
 
 -- | Pretty-printer.
 cmi_sfz_pp :: (String,CMI_SFZ) -> String
@@ -62,9 +62,9 @@ cmi_sfz_pp (nm,(l1,l2,l3,e1,e2)) = printf "%-24s %c %5d %5d %3.1f %3.1f" nm l1 l
 
 -- | Load all .sfz files below directory.
 --   Names are of the form DISK/VOICE.
-cmi_load_dir :: FilePath -> IO [(FilePath, CMI_SFZ)]
-cmi_load_dir cmi_dir = do
+cmi_load_dir :: String -> FilePath -> IO [(FilePath, CMI_SFZ)]
+cmi_load_dir ext cmi_dir = do
   fn <- dir_find_ext_rel ".sfz" cmi_dir
   let nm_seq = sort (map dropExtension fn)
-  cmi_seq <- mapM (cmi_load_sfz cmi_dir) nm_seq
+  cmi_seq <- mapM (cmi_load_sfz ext cmi_dir) nm_seq
   return (zip nm_seq cmi_seq)
