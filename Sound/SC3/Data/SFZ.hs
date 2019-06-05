@@ -117,7 +117,7 @@ sfz_region_lookup_err r = fromMaybe (error "sfz_region_lookup?") . sfz_region_lo
 sfz_region_lookup_f :: t -> (String -> t) -> SFZ_Region -> String -> t
 sfz_region_lookup_f z f r = maybe z f . sfz_region_lookup r
 
--- | Lookup default value and read instance.
+-- | Lookup with default value and read instance.
 sfz_region_lookup_read :: Read t => t -> SFZ_Region -> String -> t
 sfz_region_lookup_read z = sfz_region_lookup_f z read
 
@@ -148,10 +148,10 @@ sfz_region_loop_mode_sym :: SFZ_Region -> Maybe Char
 sfz_region_loop_mode_sym = fmap sfz_loop_mode_sym . sfz_region_loop_mode
 
 sfz_region_loop_start :: SFZ_Region -> Int
-sfz_region_loop_start r = sfz_region_lookup_read 60 r "loop_start"
+sfz_region_loop_start r = sfz_region_lookup_read 0 r "loop_start"
 
 sfz_region_loop_end :: SFZ_Region -> Int
-sfz_region_loop_end r = sfz_region_lookup_read 60 r "loop_end"
+sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
 sfz_region_ampeg_attack :: SFZ_Region -> Double
 sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
