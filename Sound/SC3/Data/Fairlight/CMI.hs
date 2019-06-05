@@ -14,7 +14,7 @@ import Text.Printf {- base -}
 
 import Music.Theory.Directory {- hmt -}
 
-import Sound.File.NeXT {- hsc3-sf -}
+import Sound.File.HSndFile {- hsc3-sf-sndfile -}
 
 import Sound.SC3.Data.SFZ {- hsc3-data -}
 
@@ -49,7 +49,7 @@ cmi_sfz_parse l =
 cmi_load_dat :: String -> FilePath -> String -> IO CMI_DAT
 cmi_load_dat ext dir nm = do
   sfz_rgn <- sfz_load_regions (dir </> nm <.> "sfz")
-  snd_hdr <- au_header (dir </> nm <.> ext)
+  snd_hdr <- sf_header (dir </> nm <.> ext)
   return (sfz_rgn,snd_hdr)
 
 -- | Load and parse SFZ.
