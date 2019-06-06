@@ -143,6 +143,7 @@ ui_html ws_p h nm lst =
 ui_html_wr :: Int -> Int -> FilePath -> String -> [UI_Elem] -> IO ()
 ui_html_wr ws_p h fn nm lst = writeFile fn (unlines (ui_html ws_p h nm lst))
 
+-- | wv = web-view
 ui_hsc3_wv_uri :: String -> (Int,Int) -> Bool -> IO ()
 ui_hsc3_wv_uri uri (w,h) rs = callProcess "hsc3-wv" [uri,show w,show h,show rs]
 

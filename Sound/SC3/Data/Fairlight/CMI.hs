@@ -18,6 +18,10 @@ import Sound.File.HSndFile {- hsc3-sf-sndfile -}
 
 import Sound.SC3.Data.SFZ {- hsc3-data -}
 
+-- | A3 (the SFZ files state C4)
+cmi_keycentre :: Int
+cmi_keycentre = 57
+
 -- | (VOLUME,KEY-CENTER,LOOP-MODE,LOOP-START,LOOP-END,EG-ATTACK,EG-RELEASE)
 --
 -- For CMI in all cases VOLUME=-3 ; KEYCENTER=C4=60
@@ -32,11 +36,12 @@ cmi_sfz_rgn_parse r =
   in (vol,mnn,lp_mode,sfz_region_loop_start r,sfz_region_loop_end r
      ,sfz_region_ampeg_attack r,sfz_region_ampeg_release r)
 
-cmi_sfz_verify :: CMI_SFZ -> CMI_SFZ
-cmi_sfz_verify r@(vol,mnn,_,_,_,_,_) =
+-- | Rewrite key-centre from C4 to A3.
+cmi_sfz_correct :: CMI_SFZ -> CMI_SFZ
+cmi_sfz_correct (vol,mnn,l1,l2,l3,e1,e2) =
   if vol /= -3 || mnn /= 60
   then error "cmi_sfz_verify?"
-  else r
+  else (vol,cmi_keycentre,l1,l2,l3,e1,e2)
 
 -- | SFZ and SND data.
 type CMI_DAT = ([SFZ_Region],SF_Header)
