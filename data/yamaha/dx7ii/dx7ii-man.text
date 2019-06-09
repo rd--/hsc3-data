@@ -1,3 +1,19 @@
+Micro Tuning (P.40)
+
+ 1  Equal Temperament
+ 2  Pure (Major)
+ 3  Pure (Minor)
+ 4  Mean tone
+ 5  Pythagorean
+ 6  Werckmeister
+ 7  Kirnberger
+ 8  Vaillotti & Young
+ 9  1/4 Shifted equal
+10  1/4 Tone
+11  1/8 Tone
+
+* * *
+
 5-1. Voice Parameter (VCED FORMAT) - Add-8
 
   0  R1     EG RATE 1                        99

@@ -2,12 +2,11 @@
 module Sound.SC3.Data.Yamaha.DX7.DX7II where
 
 import Data.List {- base -}
-import Text.Printf {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.Byte as Byte {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
+import qualified Music.Theory.Math.Convert as Math {- hmt -}
 import qualified Music.Theory.Show as Show {- hmt -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
@@ -88,7 +87,7 @@ dx7ii_microtune_full = 0x7E
 --
 -- > map dx7_tuning_units_to_cents [0,16,32,48,64] == [0,25,50,75,100]
 dx7ii_tuning_units_to_cents :: U8 -> U8
-dx7ii_tuning_units_to_cents x = floor (T.word8_to_double x * (100 / 64))
+dx7ii_tuning_units_to_cents x = floor (Math.word8_to_double x * (100 / 64))
 
 {- | Microtune parameter change sysex
 
@@ -238,30 +237,6 @@ dx7ii_pced_get_usr_by_nm pf nm = dx7ii_pced_get_usr pf (dx7ii_pced_param_ix nm)
 dx7ii_pced_ddtn_cents :: Fractional n => U8 -> (n,n)
 dx7ii_pced_ddtn_cents x = let y = (fromIntegral x / 8.0) * 25.0 in (negate y,y)
 
--- | Table of PCED data in USR format.
-dx7ii_pced_pp_tbl :: [DX7II_PCED] -> [[String]]
-dx7ii_pced_pp_tbl pf_seq =
-  let hdr = dx7ii_pced_param_abbrev
-      dat = map (\pf -> map (dx7ii_pced_get_usr pf) [0 .. 30]) pf_seq
-  in hdr : dat
-
--- | PCED summary: P-IX P-NAME PLMD A-IX A-NAME B-IX B-NAME
-dx7ii_pced_summary :: [DX7_Voice] -> (Int,DX7II_PCED) -> String
-dx7ii_pced_summary vc (n,pf) =
-  let vc_nm k = dx7_voice_name '?' (Byte.word8_at vc k)
-      (ix_a,ix_b) = (pf !! 1,pf !! 2)
-  in printf
-     "P-%02d  %s  %-6s  A-%03d  %s  B-%03d  %s"
-     n (dx7ii_pced_name pf) (dx7ii_pced_get_usr_by_nm pf "PLMD")
-     (ix_a + 1) (vc_nm ix_a) (ix_b + 1) (vc_nm ix_b)
-
--- | 'dx7ii_pced_summary' for sequence.
-dx7ii_pced_summarise :: ([DX7_Voice],[DX7II_PCED]) -> [String]
-dx7ii_pced_summarise (vc,pf) =
-  let hdr = ["P-IX  P-NAME                PLMD    A-IX   A-NAME      B-IX   B-NAME   "
-            ,"----  --------------------  ------  -----  ----------  -----  ---------"]
-  in hdr ++ map (dx7ii_pced_summary vc) (zip [1..] pf)
-
 -- * SYSEX
 
 {- | UNIVERSAL BULK DUMP REQUEST (15-BYTES)
@@ -313,32 +288,3 @@ dx7ii_8973PM_parse syx =
 -- | Load 8973PM sysex file.
 dx7ii_8973PM_load :: FilePath -> IO [DX7II_PCED]
 dx7ii_8973PM_load = fmap dx7ii_8973PM_parse . dx7_read_u8
-
--- * HL
-
--- | Load VCED voice sysex files and PCED performance sysex files and print summary
-dx7ii_pced_summary_syx :: [FilePath] -> [FilePath] -> IO ()
-dx7ii_pced_summary_syx vc_fn pf_fn = do
-  vc <- mapM dx7_load_fmt9_sysex_err vc_fn
-  pf <- mapM dx7ii_8973PM_load pf_fn
-  let str = dx7ii_pced_summarise (concat vc,concat pf)
-  putStrLn $ unlines $ str
-
-{-
-
-let dir = "/home/rohan/sw/hsc3-data/data/yamaha/dx7ii/rom/"
-let vc_fn = map (dir ++) (words "DX7II-32A.syx DX7II-64A.syx DX7II-32B.syx DX7II-64B.syx")
-let pf_fn = map (dir ++) (words "DX7II-PFA.syx DX7II-PFB.syx")
-
-dx7ii_pced_summary_syx vc_fn pf_fn
-
-pf <- Music.Theory.Monad.concatMapM dx7ii_8973PM_load pf_fn
-length pf == 64
-
-import Music.Theory.Array.Text {- hmt -}
-tbl = dx7ii_pced_pp_tbl pf
-putStrLn $ unlines $ table_pp table_opt_simple tbl
-tbl_pt = table_split [17,14] tbl
-putStrLn $ unlines $ concatMap (table_pp table_opt_simple) tbl_pt
--}
-

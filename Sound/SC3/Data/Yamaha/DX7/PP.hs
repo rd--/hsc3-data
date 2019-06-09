@@ -209,3 +209,58 @@ dx7_load_au fn = do
   (SF.SF_Header nf enc _sr nc,dat) <- SF.au_read_b fn
   when (nf `mod` 155 /= 0 || enc /= SF.Linear8 || nc /= 1) (error "dx7_load_au?")
   return (Split.chunksOf 155 (L.unpack dat))
+
+-- * DX7-II
+
+-- | PCED summary: P-IX P-NAME PLMD A-IX A-NAME B-IX B-NAME
+dx7ii_pced_summary :: [DX7_Voice] -> (Int,DX7II_PCED) -> String
+dx7ii_pced_summary vc (n,pf) =
+  let vc_nm k = dx7_voice_name '?' (Byte.word8_at vc k)
+      (ix_a,ix_b) = (pf !! 1,pf !! 2)
+  in printf
+     "P-%02d  %s  %-6s  A-%03d  %s  B-%03d  %s"
+     n (dx7ii_pced_name pf) (dx7ii_pced_get_usr_by_nm pf "PLMD")
+     (ix_a + 1) (vc_nm ix_a) (ix_b + 1) (vc_nm ix_b)
+
+-- | 'dx7ii_pced_summary' for sequence.
+dx7ii_pced_summary_seq :: ([DX7_Voice], [DX7II_PCED]) -> [String]
+dx7ii_pced_summary_seq (vc,pf) = map (dx7ii_pced_summary vc) (zip [1..] pf)
+
+dx7ii_pced_summary_hdr :: [String]
+dx7ii_pced_summary_hdr =
+  ["P-IX  P-NAME                PLMD    A-IX   A-NAME      B-IX   B-NAME   "
+  ,"----  --------------------  ------  -----  ----------  -----  ---------"]
+
+{- | Load VCED voice sysex files and PCED performance sysex files and print summary
+
+> let dir = "/home/rohan/sw/hsc3-data/data/yamaha/dx7ii/rom/"
+> let vc_fn = map (dir ++) (words "DX7II-32A.syx DX7II-64A.syx DX7II-32B.syx DX7II-64B.syx")
+> let pf_fn = map (dir ++) (words "DX7II-PFA.syx DX7II-PFB.syx")
+> dx7ii_pced_summary_syx vc_fn pf_fn
+-}
+dx7ii_pced_summary_syx :: [FilePath] -> [FilePath] -> IO ()
+dx7ii_pced_summary_syx vc_fn pf_fn = do
+  vc <- mapM dx7_load_fmt9_sysex_err vc_fn
+  pf <- mapM dx7ii_8973PM_load pf_fn
+  putStrLn $ unlines $ dx7ii_pced_summary_hdr ++ dx7ii_pced_summary_seq (concat vc,concat pf)
+
+
+-- | Table of PCED data in USR format.
+dx7ii_pced_pp_tbl :: [DX7II_PCED] -> [[String]]
+dx7ii_pced_pp_tbl pf_seq =
+  let hdr = dx7ii_pced_param_abbrev
+      dat = map (\pf -> map (dx7ii_pced_get_usr pf) [0 .. 30]) pf_seq
+  in hdr : dat
+
+{- | Print PCED data as text table.  Split into two parts if /pt/ is True.
+
+> pf <- Music.Theory.Monad.concatMapM dx7ii_8973PM_load pf_fn
+> dx7ii_pced_pp (Just [17,14]) pf
+-}
+dx7ii_pced_pp :: Maybe [Int] -> [DX7II_PCED] -> IO ()
+dx7ii_pced_pp pt pf = do
+  let tbl = dx7ii_pced_pp_tbl pf
+      txt = case pt of
+              Nothing -> T.table_pp T.table_opt_simple tbl
+              Just pl -> concatMap (T.table_pp T.table_opt_simple) (T.table_split pl tbl)
+  putStrLn (unlines txt)
