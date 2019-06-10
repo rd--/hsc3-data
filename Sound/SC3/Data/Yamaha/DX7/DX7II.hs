@@ -11,6 +11,8 @@ import qualified Music.Theory.Show as Show {- hmt -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 
+-- * UTIL
+
 -- | Error if /e/ is false else /r/.
 dx7ii_assert :: Bool -> t -> t
 dx7ii_assert e r = if e then r else error "dx7ii_assert?"
@@ -18,6 +20,7 @@ dx7ii_assert e r = if e then r else error "dx7ii_assert?"
 -- * VCED
 
 -- | DX7 OP param names (short,long).
+--   The naming in the DX7II manual is niced than the DX7 manual.
 --
 -- > length dx7ii_op_parameter_names == dx7_op_nparam
 dx7ii_op_parameter_names :: [(String,String)]
@@ -206,6 +209,8 @@ dx7ii_pced_usr_str_tbl =
   ,( 9 {-SFSW-}  ,"00;01;10;11")
   ,(10 {-FSAS-}  ,"SUS;POR;KHLD;SFT")
   ,(11 {-FSW-}   ,"00;01;10;11")
+  ,(13 {-NSFTA-} ,dx7_usr_range True (-24,24))
+  ,(14 {-NSFTB-} ,dx7_usr_range True (-24,24))
   ,(15 {-BLNC-}  ,dx7_usr_range True (-50,50))
   ,(19 {-CSSW-}  ,intercalate ";" (map (Show.show_bin (Just 4)) [0::Int .. 15]))
   ,(20 {-PNMD-}  ,"MX;11;10;01") -- MIX;0N-ON;ON-OFF;OFF-ON
@@ -257,7 +262,7 @@ dx7ii_ubd_request_sysex ch s1 s2 =
      then error "dx7_ubp_request_sysex?"
      else concat [[0xF0,0x43,0x20 + ch,0x7E],f s1,f s2,[0xF7]]
 
--- * SYSEX - 8973PM
+-- * SYSEX - 8973PM - DX7II PACKED 32 PERFORMANCE - 1642 BYTES
 
 -- | Group structure (byte-counts) for 8973PM sysex.
 dx7ii_8973PM_grp :: [Int]

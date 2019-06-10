@@ -1,16 +1,16 @@
 Micro Tuning (P.40)
 
- 1  Equal Temperament
- 2  Pure (Major)
- 3  Pure (Minor)
- 4  Mean tone
- 5  Pythagorean
- 6  Werckmeister
- 7  Kirnberger
- 8  Vaillotti & Young
- 9  1/4 Shifted equal
-10  1/4 Tone
-11  1/8 Tone
+ 0   1  Equal Temperament
+ 1   2  Pure (Major)
+ 2   3  Pure (Minor)
+ 3   4  Mean tone
+ 4   5  Pythagorean
+ 5   6  Werckmeister
+ 6   7  Kirnberger
+ 7   8  Vaillotti & Young
+ 8   9  1/4 Shifted equal
+ 9  10  1/4 Tone
+10  11  1/8 Tone
 
 * * *
 
@@ -68,7 +68,7 @@ Micro Tuning (P.40)
   2  SCM4       OP4 scaling mode normal/fraction
   3  SCM3       OP3 scaling mode normal/fraction
   4  SCM2       OP2 scaling mode normal/fraction
-  5  SCM1       OP1 scaling mode norma!/fraction
+  5  SCM1       OP1 scaling mode normal/fraction
   6  AMS6       OP6 amplitude modulation sensitivity
   7  AMS5       OP5 amplitude modulation sensitivity
   8  AMS4       OP4 amplitude modulation sensitivity
@@ -89,14 +89,14 @@ Micro Tuning (P.40)
  23  MWPM       modulation wheel pitch mod range
  24  MWAM                        amplitude mod range
  25  MWEB                        EG bias range
- 26  FC1PM      foot controler 1 pitch mod range
- 27  FC1AM                     amplitude mod range
- 28  FC1EB                     EG bias range
- 29  FC1VL                     volume range
- 30  BCPM       breath controler pitch mod range
- 31  BCAM                        amplitude mod range
- 32  BCEB                        EG bias range
- 33  BCPB                        pitch bias range
+ 26  FC1PM      foot controller 1 pitch mod range
+ 27  FC1AM                        amplitude mod range
+ 28  FC1EB                        EG bias range
+ 29  FC1VL                        volume range
+ 30  BCPM       breath controller pitch mod range
+ 31  BCAM                         amplitude mod range
+ 32  BCEB                         EG bias range
+ 33  BCPB                         pitch bias range
  34  ATPM       after touch pitch mod range
  35  ATAM                   amplitude mod range
  36  ATEB                   EG bias range

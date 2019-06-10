@@ -244,18 +244,19 @@ dx7ii_pced_summary_syx vc_fn pf_fn = do
   pf <- mapM dx7ii_8973PM_load pf_fn
   putStrLn $ unlines $ dx7ii_pced_summary_hdr ++ dx7ii_pced_summary_seq (concat vc,concat pf)
 
-
 -- | Table of PCED data in USR format.
+--   Prefixed with P-IX, therefore 32 fields.
 dx7ii_pced_pp_tbl :: [DX7II_PCED] -> [[String]]
 dx7ii_pced_pp_tbl pf_seq =
-  let hdr = dx7ii_pced_param_abbrev
-      dat = map (\pf -> map (dx7ii_pced_get_usr pf) [0 .. 30]) pf_seq
+  let hdr = "#" : dx7ii_pced_param_abbrev
+      pfx = zipWith (:) (map show [1::Int ..])
+      dat = pfx (map (\pf -> map (dx7ii_pced_get_usr pf) [0 .. 30]) pf_seq)
   in hdr : dat
 
-{- | Print PCED data as text table.  Split into two parts if /pt/ is True.
+{- | Print PCED data as text table.  Split into parts if /pt/ is True.
 
 > pf <- Music.Theory.Monad.concatMapM dx7ii_8973PM_load pf_fn
-> dx7ii_pced_pp (Just [17,14]) pf
+> dx7ii_pced_pp (Just [18,14]) pf
 -}
 dx7ii_pced_pp :: Maybe [Int] -> [DX7II_PCED] -> IO ()
 dx7ii_pced_pp pt pf = do
