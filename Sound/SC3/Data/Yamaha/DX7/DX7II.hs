@@ -76,21 +76,23 @@ dx7ii_sh_parameter_names =
 
 -- | Constant for per-octave mode (ie. tune all pitch-classes equally).
 --
--- > gen_bitseq_pp 8 dx7_microtune_octave == "01111101"
+-- > import Music.Theory.Bits {- hmt -}
+-- > gen_bitseq_pp 8 dx7ii_microtune_octave == "01111101"
 dx7ii_microtune_octave :: U8
 dx7ii_microtune_octave = 0x7D
 
 -- | Constant for full gamut mode (ie. tune all notes distinctly).
 --
--- > gen_bitseq_pp 8 dx7_microtune_full == "01111110"
+-- > gen_bitseq_pp 8 dx7ii_microtune_full == "01111110"
 dx7ii_microtune_full :: U8
 dx7ii_microtune_full = 0x7E
 
--- | DX7 tuning units are 64 steps per semi-tone.
+-- | DX7 tuning units are 64 steps per semi-tone (100 cents).
 --
--- > map dx7_tuning_units_to_cents [0,16,32,48,64] == [0,25,50,75,100]
-dx7ii_tuning_units_to_cents :: U8 -> U8
-dx7ii_tuning_units_to_cents x = floor (Math.word8_to_double x * (100 / 64))
+-- > map dx7ii_tuning_units_to_cents [0x00,0x10,0x20,0x30,0x40] == [0,25,50,75,100]
+-- > map dx7ii_tuning_units_to_cents [0..8] == [0,1.5625,3.125,4.6875,6.25,7.8125,9.375,10.9375,12.5]
+dx7ii_tuning_units_to_cents :: U8 -> Double
+dx7ii_tuning_units_to_cents x = Math.word8_to_double x * (100 / 64)
 
 {- | Microtune parameter change sysex
 
