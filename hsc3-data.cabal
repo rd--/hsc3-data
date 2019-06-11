@@ -85,6 +85,7 @@ Library
                    Sound.SC3.Data.Image.PGM
                    Sound.SC3.Data.Image.Plain
                    Sound.SC3.Data.Image.Type
+                   Sound.SC3.Data.Korg.Minilogue
                    Sound.SC3.Data.LPC
                    Sound.SC3.Data.Math.Bourke
                    Sound.SC3.Data.Math.Bouwkamp
