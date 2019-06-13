@@ -47,13 +47,17 @@ dx7_syx_db_tree_get t nm =
 -- | (SYX-NAME,FILE-NAME,INDEX,VOICE,NAME,HASH,PARAM)
 type DX7_SYX_VC = (String, FilePath, Int, DX7_Voice, String, DX7_Hash, DX7_Param)
 
--- | Get hash.
-dx7_syx_vc_hash :: DX7_SYX_VC -> DX7_Hash
-dx7_syx_vc_hash (_,_,_,_,_,h,_) = h
-
 -- | Get voice.
 dx7_syx_vc_voice :: DX7_SYX_VC -> DX7_Voice
 dx7_syx_vc_voice (_,_,_,v,_,_,_) = v
+
+-- | Get name.
+dx7_syx_vc_name :: DX7_SYX_VC -> String
+dx7_syx_vc_name (_,_,_,_,nm,_,_) = nm
+
+-- | Get hash.
+dx7_syx_vc_hash :: DX7_SYX_VC -> DX7_Hash
+dx7_syx_vc_hash (_,_,_,_,_,h,_) = h
 
 -- | CSV entry for (HASH,PARAM)
 vc_hash_param_csv :: DX7_SYX_VC -> [String]
