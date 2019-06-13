@@ -45,12 +45,16 @@ ml_ctl_enum n =
 
 ml_cc_seq_grp :: [[[Word8]]]
 ml_cc_seq_grp =
-  [[[34,36],[39],[43]   ,[16..19],[20..31],[]]
+  [[[34,36],[39],[43]   ,[16..19],[29..31],[]]
   ,[[35,37],[40],[44,45],[20..23],[]      ,[27]]
-  ,[[41,42],[33],[24,34],[]      ,[]      ,[]]]
+  ,[[41,42],[33],[24,26],[]      ,[]      ,[]]]
 
+-- > map length ml_cc_seq_ln == [11,10,5]
 ml_cc_seq_ln :: [[Word8]]
 ml_cc_seq_ln = map concat ml_cc_seq_grp
 
+-- > length mk_cc_seq == 26
+-- > import Data.List {- base -}
+-- > nub (sort mk_cc_seq) == concat [[16 .. 24],[26 .. 27],[29 .. 31],[33 .. 37],[39 .. 45]]
 mk_cc_seq :: [Word8]
 mk_cc_seq = concat ml_cc_seq_ln
