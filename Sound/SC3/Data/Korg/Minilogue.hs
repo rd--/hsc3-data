@@ -43,3 +43,14 @@ ml_ctl_enum n =
     0x80 -> [0x00 .. 0x7F]
     _ -> error "ml_ctl_enum?"
 
+ml_cc_seq_grp :: [[[Word8]]]
+ml_cc_seq_grp =
+  [[[34,36],[39],[43]   ,[16..19],[20..31],[]]
+  ,[[35,37],[40],[44,45],[20..23],[]      ,[27]]
+  ,[[41,42],[33],[24,34],[]      ,[]      ,[]]]
+
+ml_cc_seq_ln :: [[Word8]]
+ml_cc_seq_ln = map concat ml_cc_seq_grp
+
+mk_cc_seq :: [Word8]
+mk_cc_seq = concat ml_cc_seq_ln
