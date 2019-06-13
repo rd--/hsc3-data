@@ -1,7 +1,9 @@
 -- | DX7 / DB
 module Sound.SC3.Data.Yamaha.DX7.DB where
 
+import Control.Monad {- base-}
 import Data.List {- base-}
+import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
 import qualified Music.Theory.Array.CSV as T {- hmt -}
@@ -21,9 +23,15 @@ type DX7_SYX_DAT = (String, FilePath, [(Int, DX7_Voice)])
 type DX7_SYX_DB_TREE = [DX7_SYX_DAT]
 
 -- | Scan /dir/ for ".syx" files and make DB tree.
+--   Ignore files that are not 4104-BYTES.
+--
+-- > dir = "/home/rohan/sw/hsc3-data/data/yamaha/"
+-- > db <- dx7_syx_db_tree dir
+-- > length db == 213
+-- > map (\(nm,_,_) -> nm) db
 dx7_syx_db_tree :: FilePath -> IO DX7_SYX_DB_TREE
 dx7_syx_db_tree dir = do
-  fn <- fmap sort (T.dir_find_ext ".syx" dir)
+  fn <- fmap sort . filterM (fmap (== 4104) . getFileSize) =<< T.dir_find_ext ".syx" dir
   let nm = map takeBaseName fn
   p <- mapM dx7_load_fmt9_sysex_err fn
   return (zip3 nm fn (map (zip [1..]) p))

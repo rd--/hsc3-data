@@ -618,7 +618,9 @@ dx7_read_fmt9_sysex = fmap dx7_fmt9_sysex_validate  . dx7_read_u8
 
 -- | Erroring variant.
 dx7_read_fmt9_sysex_err :: FilePath -> IO DX7_SYSEX
-dx7_read_fmt9_sysex_err = fmap (dx7_fmt9_sysex_validate_err "dx7_read_fmt9_sysex?")  . dx7_read_u8
+dx7_read_fmt9_sysex_err fn =
+  let f = dx7_fmt9_sysex_validate_err ("dx7_read_fmt9_sysex: " ++ fn)
+  in fmap f (dx7_read_u8 fn)
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_write_fmt9_sysex :: FilePath -> DX7_SYSEX -> IO ()
@@ -655,7 +657,6 @@ dx7_fmt9_sysex_encode ch bnk = do
 > d <- dx7_load_fmt9_sysex_err fn
 > dx7_bank_verify True d
 > mapM_ (putStrLn . dx7_voice_name '?') d
-> import 
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
