@@ -51,7 +51,7 @@ z_parse_midi_voice_event e =
   case e of
     Z.NoteOff st d1 d2 -> M.Note_Off (M.status_ch st) d1 d2
     Z.NoteOn st d1 d2 -> M.Note_On (M.status_ch st) d1 d2
-    Z.NoteAftertouch st d1 d2 -> M.Polyphic_Key_Pressure (M.status_ch st) d1 d2
+    Z.NoteAftertouch st d1 d2 -> M.Polyphonic_Key_Pressure (M.status_ch st) d1 d2
     Z.Controller st d1 d2 -> M.Control_Change (M.status_ch st) d1 d2
     Z.ProgramChange st d1 -> M.Program_Change (M.status_ch st) d1
     Z.ChanAftertouch st d1 -> M.Chanel_Aftertouch (M.status_ch st) d1

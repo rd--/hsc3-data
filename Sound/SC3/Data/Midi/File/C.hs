@@ -118,7 +118,7 @@ c_parse_channel_message c =
   case c of
     C.NoteOff ch mnn vel -> Just (M.Note_Off (T.int_to_word8 ch) mnn vel)
     C.NoteOn ch mnn vel -> Just (M.Note_On (T.int_to_word8 ch) mnn vel)
-    C.KeyPressure ch d1 d2 -> Just (M.Polyphic_Key_Pressure (T.int_to_word8 ch) d1 d2)
+    C.KeyPressure ch d1 d2 -> Just (M.Polyphonic_Key_Pressure (T.int_to_word8 ch) d1 d2)
     C.ControlChange ch i j -> Just (M.Control_Change (T.int_to_word8 ch) i j)
     C.ProgramChange ch pc -> Just (M.Program_Change (T.int_to_word8 ch) pc)
     C.ChannelPressure ch d1 -> Just (M.Chanel_Aftertouch (T.int_to_word8 ch) d1)
