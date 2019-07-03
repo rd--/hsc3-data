@@ -1,6 +1,10 @@
 # hsc3-data
 
-Data functions for [SC3][sc3] related work in [hsc3][hsc3] ([haskell][hs] supercollider).
+Data functions for
+[SC3](http://audiosynth.com/)
+related work in
+[hsc3](http://rohandrape.net/?t=hsc3)
+([haskell](http://haskell.org/) supercollider).
 
 ## cli
 
@@ -25,12 +29,6 @@ Data functions for [SC3][sc3] related work in [hsc3][hsc3] ([haskell][hs] superc
 [trace-rec-x11](?t=hsc3-data&e=md/trace-rec-x11.md),
 [x11-ptr-to-midi-osc](?t=hsc3-data&e=md/x11-ptr-to-midi-osc.md)
 
-[hs]: http://haskell.org/
-[sc3]: http://audiosynth.com/
-[hsc3]: http://rohandrape.net/?t=hsc3
-[hsc3-data]: http://rohandrape.net/?t=hsc3-data
-
-© [rohan drape][rd], 2013-2019, [gpl]
-
-[rd]: http://rohandrape.net/
-[gpl]: http://gnu.org/copyleft/
+© [rohan drape](http://rohandrape.net/),
+  2013-2019,
+  [gpl](http://gnu.org/copyleft/)
