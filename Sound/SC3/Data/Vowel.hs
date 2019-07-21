@@ -47,14 +47,21 @@ data Vowel = A | E | I | O | U
 -- | Vowel tuple of form ('Voice','Vowel',/freq:hz/,/gain:db/,/bw:hz/).
 type Fdata n = (Voice,Vowel,[n],[n],[n])
 
--- | Enumeration of formant indices.
-data Fn = F0 | F1 | F2 | F3 | F4
+-- | Flatten 'Fdata' to numeric sequence.
+--
+-- > map (fdata_to_csv id) fdata_table
+fdata_to_csv :: (Int -> n) -> Fdata n -> [n]
+fdata_to_csv f (vc,vw,fr,gn,bw) = f (fromEnum vc) : f (fromEnum vw) : concat [fr,gn,bw]
+
+-- | Enumeration of formant indices, one-indexed
+data Fn = F1 | F2 | F3 | F4 | F5
         deriving (Enum,Bounded,Eq,Read,Show)
 
 -- * Table
 
 -- | 'Fdata' table.
--- |  From Csound Manual, Table III: Formant values
+-- From Csound Manual, Table III: Formant values
+-- <http://www.csounds.com/manual/html/MiscFormants.html>
 fdata_table :: Num n => [Fdata n]
 fdata_table =
     [(Soprano
@@ -183,6 +190,7 @@ fdata_table =
      ,[0,-20,-32,-28,-36]
      ,[40,80,100,120,120])]
 
+-- > fdata_table_sz == 25
 fdata_table_sz :: Int
 fdata_table_sz = length (fdata_table :: [Fdata Int])
 
@@ -190,3 +198,20 @@ fdata_table_sz = length (fdata_table :: [Fdata Int])
 
 t3_from_list :: [a] -> (a,a,a)
 t3_from_list l = case l of {[p,q,r] -> (p,q,r);_ -> error "t3_from_list"}
+
+-- * PB
+
+pb_vc_tbl :: [(Int,String)]
+pb_vc_tbl = zip [1..] (words "M F C")
+
+pb_ph_tbl :: [(Int,String)]
+pb_ph_tbl = zip [1..] (words "IY IH EH AE AH AA AO UH UW ER")
+
+-- | (VOICE-ID,SPEAKER-ID,PHONEME-ID,(F0,F1,F2,F3))
+type PB_ENT = (Int,Int,Int,(Int,Int,Int,Int))
+
+pb_parse :: [String] -> PB_ENT
+pb_parse l =
+  case l of
+    [vc,k,ph,_,f0,f1,f2,f3] -> (read vc,read k,read ph,(read f0,read f1,read f2,read f3))
+    _ -> error "pb_parse?"

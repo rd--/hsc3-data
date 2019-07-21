@@ -1,0 +1,45 @@
+## cs.csv
+
+<http://www.csounds.com/manual/html/MiscFormants.html>
+
+VOICE-ID,PHONEME-ID,F1,F2,F3,F4,F5,G1,G2,G3,G4,G5,BW1,BW2,BW3,BW4,BW5
+
+VOICE-ID: 0=S 1=A 2=CT 3=T 4=B
+PHONEME-ID: 0=A 1=E 2=I 3=O 4=U
+
+## pb.csv
+
+<https://github.com/satra/shbt-datavis/tree/master/data>
+
+Original Peterson/Barney Data:
+
+	33 Male
+	28 Female
+	15 Children
+	------------
+	76 Total
+
+2 Repetitions of 10 Vowels = 1520 utterances
+
+======================================
+
+Format:
+
+M/F/C	SPKR	Phoneme-Number	Phoneme-Ascii	F0	F1	F2	F3
+1 - M	1-33
+2 - F	34-61
+3 - C	62-76
+
+Asterisk in ARPABET phoneme field means utterance failed of unanimous identification
+in listening test (26 listeners)
+
+1	IY	[i]
+2	IH	[I]
+3	EH	[e]
+4	AE	[ae]
+5	AH	[^]
+6	AA	[a]
+7	AO	[o]
+8	UH	[U]
+9	UW	[u]
+10	ER	[3]
