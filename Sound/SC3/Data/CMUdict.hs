@@ -122,6 +122,7 @@ arpabet_classification p =
        fmap fst $
        find f arpabet_classification_table
 
+-- | Load CMUdict given parser function.
 cmudict_load_ty :: (String -> (String,a)) -> FilePath -> IO (CMU_Dict_ty a)
 cmudict_load_ty pf fn = do
   s <- readFile fn
@@ -129,25 +130,27 @@ cmudict_load_ty pf fn = do
       l = filter (not . is_comment) (lines s)
   return (M.fromList (map pf l))
 
--- | Load CMU dictionary from file.
+-- | Load CMU dictionary from file, ie. 'parse_arpabet'
 --
--- > d <- cmudict_load "/home/rohan/data/cmudict/cmudict.0.7a"
--- > M.size d == 133313
+-- > d <- cmudict_load "/home/rohan/data/cmudict/cmudict-0.7b"
+-- > M.size d == 133852
 cmudict_load :: FilePath -> IO CMU_Dict
 cmudict_load = cmudict_load_ty parse_arpabet
 
--- | Load syllable CMU dictionary from file.
+-- | Load syllable CMU dictionary from file, ie. 'parse_arpabet_syl'
 --
--- > d <- cmudict_syl_load "/home/rohan/data/cmudict/cmudict.0.6d.syl"
--- > M.size d == 129463
+-- > d_syl <- cmudict_syl_load "/home/rohan/data/cmudict/cmudict.0.6d.syl"
+-- > M.size d_syl == 129463
 cmudict_syl_load :: FilePath -> IO CMU_Dict_syl
 cmudict_syl_load = cmudict_load_ty parse_arpabet_syl
 
 -- | Dictionary lookup.
 --
--- > let r = [(R,Nothing),(EY,Just Primary_stress)
--- >         ,(N,Nothing),(ER,Just No_stress),(D,Nothing)]
--- > in d_lookup d "reynard" == Just r
+-- > let r_syl = [[(R,Nothing),(EY,Just Primary_stress)],[(N,Nothing),(ER,Just No_stress),(D,Nothing)]]
+-- > d_lookup d_syl "reynard" == Just r_syl
+--
+-- > let r = concat r_syl
+-- > d_lookup d "reynard" == Just r
 d_lookup :: CMU_Dict_ty a -> String -> Maybe a
 d_lookup d w = M.lookup (map toUpper w) d
 
@@ -235,6 +238,6 @@ phoneme_ipa s =
 -- | Consult 'arpabet_ipa_table'.
 --
 -- > let r = map parse_phoneme_str (words "R EY1 N ER0 D")
--- > in arpabet_ipa r == "ɹeɪnɝd"
+-- > arpabet_ipa r == "ɹeɪnɝd"
 arpabet_ipa :: ARPABET -> String
 arpabet_ipa = concatMap (\(p,s) -> phoneme_ipa s p)
