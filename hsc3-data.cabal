@@ -109,6 +109,8 @@ Library
                    Sound.SC3.Data.Roland.D50.PP
                    Sound.SC3.Data.Roland.D50.Reverb
                    Sound.SC3.Data.Speech
+                   Sound.SC3.Data.Speech.CS
+                   Sound.SC3.Data.Speech.PB
                    Sound.SC3.Data.SFZ
                    Sound.SC3.Data.Timestamp
                    Sound.SC3.Data.Trace
@@ -116,7 +118,6 @@ Library
                    Sound.SC3.Data.UI.ST
                    Sound.SC3.Data.UI.WS
                    Sound.SC3.Data.URandom
-                   Sound.SC3.Data.Vowel
                    Sound.SC3.Data.VST
                    Sound.SC3.Data.VST.Obxd
                    Sound.SC3.Data.WT.AKWF
