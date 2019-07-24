@@ -111,6 +111,7 @@ Library
                    Sound.SC3.Data.Speech
                    Sound.SC3.Data.Speech.CS
                    Sound.SC3.Data.Speech.PB
+                   Sound.SC3.Data.Speech.Stk
                    Sound.SC3.Data.SFZ
                    Sound.SC3.Data.Timestamp
                    Sound.SC3.Data.Trace

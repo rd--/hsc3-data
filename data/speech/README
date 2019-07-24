@@ -47,3 +47,11 @@ in listening test (26 listeners)
 8	UH	[U]
 9	UW	[u]
 10	ER	[3]
+
+## stk.csv
+
+<https://github.com/thestk/stk/blob/master/src/Phonemes.cpp>
+
+32 ROWS, 15 COLUMNS
+
+NAME {VOICE,NOISE}-GAIN FORMANT-{FREQ,RADIUS,GAIN} × 4
