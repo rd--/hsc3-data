@@ -87,8 +87,11 @@ obxd_write_csv k fn = writeFile fn . unlines . map (obxd_program_to_csv k)
 obxd_parse_csv :: String -> OBXD_Program
 obxd_parse_csv s =
   case Split.splitOn "," s of
-       nm:dat -> if length dat == 71 then (nm,map read dat) else error "obxd_parse_csv"
-       _ -> error "obxd_parse_csv?"
+    nm:dat -> let n = length dat
+              in if n < 71 || n > 80
+                 then error ("obxd_parse_csv: n-param = " ++ show n)
+                 else (nm,map read dat)
+    _ -> error "obxd_parse_csv?"
 
 -- | 'obxd_parse_csv' of 'readFile'.
 obxd_load_csv :: FilePath -> IO [OBXD_Program]
@@ -111,3 +114,75 @@ obxd_load_programs fn = do
   let p = obd_fxb_xml_parse x
   when (n /= genericLength p) (print ("obxd_load_programs?",n,length p))
   return p
+
+-- > length obxd_def == 80
+obxd_param_def :: [Double]
+obxd_param_def = [0,0,0.5,1,0.5,0.5,0,0,0,0.6,0,0,0,0,0,0.2,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0.3,0.3,0.3,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0,1,0,0,0,0,0,0,0.3,0]
+
+-- > length obxd_param_nm == 80
+obxd_param_nm :: [String]
+obxd_param_nm =
+  ["UNDEFINED" -- 0
+  ,"MIDILEARN"
+  ,"VOLUME"
+  ,"VOICE_COUNT"
+  ,"TUNE"
+  ,"OCTAVE"
+  ,"BENDRANGE"
+  ,"BENDOSC2"
+  ,"LEGATOMODE"
+  ,"BENDLFORATE"
+  ,"VFLTENV" -- 10
+  ,"VAMPENV"
+  ,"ASPLAYEDALLOCATION"
+  ,"PORTAMENTO"
+  ,"UNISON"
+  ,"UDET"
+  ,"OSC2_DET"
+  ,"LFOFREQ"
+  ,"LFOSINWAVE","LFOSQUAREWAVE","LFOSHWAVE" -- 18-20
+  ,"LFO1AMT","LFO2AMT"
+  ,"LFOOSC1","LFOOSC2","LFOFILTER","LFOPW1","LFOPW2"
+  ,"OSC2HS"
+  ,"XMOD"
+  ,"OSC1P" -- 30
+  ,"OSC2P"
+  ,"OSCQuantize"
+  ,"OSC1Saw"
+  ,"OSC1Pul"
+  ,"OSC2Saw"
+  ,"OSC2Pul"
+  ,"PW"
+  ,"BRIGHTNESS"
+  ,"ENVPITCH"
+  ,"OSC1MIX" -- 40
+  ,"OSC2MIX"
+  ,"NOISEMIX"
+  ,"FLT_KF"
+  ,"CUTOFF"
+  ,"RESONANCE"
+  ,"MULTIMODE"
+  ,"FILTER_WARM"
+  ,"BANDPASS"
+  ,"FOURPOLE"
+  ,"ENVELOPE_AMT" -- 50
+  ,"LATK"
+  ,"LDEC"
+  ,"LSUS"
+  ,"LREL"
+  ,"FATK"
+  ,"FDEC"
+  ,"FSUS"
+  ,"FREL"
+  ,"ENVDER","FILTERDER","PORTADER" -- 59-61
+  ,"PAN1","PAN2","PAN3","PAN4","PAN5","PAN6","PAN7","PAN8"
+  ,"UNLEARN" -- 70
+  ,"ECONOMY_MODE" -- 2014-07-06
+  ,"LFO_SYNC" -- 2014-07-18
+  ,"PW_ENV" -- 2014-07-21
+  ,"PW_ENV_BOTH"
+  ,"ENV_PITCH_BOTH"
+  ,"FENV_INVERT"
+  ,"PW_OSC2_OFS"
+  ,"LEVEL_DIF"
+  ,"SELF_OSC_PUSH"]

@@ -1,4 +1,4 @@
--- | WEBSOCKET
+-- | WS = WEBSOCKET
 module Sound.SC3.Data.UI.WS where
 
 import Text.Printf {- base -}
@@ -14,6 +14,7 @@ m_recur st0 f = do
   st <- f st0
   m_recur st f
 
+-- | (ST,(ELEM-IX,VALUE-IX)) -> IO ST
 type WS_RECV_F st = (st,(Int,Int)) -> IO st
 
 ws_value_to_ix :: J.Value -> (Int,Int)

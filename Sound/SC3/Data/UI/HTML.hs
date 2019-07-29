@@ -130,6 +130,8 @@ ui_html_post =
   ]
 
 -- | Generate HTML for UI.
+--
+-- h = height:n-line
 ui_html :: Int -> Int -> String -> [UI_Elem] -> [String]
 ui_html ws_p h nm lst =
   concat [ui_html_pre ws_p nm
@@ -143,9 +145,10 @@ ui_html ws_p h nm lst =
 ui_html_wr :: Int -> Int -> FilePath -> String -> [UI_Elem] -> IO ()
 ui_html_wr ws_p h fn nm lst = writeFile fn (unlines (ui_html ws_p h nm lst))
 
--- | wv = web-view
+-- | wv = web-view, uri = uniform-resource-identifier
 ui_hsc3_wv_uri :: String -> (Int,Int) -> Bool -> IO ()
 ui_hsc3_wv_uri uri (w,h) rs = callProcess "hsc3-wv" [uri,show w,show h,show rs]
 
+-- | fn = file-name
 ui_hsc3_wv_fn :: FilePath -> (Int,Int) -> Bool -> IO ()
 ui_hsc3_wv_fn fn = ui_hsc3_wv_uri ("file://" ++ fn)
