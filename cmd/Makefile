@@ -47,3 +47,6 @@ mk-dx7:
 
 mk-dx7-unpack:
 	(rm -f dx7-unpack ; make dx7-unpack ; cp dx7-unpack $(prefix)/bin/hsc3-dx7-unpack)
+
+dep:
+	cabal install hscurses
