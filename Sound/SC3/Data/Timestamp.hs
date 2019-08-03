@@ -2,6 +2,19 @@ module Sound.SC3.Data.Timestamp where
 
 import qualified Data.Time as T {- time -}
 
+-- * GEN
+
+-- | Generate an ISO8601 (basic or extended) format timestamp for the current local time.
+--
+-- > mapM gen_iso8601_time_stamp [True,False]
+gen_iso8601_time_stamp :: Bool -> IO String
+gen_iso8601_time_stamp ext = do
+  t <- T.getZonedTime
+  return (T.formatTime T.defaultTimeLocale (if ext then  "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S") t)
+
+
+-- * PARSE
+
 -- | 'T.parseTimeOrError' of 'T.defaultTimeLocale'.
 parse_time_fmt :: String -> String -> T.LocalTime
 parse_time_fmt fmt = T.parseTimeOrError True T.defaultTimeLocale fmt
@@ -42,11 +55,23 @@ rfc822_fmt_no_day_of_week = "%_d %b %Y %_H:%M:%S %Z"
 rfc822_fmt_no_tz :: String
 rfc822_fmt_no_tz = "%a, %_d %b %Y %_H:%M:%S"
 
--- | ISO8601 with time-zone.
+-- | ISO8601 basic.
 --
--- > parse_time_fmt iso8601_fmt_tz "2014-11-18T19:45:44+11:00"
-iso8601_fmt_tz :: String
-iso8601_fmt_tz = "%FT%H:%M:%S%z"
+-- > parse_time_fmt iso8601_fmt_basic "20141118T194544"
+iso8601_fmt_basic :: String
+iso8601_fmt_basic = "%Y%m%dT%H%M%S"
+
+-- | ISO8601 extended.
+--
+-- > parse_time_fmt iso8601_fmt_ext "2014-11-18T19:45:44"
+iso8601_fmt_ext :: String
+iso8601_fmt_ext = "%FT%H:%M:%S"
+
+-- | ISO8601 extended with time-zone.
+--
+-- > parse_time_fmt iso8601_fmt_ext_tz "2014-11-18T19:45:44+11:00"
+iso8601_fmt_ext_tz :: String
+iso8601_fmt_ext_tz = "%FT%H:%M:%S%z"
 
 -- | Apply /f/ at /l/ until if provides a value, or 'Nothing' if it never does.
 locate :: (t -> Maybe u) -> [t] -> Maybe u
@@ -71,6 +96,8 @@ parse_timestamp_fmt_seq fmt s =
 >          ,"Fri, 11 Nov 2016 12:39:09 +0100 (CET)"
 >          ,"11 Aug 2008 21:29:30 -0700"
 >          ,"Tue, 16 Oct 2007 10:21:54"
+>          ,"20141118T194544"
+>          ,"2014-11-18T19:45:44"
 >          ,"2014-11-18T19:45:44+11:00"
 >          ,"Wed, 22 Feb 2006 09:39:30 +1100 (AUS Eastern Standard Time)"]
 > in map parse_timestamp ts
@@ -84,4 +111,6 @@ parse_timestamp =
     ,rfc822_fmt_postfix_named_tz
     ,rfc822_fmt_no_day_of_week
     ,rfc822_fmt_no_tz
-    ,iso8601_fmt_tz]
+    ,iso8601_fmt_basic
+    ,iso8601_fmt_ext
+    ,iso8601_fmt_ext_tz]
