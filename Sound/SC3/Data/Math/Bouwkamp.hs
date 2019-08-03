@@ -103,7 +103,7 @@ sq_ascii (w,h) sq =
         g r = map (f r) [0 .. w]
     in map g [0 .. h]
 
--- * PDF
+-- * PICTURE
 
 to_pt :: Int -> Pt -> CG.Pt Double
 to_pt h (x,y) = CG.Pt (fromIntegral x) (fromIntegral (h - y))
@@ -121,15 +121,6 @@ gen_pic m_clr sz sq = do
     in case m_clr of
          Just clr_seq -> zipWith (CG.polygon_f) clr_seq p
          Nothing -> map (CG.polygon_l black_pen) p
-
-{-
-import qualified Render.CG.Minus.Picture as CG {- hcg-minus-cairo -}
-
-gen_pdf :: Maybe [CG.Ca] -> Int -> String -> [Sq] -> IO ()
-gen_pdf m_clr sz nm sq = do
-  let i = gen_pic m_clr sz sq
-  CG.picture_to_pdf_and_svg 4 nm i
--}
 
 -- * CSV
 
