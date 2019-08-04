@@ -12,7 +12,6 @@ gen_iso8601_time_stamp ext = do
   t <- T.getZonedTime
   return (T.formatTime T.defaultTimeLocale (if ext then  "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S") t)
 
-
 -- * PARSE
 
 -- | 'T.parseTimeOrError' of 'T.defaultTimeLocale'.
