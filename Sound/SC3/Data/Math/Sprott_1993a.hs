@@ -40,17 +40,9 @@ with_delayed n l =
                  [] -> []
                  e1:_ -> (e0,e1) : with_delayed n l'
 
-{- hsc3-plot...
-
--- | /n/ '*' /n/.
-square :: Num a => a -> a
-square x = x * x
-
--}
-
 -- | General one-dimensional quadratic iterated map (Equation 2A, p.25)
 quadratic_1 :: Num a => a -> a -> a -> a -> a
-quadratic_1 a1 a2 a3 x = a1 + a2 * x + a3 * square x
+quadratic_1 a1 a2 a3 x = a1 + a2 * x + a3 * x * x
 
 -- | List (/l/) variant of 'quadratic_1'.
 quadratic_1l :: Num a => [a] -> a -> a
@@ -86,9 +78,8 @@ general_1l l =
 -- | General two-dimensional iterated quadratic map (Equation 3B, p.53)
 quadratic_2 :: Num t => t->t->t->t->t->t->t->t->t->t->t->t->(t,t)->(t,t)
 quadratic_2 a1 a2 a3 a4 a5 a6 a7 a8 a9 aA aB aC (x,y) =
-    let sq n = n * n
-        x' = a1 + a2 * x + a3 * sq x + a4 * x * y + a5 * y + a6 * sq y
-        y' = a7 + a8 * x + a9 * sq x + aA * x * y + aB * y + aC * sq y
+    let x' = a1 + a2 * x + a3 * x * x + a4 * x * y + a5 * y + a6 * y * y
+        y' = a7 + a8 * x + a9 * x * x + aA * x * y + aB * y + aC * y * y
     in (x',y')
 
 -- | List (/l/) variant of 'quadratic_2'.
@@ -178,41 +169,56 @@ sphere_proj l =
                        ,ya + 0.5 * (y1 - y0) * cos ph)
     in map prj l
 
--- * Code Plotting
+-- * CALC
 
--- | Plot one-dimensional code, /m/ is delay, /n/ is iteration degree, /i/ is initial value.
-plot_code_1 :: Int -> Int -> Double -> (Code,Annotation) -> IO ()
-plot_code_1 m n i (c,_) =
+-- | Calculate one-dimensional code, /m/ is delay, /n/ is iteration degree, /i/ is initial value.
+calc_code_1 :: Int -> Int -> Double -> Code -> [(Double, Double)]
+calc_code_1 m n i c =
     case c of
       c0:c' -> if c0 `elem` "ABCD"
                then case general_1l (map sprott_coef_err c') of
-                      Just f -> plot_p2_pt [with_delayed m (take n (iterate f i))]
-                      Nothing -> error "plot_code_1: ill-formed coef"
-               else error "plot_code_1: not type {A,B,C,D}"
-      _ -> error "plot_code_1: ill-formed code"
+                      Just f -> with_delayed m (take n (iterate f i))
+                      Nothing -> error "calc_code_1: ill-formed coef"
+               else error "calc_code_1: not type {A,B,C,D}"
+      _ -> error "calc_code_1: ill-formed code"
 
--- | Plot two-dimensional code, /n/ is iteration degree, /i/ is initial value.
-plot_code_2 :: Bool -> Int -> (Double,Double) -> (Code,Annotation) -> IO ()
-plot_code_2 sph n i (c,_) =
+-- | Calculate two-dimensional code, /n/ is iteration degree, /i/ is initial value.
+calc_code_2 :: Int -> (Double, Double) -> Code -> [(Double, Double)]
+calc_code_2 n i c =
     case c of
       c0:c' -> if c0 `elem` "EF"
                then case general_2l (map sprott_coef_err c') of
-                      Just f -> let prj = if sph then sphere_proj else id
-                                in plot_p2_pt [prj (take n (iterate f i))]
-                      Nothing -> error "plot_code_2: ill-formed coef"
-               else error "plot_code_2: not type {E,F}"
-      _ -> error "plot_code_2: ill-formed code"
+                      Just f -> take n (iterate f i)
+                      Nothing -> error "calc_code_2: ill-formed coef"
+               else error "calc_code_2: not type {E,F}"
+      _ -> error "calc_code_2: ill-formed code"
 
 -- | Plot three-dimensional code, /n/ is iteration degree, /i/ is initial value.
-plot_code_3 :: Int -> (Double,Double,Double) -> (Code,Annotation) -> IO ()
-plot_code_3 n i (c,_) =
+calc_code_3 :: Int -> (Double,Double,Double) -> Code -> [(Double, Double, Double)]
+calc_code_3 n i c =
     case c of
       c0:c' -> if c0 `elem` "I"
                then case general_3l (map sprott_coef_err c') of
-                      Just f -> plot_p3_pt [take n (iterate f i)]
-                      Nothing -> error "plot_code_3: ill-formed coef"
-               else error "plot_code_3: not type {I}"
-      _ -> error "plot_code_3: ill-formed code"
+                      Just f -> take n (iterate f i)
+                      Nothing -> error "calc_code_3: ill-formed coef"
+               else error "calc_code_3: not type {I}"
+      _ -> error "calc_code_3: ill-formed code"
+
+-- * Code Plotting
+
+-- | 'plot_p2_pt' of 'calc_code_1'
+plot_code_1 :: Int -> Int -> Double -> (Code,Annotation) -> IO ()
+plot_code_1 m n i (c,_) = plot_p2_pt [calc_code_1 m n i c]
+
+-- | 'plot_p2_pt' of 'calc_code_2'.  If /sph/ run 'sphere_proj'.
+plot_code_2 :: Bool -> Int -> (Double,Double) -> (Code,Annotation) -> IO ()
+plot_code_2 sph n i (c,_) =
+  let prj = if sph then sphere_proj else id
+  in plot_p2_pt [prj (calc_code_2 n i c)]
+
+-- | 'plot_p3_pt' of 'calc_code_3'
+plot_code_3 :: Int -> (Double,Double,Double) -> (Code,Annotation) -> IO ()
+plot_code_3 n i (c,_) = plot_p3_pt [calc_code_3 n i c]
 
 -- * Co-efficient codes.
 
@@ -225,7 +231,7 @@ type Annotation = String
 
 -- | One-dimensional codes.
 --
--- > plot_code_1 5 12500 0.1 (codes_1 !! 7)
+-- > plot_code_1 5 12500 0.1 (codes_1 !! 0)
 codes_1 :: [(Code,Annotation)]
 codes_1 =
     [("AMu%","Fig 1-4")
@@ -301,4 +307,4 @@ logistic r x = r * x * (1 - x)
 --
 -- > plot_p2_pt [take 5000 (iterate (henon (-1.4) 0.3) (0.1,0))]
 henon :: Num t => t -> t -> (t, t) -> (t, t)
-henon a b (x,y) = (1 + a * square x + b * y, x)
+henon a b (x,y) = (1 + a * x * x + b * y, x)
