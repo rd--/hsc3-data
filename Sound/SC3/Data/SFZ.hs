@@ -153,6 +153,9 @@ sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
 sfz_region_lokey :: SFZ_Region -> Int
 sfz_region_lokey r = sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
 
+sfz_region_tune :: SFZ_Region -> Int
+sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
+
 sfz_region_loop_mode :: SFZ_Region -> Maybe String
 sfz_region_loop_mode r = sfz_region_lookup r "loop_mode"
 
@@ -186,6 +189,7 @@ sfz_region_sample r
 sfz_region_volume r
 sfz_region_pan r
 sfz_region_pitch_keycenter r
+sfz_region_tune r
 sfz_region_loop_mode r
 sfz_region_loop_start r
 sfz_region_loop_end r
