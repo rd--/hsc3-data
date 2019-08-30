@@ -100,6 +100,15 @@ sfz_load_regions fn = do
   tk <- sfz_load_tokens fn
   return (sfz_collate (sfz_tokens_group tk))
 
+-- * RW
+
+-- | Add implict op-codes, ie. if region has @key@ opcode.
+sfz_region_key_rewrite :: SFZ_Region -> SFZ_Region
+sfz_region_key_rewrite (g,c) =
+  case lookup "key" c of
+    Nothing -> (g,c)
+    Just r -> (g,("pitch_keycenter",r):("lokey",r):("hikey",r):c)
+
 -- * LOOKUP
 
 -- | Lookup in region opcodes, then in group if not located.
@@ -132,8 +141,17 @@ sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 sfz_region_sample :: SFZ_Region -> FilePath
 sfz_region_sample r = sfz_region_lookup_err r "sample"
 
+sfz_region_key :: SFZ_Region -> Maybe Int
+sfz_region_key r = fmap sfz_parse_pitch (sfz_region_lookup r "key")
+
 sfz_region_pitch_keycenter :: SFZ_Region -> Int
 sfz_region_pitch_keycenter r = sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_keycenter"
+
+sfz_region_hikey :: SFZ_Region -> Int
+sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
+
+sfz_region_lokey :: SFZ_Region -> Int
+sfz_region_lokey r = sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
 
 sfz_region_loop_mode :: SFZ_Region -> Maybe String
 sfz_region_loop_mode r = sfz_region_lookup r "loop_mode"
@@ -161,7 +179,7 @@ sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 
 {-
 
-fn = "/home/rohan/rd/j/2019-04-21/FAIRLIGHT/PLUCKED/koto.sfz"
+fn = "/home/rohan/rd/j/2019-04-21/FAIRLIGHT/IIX/PLUCKED/koto.sfz"
 r:_ <- sfz_load_regions fn
 map (sfz_region_lookup r) ["sample","volume","pan"]
 sfz_region_sample r
@@ -173,5 +191,15 @@ sfz_region_loop_start r
 sfz_region_loop_end r
 sfz_region_ampeg_attack r
 sfz_region_ampeg_release r
+
+fn = "/home/rohan/data/audio/instr/casacota/zell_1737_415_MeanTone5/8_i.sfz"
+r <- fmap (map sfz_region_key_rewrite) (sfz_load_regions fn)
+length r == 51
+map sfz_region_sample r
+map sfz_region_pitch_keycenter r
+map sfz_region_lokey r
+map sfz_region_hikey r
+map sfz_region_ampeg_attack r
+map sfz_region_ampeg_release r
 
 -}
