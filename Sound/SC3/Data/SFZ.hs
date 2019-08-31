@@ -8,6 +8,7 @@ volume : float : db : 0 : -144 6
 pan : float : linear : 0 : -100 100
 sample : string : file-name
 key|lokey|hikey|pitch_keycenter : int|string : midi-note-number|iso-pitch-name : 0|127|60 : 0 127
+lochan|hichan : int : channel-number : 1|16 : 1 16
 tune : int : cents : 0 : -100 100
 transpose : int : linear : 0 : -127 127
 loop_mode : string : no_loop one_shot loop_continuous loop_sustain
@@ -147,14 +148,26 @@ sfz_region_key r = fmap sfz_parse_pitch (sfz_region_lookup r "key")
 sfz_region_pitch_keycenter :: SFZ_Region -> Int
 sfz_region_pitch_keycenter r = sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_keycenter"
 
-sfz_region_hikey :: SFZ_Region -> Int
-sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
-
 sfz_region_lokey :: SFZ_Region -> Int
 sfz_region_lokey r = sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
 
+sfz_region_hikey :: SFZ_Region -> Int
+sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
+
 sfz_region_tune :: SFZ_Region -> Int
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
+
+sfz_region_lochan :: SFZ_Region -> Int
+sfz_region_lochan r = sfz_region_lookup_read 1 r "lochan"
+
+sfz_region_hichan :: SFZ_Region -> Int
+sfz_region_hichan r = sfz_region_lookup_read 16 r "hichan"
+
+sfz_region_lovel :: SFZ_Region -> Int
+sfz_region_lovel r = sfz_region_lookup_read 0 r "lovel"
+
+sfz_region_hivel :: SFZ_Region -> Int
+sfz_region_hivel r = sfz_region_lookup_read 127 r "hivel"
 
 sfz_region_loop_mode :: SFZ_Region -> Maybe String
 sfz_region_loop_mode r = sfz_region_lookup r "loop_mode"
