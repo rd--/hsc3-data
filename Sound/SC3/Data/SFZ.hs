@@ -2,6 +2,9 @@
 
 <http://www.sfzformat.com/legacy/>
 
+<control>
+default_path : string : directory-name
+
 <group>
 <region>
 volume : float : db : 0 : -144 6
@@ -46,13 +49,27 @@ sfz_is_comment ln =
     '/':_ -> True
     _ -> False
 
+sfz_is_header :: String -> Bool
+sfz_is_header s = not (null s) && head s == '<' && last s == '>'
+
+-- > sfz_tokenize "<region> sample=a.wav <region> sample=b c.wav"
+sfz_tokenize :: String -> [String]
+sfz_tokenize =
+  let recur l = case l of
+                  x1:x2:r ->
+                    if not (sfz_is_header x2) && '=' `notElem` x2
+                    then recur ((unwords [x1,x2]) : r)
+                    else x1 : recur (x2 : r)
+                  _ -> l
+  in recur . words
+
 -- | Read a file, remove comments, parse into tokens.
 --   Requires file names not include white space, which however they may...
 sfz_load_tokens :: FilePath -> IO [String]
 sfz_load_tokens fn = do
   s <- readFile fn
   let l = filter (not . sfz_is_comment) (lines s)
-  return (concatMap words l)
+  return (concatMap sfz_tokenize l)
 
 -- | Pitch values, ie. for pitch_keycenter, may be either numbers or strings.
 --   Returned as midi-note numbers (ie. 0 - 127)
@@ -73,34 +90,29 @@ sfz_parse_opcode s =
     (k,'=':v) -> (k,v)
     _ -> error "sfz_parse_opcode?"
 
--- | Section tokens (<group> and <region>) start with <.
-sfz_is_section :: String -> Bool
-sfz_is_section s =
-  case s of
-    '<':_ -> True
-    _ -> False
-
 -- | Group tokens into sections.
 sfz_tokens_group :: [String] -> [[String]]
 sfz_tokens_group =
   filter (not . null) .
-  (Split.split . Split.keepDelimsL . Split.whenElt) sfz_is_section
+  (Split.split . Split.keepDelimsL . Split.whenElt) sfz_is_header
 
--- | Collate grouped token sequence into regions.
+-- | Collate grouped token sequence into <control> opcodes and <region>s
 --   <group> opcodes are reset at each <group>.
-sfz_collate :: [[String]] -> [SFZ_Region]
-sfz_collate =
+sfz_collate :: [[String]] -> ([SFZ_Opcode],[SFZ_Region])
+sfz_collate hd =
   let recur gr tk =
         case tk of
           [] -> []
           ("<group>":c):tk' -> recur (map sfz_parse_opcode c) tk'
           ("<region>":c):tk' -> (gr,map sfz_parse_opcode c) : recur gr tk'
           _ -> error "sfz_collate?"
-  in recur []
+  in case hd of
+       ("<control>":c):hd' -> (map sfz_parse_opcode c,recur [] hd')
+       _ -> ([],recur [] hd)
 
--- | Load tokens, group and collate into regions.
-sfz_load_regions :: FilePath -> IO [SFZ_Region]
-sfz_load_regions fn = do
+-- | Load tokens, group and collate into (<control>,[<region>])
+sfz_load :: FilePath -> IO ([SFZ_Opcode],[SFZ_Region])
+sfz_load fn = do
   tk <- sfz_load_tokens fn
   return (sfz_collate (sfz_tokens_group tk))
 

@@ -57,7 +57,7 @@ cmi_sfz_parse l =
 -- | Load SFZ and SND-HEADER data.
 cmi_load_dat :: String -> FilePath -> String -> IO CMI_DAT
 cmi_load_dat ext dir nm = do
-  sfz_rgn <- sfz_load_regions (dir </> nm <.> "sfz")
+  (_,sfz_rgn) <- sfz_load (dir </> nm <.> "sfz")
   snd_hdr <- sf_header (dir </> nm <.> ext)
   return (sfz_rgn,snd_hdr)
 
