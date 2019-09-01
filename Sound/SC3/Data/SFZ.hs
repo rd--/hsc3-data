@@ -42,6 +42,9 @@ type SFZ_Group = [SFZ_Opcode]
 -- | A region is a salient group, perhaps empty, and a set of opcodes.
 type SFZ_Region = (SFZ_Group,[SFZ_Opcode])
 
+-- | ([control],[region])
+type SFZ_Data = ([SFZ_Opcode],[SFZ_Region])
+
 -- | Lines starting with / are comments.
 sfz_is_comment :: String -> Bool
 sfz_is_comment ln =
@@ -98,7 +101,7 @@ sfz_tokens_group =
 
 -- | Collate grouped token sequence into <control> opcodes and <region>s
 --   <group> opcodes are reset at each <group>.
-sfz_collate :: [[String]] -> ([SFZ_Opcode],[SFZ_Region])
+sfz_collate :: [[String]] -> SFZ_Data
 sfz_collate hd =
   let recur gr tk =
         case tk of
@@ -111,7 +114,7 @@ sfz_collate hd =
        _ -> ([],recur [] hd)
 
 -- | Load tokens, group and collate into (<control>,[<region>])
-sfz_load :: FilePath -> IO ([SFZ_Opcode],[SFZ_Region])
+sfz_load :: FilePath -> IO SFZ_Data
 sfz_load fn = do
   tk <- sfz_load_tokens fn
   return (sfz_collate (sfz_tokens_group tk))
