@@ -74,7 +74,7 @@ svl_model_dimenions :: X.Element -> Int
 svl_model_dimenions = read . XML.x_get_attr "dimenions"
 
 -- | (value,level,label)
-type SVL_NOTE = (Int,Double,String)
+type SVL_NOTE = (T.Midi,Double,String)
 
 -- | ((frame,duration),data)
 type SVL_PT t = ((FRAME,FRAME),t)
@@ -140,7 +140,7 @@ svl_frame_to_sec sr x = round (fromIntegral x / sr)
 svl_load_sparse_note_sec :: FilePath -> IO (T.Wseq T.SEC SVL_NOTE)
 svl_load_sparse_note_sec = svl_load_sparse_note_tm svl_frame_to_sec
 
-svl_load_sparse_note_mnn_accum :: (Ord t,Num t) => (SR -> FRAME -> t) -> FilePath -> IO (Bool,T.Tseq t ([Int], [Int], [Int]))
+svl_load_sparse_note_mnn_accum :: (Ord t,Num t) => (SR -> FRAME -> t) -> FilePath -> IO (Bool,T.Tseq t ([T.Midi], [T.Midi], [T.Midi]))
 svl_load_sparse_note_mnn_accum tm_f =
   fmap (T.wseq_begin_end_accum . T.wseq_map (\(e,_,_) -> e)) .
   svl_load_sparse_note_tm tm_f
@@ -157,7 +157,7 @@ svl_node_map f (tm,(el,du)) = (tm,(f el,du))
 
 type SVL_NODE_m t = SVL_NODE t T.Midi
 
-svl_load_node_m :: Ord t => (SR -> FRAME -> t) -> (Int -> Int) -> FilePath -> IO [SVL_NODE_m t]
+svl_load_node_m :: Ord t => (SR -> FRAME -> t) -> (T.Midi -> T.Midi) -> FilePath -> IO [SVL_NODE_m t]
 svl_load_node_m tm_f mnn_f fn = do
   pt <- svl_load_sparse_note_tm tm_f fn
   let n = T.collate (map (\((tm,du),(mnn,_,_)) -> (tm,(mnn,du))) pt)
@@ -168,7 +168,7 @@ svl_load_node_m tm_f mnn_f fn = do
 
 type SVL_NODE_p t = SVL_NODE t T.Pitch
 
-svl_load_node_p :: Ord t => (SR -> FRAME -> t) -> (Int -> Int) -> FilePath -> IO [SVL_NODE_p t]
+svl_load_node_p :: Ord t => (SR -> FRAME -> t) -> (T.Midi -> T.Midi) -> FilePath -> IO [SVL_NODE_p t]
 svl_load_node_p tm_f mnn_f =
   fmap (map (svl_node_map T.spell_midi_set)) .
   svl_load_node_m tm_f mnn_f

@@ -9,6 +9,7 @@ module Sound.SC3.Data.Fairlight.CMI where
 
 import Data.List {- base -}
 import Data.Maybe {- base -}
+import Data.Word {- base -}
 import System.FilePath {- filepath -}
 import Text.Printf {- base -}
 
@@ -19,13 +20,13 @@ import Sound.File.HSndFile {- hsc3-sf-sndfile -}
 import Sound.SC3.Data.SFZ {- hsc3-data -}
 
 -- | A3 (the SFZ files state C4)
-cmi_keycentre :: Int
+cmi_keycentre :: Word8
 cmi_keycentre = 57
 
 -- | (VOLUME,KEY-CENTER,LOOP-MODE,LOOP-START,LOOP-END,EG-ATTACK,EG-RELEASE)
 --
 -- For CMI in all cases VOLUME=-3 ; KEYCENTER=C4=60
-type CMI_SFZ = (Double, Int, Char, Int, Int, Double, Double)
+type CMI_SFZ = (Double, Word8, Char, Int, Int, Double, Double)
 
 -- | Parse SFZ <region>.
 cmi_sfz_rgn_parse :: SFZ_Region -> CMI_SFZ

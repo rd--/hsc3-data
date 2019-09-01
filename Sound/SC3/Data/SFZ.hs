@@ -20,7 +20,9 @@ ampeg_release : float : seconds : 0 : 0 100
 -}
 module Sound.SC3.Data.SFZ where
 
+import Data.Int {- base -}
 import Data.Maybe {- base -}
+import Data.Word {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
@@ -53,11 +55,12 @@ sfz_load_tokens fn = do
   return (concatMap words l)
 
 -- | Pitch values, ie. for pitch_keycenter, may be either numbers or strings.
+--   Returned as midi-note numbers (ie. 0 - 127)
 --
 -- > map sfz_parse_pitch ["B3","60","C#4"] == [59,60,61]
-sfz_parse_pitch :: String -> Int
+sfz_parse_pitch :: String -> Word8
 sfz_parse_pitch s =
-  case T.read_maybe_int s of
+  case T.read_maybe s of
     Just n -> n
     _ -> T.pitch_to_midi (T.parse_iso_pitch_err s)
 
@@ -142,31 +145,31 @@ sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 sfz_region_sample :: SFZ_Region -> FilePath
 sfz_region_sample r = sfz_region_lookup_err r "sample"
 
-sfz_region_key :: SFZ_Region -> Maybe Int
+sfz_region_key :: SFZ_Region -> Maybe Word8
 sfz_region_key r = fmap sfz_parse_pitch (sfz_region_lookup r "key")
 
-sfz_region_pitch_keycenter :: SFZ_Region -> Int
+sfz_region_pitch_keycenter :: SFZ_Region -> Word8
 sfz_region_pitch_keycenter r = sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_keycenter"
 
-sfz_region_lokey :: SFZ_Region -> Int
+sfz_region_lokey :: SFZ_Region -> Word8
 sfz_region_lokey r = sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
 
-sfz_region_hikey :: SFZ_Region -> Int
+sfz_region_hikey :: SFZ_Region -> Word8
 sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
 
-sfz_region_tune :: SFZ_Region -> Int
+sfz_region_tune :: SFZ_Region -> Int8
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
 
-sfz_region_lochan :: SFZ_Region -> Int
+sfz_region_lochan :: SFZ_Region -> Word8
 sfz_region_lochan r = sfz_region_lookup_read 1 r "lochan"
 
-sfz_region_hichan :: SFZ_Region -> Int
+sfz_region_hichan :: SFZ_Region -> Word8
 sfz_region_hichan r = sfz_region_lookup_read 16 r "hichan"
 
-sfz_region_lovel :: SFZ_Region -> Int
+sfz_region_lovel :: SFZ_Region -> Word8
 sfz_region_lovel r = sfz_region_lookup_read 0 r "lovel"
 
-sfz_region_hivel :: SFZ_Region -> Int
+sfz_region_hivel :: SFZ_Region -> Word8
 sfz_region_hivel r = sfz_region_lookup_read 127 r "hivel"
 
 sfz_region_loop_mode :: SFZ_Region -> Maybe String
