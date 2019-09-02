@@ -1,12 +1,9 @@
-{- | SFZ
-
-<http://www.sfzformat.com/legacy/>
+{- | SFZ <http://www.sfzformat.com/legacy/>
 
 <control>
 default_path : string : directory-name
 
-<group>
-<region>
+<global> | <group> | <region>
 volume : float : db : 0 : -144 6
 pan : float : linear : 0 : -100 100
 sample : string : file-name
@@ -24,8 +21,10 @@ ampeg_release : float : seconds : 0 : 0 100
 module Sound.SC3.Data.SFZ where
 
 import Data.Int {- base -}
+import Data.List {- base -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
+import System.FilePath {- filepath -}
 
 import qualified Data.List.Split as Split {- split -}
 
@@ -33,17 +32,25 @@ import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Pitch as T {- hmt -}
 import qualified Music.Theory.Read as T {- hmt -}
 
--- | An Opcode is a (key,value) pair.
+import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
+
+-- | An opcode is a (key,value) pair.
 type SFZ_Opcode = (String,String)
 
--- | A group is a set of opcodes.
+-- | The <control> header defines a set of opcodes.
+type SFZ_Control = [SFZ_Opcode]
+
+-- | The <global> header defines a set of opcodes.
+type SFZ_Global = [SFZ_Opcode]
+
+-- | The <group> header defines a set of opcodes.
 type SFZ_Group = [SFZ_Opcode]
 
--- | A region is a salient group, perhaps empty, and a set of opcodes.
-type SFZ_Region = (SFZ_Group,[SFZ_Opcode])
+-- | The <region> header defines a set of opcodes, and has salient <global> and <group> opcodes.
+type SFZ_Region = ([SFZ_Opcode],[SFZ_Opcode])
 
--- | ([control],[region])
-type SFZ_Data = ([SFZ_Opcode],[SFZ_Region])
+-- | (control,global,[region])
+type SFZ_Data = (SFZ_Control,SFZ_Global,[SFZ_Region])
 
 -- | Lines starting with / are comments.
 sfz_is_comment :: String -> Bool
@@ -52,9 +59,12 @@ sfz_is_comment ln =
     '/':_ -> True
     _ -> False
 
+-- | Headers are in angle brackets, ie. <group>.
 sfz_is_header :: String -> Bool
 sfz_is_header s = not (null s) && head s == '<' && last s == '>'
 
+-- | SFZ tokenizer, white space is allowed in the right hand sides of opcodes, ie. in file-names.
+--
 -- > sfz_tokenize "<region> sample=a.wav <region> sample=b c.wav"
 sfz_tokenize :: String -> [String]
 sfz_tokenize =
@@ -64,10 +74,9 @@ sfz_tokenize =
                     then recur ((unwords [x1,x2]) : r)
                     else x1 : recur (x2 : r)
                   _ -> l
-  in recur . words
+  in recur . words -- INCORRECT IMPLEMENTATION, WORKS FOR NON-CONSECUTIVE SPACES ONLY...
 
 -- | Read a file, remove comments, parse into tokens.
---   Requires file names not include white space, which however they may...
 sfz_load_tokens :: FilePath -> IO [String]
 sfz_load_tokens fn = do
   s <- readFile fn
@@ -99,25 +108,35 @@ sfz_tokens_group =
   filter (not . null) .
   (Split.split . Split.keepDelimsL . Split.whenElt) sfz_is_header
 
--- | Collate grouped token sequence into <control> opcodes and <region>s
---   <group> opcodes are reset at each <group>.
-sfz_collate :: [[String]] -> SFZ_Data
-sfz_collate hd =
+-- | Collate grouped token sequences.
+--   <region>s have salient <global> and <group> opcodes, which are reset at each <group> element.
+sfz_collate :: SFZ_Global -> [[String]] -> [SFZ_Region]
+sfz_collate gl =
   let recur gr tk =
         case tk of
           [] -> []
           ("<group>":c):tk' -> recur (map sfz_parse_opcode c) tk'
-          ("<region>":c):tk' -> (gr,map sfz_parse_opcode c) : recur gr tk'
+          ("<region>":c):tk' -> (gr ++ gl,map sfz_parse_opcode c) : recur gr tk'
           _ -> error "sfz_collate?"
-  in case hd of
-       ("<control>":c):hd' -> (map sfz_parse_opcode c,recur [] hd')
-       _ -> ([],recur [] hd)
+  in recur []
+
+-- | Collect <control> and <global> opcodes, and collate <region>s.
+sfz_get_data :: [[String]] -> SFZ_Data
+sfz_get_data gr =
+  let (lhs,rhs) = partition ((`elem` ["<control>","<global>"]) . head) gr
+  in case lhs of
+    [] -> ([],[],sfz_collate [] rhs)
+    ["<control>":c] -> (map sfz_parse_opcode c,[],sfz_collate [] rhs)
+    ["<control>":c,"<global>":g] ->
+      let gl = map sfz_parse_opcode g
+      in (map sfz_parse_opcode c,gl,sfz_collate gl rhs)
+    _ -> error "sfz_get_meta?"
 
 -- | Load tokens, group and collate into (<control>,[<region>])
 sfz_load :: FilePath -> IO SFZ_Data
 sfz_load fn = do
   tk <- sfz_load_tokens fn
-  return (sfz_collate (sfz_tokens_group tk))
+  return (sfz_get_data (sfz_tokens_group tk))
 
 -- * RW
 
@@ -211,6 +230,21 @@ sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
 sfz_region_ampeg_release :: SFZ_Region -> Double
 sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 
+-- * QUERY
+
+-- | Resolve sample file-name of <region>
+sfz_resolve :: FilePath -> SFZ_Control -> SFZ_Region -> FilePath
+sfz_resolve fn ctl rgn =
+  let (dir,_) = splitFileName fn
+      path = dir </> fromMaybe "" (lookup "default_path" ctl)
+  in path </> sfz_region_sample rgn
+
+-- | Get number-of-channels of sample of region.
+sfz_get_nc :: FilePath -> SFZ_Control -> SFZ_Region -> IO Int
+sfz_get_nc fn ctl rgn = do
+  hdr <- SF.sf_header (sfz_resolve fn ctl rgn)
+  return (SF.channelCount hdr)
+
 {-
 
 fn = "/home/rohan/rd/j/2019-04-21/FAIRLIGHT/IIX/PLUCKED/koto.sfz"
@@ -228,7 +262,9 @@ sfz_region_ampeg_attack r
 sfz_region_ampeg_release r
 
 fn = "/home/rohan/data/audio/instr/casacota/zell_1737_415_MeanTone5/8_i.sfz"
-r <- fmap (map sfz_region_key_rewrite) (sfz_load_regions fn)
+(c,_,r') <- sfz_load fn
+length c == 1
+r = map sfz_region_key_rewrite r'
 length r == 51
 map sfz_region_sample r
 map sfz_region_pitch_keycenter r
