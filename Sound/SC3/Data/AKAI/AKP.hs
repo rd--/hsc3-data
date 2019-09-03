@@ -235,6 +235,6 @@ map fst hdr
 map akp_ch_parse hdr
 k = kgrp !! 0
 map fst k
-map akp_ch_parse k
+map (map akp_ch_parse) kgrp
 
 -}

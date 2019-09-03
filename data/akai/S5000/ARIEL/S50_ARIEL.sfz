@@ -1,0 +1,5 @@
+<group> loop_mode=no_loop
+<region> sample=S50_AR C2.wav pitch_keycenter=C2 lokey=21 hikey=47
+<region> sample=S50_AR C3.wav pitch_keycenter=C3 lokey=48 hikey=59
+<region> sample=S50_AR C4.wav pitch_keycenter=C4 lokey=60 hikey=71
+<region> sample=S50_AR C5.wav pitch_keycenter=C5 lokey=72 hikey=96
