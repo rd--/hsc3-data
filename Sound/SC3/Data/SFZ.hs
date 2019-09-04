@@ -234,7 +234,7 @@ sfz_region_loop_data r =
   case (sfz_region_lookup r "loop_start",sfz_region_lookup r "loop_end") of
     (Just st,Just en) -> (sfz_region_lookup_f "loop_continuous" id r "loop_mode"
                          ,Just (read st,read en))
-    _ -> (sfz_region_lookup_f "loop_continuous" id r "no_loop",Nothing)
+    _ -> (sfz_region_lookup_f "no_loop" id r "loop_mode",Nothing)
 
 sfz_region_ampeg_attack :: SFZ_Region -> Double
 sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
