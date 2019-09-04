@@ -224,6 +224,18 @@ sfz_region_loop_start r = sfz_region_lookup_read 0 r "loop_start"
 sfz_region_loop_end :: SFZ_Region -> Int
 sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
+{- | If loop start and end points are defined,
+     then return with mode defaulting to loop_continuous,
+     else return Nothing and mode defaulting to no_loop.
+     Does not read loop data from sample file.
+-}
+sfz_region_loop_data :: SFZ_Region -> (String,Maybe (Int,Int))
+sfz_region_loop_data r =
+  case (sfz_region_lookup r "loop_start",sfz_region_lookup r "loop_end") of
+    (Just st,Just en) -> (sfz_region_lookup_f "loop_continuous" id r "loop_mode"
+                         ,Just (read st,read en))
+    _ -> (sfz_region_lookup_f "loop_continuous" id r "no_loop",Nothing)
+
 sfz_region_ampeg_attack :: SFZ_Region -> Double
 sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
 
@@ -248,7 +260,7 @@ sfz_get_nc fn ctl rgn = do
 {-
 
 fn = "/home/rohan/rd/j/2019-04-21/FAIRLIGHT/IIX/PLUCKED/koto.sfz"
-r:_ <- sfz_load_regions fn
+(_,_,r:_) <- sfz_load fn
 map (sfz_region_lookup r) ["sample","volume","pan"]
 sfz_region_sample r
 sfz_region_volume r
@@ -258,12 +270,12 @@ sfz_region_tune r
 sfz_region_loop_mode r
 sfz_region_loop_start r
 sfz_region_loop_end r
+sfz_region_loop_data r
 sfz_region_ampeg_attack r
 sfz_region_ampeg_release r
 
 fn = "/home/rohan/data/audio/instr/casacota/zell_1737_415_MeanTone5/8_i.sfz"
-(c,_,r') <- sfz_load fn
-length c == 1
+(_,_,r') <- sfz_load fn
 r = map sfz_region_key_rewrite r'
 length r == 51
 map sfz_region_sample r
