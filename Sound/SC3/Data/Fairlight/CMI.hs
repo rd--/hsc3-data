@@ -2,9 +2,9 @@
      <http://www.nattvard.com/iix/database.php>
 
 This assumes some post-processing:
-of WAV audio files to 8-BIT SND files,
-and re-naming of SFZ files so that all .SND files have matched .SFZ files,
-and editing SFZ files to correct pitch_keycenter (C4 -> A3) and to set sample type (.wav -> .snd)
+convert WAV audio files to 8-BIT SND files,
+edit SFZ files to correct pitch_keycenter (C4 -> A3)
+and to set sample format (.wav -> .snd)
 -}
 module Sound.SC3.Data.Fairlight.CMI where
 
@@ -20,10 +20,10 @@ import Sound.File.HSndFile {- hsc3-sf-sndfile -}
 
 import Sound.SC3.Data.SFZ {- hsc3-data -}
 
--- | (VOLUME,KEY-CENTER,LOOP-MODE-SYM,LOOP-START,LOOP-END,EG-ATTACK,EG-RELEASE)
+-- | (FILENAME,VOLUME,KEY-CENTER,LOOP-MODE-SYM,LOOP-START,LOOP-END,EG-ATTACK,EG-RELEASE)
 --
 -- For CMI in all cases VOLUME=-3 ; KEYCENTER=A3=57
-type CMI_SFZ = (Double, Word8, Char, Int, Int, Double, Double)
+type CMI_SFZ = (FilePath, Double, Word8, Char, Int, Int, Double, Double)
 
 -- | Parse SFZ <region>.
 cmi_sfz_rgn_parse :: SFZ_Region -> CMI_SFZ
@@ -31,7 +31,7 @@ cmi_sfz_rgn_parse r =
   let vol = sfz_region_volume r
       mnn = sfz_region_pitch_keycenter r
       lp_mode = fromMaybe (error "cmi_sfz_rgn_parse?") (sfz_region_loop_mode_sym r)
-  in (vol,mnn,lp_mode,sfz_region_loop_start r,sfz_region_loop_end r
+  in (sfz_region_sample r,vol,mnn,lp_mode,sfz_region_loop_start r,sfz_region_loop_end r
      ,sfz_region_ampeg_attack r,sfz_region_ampeg_release r)
 
 -- | SFZ and SND data.
@@ -57,7 +57,7 @@ cmi_load_sfz ext dir = fmap cmi_sfz_parse . cmi_load_dat ext dir
 
 -- | Pretty-printer.
 cmi_sfz_pp :: (String,CMI_SFZ) -> String
-cmi_sfz_pp (nm,(_,_,l1,l2,l3,e1,e2)) = printf "%-24s %c %5d %5d %3.1f %3.1f" nm l1 l2 l3 e1 e2
+cmi_sfz_pp (nm,(_,_,_,l1,l2,l3,e1,e2)) = printf "%-24s %c %5d %5d %3.1f %3.1f" nm l1 l2 l3 e1 e2
 
 -- | Load all .sfz files below directory.
 --   Names are of the form DISK/VOICE.
