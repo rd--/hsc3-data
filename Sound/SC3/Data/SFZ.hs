@@ -34,6 +34,8 @@ import qualified Music.Theory.Read as T {- hmt -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 
+-- * TYPES
+
 -- | An opcode is a (key,value) pair.
 type SFZ_Opcode = (String,String)
 
@@ -54,6 +56,16 @@ type SFZ_Region = ([SFZ_Opcode],[SFZ_Opcode])
 
 -- | (control,global,[region])
 type SFZ_Data = (SFZ_Control,SFZ_Global,[SFZ_Region])
+
+-- | Does a set of opcodes contain given key?
+sfz_region_has_opcode :: String -> SFZ_Region -> Bool
+sfz_region_has_opcode k (g,c) = any ((== k) . fst) (g ++ c)
+
+-- | Does a set of opcodes contain any of a given set of key?
+sfz_region_has_opcode_in :: [String] -> SFZ_Region -> Bool
+sfz_region_has_opcode_in k (g,c) = any ((`elem` k) . fst) (g ++ c)
+
+-- * PARSE
 
 -- | Lines starting with / are comments.
 sfz_is_comment :: String -> Bool
@@ -105,15 +117,9 @@ sfz_tokens_group =
   filter (not . null) .
   (Split.split . Split.keepDelimsL . Split.whenElt) sfz_is_header
 
--- | Read a file, remove comments, parse into tokens.
-sfz_load_sections :: FilePath -> IO [SFZ_Section]
-sfz_load_sections fn = do
-  s <- readFile fn
-  let l = filter (not . sfz_is_comment) (lines s)
-  return (sfz_tokens_group (concatMap sfz_tokenize l))
-
 -- | Collate grouped token sequences.
---   <region>s have salient <global> and <group> opcodes, which are reset at each <group> element.
+--   <region>s have salient <global> and <group> opcodes.
+--   <group> opcodes are reset at each <group> element.
 sfz_collate :: SFZ_Global -> [SFZ_Section] -> [SFZ_Region]
 sfz_collate gl =
   let recur gr sc =
@@ -132,11 +138,7 @@ sfz_get_data gr =
     [] -> ([],[],sfz_collate [] rhs)
     [("<control>",c)] -> (c,[],sfz_collate [] rhs)
     [("<control>",c),("<global>",g)] -> (c,g,sfz_collate g rhs)
-    _ -> error "sfz_get_meta?"
-
--- | 'sfz_get_data' of 'sfz_load_sections'
-sfz_load :: FilePath -> IO SFZ_Data
-sfz_load = fmap sfz_get_data . sfz_load_sections
+    _ -> error "sfz_get_data?"
 
 -- * RW
 
@@ -145,7 +147,26 @@ sfz_region_key_rewrite :: SFZ_Region -> SFZ_Region
 sfz_region_key_rewrite (g,c) =
   case lookup "key" c of
     Nothing -> (g,c)
-    Just r -> (g,("pitch_keycenter",r):("lokey",r):("hikey",r):c)
+    Just r -> if sfz_region_has_opcode_in ["pitch_keycenter","lokey","hikey"] (g,c)
+              then error "sfz_region_key_rewrite?"
+              else (g,("pitch_keycenter",r):("lokey",r):("hikey",r):c)
+
+-- | Rewrite <region> data.
+sfz_data_rewrite :: SFZ_Data -> SFZ_Data
+sfz_data_rewrite (c,g,r) = (c,g,map sfz_region_key_rewrite r)
+
+-- * IO
+
+-- | Read a file, remove comments, parse into sections.
+sfz_load_sections :: FilePath -> IO [SFZ_Section]
+sfz_load_sections fn = do
+  s <- readFile fn
+  let l = filter (not . sfz_is_comment) (lines s)
+  return (sfz_tokens_group (concatMap sfz_tokenize l))
+
+-- | 'sfz_get_data' of 'sfz_load_sections'
+sfz_load_data :: FilePath -> IO SFZ_Data
+sfz_load_data = fmap (sfz_data_rewrite . sfz_get_data) . sfz_load_sections
 
 -- * LOOKUP
 
@@ -245,6 +266,12 @@ sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 -- * QUERY
 
 -- | Resolve sample file-name of <region>
+--
+-- > sfz_resolve "x/x.sfz" [] ([],[("sample","y.z")]) == "x/y.z"
+-- > sfz_resolve "x.sfz" [("default_path","x")] ([],[("sample","y.z")]) == "./x/y.z"
+--
+-- > "x" </> "" </> "y.z" == "x/y.z"
+-- > splitFileName "x.sfz" == ("./","x.sfz")
 sfz_resolve :: FilePath -> SFZ_Control -> SFZ_Region -> FilePath
 sfz_resolve fn ctl rgn =
   let (dir,_) = splitFileName fn

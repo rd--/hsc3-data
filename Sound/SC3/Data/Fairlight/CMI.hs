@@ -44,7 +44,7 @@ cmi_sfz_parse (r,dir,_) = cmi_sfz_rgn_parse dir r
 -- | Load SFZ and SND-HEADER data.
 cmi_load_dat :: FilePath -> String -> IO CMI_DAT
 cmi_load_dat cmi_dir fn = do
-  (_,_,[rgn]) <- sfz_load (cmi_dir </> fn)
+  (_,_,[rgn]) <- sfz_load_data (cmi_dir </> fn)
   let dir = takeDirectory (cmi_dir </> fn)
       sf_fn = dir </> sfz_region_sample rgn
   hdr <- sf_header sf_fn
