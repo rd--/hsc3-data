@@ -37,6 +37,9 @@ import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 -- | An opcode is a (key,value) pair.
 type SFZ_Opcode = (String,String)
 
+-- | A section is a <header> and a set of opcodes.
+type SFZ_Section = (String,[SFZ_Opcode])
+
 -- | The <control> header defines a set of opcodes.
 type SFZ_Control = [SFZ_Opcode]
 
@@ -76,13 +79,6 @@ sfz_tokenize =
                   _ -> l
   in recur . words -- INCORRECT IMPLEMENTATION, WORKS FOR NON-CONSECUTIVE SPACES ONLY...
 
--- | Read a file, remove comments, parse into tokens.
-sfz_load_tokens :: FilePath -> IO [String]
-sfz_load_tokens fn = do
-  s <- readFile fn
-  let l = filter (not . sfz_is_comment) (lines s)
-  return (concatMap sfz_tokenize l)
-
 -- | Pitch values, ie. for pitch_keycenter, may be either numbers or strings.
 --   Returned as midi-note numbers (ie. 0 - 127)
 --
@@ -103,40 +99,44 @@ sfz_parse_opcode s =
     _ -> error "sfz_parse_opcode?"
 
 -- | Group tokens into sections.
-sfz_tokens_group :: [String] -> [[String]]
+sfz_tokens_group :: [String] -> [SFZ_Section]
 sfz_tokens_group =
+  map (\(h:c) -> (h,map sfz_parse_opcode c)) .
   filter (not . null) .
   (Split.split . Split.keepDelimsL . Split.whenElt) sfz_is_header
 
+-- | Read a file, remove comments, parse into tokens.
+sfz_load_sections :: FilePath -> IO [SFZ_Section]
+sfz_load_sections fn = do
+  s <- readFile fn
+  let l = filter (not . sfz_is_comment) (lines s)
+  return (sfz_tokens_group (concatMap sfz_tokenize l))
+
 -- | Collate grouped token sequences.
 --   <region>s have salient <global> and <group> opcodes, which are reset at each <group> element.
-sfz_collate :: SFZ_Global -> [[String]] -> [SFZ_Region]
+sfz_collate :: SFZ_Global -> [SFZ_Section] -> [SFZ_Region]
 sfz_collate gl =
-  let recur gr tk =
-        case tk of
+  let recur gr sc =
+        case sc of
           [] -> []
-          ("<group>":c):tk' -> recur (map sfz_parse_opcode c) tk'
-          ("<region>":c):tk' -> (gr ++ gl,map sfz_parse_opcode c) : recur gr tk'
+          ("<group>",op):sc' -> recur op sc'
+          ("<region>",op):sc' -> (gr ++ gl,op) : recur gr sc'
           _ -> error "sfz_collate?"
   in recur []
 
 -- | Collect <control> and <global> opcodes, and collate <region>s.
-sfz_get_data :: [[String]] -> SFZ_Data
+sfz_get_data :: [SFZ_Section] -> SFZ_Data
 sfz_get_data gr =
-  let (lhs,rhs) = partition ((`elem` ["<control>","<global>"]) . head) gr
+  let (lhs,rhs) = partition ((`elem` ["<control>","<global>"]) . fst) gr
   in case lhs of
     [] -> ([],[],sfz_collate [] rhs)
-    ["<control>":c] -> (map sfz_parse_opcode c,[],sfz_collate [] rhs)
-    ["<control>":c,"<global>":g] ->
-      let gl = map sfz_parse_opcode g
-      in (map sfz_parse_opcode c,gl,sfz_collate gl rhs)
+    [("<control>",c)] -> (c,[],sfz_collate [] rhs)
+    [("<control>",c),("<global>",g)] -> (c,g,sfz_collate g rhs)
     _ -> error "sfz_get_meta?"
 
--- | Load tokens, group and collate into (<control>,[<region>])
+-- | 'sfz_get_data' of 'sfz_load_sections'
 sfz_load :: FilePath -> IO SFZ_Data
-sfz_load fn = do
-  tk <- sfz_load_tokens fn
-  return (sfz_get_data (sfz_tokens_group tk))
+sfz_load = fmap sfz_get_data . sfz_load_sections
 
 -- * RW
 
@@ -257,9 +257,23 @@ sfz_get_nc fn ctl rgn = do
   hdr <- SF.sf_header (sfz_resolve fn ctl rgn)
   return (SF.channelCount hdr)
 
+-- * PP
+
+-- | Print section, nl=new-line
+sfz_section_pp :: Bool -> SFZ_Section -> String
+sfz_section_pp nl (hdr,op) =
+  let tk = hdr : map (\(k,v) -> concat [k,"=",v]) op
+  in (if nl then unlines else unwords) tk
+
+-- | Write sections to file.
+sfz_write_sections :: Bool -> FilePath -> [SFZ_Section] -> IO ()
+sfz_write_sections nl fn sc = writeFile fn (unlines (map (sfz_section_pp nl) sc))
+
 {-
 
 fn = "/home/rohan/rd/j/2019-04-21/FAIRLIGHT/IIX/PLUCKED/koto.sfz"
+sc:_ <- sfz_load_sections fn
+putStrLn $ sfz_section_pp True sc
 (_,_,r:_) <- sfz_load fn
 map (sfz_region_lookup r) ["sample","volume","pan"]
 sfz_region_sample r
