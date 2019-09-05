@@ -15,6 +15,8 @@ loop_mode : string : no_loop one_shot loop_continuous loop_sustain
 loop_start : int : frame-number : 0 : 0 2^32
 loop_end : int : frame-number : 0 : 0 2^32
 ampeg_attack : float : seconds : 0 : 0 100
+ampeg_decay : float : seconds : 0 : 0 100
+ampeg_sustain : float : % : 100 : 0 100
 ampeg_release : float : seconds : 0 : 0 100
 
 -}
@@ -64,6 +66,10 @@ sfz_region_has_opcode k (g,c) = any ((== k) . fst) (g ++ c)
 -- | Does a set of opcodes contain any of a given set of key?
 sfz_region_has_opcode_in :: [String] -> SFZ_Region -> Bool
 sfz_region_has_opcode_in k (g,c) = any ((`elem` k) . fst) (g ++ c)
+
+-- | Delete any opcode with given key.
+sfz_opcode_delete :: String -> [SFZ_Opcode] -> [SFZ_Opcode]
+sfz_opcode_delete k c = filter ((/= k) . fst) c
 
 -- * PARSE
 
@@ -140,20 +146,11 @@ sfz_get_data gr =
     [("<control>",c),("<global>",g)] -> (c,g,sfz_collate g rhs)
     _ -> error "sfz_get_data?"
 
--- * RW
-
--- | Add implict op-codes, ie. if region has @key@ opcode.
-sfz_region_key_rewrite :: SFZ_Region -> SFZ_Region
-sfz_region_key_rewrite (g,c) =
-  case lookup "key" c of
-    Nothing -> (g,c)
-    Just r -> if sfz_region_has_opcode_in ["pitch_keycenter","lokey","hikey"] (g,c)
-              then error "sfz_region_key_rewrite?"
-              else (g,("pitch_keycenter",r):("lokey",r):("hikey",r):c)
-
--- | Rewrite <region> data.
-sfz_data_rewrite :: SFZ_Data -> SFZ_Data
-sfz_data_rewrite (c,g,r) = (c,g,map sfz_region_key_rewrite r)
+-- | Check that if region has a key opcode it doesn't have any of the opcodes that implicitly defines.
+sfz_region_key_validate :: SFZ_Region -> Bool
+sfz_region_key_validate r =
+  not (sfz_region_has_opcode "key" r &&
+       sfz_region_has_opcode_in ["pitch_keycenter","lokey","hikey"] r)
 
 -- * IO
 
@@ -166,7 +163,7 @@ sfz_load_sections fn = do
 
 -- | 'sfz_get_data' of 'sfz_load_sections'
 sfz_load_data :: FilePath -> IO SFZ_Data
-sfz_load_data = fmap (sfz_data_rewrite . sfz_get_data) . sfz_load_sections
+sfz_load_data = fmap sfz_get_data . sfz_load_sections
 
 -- * LOOKUP
 
@@ -200,9 +197,6 @@ sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 sfz_region_sample :: SFZ_Region -> FilePath
 sfz_region_sample r = sfz_region_lookup_err r "sample"
 
-sfz_region_key :: SFZ_Region -> Maybe Word8
-sfz_region_key r = fmap sfz_parse_pitch (sfz_region_lookup r "key")
-
 sfz_region_pitch_keycenter :: SFZ_Region -> Word8
 sfz_region_pitch_keycenter r = sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_keycenter"
 
@@ -211,6 +205,14 @@ sfz_region_lokey r = sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
 
 sfz_region_hikey :: SFZ_Region -> Word8
 sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
+
+-- | If opcode @key@ is give, it defines the triple (pitch_keycenter,lokey,hikey).
+--   Else read these individually.
+sfz_region_key :: SFZ_Region -> (Word8,Word8,Word8)
+sfz_region_key r =
+  case sfz_region_lookup r "key" of
+    Just x -> let n = sfz_parse_pitch x in (n,n,n)
+    Nothing -> (sfz_region_pitch_keycenter r,sfz_region_lokey r,sfz_region_hikey r)
 
 sfz_region_tune :: SFZ_Region -> Int8
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
@@ -246,8 +248,8 @@ sfz_region_loop_end :: SFZ_Region -> Int
 sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
 {- | If loop start and end points are defined,
-     then return with mode defaulting to loop_continuous,
-     else return Nothing and mode defaulting to no_loop.
+     then return them with mode (defaulting to loop_continuous),
+     else return Nothing and mode (defaulting to no_loop).
      Does not read loop data from sample file.
 -}
 sfz_region_loop_data :: SFZ_Region -> (String,Maybe (Int,Int))
@@ -260,29 +262,45 @@ sfz_region_loop_data r =
 sfz_region_ampeg_attack :: SFZ_Region -> Double
 sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
 
+sfz_region_ampeg_decay :: SFZ_Region -> Double
+sfz_region_ampeg_decay r = sfz_region_lookup_read 0 r "ampeg_decay"
+
+sfz_region_ampeg_sustain :: SFZ_Region -> Double
+sfz_region_ampeg_sustain r = sfz_region_lookup_read 100 r "ampeg_sustain"
+
 sfz_region_ampeg_release :: SFZ_Region -> Double
 sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 
+sfz_region_ampeg_adsr :: SFZ_Region -> (Double, Double, Double, Double)
+sfz_region_ampeg_adsr r =
+  (sfz_region_ampeg_attack r,sfz_region_ampeg_decay r
+  ,sfz_region_ampeg_sustain r,sfz_region_ampeg_release r)
+
 -- * QUERY
 
--- | Resolve sample file-name of <region>
+-- | Resolve sample file-name of <region>.
+--   Requires SFZ file name (for directory) and <control> data for default_path.
 --
--- > sfz_resolve "x/x.sfz" [] ([],[("sample","y.z")]) == "x/y.z"
--- > sfz_resolve "x.sfz" [("default_path","x")] ([],[("sample","y.z")]) == "./x/y.z"
+-- > sfz_region_sample_resolve "x/x.sfz" [] ([],[("sample","y.z")]) == "x/y.z"
+-- > sfz_region_sample_resolve "x.sfz" [("default_path","x")] ([],[("sample","y.z")]) == "./x/y.z"
 --
 -- > "x" </> "" </> "y.z" == "x/y.z"
 -- > splitFileName "x.sfz" == ("./","x.sfz")
-sfz_resolve :: FilePath -> SFZ_Control -> SFZ_Region -> FilePath
-sfz_resolve fn ctl rgn =
-  let (dir,_) = splitFileName fn
+sfz_region_sample_resolve :: FilePath -> SFZ_Control -> SFZ_Region -> FilePath
+sfz_region_sample_resolve sfz_fn ctl rgn =
+  let (dir,_) = splitFileName sfz_fn
       path = dir </> fromMaybe "" (lookup "default_path" ctl)
   in path </> sfz_region_sample rgn
 
--- | Get number-of-channels of sample of region.
-sfz_get_nc :: FilePath -> SFZ_Control -> SFZ_Region -> IO Int
-sfz_get_nc fn ctl rgn = do
-  hdr <- SF.sf_header (sfz_resolve fn ctl rgn)
+-- | Get number-of-channels of sample of region, requires reading SF header.
+sfz_region_get_nc :: FilePath -> SFZ_Control -> SFZ_Region -> IO Int
+sfz_region_get_nc sfz_fn ctl rgn = do
+  hdr <- SF.sf_header (sfz_region_sample_resolve sfz_fn ctl rgn)
   return (SF.channelCount hdr)
+
+-- | Run 'sfz_region_get_nc' at each region in sequence.
+sfz_data_get_nc :: FilePath -> SFZ_Data -> IO [Int]
+sfz_data_get_nc sfz_fn (ctl,_,rgn) = mapM (sfz_region_get_nc sfz_fn ctl) rgn
 
 -- * PP
 
@@ -301,12 +319,12 @@ sfz_write_sections nl fn sc = writeFile fn (unlines (map (sfz_section_pp nl) sc)
 fn = "/home/rohan/rd/j/2019-04-21/FAIRLIGHT/IIX/PLUCKED/koto.sfz"
 sc:_ <- sfz_load_sections fn
 putStrLn $ sfz_section_pp True sc
-(_,_,r:_) <- sfz_load fn
+(_,_,r:_) <- sfz_load_data fn
 map (sfz_region_lookup r) ["sample","volume","pan"]
 sfz_region_sample r
 sfz_region_volume r
 sfz_region_pan r
-sfz_region_pitch_keycenter r
+sfz_region_key r
 sfz_region_tune r
 sfz_region_loop_mode r
 sfz_region_loop_start r
@@ -316,13 +334,10 @@ sfz_region_ampeg_attack r
 sfz_region_ampeg_release r
 
 fn = "/home/rohan/data/audio/instr/casacota/zell_1737_415_MeanTone5/8_i.sfz"
-(_,_,r') <- sfz_load fn
-r = map sfz_region_key_rewrite r'
+(_,_,r) <- sfz_load_data fn
 length r == 51
 map sfz_region_sample r
-map sfz_region_pitch_keycenter r
-map sfz_region_lokey r
-map sfz_region_hikey r
+map sfz_region_key r
 map sfz_region_ampeg_attack r
 map sfz_region_ampeg_release r
 
