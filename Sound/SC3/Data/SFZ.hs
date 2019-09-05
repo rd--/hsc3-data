@@ -241,10 +241,10 @@ sfz_loop_mode_sym = flip T.lookup_err sfz_loop_mode_sym_tbl
 sfz_region_loop_mode_sym :: SFZ_Region -> Maybe Char
 sfz_region_loop_mode_sym = fmap sfz_loop_mode_sym . sfz_region_loop_mode
 
-sfz_region_loop_start :: SFZ_Region -> Int
+sfz_region_loop_start :: SFZ_Region -> Word32
 sfz_region_loop_start r = sfz_region_lookup_read 0 r "loop_start"
 
-sfz_region_loop_end :: SFZ_Region -> Int
+sfz_region_loop_end :: SFZ_Region -> Word32
 sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
 {- | If loop start and end points are defined,
@@ -252,7 +252,7 @@ sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
      else return Nothing and mode (defaulting to no_loop).
      Does not read loop data from sample file.
 -}
-sfz_region_loop_data :: SFZ_Region -> (String,Maybe (Int,Int))
+sfz_region_loop_data :: SFZ_Region -> (String,Maybe (Word32,Word32))
 sfz_region_loop_data r =
   case (sfz_region_lookup r "loop_start",sfz_region_lookup r "loop_end") of
     (Just st,Just en) -> (sfz_region_lookup_f "loop_continuous" id r "loop_mode"

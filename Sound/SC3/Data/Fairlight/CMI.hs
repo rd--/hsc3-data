@@ -23,7 +23,7 @@ import Sound.SC3.Data.SFZ {- hsc3-data -}
 -- | (DIR,FILENAME,VOLUME,KEY-CENTER,LOOP-MODE-SYM,LOOP-START,LOOP-END,EG-ATTACK,EG-RELEASE)
 --
 -- For CMI in all cases VOLUME=-3 ; KEYCENTER=A3=57
-type CMI_SFZ = (FilePath,FilePath,Double, Word8, Char, Int, Int, Double, Double)
+type CMI_SFZ = (FilePath,FilePath,Double, Word8, Char, Word32, Word32, Double, Double)
 
 -- | Parse SFZ <region>.
 cmi_sfz_rgn_parse :: FilePath -> SFZ_Region -> CMI_SFZ
