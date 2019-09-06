@@ -206,7 +206,7 @@ sfz_region_lokey r = sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
 sfz_region_hikey :: SFZ_Region -> Word8
 sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
 
--- | If opcode @key@ is give, it defines the triple (pitch_keycenter,lokey,hikey).
+-- | If opcode @key@ exists it defines the triple (pitch_keycenter,lokey,hikey).
 --   Else read these individually.
 sfz_region_key :: SFZ_Region -> (Word8,Word8,Word8)
 sfz_region_key r =
