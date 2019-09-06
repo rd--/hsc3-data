@@ -1,3 +1,4 @@
+-- | Printers and parsers for timestamps.
 module Sound.SC3.Data.Timestamp where
 
 import qualified Data.Time as T {- time -}
@@ -11,6 +12,12 @@ gen_iso8601_time_stamp :: Bool -> IO String
 gen_iso8601_time_stamp ext = do
   t <- T.getZonedTime
   return (T.formatTime T.defaultTimeLocale (if ext then  "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S") t)
+
+-- | Variant useful for forming portable file-names, with @:@ re-written as @-@.
+gen_iso8601_time_stamp_fn :: IO String
+gen_iso8601_time_stamp_fn =
+  let rw = map (\c -> if c == ':' then '-' else c)
+  in fmap rw (gen_iso8601_time_stamp True)
 
 -- * PARSE
 
@@ -81,6 +88,7 @@ locate f l =
                 Just r -> Just r
                 Nothing -> locate f l'
 
+-- | Attempt to parse time-stamp using a sequence of format strings.
 parse_timestamp_fmt_seq :: T.ParseTime t => [String] -> String -> Maybe t
 parse_timestamp_fmt_seq fmt s =
     let ptm = T.parseTimeM True T.defaultTimeLocale
