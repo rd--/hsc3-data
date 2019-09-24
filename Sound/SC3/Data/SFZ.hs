@@ -1,4 +1,4 @@
-{- | SFZ <http://www.sfzformat.com/legacy/>
+{- | SFZ <http://www.sfzformat.com/> (<http://www.sfzformat.com/legacy/>)
 
 <control>
 default_path : string : directory-name
@@ -44,20 +44,22 @@ type SFZ_Opcode = (String,String)
 -- | A section is a <header> and a set of opcodes.
 type SFZ_Section = (String,[SFZ_Opcode])
 
--- | The <control> header defines a set of opcodes.
+-- | The <control> section defines a set of opcodes.
 type SFZ_Control = [SFZ_Opcode]
 
--- | The <global> header defines a set of opcodes.
+-- | The <global> section defines a set of opcodes.
 type SFZ_Global = [SFZ_Opcode]
 
--- | The <group> header defines a set of opcodes.
+-- | <group> sections define a set of opcodes.
 type SFZ_Group = [SFZ_Opcode]
 
--- | The <region> header defines a set of opcodes, and has salient <global> and <group> opcodes.
+-- | <region> sections define a set of opcodes, and have salient <global> and <group> opcodes.
 type SFZ_Region = ([SFZ_Opcode],[SFZ_Opcode])
 
 -- | (control,global,[region])
 type SFZ_Data = (SFZ_Control,SFZ_Global,[SFZ_Region])
+
+-- * OPCODES
 
 -- | Does a set of opcodes contain given key?
 sfz_region_has_opcode :: String -> SFZ_Region -> Bool
@@ -146,13 +148,7 @@ sfz_get_data gr =
     [("<control>",c),("<global>",g)] -> (c,g,sfz_collate g rhs)
     _ -> error "sfz_get_data?"
 
--- | Check that if region has a key opcode it doesn't have any of the opcodes that implicitly defines.
-sfz_region_key_validate :: SFZ_Region -> Bool
-sfz_region_key_validate r =
-  not (sfz_region_has_opcode "key" r &&
-       sfz_region_has_opcode_in ["pitch_keycenter","lokey","hikey"] r)
-
--- * IO
+-- * READ/IO
 
 -- | Read a file, remove comments, parse into sections.
 sfz_load_sections :: FilePath -> IO [SFZ_Section]
@@ -197,23 +193,6 @@ sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 sfz_region_sample :: SFZ_Region -> FilePath
 sfz_region_sample r = sfz_region_lookup_err r "sample"
 
-sfz_region_pitch_keycenter :: SFZ_Region -> Word8
-sfz_region_pitch_keycenter r = sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_keycenter"
-
-sfz_region_lokey :: SFZ_Region -> Word8
-sfz_region_lokey r = sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
-
-sfz_region_hikey :: SFZ_Region -> Word8
-sfz_region_hikey r = sfz_region_lookup_f 127 sfz_parse_pitch r "hikey"
-
--- | If opcode @key@ exists it defines the triple (pitch_keycenter,lokey,hikey).
---   Else read these individually.
-sfz_region_key :: SFZ_Region -> (Word8,Word8,Word8)
-sfz_region_key r =
-  case sfz_region_lookup r "key" of
-    Just x -> let n = sfz_parse_pitch x in (n,n,n)
-    Nothing -> (sfz_region_pitch_keycenter r,sfz_region_lokey r,sfz_region_hikey r)
-
 sfz_region_tune :: SFZ_Region -> Int8
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
 
@@ -247,18 +226,6 @@ sfz_region_loop_start r = sfz_region_lookup_read 0 r "loop_start"
 sfz_region_loop_end :: SFZ_Region -> Word32
 sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
-{- | If loop start and end points are defined,
-     then return them with mode (defaulting to loop_continuous),
-     else return Nothing and mode (defaulting to no_loop).
-     Does not read loop data from sample file.
--}
-sfz_region_loop_data :: SFZ_Region -> (String,Maybe (Word32,Word32))
-sfz_region_loop_data r =
-  case (sfz_region_lookup r "loop_start",sfz_region_lookup r "loop_end") of
-    (Just st,Just en) -> (sfz_region_lookup_f "loop_continuous" id r "loop_mode"
-                         ,Just (read st,read en))
-    _ -> (sfz_region_lookup_f "no_loop" id r "loop_mode",Nothing)
-
 sfz_region_ampeg_attack :: SFZ_Region -> Double
 sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
 
@@ -275,6 +242,36 @@ sfz_region_ampeg_adsr :: SFZ_Region -> (Double, Double, Double, Double)
 sfz_region_ampeg_adsr r =
   (sfz_region_ampeg_attack r,sfz_region_ampeg_decay r
   ,sfz_region_ampeg_sustain r,sfz_region_ampeg_release r)
+
+-- * COMPOSITE
+
+-- | Check that if region has a key opcode it doesn't have any of the opcodes it implicitly defines.
+sfz_region_key_validate :: SFZ_Region -> Bool
+sfz_region_key_validate r =
+  not (sfz_region_has_opcode "key" r &&
+       sfz_region_has_opcode_in ["pitch_keycenter","lokey","hikey"] r)
+
+-- | If opcode @key@ exists it defines the triple (pitch_keycenter,lokey,hikey).
+--   Else read these opcodes individually, with defaults.
+sfz_region_key :: SFZ_Region -> (Word8,Word8,Word8)
+sfz_region_key r =
+  case sfz_region_lookup r "key" of
+    Just x -> let n = sfz_parse_pitch x in (n,n,n)
+    Nothing -> (sfz_region_lookup_f 60 sfz_parse_pitch r "pitch_keycenter"
+               ,sfz_region_lookup_f 0 sfz_parse_pitch r "lokey"
+               ,sfz_region_lookup_f 127 sfz_parse_pitch r "hikey")
+
+{- | If loop start and end points are defined,
+     then return them with mode (defaulting to loop_continuous),
+     else return Nothing and mode (defaulting to no_loop).
+     Does not read loop data from sample file.
+-}
+sfz_region_loop_data :: SFZ_Region -> (String,Maybe (Word32,Word32))
+sfz_region_loop_data r =
+  case (sfz_region_lookup r "loop_start",sfz_region_lookup r "loop_end") of
+    (Just st,Just en) -> (sfz_region_lookup_f "loop_continuous" id r "loop_mode"
+                         ,Just (read st,read en))
+    _ -> (sfz_region_lookup_f "no_loop" id r "loop_mode",Nothing)
 
 -- * QUERY
 
@@ -302,7 +299,13 @@ sfz_region_get_nc sfz_fn ctl rgn = do
 sfz_data_get_nc :: FilePath -> SFZ_Data -> IO [Int]
 sfz_data_get_nc sfz_fn (ctl,_,rgn) = mapM (sfz_region_get_nc sfz_fn ctl) rgn
 
--- * PP
+-- | SFZ note range (lo,hi), inclusive
+sfz_data_rng :: SFZ_Data -> (Word8,Word8)
+sfz_data_rng (_,_,rgn) =
+  let (_,l,r) = unzip3 (map sfz_region_key rgn)
+  in (minimum l,maximum r)
+
+-- * WRITE/IO
 
 -- | Print section, nl=new-line
 sfz_section_pp :: Bool -> SFZ_Section -> String
@@ -334,11 +337,13 @@ sfz_region_ampeg_attack r
 sfz_region_ampeg_release r
 
 fn = "/home/rohan/data/audio/instr/casacota/zell_1737_415_MeanTone5/8_i.sfz"
-(_,_,r) <- sfz_load_data fn
+z <- sfz_load_data fn
+sfz_data_get_nc fn z
+sfz_data_rng z == (36,86)
+(_,_,r) = z
 length r == 51
 map sfz_region_sample r
 map sfz_region_key r
 map sfz_region_ampeg_attack r
 map sfz_region_ampeg_release r
-
 -}
