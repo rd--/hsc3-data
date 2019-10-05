@@ -104,6 +104,8 @@ load_struct fn =
        ".xyz" -> fmap (xyz_to_struct . f) (XYZ.xyz_load fn)
        ext -> error (show ("load_struct",fn,ext))
 
+-- * I/O - DIR
+
 -- | 'mol_to_struct' of 'MOL.mol_load_dir'
 load_mol_structs :: FilePath -> IO [STRUCT]
 load_mol_structs = fmap (map mol_to_struct) . MOL.mol_load_dir
