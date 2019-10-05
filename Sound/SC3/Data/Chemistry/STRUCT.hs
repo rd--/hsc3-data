@@ -93,17 +93,14 @@ xyz_to_struct (nm,(k,dsc,atoms)) = (nm,k,dsc,atoms,[])
 
 -- * I/O
 
+-- | 'mol_to_struct' of 'MOL.mol_load_dir'
 load_mol_structs :: FilePath -> IO [STRUCT]
-load_mol_structs dir = do
-  mol_set <- MOL.mol_load_dir dir
-  return (map (mol_to_struct) mol_set)
+load_mol_structs = fmap (map mol_to_struct) . MOL.mol_load_dir
 
+-- | 'poscar_to_struct' of 'POSCAR.poscar_load_dir'
 load_poscar_structs :: POSCAR.POSCAR_TY -> FilePath -> IO [STRUCT]
-load_poscar_structs ty dir = do
-  poscar_set <- POSCAR.poscar_load_dir dir
-  return (map (poscar_to_struct ty) poscar_set)
+load_poscar_structs ty = fmap (map (poscar_to_struct ty)) . POSCAR.poscar_load_dir
 
+-- | 'xyz_to_struct' of 'XYZ.xyz_load_dir'
 load_xyz_structs :: FilePath -> IO [STRUCT]
-load_xyz_structs dir = do
-  xyz_set <- XYZ.xyz_load_dir dir
-  return (map xyz_to_struct xyz_set)
+load_xyz_structs = fmap (map xyz_to_struct) . XYZ.xyz_load_dir
