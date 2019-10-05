@@ -25,7 +25,7 @@ dot_run_layout = readProcess "dot" ["-T","dot"]
 
 -- | 'GV.parseDotGraph' of 'T.pack'.
 --
--- > let st = [G.DE (G.DotEdge 1 2 []),G.DE (G.DotEdge 2 3 [])]
+-- > st = [G.DE (G.DotEdge 1 2 []),G.DE (G.DotEdge 2 3 [])]
 -- > F.toList (G.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
 dg_parse :: (Ord t,GV.ParseDot t) => String -> G.DotGraph t
 dg_parse = GV.parseDotGraph . T.pack

@@ -12,8 +12,11 @@ picometres_to_angstroms = (/ 100)
 angstroms_to_picometres :: Num n => n -> n
 angstroms_to_picometres = (* 100)
 
+type Atomic_Number = Int
+type Atomic_Symbol = String
+
 -- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
-periodic_table :: [(Int,String,String,Double)]
+periodic_table :: [(Atomic_Number,Atomic_Symbol,String,Double)]
 periodic_table =
   [(1,"H","Hydrogen",1.00794)
   ,(2,"He","Helium",4.002602)
@@ -135,11 +138,14 @@ periodic_table =
   ,(118,"Og","Oganesson",294)
   ]
 
-atomic_number :: String -> Maybe Int
+-- | Lookup atomic symbol in 'periodic_table' and return atomic number.
+atomic_number :: Atomic_Symbol -> Maybe Atomic_Number
 atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
 
+-- | Erroring variant.
+--
 -- > map atomic_number_err (words "C Sc Ag") == [6,21,47]
-atomic_number_err :: String -> Int
+atomic_number_err :: Atomic_Symbol -> Atomic_Number
 atomic_number_err sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number sym)
 
 {- | (atomic-number,covalent-radius:picometres)
@@ -151,7 +157,7 @@ Cordero et al. (2008), and Pyykkö and Atsumi (2009)
 > (minimum r,average r,maximum r) == (28,152,260)
 
 -}
-covalent_radii_table :: Num n => [(Int,n)]
+covalent_radii_table :: Num n => [(Atomic_Number,n)]
 covalent_radii_table =
   [(001,31)
   ,(002,28)
@@ -250,10 +256,12 @@ covalent_radii_table =
   ,(095,180)
   ,(096,169)]
 
-covalent_radius :: Num n => Int -> Maybe n
+-- | Lookup covalent radius of element (given by atomic number) in 'covalent_radii_table'.
+covalent_radius :: Num n => Atomic_Number -> Maybe n
 covalent_radius k = lookup k covalent_radii_table
 
-covalent_radius_err :: Num n => Int -> n
+-- | Erroring variant.
+covalent_radius_err :: Num n => Atomic_Number -> n
 covalent_radius_err = fromMaybe (error "covalent_radii") . covalent_radius
 
 {- | (atomic-number,covalent-radius:angstroms)
@@ -265,7 +273,7 @@ covalent_radius_err = fromMaybe (error "covalent_radii") . covalent_radius
 > (minimum r,round (average r),maximum r) == (23,155,260)
 
 -}
-covalent_radii_csd_table :: Fractional n => [(Int,n)]
+covalent_radii_csd_table :: Fractional n => [(Atomic_Number,n)]
 covalent_radii_csd_table =
   [(001,0.23)
   ,(002,1.5)
@@ -378,17 +386,19 @@ covalent_radii_csd_table =
   ,(109,1.5)
   ,(110,1.5)]
 
-covalent_radius_csd :: Fractional n => Int -> Maybe n
+-- | Lookup covalent radius of element (given by atomic number) in 'covalent_radii_csd_table'.
+covalent_radius_csd :: Fractional n => Atomic_Number -> Maybe n
 covalent_radius_csd k = lookup k covalent_radii_csd_table
 
-covalent_radius_csd_err :: Fractional n => Int -> n
+-- | Erroring variant.
+covalent_radius_csd_err :: Fractional n => Atomic_Number -> n
 covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radius_csd
 
 type DIST_MSR t = (((Int,Int),(V3 t,V3 t)),t,t,t,Bool,Bool)
 
 -- | /rad_f/ is the atomic symbol to covalent radius function.
 -- /(t_min,t_max)/ are the tolerance values, /t_min/ is ordinarily negative.
-calculate_distance_set :: (Ord t,Floating t) => (String -> t) -> (t,t) -> [(String, V3 t)] -> [DIST_MSR t]
+calculate_distance_set :: (Ord t,Floating t) => (Atomic_Symbol -> t) -> (t,t) -> [(Atomic_Symbol, V3 t)] -> [DIST_MSR t]
 calculate_distance_set rad_f (t_min,t_max) e =
   let f (k0,(a0,p0)) (k1,(a1,p1)) =
         if k0 < k1
@@ -409,13 +419,13 @@ calculate_distance_set rad_f (t_min,t_max) e =
 -- The rule is: if the distance between two atoms is within a
 -- tolerance of the sum of their covalent radii, they are considered
 -- bonded.
-calculate_bonds :: (Floating n,Ord n) => (String -> n) -> (n,n) -> [(String,V3 n)] -> [((Int,Int),(V3 n,V3 n))]
+calculate_bonds :: (Floating n,Ord n) => (Atomic_Symbol -> n) -> (n,n) -> [(Atomic_Symbol,V3 n)] -> [((Int,Int),(V3 n,V3 n))]
 calculate_bonds rad_f th =
   let f (r,_,_,_,t0,t1) = if t0 && t1 then Just r else Nothing
   in mapMaybe f . calculate_distance_set rad_f th
 
 -- | (atomic-number,cpk-colour:rgb24)
-cpk_color_table :: Num n => [(Int,n)]
+cpk_color_table :: Num n => [(Atomic_Number,n)]
 cpk_color_table =
   [(001,0xFFFFFF)
   ,(002,0xD9FFFF)
@@ -527,14 +537,16 @@ cpk_color_table =
   ,(108,0xE6002E)
   ,(109,0xEB0026)]
 
-cpk_color :: Num n => Int -> Maybe n
+-- | Lookup 'cpk_color_table'.
+cpk_color :: Num n => Atomic_Number -> Maybe n
 cpk_color k = lookup k cpk_color_table
 
-cpk_color_err :: Num n => Int -> n
+-- | Erroring variant.
+cpk_color_err :: Num n => Atomic_Number -> n
 cpk_color_err = fromMaybe (error "cpk_color") . cpk_color
 
 -- | (atomic-number,atomic-radius,ion-radius,van-del-waals-radius)
-atomic_ion_vdw_radii_table :: Fractional n => [(Int,n,n,n)]
+atomic_ion_vdw_radii_table :: Fractional n => [(Atomic_Number,n,n,n)]
 atomic_ion_vdw_radii_table =
   [(1,37,-1,120)
   ,(2,32,-1,140)

@@ -1,5 +1,3 @@
--- | Convert a CSV file having bit-indices of the form (row,column) to PBM file.
-
 import System.Environment {- base -}
 import qualified Text.CSV.Lazy.String as C {- lazy-csv -}
 
@@ -28,8 +26,6 @@ csv_to_indices (i,j) =
     let f r = (r !! i,r !! j)
     in map f
 
--- > let csv_fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2016-07-06/pt-2-20.csv"
--- > mk_real csv_fn (1001,1001) (0,1) "/tmp/pt-2-20.pbm"
 mk_pt_real_pbm :: FilePath -> Dimensions -> (Int,Int) -> FilePath -> IO ()
 mk_pt_real_pbm csv_fn dm ix pbm_fn = do
   dat <- csv_load_double_round csv_fn
@@ -43,3 +39,9 @@ main = do
     ["pt","real","pbm",csv_fn,h,w,i,j,pbm_fn] -> mk_pt_real_pbm csv_fn (read h,read w) (read i,read j) pbm_fn
     _ -> putStrLn "csv-to-img {pt} {real} {pbm} csv-file height width y-index x-index pbm-file"
 
+{-
+
+let csv_fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2016-07-06/pt-2-20.csv"
+mk_real csv_fn (1001,1001) (0,1) "/tmp/pt-2-20.pbm"
+
+-}
