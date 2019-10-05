@@ -111,8 +111,11 @@ load_mol_structs :: FilePath -> IO [STRUCT]
 load_mol_structs = fmap (map mol_to_struct) . MOL.mol_load_dir
 
 -- | 'poscar_to_struct' of 'POSCAR.poscar_load_dir'
-load_poscar_structs :: POSCAR.POSCAR_TY -> FilePath -> IO [STRUCT]
-load_poscar_structs ty = fmap (map (poscar_to_struct ty)) . POSCAR.poscar_load_dir
+load_poscar_structs_ty :: POSCAR.POSCAR_TY -> FilePath -> IO [STRUCT]
+load_poscar_structs_ty ty = fmap (map (poscar_to_struct ty)) . POSCAR.poscar_load_dir
+
+load_poscar_structs :: FilePath -> IO [STRUCT]
+load_poscar_structs = load_poscar_structs_ty POSCAR.POSCAR_C
 
 -- | 'xyz_to_struct' of 'XYZ.xyz_load_dir'
 load_xyz_structs :: FilePath -> IO [STRUCT]
