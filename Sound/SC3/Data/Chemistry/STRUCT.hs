@@ -2,6 +2,7 @@
 module Sound.SC3.Data.Chemistry.STRUCT where
 
 import Data.Maybe {- base -}
+import System.FilePath {- filepath -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
@@ -92,6 +93,15 @@ xyz_to_struct :: (String,XYZ.XYZ) -> STRUCT
 xyz_to_struct (nm,(k,dsc,atoms)) = (nm,k,dsc,atoms,[])
 
 -- * I/O
+
+load_struct :: FilePath -> IO STRUCT
+load_struct fn =
+  let f x = (takeBaseName fn,x)
+  in case takeExtension fn of
+       "mol" -> fmap (mol_to_struct . f) (MOL.mol_load fn)
+       "poscar" -> fmap (poscar_to_struct POSCAR.POSCAR_C . f) (POSCAR.poscar_load fn)
+       "xyz" -> fmap (xyz_to_struct . f) (XYZ.xyz_load fn)
+       _ -> error "load_struct"
 
 -- | 'mol_to_struct' of 'MOL.mol_load_dir'
 load_mol_structs :: FilePath -> IO [STRUCT]

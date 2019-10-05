@@ -18,10 +18,10 @@ read_r s =
     _ -> read s
 
 -- | (atomic-symbol,xyz-coordinate)
-type ATOM = (String,V3 Double)
+type XYZ_ATOM = (String,V3 Double)
 
 -- | (k = n-atoms,d = description,e = [atom]
-type XYZ = (Int,String,[ATOM])
+type XYZ = (Int,String,[XYZ_ATOM])
 
 -- | Numbner of atoms.
 xyz_degree :: XYZ -> Int
@@ -46,7 +46,7 @@ xyz_parse_cnt s =
 {- | Each entry describing an atom must contain at least four fields of
 information separated by whitespace: the atom's type and its X, Y, and
 Z positions. -}
-xyz_parse_entry :: String -> String -> (String,V3 Double)
+xyz_parse_entry :: String -> String -> XYZ_ATOM
 xyz_parse_entry fn s =
   case words s of
     a:x:y:z:_ -> (a,(read_r x,read_r y,read_r z))
