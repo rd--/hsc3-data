@@ -1,3 +1,5 @@
+-- | Periodic table of the elements.
+--   <https://pubchem.ncbi.nlm.nih.gov/periodic-table/>
 module Sound.SC3.Data.Chemistry.Elements where
 
 import Data.Maybe {- base -}
@@ -12,7 +14,10 @@ picometres_to_angstroms = (/ 100)
 angstroms_to_picometres :: Num n => n -> n
 angstroms_to_picometres = (* 100)
 
+-- | Atomic number (1 - 118)
 type Atomic_Number = Int
+
+-- | Atomic symbol (1-2 char)
 type Atomic_Symbol = String
 
 -- | (atomic-number,atomic-symbol,name,standard-atomic-weight)

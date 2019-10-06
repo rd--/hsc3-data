@@ -1,4 +1,8 @@
--- | POSCAR file format.  Coordinates are in Angstroms.
+{- | POSCAR file format.
+
+<https://cms.mpi.univie.ac.at/vasp/guide/node59.html>.
+Coordinates are in Angstroms.
+-}
 module Sound.SC3.Data.Chemistry.POSCAR where
 
 import Data.Char {- base -}
@@ -85,7 +89,7 @@ poscar_bounds p =
 
 -- | Load ".poscar" file.
 --
--- > p <- poscar_load "/home/rohan/data/chemistry/aflow/poscar/A3B_cI32_204_g_c.poscar"
+-- > p <- poscar_load "/home/rohan/sw/hsc3-data/data/chemistry/aflow/poscar/A3B_cI32_204_g_c.poscar"
 -- > poscar_bounds p == let (l,r) = (-1.895,4.979302000000001) in ((l,l,l),(r,r,r))
 poscar_load :: FilePath -> IO POSCAR
 poscar_load = fmap poscar_parse . readFile

@@ -14,15 +14,19 @@ module Sound.SC3.Data.Chemistry.AFLOW where
 
 import qualified Music.Theory.Array.CSV as T {- hmt -}
 
+-- | Local AFLOW directory.
 aflow_dir :: FilePath
 aflow_dir = "/home/rohan/sw/hsc3-data/data/chemistry/aflow/"
 
+-- | Local AFLOW file.
 aflow_file :: FilePath -> FilePath
 aflow_file = (++) aflow_dir
 
+-- | AFLOW URL for crystal given code.
 aflow_uri :: String -> String
 aflow_uri nm = "http://www.aflowlib.org/CrystalDatabase/" ++ nm ++ ".html"
 
+-- | Read (index,name,code) triples from CSV file.
 read_aflow_index_csv :: FilePath -> IO [(Int, String, String)]
 read_aflow_index_csv fn = do
   tbl <- T.csv_table_read_def id fn
@@ -32,8 +36,10 @@ read_aflow_index_csv fn = do
           _ -> error "read_aflow_index_csv"
   return (map f tbl)
 
+-- | Read A index (ie. PART 1)
 aflow_index_A :: IO [(Int,String,String)]
 aflow_index_A = read_aflow_index_csv (aflow_file "csv/index.A.csv")
 
+-- | Read A index (ie. PART 2)
 aflow_index_B :: IO [(Int,String,String)]
 aflow_index_B = read_aflow_index_csv (aflow_file "csv/index.B.csv")

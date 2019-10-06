@@ -13,9 +13,11 @@ import System.FilePath {- filepath -}
 import Sound.SC3.Data.Chemistry.POSCAR {- hsc3-data -}
 import Sound.SC3.Data.Chemistry.STRUCT {- hsc3-data -}
 
+-- | Local MP directory
 mp_dir :: FilePath
 mp_dir = "/home/rohan/sw/hsc3-data/data/chemistry/mp"
 
+-- | Local MP POSCAR file
 mp_poscar_file :: String -> FilePath
 mp_poscar_file nm = mp_dir </> "poscar" </> nm <.> "poscar"
 

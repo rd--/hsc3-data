@@ -1,4 +1,7 @@
--- | STRUCT, minimal structure data type.
+{- | STRUCT, minimal structure data type.
+
+Files in XYZ, MOL and POSCAR file formats can be loaded into a STRUCT data.
+-}
 module Sound.SC3.Data.Chemistry.STRUCT where
 
 import Data.Maybe {- base -}

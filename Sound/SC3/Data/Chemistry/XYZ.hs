@@ -1,4 +1,8 @@
--- | XYZ file format.  Coordinates are ordinarily Angstroms.
+{- | XYZ file format.
+
+<http://www.ccl.net/chemistry/resources/messages/1996/10/21.005-dir/index.html>
+Coordinates are ordinarily Angstroms.
+-}
 module Sound.SC3.Data.Chemistry.XYZ where
 
 import Data.List {- base -}
@@ -84,3 +88,46 @@ xyz_load_dir dir = do
   let nm = map takeBaseName fn
   dat <- mapM (xyz_load . (</>) dir) fn
   return (zip nm dat)
+
+{-
+
+XYZ datafiles specify molecular geometries using a Cartesian
+coordinate system.  This simple, stripped-down, ASCII-readable format
+is intended to serve as a "transition" format for the XMol series of
+applications.  For example, suppose a molecular datafile was in a
+format not supported by XMol.  In order to read the data into XMol, it
+would be possible to modify the datafile, perhaps by creating a shell
+script, so that it fit the relatively lenient requirements of the XYZ
+format specification.  Once data is in XYZ format, it may be examined
+by XMol, or converted to yet another format.
+
+The XYZ format supports multi-step datasets.  Each step is represented
+by a two-line "header," followed by one line for each atom.  The first
+line of a step's header is the number of atoms in that step.  This
+integer may be preceded by whitespace; anything on the line after the
+integer is ignored.  The second line of the header leaves room for a
+descriptive string.  This line may be blank, or it may contain some
+information pertinent to that particular step, but it must exist, and
+it must be just one line long.
+
+Each line of text describing a single atom must contain at least four
+fields of information, separated by whitespace: the atom's type (a
+short string of alphanumeric characters), and its x-, y-, and
+z-positions.  Optionally, extra fields may be used to specify a charge
+for the atom, and/or a vector associated with the atom. If an input
+line contains five or eight fields, the fifth field is interpreted as
+the atom's charge; otherwise, a charge of zero is assumed.  If an
+input line contains seven or eight fields, the last three fields are
+interpreted as the components of a vector.  These components should be
+specified in angstroms.
+
+Note that the XYZ format doesn't contain connectivity information.
+This intentional omission allows for greater flexibility: to create an
+XYZ file, you don't need to know where a molecule's bonds are; you
+just need to know where its atoms are.  Connectivity information is
+generated automatically for XYZ files as they are read into
+XMol-related applications.  Briefly, if the distance between two atoms
+is less than the sum of their covalent radii, they are considered
+bonded.
+
+-}
