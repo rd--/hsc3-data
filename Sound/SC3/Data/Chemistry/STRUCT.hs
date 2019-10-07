@@ -17,7 +17,7 @@ import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
 -- | (atomic-symbol,xyz-coordinate)
 type ATOM = (String,V3 Double)
 
--- | (i,j), indicies into ATOM sequence.
+-- | (i,j), indicies into ATOM sequence (ZERO indexed)
 type BOND = (Int,Int)
 
 -- | (name,degree=n-atoms,description,atoms,bonds)
@@ -81,8 +81,9 @@ struct_center c (nm,k,dsc,a,b) =
 
 mol_to_struct :: (String,MOL.MOL) -> STRUCT
 mol_to_struct (nm,(_nm,dsc,a_n,_b_n,a,b)) =
-  let swap (i,j) = (j,i)
-  in (nm,a_n,dsc,map swap a,map fst b)
+  let atom_f (i,j) = (j,i)
+      bond_f ((i,j),_,_) = (i - 1,j - 1) -- MOL bond data is one-indexed
+  in (nm,a_n,dsc,map atom_f a,map bond_f b)
 
 poscar_to_struct :: POSCAR.POSCAR_TY -> (String,POSCAR.POSCAR) -> STRUCT
 poscar_to_struct ty (nm,p) =
