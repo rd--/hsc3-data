@@ -1,4 +1,4 @@
-{- | MOL file format.
+{- | MOL/SDF file format.
 
 Dalby, A. et al. (1992). "Description of several chemical structure
 file formats used by computer programs developed at Molecular Design
@@ -59,14 +59,22 @@ mol_parse s =
 mol_load :: FilePath -> IO MOL
 mol_load fn = readFile fn >>= return . mol_parse
 
--- | List of all ".mol" files at /dir/.
-mol_dir_entries :: FilePath -> IO [FilePath]
-mol_dir_entries = fmap (filter ((==) ".mol" . takeExtension)) . listDirectory
+-- | List of all .ext files at /dir/.  SDF is a superset of MOL, extensions are ".mol" and ".sdf".
+mol_dir_entries :: String -> FilePath -> IO [FilePath]
+mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
 
--- | Load all ".mol" files at directory.
-mol_load_dir :: FilePath -> IO [(String, MOL)]
-mol_load_dir dir = do
-  fn <- mol_dir_entries dir
+-- | Load all .ext files at directory.
+mol_load_dir :: String -> FilePath -> IO [(String, MOL)]
+mol_load_dir ext dir = do
+  fn <- mol_dir_entries ext dir
   let nm = map takeBaseName fn
   dat <- mapM (mol_load . (</>) dir) fn
   return (zip nm dat)
+
+{-
+
+let fn = "/home/rohan/rd/j/2019-10-08/sdf/5288826.sdf"
+m <- mol_load fn
+m
+
+-}

@@ -111,8 +111,8 @@ load_struct fn =
 -- * I/O - DIR
 
 -- | 'mol_to_struct' of 'MOL.mol_load_dir'
-load_mol_structs :: FilePath -> IO [STRUCT]
-load_mol_structs = fmap (map mol_to_struct) . MOL.mol_load_dir
+load_mol_structs :: String -> FilePath -> IO [STRUCT]
+load_mol_structs ext = fmap (map mol_to_struct) . MOL.mol_load_dir ext
 
 -- | 'poscar_to_struct' of 'POSCAR.poscar_load_dir'
 load_poscar_structs_ty :: POSCAR.POSCAR_TY -> FilePath -> IO [STRUCT]
