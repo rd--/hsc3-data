@@ -3,7 +3,6 @@
 -- Simpler than MusicXML transfer for cases where durations are straightforward.
 module Sound.SC3.Data.Midi.Plain where
 
-import Data.Function {- base -}
 import Data.Maybe {- base -}
 
 import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
@@ -54,22 +53,13 @@ write_midi0 = write_midi0_opt (Just 60) (Just (4,4))
 
 -- * TRANSLATE
 
--- | Read 'T.Event' as real and quantize.
-event_fmidi_to_midi :: Integral t => (Double -> t) -> T.Event Double -> T.Event t
-event_fmidi_to_midi f (mnn,vel,ch,param) = (f mnn,f vel,ch,param)
-
-event_mnn :: T.Event t -> t
-event_mnn (mnn,_,_,_) = mnn
-
-event_ch :: T.Event t -> T.Channel
-event_ch (_,_,ch,_) = ch
-
-event_eq :: Eq t => T.Event t -> T.Event t -> Bool
-event_eq = ((==) `on` (\(mnn,_,ch,_) -> (mnn,ch)))
-
 -- | 'T.Event' 'T.Wseq' node to 'Note'.
 mnd_to_note :: ((Double,Double),T.Event Int) -> Note
 mnd_to_note = id -- ((st,du),(mnn,vel,ch,param)) = ((st,du),(mnn,vel,T.word8_to_int ch,param))
+
+-- | Type-specialised
+event_fmidi_to_midi :: Integral t => (Double -> t) -> T.Event Double -> T.Event t
+event_fmidi_to_midi = T.event_cast
 
 -- | Read either MND or MNDD CSV file and write FORMAT-0 midi file.
 --
@@ -79,9 +69,9 @@ cvs_mnd_to_midi0 :: Bool -> Int -> (Int, Int) -> FilePath -> FilePath -> IO ()
 cvs_mnd_to_midi0 rw tc ts fn1 fn2 = do
   sq <- T.csv_midi_read_wseq fn1
   let f1 = T.wseq_map (event_fmidi_to_midi round)
-      f2 = if rw then T.wseq_remove_overlaps_rw event_eq id else id
+      f2 = if rw then T.wseq_remove_overlaps_rw T.event_eq_ol id else id
       sq_n = map mnd_to_note (f2 (f1 sq))
-  print ("cvs_mnd_to_midi0","#",length sq,"o/l",T.wseq_has_overlaps event_eq sq)
+  print ("cvs_mnd_to_midi0","#",length sq,"o/l",T.wseq_has_overlaps T.event_eq_ol sq)
   write_midi0_opt (Just tc) (Just ts) fn2 [sq_n]
 
 -- * Read
@@ -95,7 +85,7 @@ track_to_wseq =
                        C.NoteOff ch mnn vel ->
                            Just (tm,T.End (mnn,vel,T.int_to_word8 ch,[]))
                        _ -> Nothing
-    in T.tseq_begin_end_to_wseq event_eq . mapMaybe f
+    in T.tseq_begin_end_to_wseq T.event_eq_ol . mapMaybe f
 
 -- | Load Type-0 or Type-1 MIDI file as 'SEQ' data.  Ignores
 -- everything except note on and off messages.
