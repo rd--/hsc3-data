@@ -5,29 +5,42 @@ file formats used by computer programs developed at Molecular Design
 Limited". Journal of Chemical Information and Modeling. 32 (3): 244.
 
 <https://pubs.acs.org/doi/abs/10.1021/ci00007a012>
+
+MOL fields are fixed length.
 -}
 module Sound.SC3.Data.Chemistry.MOL where
 
+import Data.List.Split {- split -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
+-- > length mol_counts_flen == 12
+-- > sum mol_counts_flen == 39
+mol_counts_flen :: [Int]
+mol_counts_flen = replicate 11 3 ++ [6]
+
 mol_read_counts :: String -> (Int,Int)
 mol_read_counts s =
-  case words s of
-    [a,b,"0",_d,"0","0","0","0","0999","V2000"] -> (read a,read b)
-    [a,b,"0","0","0","0","0","0","0","0999","V2000"] -> (read a,read b)
-    _ -> error ("mol_read_counts: " ++ s)
+  case splitPlaces mol_counts_flen s of
+    [a,b,"  0","   ","  0","  0","  0","  0","  0","  0","999"," V2000"] -> (read a,read b)
+    [a,b,    _,    _,    _,    _,    _,    _,    _,    _,"999"," V2000"] -> (read a,read b)
+    r -> error ("mol_read_counts: " ++ s ++ show r)
 
 -- | (xyz-coordinate, atomic-symbol)
 type MOL_ATOM = (V3 Double, String)
 
+-- > length mol_atom_flen == 17
+-- > sum mol_atom_flen == 69
+mol_atom_flen :: [Int]
+mol_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
+
 mol_read_atom :: String -> MOL_ATOM
 mol_read_atom s =
-  case words s of
-    [x,y,z,a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),a)
-    _ -> error "mol_read_atom"
+  case splitPlaces mol_atom_flen s of
+    [x,y,z," ",a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),a)
+    r -> error ("mol_read_atom: " ++ s ++ show r)
 
 -- | MOL files include BOND data.
 --   MOL bond data is ONE-INDEXED.
@@ -39,11 +52,16 @@ mol_bond_type_tbl = [(1,"Single"),(2,"Double"),(3,"Triple"),(4,"Aromatic")]
 mol_bond_stereo_tbl :: [(Int,String)]
 mol_bond_stereo_tbl = [(0,"Not stereo"),(1,"Up"),(6,"Down")]
 
+-- > length mol_bond_flen == 7
+-- > sum mol_bond_flen == 21
+mol_bond_flen :: [Int]
+mol_bond_flen = replicate 7 3
+
 mol_read_bond :: String -> MOL_BOND
 mol_read_bond s =
-  case words s of
+  case splitPlaces mol_bond_flen s of
     [a0,a1,ty,sc,_,_,_] -> ((read a0,read a1),read ty,read sc)
-    _ -> error "mol_read_bond"
+    _ -> error ("mol_read_bond: " ++ s)
 
 -- | (name,description,atom-count,bond-count,atoms,bonds)
 type MOL = (String, String, Int, Int, [MOL_ATOM], [MOL_BOND])
