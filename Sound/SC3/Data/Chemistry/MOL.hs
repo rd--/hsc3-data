@@ -10,6 +10,7 @@ MOL fields are fixed length.
 -}
 module Sound.SC3.Data.Chemistry.MOL where
 
+import Data.Char {- base -}
 import Data.List.Split {- split -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
@@ -39,7 +40,7 @@ mol_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
 mol_read_atom :: String -> MOL_ATOM
 mol_read_atom s =
   case splitPlaces mol_atom_flen s of
-    [x,y,z," ",a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),a)
+    [x,y,z," ",a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),takeWhile (not . isSpace) a)
     r -> error ("mol_read_atom: " ++ s ++ show r)
 
 -- | MOL files include BOND data.
