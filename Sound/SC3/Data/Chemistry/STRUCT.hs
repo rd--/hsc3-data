@@ -80,10 +80,10 @@ struct_center c (nm,k,dsc,a,b) =
 -- * Convert
 
 mol_to_struct :: (String,MOL.MOL) -> STRUCT
-mol_to_struct (nm,(_nm,dsc,a_n,_b_n,a,b)) =
+mol_to_struct (fn,(nm,dsc,a_n,_b_n,a,b)) =
   let atom_f (i,j) = (j,i)
       bond_f ((i,j),_,_) = (i - 1,j - 1) -- MOL bond data is one-indexed
-  in (nm,a_n,dsc,map atom_f a,map bond_f b)
+  in (fn,a_n,concat [nm," -- ",dsc],map atom_f a,map bond_f b)
 
 poscar_to_struct :: POSCAR.POSCAR_TY -> (String,POSCAR.POSCAR) -> STRUCT
 poscar_to_struct ty (nm,p) =
