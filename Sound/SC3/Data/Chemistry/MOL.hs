@@ -26,7 +26,7 @@ mol_read_counts :: String -> (Int,Int)
 mol_read_counts s =
   case splitPlaces mol_counts_flen s of
     [a,b,"  0","   ","  0","  0","  0","  0","  0","  0","999"," V2000"] -> (read a,read b)
-    [a,b,    _,    _,    _,    _,    _,    _,    _,    _,"999"," V2000"] -> (read a,read b)
+    [a,b,    _,    _,    _,    _,    _,    _,    _,    _,    _," V2000"] -> (read a,read b)
     r -> error ("mol_read_counts: " ++ s ++ show r)
 
 -- | (xyz-coordinate, atomic-symbol)
