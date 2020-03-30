@@ -54,8 +54,8 @@ mol_bond_stereo_tbl = [(0,"Not stereo"),(1,"Up"),(6,"Down")]
 > length mol_counts_flen == 12
 > sum mol_counts_flen == 39
 -}
-mol_counts_flen :: [Int]
-mol_counts_flen = replicate 11 3 ++ [6]
+mol_v20_counts_flen :: [Int]
+mol_v20_counts_flen = replicate 11 3 ++ [6]
 
 {- | This function returns the COUNT fields (1,2,12), known fields are:
 
@@ -65,48 +65,57 @@ mol_counts_flen = replicate 11 3 ++ [6]
 11. number of lines of additional properties (999 in V3000)
 12. version number (V2000 or V3000)
 -}
-mol_read_counts :: String -> (Int,Int,Int)
-mol_read_counts s =
-  case splitPlaces mol_counts_flen s of
-    [a,b,    _,    _,    _,    _,    _,    _,    _,    _,    _,v] -> (read a,read b,mol_version v)
+mol_v20_read_counts :: String -> (Int,Int,Int)
+mol_v20_read_counts s =
+  case splitPlaces mol_v20_counts_flen s of
+    [a,b,_,_,_,_,_,_,_,_,_,v] -> (read a,read b,mol_version v)
     r -> error ("mol_read_counts: " ++ s ++ show r)
 
 -- > length mol_atom_flen == 17
 -- > sum mol_atom_flen == 69
-mol_atom_flen :: [Int]
-mol_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
+mol_v20_atom_flen :: [Int]
+mol_v20_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
 
-mol_read_atom :: String -> MOL_ATOM
-mol_read_atom s =
-  case splitPlaces mol_atom_flen s of
+mol_v20_read_atom :: String -> MOL_ATOM
+mol_v20_read_atom s =
+  case splitPlaces mol_v20_atom_flen s of
     [x,y,z," ",a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),takeWhile (not . isSpace) a)
     r -> error ("mol_read_atom: " ++ s ++ show r)
 
 -- > length mol_bond_flen == 7
 -- > sum mol_bond_flen == 21
-mol_bond_flen :: [Int]
-mol_bond_flen = replicate 7 3
+mol_v20_bond_flen :: [Int]
+mol_v20_bond_flen = replicate 7 3
 
-mol_read_bond :: String -> MOL_BOND
-mol_read_bond s =
-  case splitPlaces mol_bond_flen s of
+mol_v20_read_bond :: String -> MOL_BOND
+mol_v20_read_bond s =
+  case splitPlaces mol_v20_bond_flen s of
     [a0,a1,ty,_,_,_,_] -> ((read a0,read a1),read ty)
     _ -> error ("mol_read_bond: " ++ s)
 
 mol_v20_parse :: [String] -> MOL
 mol_v20_parse l =
   let nm:dsc:_:cnt:dat = l
-      (a_n,b_n,v) = mol_read_counts cnt
-      a = map mol_read_atom (take a_n dat)
-      b = map mol_read_bond (take b_n (drop a_n dat))
+      (a_n,b_n,v) = mol_v20_read_counts cnt
+      a = map mol_v20_read_atom (take a_n dat)
+      b = map mol_v20_read_bond (take b_n (drop a_n dat))
   in (nm,dsc,a_n,b_n,a,b,v)
 
 -- * V30
 
+{- | Returns fields (1,2), fields are:
+
+1. number of atoms,
+2. number of bonds,
+3. number of S-groups,
+4. number of 3D constraints,
+5. chirality (1 = chiral),
+6. molecule reg. no. (OPT)
+-}
 mol_v30_counts :: String -> (Int,Int)
 mol_v30_counts s =
   case words s of
-    ["M","V30","COUNTS",a,b,"0","0","1"] -> (read a,read b)
+    ["M","V30","COUNTS",a,b,_,_,_] -> (read a,read b)
     _ -> error "mol_v30_counts"
 
 mol_v30_atom :: String -> MOL_ATOM
