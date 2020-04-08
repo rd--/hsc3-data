@@ -25,8 +25,9 @@ import Data.CG.Minus.Plain {- hcg-minus -}
 -- | (xyz-coordinate, atomic-symbol)
 type MOL_ATOM = (V3 Double, String)
 
--- | MOL files include BOND data.
---   MOL bond data is ONE-INDEXED.
+-- | ((i,j),bond-type)
+--   MOL files include BOND data.
+--   MOL bond atom-id data is ONE-INDEXED.
 type MOL_BOND = (V2 Int, Int)
 
 -- | (name,description,atom-count,bond-count,atoms,bonds,version)
@@ -118,11 +119,22 @@ mol_v30_counts s =
     ["M","V30","COUNTS",a,b,_,_,_] -> (read a,read b)
     _ -> error "mol_v30_counts"
 
+{- | Returns fields ((3,4,5),2), fields are:
+
+1. atom-id
+2. name
+3. x
+4. y
+5. z
+7. key=value
+
+> mol_v30_atom "M  V30 34 N -8.538 -51.035 -7.336 0 CHG=1"
+-}
 mol_v30_atom :: String -> MOL_ATOM
 mol_v30_atom s =
   case words s of
-    ["M","V30",_k,nm,x,y,z,"0"] -> ((read x,read y,read z),nm)
-    _ -> error "mol_v30_atom"
+    "M":"V30":_k:nm:x:y:z:"0":_ -> ((read x,read y,read z),nm)
+    _ -> error ("mol_v30_atom: " ++ s)
 
 mol_v30_bond :: String -> MOL_BOND
 mol_v30_bond s =
