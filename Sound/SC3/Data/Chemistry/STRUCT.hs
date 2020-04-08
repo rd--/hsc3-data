@@ -98,19 +98,20 @@ xyz_to_struct (nm,(k,dsc,atoms)) = (nm,k,dsc,atoms,[])
 
 -- * I/O
 
--- | Load STRUCT based on file-extension (mol,poscar,xyz)
+-- | Load STRUCT based on file-extension (mol,poscar,sdf,xyz)
 load_struct :: FilePath -> IO STRUCT
 load_struct fn =
   let f x = (takeBaseName fn,x)
   in case takeExtension fn of
        ".mol" -> fmap (mol_to_struct . f) (MOL.mol_load fn)
        ".poscar" -> fmap (poscar_to_struct POSCAR.POSCAR_C . f) (POSCAR.poscar_load fn)
+       ".sdf" -> fmap (mol_to_struct . f) (MOL.mol_load fn)
        ".xyz" -> fmap (xyz_to_struct . f) (XYZ.xyz_load fn)
        ext -> error (show ("load_struct",fn,ext))
 
 -- * I/O - DIR
 
--- | 'mol_to_struct' of 'MOL.mol_load_dir'
+-- | 'mol_to_struct' of 'MOL.mol_load_dir', extension is either ".mol" or ".sdf"
 load_mol_structs :: String -> FilePath -> IO [STRUCT]
 load_mol_structs ext = fmap (map mol_to_struct) . MOL.mol_load_dir ext
 

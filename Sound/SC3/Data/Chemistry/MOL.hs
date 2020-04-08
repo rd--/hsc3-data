@@ -177,7 +177,7 @@ mol_load fn = do
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
 mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
 
--- | Load all .ext files at directory.
+-- | Load all .ext files at directory, extensions are ".mol" or ".sdf"
 mol_load_dir :: String -> FilePath -> IO [(String, MOL)]
 mol_load_dir ext dir = do
   fn <- mol_dir_entries ext dir
