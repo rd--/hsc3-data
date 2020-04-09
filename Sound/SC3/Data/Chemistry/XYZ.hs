@@ -13,7 +13,7 @@ import Data.CG.Minus.Plain {- hcg-minus -}
 
 -- | Allow elided 0 before decimal place.
 --
--- > map read_r ["-.5",".5"]
+-- > map read_r ["-.5",".5"] == [-0.5,0.5]
 read_r :: String -> Double
 read_r s =
   case s of
@@ -27,7 +27,7 @@ type XYZ_ATOM = (String,V3 Double)
 -- | (k = n-atoms,d = description,e = [atom]
 type XYZ = (Int,String,[XYZ_ATOM])
 
--- | Numbner of atoms.
+-- | Number of atoms.
 xyz_degree :: XYZ -> Int
 xyz_degree (k,_,_) = k
 

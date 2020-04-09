@@ -174,6 +174,8 @@ mol_load fn = do
     _ -> return r
 
 -- | List of all .ext files at /dir/.  SDF is a superset of MOL, extensions are ".mol" and ".sdf".
+--
+-- > mol_dir_entries ".mol" "/home/rohan/rd/j/2020-03-30/mol/"
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
 mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
 

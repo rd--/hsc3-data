@@ -20,7 +20,11 @@ type Atomic_Number = Int
 -- | Atomic symbol (1-2 char)
 type Atomic_Symbol = String
 
--- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
+{- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
+
+> let f (_,sym,_,_) = if length sym == 1 then Just (head sym) else Nothing
+> Data.List.sort (mapMaybe f periodic_table) == "BCFHIKNOPSUVWY"
+-}
 periodic_table :: [(Atomic_Number,Atomic_Symbol,String,Double)]
 periodic_table =
   [(1,"H","Hydrogen",1.00794)
@@ -144,12 +148,15 @@ periodic_table =
   ]
 
 -- | Lookup atomic symbol in 'periodic_table' and return atomic number.
+--
+-- > map atomic_number (map return ['A' .. 'Z'])
 atomic_number :: Atomic_Symbol -> Maybe Atomic_Number
 atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
 
 -- | Erroring variant.
 --
 -- > map atomic_number_err (words "C Sc Ag") == [6,21,47]
+-- > map atomic_number_err (map return "BCFHIKNOPSUVWY")
 atomic_number_err :: Atomic_Symbol -> Atomic_Number
 atomic_number_err sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number sym)
 
