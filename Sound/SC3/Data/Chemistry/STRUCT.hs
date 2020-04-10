@@ -150,8 +150,8 @@ struct_load :: FilePath -> IO STRUCT
 struct_load fn = return . struct_parse . lines =<< readFile fn
 
 -- | 'writeFile' of 'struct_pp'.
-store_struct :: FilePath -> STRUCT -> IO ()
-store_struct fn = writeFile fn . unlines . struct_pp
+struct_store :: FilePath -> STRUCT -> IO ()
+struct_store fn = writeFile fn . unlines . struct_pp
 
 -- * I/O - MOL/SDF,POSCAR,XYZ
 
