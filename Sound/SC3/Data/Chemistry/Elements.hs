@@ -6,11 +6,20 @@ import Data.Maybe {- base -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
+{- | The angstrom or ångström is a metric unit of length equal to 1×10−10 m,
+or one ten-billionth of a metre, 0.1 nanometre, or 100 picometres.
+Its symbol is Å.
+
+The picometre (SI symbol: pm) is a metric unit of length equal to 1×10−12 m,
+or one trillionth of a metre.
+-}
 data E_Length_Unit = Angstroms | Picometres
 
+-- | 100 pm = 1 Å
 picometres_to_angstroms :: Fractional n => n -> n
 picometres_to_angstroms = (/ 100)
 
+-- | 1 Å = 100 pm
 angstroms_to_picometres :: Num n => n -> n
 angstroms_to_picometres = (* 100)
 
@@ -20,12 +29,23 @@ type Atomic_Number = Int
 -- | Atomic symbol (1-2 char)
 type Atomic_Symbol = String
 
+-- | The dalton (Da) or unified atomic mass unit (u) is defined as
+-- 1/12 of the mass of an unbound neutral atom of carbon-12 in its
+-- nuclear and electronic ground state and at rest.
+type Dalton = Double
+
 {- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
 
 > let f (_,sym,_,_) = if length sym == 1 then Just (head sym) else Nothing
 > Data.List.sort (mapMaybe f periodic_table) == "BCFHIKNOPSUVWY"
+
+Commission on Isotopic Abundances and Atomic Weights,
+The International Union of Pure and Applied Chemistry,
+<https://ciaaw.org/atomic-weights.htm>
+
+<https://www.qmul.ac.uk/sbcs/iupac/AtWt/>
 -}
-periodic_table :: [(Atomic_Number,Atomic_Symbol,String,Double)]
+periodic_table :: [(Atomic_Number,Atomic_Symbol,String,Dalton)]
 periodic_table =
   [(1,"H","Hydrogen",1.00794)
   ,(2,"He","Helium",4.002602)
@@ -159,6 +179,14 @@ atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
 -- > map atomic_number_err (map return "BCFHIKNOPSUVWY")
 atomic_number_err :: Atomic_Symbol -> Atomic_Number
 atomic_number_err sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number sym)
+
+-- | Lookup atomic number in 'periodic_table' and return atomic weight.
+atomic_weight :: Atomic_Number -> Maybe Dalton
+atomic_weight x = lookup x (map (\(k,_,_,w) -> (k,w)) periodic_table)
+
+-- | Erroring variant.
+atomic_weight_err :: Atomic_Number -> Dalton
+atomic_weight_err x = fromMaybe (error ("atomic_weight: " ++ show x)) (atomic_weight x)
 
 {- | (atomic-number,covalent-radius:picometres)
 
