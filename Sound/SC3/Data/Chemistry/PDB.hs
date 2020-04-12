@@ -84,9 +84,17 @@ nucleotide_iupac =
 pdb_ligand_summary_uri :: String -> String
 pdb_ligand_summary_uri k = "http://www.rcsb.org/ligand/" ++ k
 
--- | /ty/ is "ideal" or "model"
+-- | Filename for ligand /k/, /ty/ is "ideal" or "model"
+--
+-- > pdb_ligand_sdf_filename "ideal" "GLY" == "GLY_ideal.sdf"
+pdb_ligand_sdf_filename :: String -> String -> String
+pdb_ligand_sdf_filename ty k = concat [k,"_",ty,".sdf"]
+
+-- | RCSB URI for ligand /k/.
+--
+-- > pdb_ligand_sdf_uri "ideal" "ALA" == "http://files.rcsb.org/ligands/view/ALA_ideal.sdf"
 pdb_ligand_sdf_uri :: String -> String -> String
-pdb_ligand_sdf_uri ty k = concat ["http://files.rcsb.org/ligands/view/",k,"_",ty,".sdf"]
+pdb_ligand_sdf_uri ty k = "http://files.rcsb.org/ligands/view/" ++ pdb_ligand_sdf_filename ty k
 
 {-
 https://pdb101.rcsb.org/learn/guide-to-understanding-pdb-data/small-molecule-ligands
