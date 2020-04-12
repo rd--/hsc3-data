@@ -72,6 +72,7 @@ Library
                    Sound.SC3.Data.Chemistry.Elements
                    Sound.SC3.Data.Chemistry.MOL
                    Sound.SC3.Data.Chemistry.MP
+                   Sound.SC3.Data.Chemistry.PDB
                    Sound.SC3.Data.Chemistry.POSCAR
                    Sound.SC3.Data.Chemistry.STRUCT
                    Sound.SC3.Data.Chemistry.XYZ
