@@ -2,6 +2,7 @@
 --   <https://pubchem.ncbi.nlm.nih.gov/periodic-table/>
 module Sound.SC3.Data.Chemistry.Elements where
 
+import Data.Char {- base -}
 import Data.Maybe {- base -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
@@ -168,17 +169,21 @@ periodic_table =
   ]
 
 -- | Lookup atomic symbol in 'periodic_table' and return atomic number.
+--   If /cs/ is False then match case-insensitively.
 --
--- > map atomic_number (map return ['A' .. 'Z'])
-atomic_number :: Atomic_Symbol -> Maybe Atomic_Number
-atomic_number x = lookup x (map (\(k,sym,_,_) -> (sym,k)) periodic_table)
+-- > map (atomic_number True) (map return ['A' .. 'Z'])
+atomic_number :: Bool -> Atomic_Symbol -> Maybe Atomic_Number
+atomic_number cs x =
+  let u = if cs then id else map toUpper
+  in lookup (u x) (map (\(k,sym,_,_) -> (u sym,k)) periodic_table)
 
 -- | Erroring variant.
 --
--- > map atomic_number_err (words "C Sc Ag") == [6,21,47]
--- > map atomic_number_err (map return "BCFHIKNOPSUVWY")
-atomic_number_err :: Atomic_Symbol -> Atomic_Number
-atomic_number_err sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number sym)
+-- > map (atomic_number_err True) (words "C Sc Ag") == [6,21,47]
+-- > map (atomic_number_err True) (map return "BCFHIKNOPSUVWY")
+-- > atomic_number_err False "FE" == 26
+atomic_number_err :: Bool -> Atomic_Symbol -> Atomic_Number
+atomic_number_err cs sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number cs sym)
 
 -- | Lookup atomic number in 'periodic_table' and return atomic weight.
 atomic_weight :: Atomic_Number -> Maybe Dalton

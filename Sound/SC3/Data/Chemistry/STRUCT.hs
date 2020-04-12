@@ -58,7 +58,7 @@ struct_bonds_atoms (_nm,_k,_dsc,a,b) =
 -- > map sym_radius ["Al","C","Cu","Fe","S"]
 sym_radius :: Fractional n => String -> n
 sym_radius sym =
-  let r = E.covalent_radius (E.atomic_number_err sym)
+  let r = E.covalent_radius (E.atomic_number_err True sym)
   in E.picometres_to_angstroms (fromMaybe 250 r)
 
 struct_validate :: STRUCT -> Bool
