@@ -1,8 +1,14 @@
+-- | Protein Data Bank, <https://www.rcsb.org/>
 module Sound.SC3.Data.Chemistry.PDB where
 
--- | (IUPAC-CODE,THREE-LETTER-CODE,DESCRIPTION)
---
--- <https://www.bioinformatics.org/sms/iupac.html>
+import Data.Char {- base -}
+import Data.List {- base -}
+import Data.Maybe {- base -}
+
+{- | (IUPAC-CODE,THREE-LETTER-CODE,DESCRIPTION)
+
+<https://www.bioinformatics.org/sms/iupac.html>
+-}
 proteinogenic_amino_acid_tbl :: [(Char,String,String)]
 proteinogenic_amino_acid_tbl =
   [('A',"Ala","Alanine")
@@ -25,6 +31,21 @@ proteinogenic_amino_acid_tbl =
   ,('V',"Val","Valine")
   ,('W',"Trp","Tryptophan")
   ,('Y',"Tyr","Tyrosine")]
+
+-- | Lookup PDB SEQRES code in 'proteinogenic_amino_acid_tbl'.
+pdb_seqres_code_lookup :: String -> Maybe (Char,String)
+pdb_seqres_code_lookup x =
+  let f (_,c3,_) = x == map toUpper c3
+      g (c1,_,dsc) = (c1,dsc)
+  in fmap g (find f proteinogenic_amino_acid_tbl)
+
+{- | Erroring variant.
+
+> let s = "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR"
+> map (fst . pdb_seqres_code_lookup_err) (words s) == "ACDEFGHIKLMNPQRSTVWY"
+-}
+pdb_seqres_code_lookup_err :: String -> (Char, String)
+pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_seqres_code_lookup
 
 -- | (IUPAC-CODE,DESCRIPTION,COMPLEMENT)
 nucleotide :: [(Char,String,Char)]
