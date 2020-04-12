@@ -78,3 +78,15 @@ nucleotide_iupac =
   ,('N',"any",'N')
   ,('-',"Gap (Zero)",'-')
   ,('.',"Gap (Zero)",'.')]
+
+-- * URI
+
+pdb_ligand_summary_uri :: String -> String
+pdb_ligand_summary_uri k = "http://www.rcsb.org/ligand/" ++ k
+
+pdb_ligand_ideal_sdf_uri :: String -> String
+pdb_ligand_ideal_sdf_uri k = concat ["http://files.rcsb.org/ligands/view/",k,"_ideal.sdf"]
+
+{-
+https://pdb101.rcsb.org/learn/guide-to-understanding-pdb-data/small-molecule-ligands
+-}
