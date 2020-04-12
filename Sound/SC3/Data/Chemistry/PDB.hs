@@ -84,10 +84,9 @@ nucleotide_iupac =
 pdb_ligand_summary_uri :: String -> String
 pdb_ligand_summary_uri k = "http://www.rcsb.org/ligand/" ++ k
 
-pdb_ligand_sdf_uri :: Bool -> String -> String
-pdb_ligand_sdf_uri m k =
-  let ty = if m then "model" else "ideal"
-  in concat ["http://files.rcsb.org/ligands/view/",k,"_",ty,".sdf"]
+-- | /ty/ is "ideal" or "model"
+pdb_ligand_sdf_uri :: String -> String -> String
+pdb_ligand_sdf_uri ty k = concat ["http://files.rcsb.org/ligands/view/",k,"_",ty,".sdf"]
 
 {-
 https://pdb101.rcsb.org/learn/guide-to-understanding-pdb-data/small-molecule-ligands
