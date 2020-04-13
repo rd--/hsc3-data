@@ -65,42 +65,53 @@ mol_v20_counts_flen = replicate 11 3 ++ [6]
 5. chiral flag (1 = chiral;0 = not chiral)
 11. number of lines of additional properties (999 in V3000)
 12. version number (V2000 or V3000)
+
+> txt = " 16 16  0  0  0  0  0  0  0  0999 V2000"
+> txt = "  5  4  0  0  0  0  0  0  0  0  0"
+> mol_v20_read_counts txt
 -}
 mol_v20_read_counts :: String -> (Int,Int,Int)
 mol_v20_read_counts s =
   case splitPlaces mol_v20_counts_flen s of
     [a,b,_,_,_,_,_,_,_,_,_,v] -> (read a,read b,mol_version v)
-    r -> error ("mol_read_counts: " ++ s ++ show r)
+    a:b:_ -> (read a,read b,mol_version " V2000") -- ALLOW OMITTED FIELDS
+    r -> error (show ("mol_v20_read_counts",s,r))
 
 -- > length mol_atom_flen == 17
 -- > sum mol_atom_flen == 69
 mol_v20_atom_flen :: [Int]
 mol_v20_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
 
+-- > mol_v20_read_atom "    0.0000    0.0000    0.0000 S   0  0  0  0  0"
 mol_v20_read_atom :: String -> MOL_ATOM
 mol_v20_read_atom s =
   case splitPlaces mol_v20_atom_flen s of
     [x,y,z," ",a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),takeWhile (not . isSpace) a)
-    r -> error ("mol_read_atom: " ++ s ++ show r)
+    x:y:z:" ":a:_ -> ((read x,read y,read z),takeWhile (not . isSpace) a) -- ALLOW OMITTED FIELDS
+    r -> error (show ("mol_v20_read_atom",s,r))
 
 -- > length mol_bond_flen == 7
 -- > sum mol_bond_flen == 21
 mol_v20_bond_flen :: [Int]
 mol_v20_bond_flen = replicate 7 3
 
+-- > mol_v20_read_bond "  1  2  2  0  0  0"
 mol_v20_read_bond :: String -> MOL_BOND
 mol_v20_read_bond s =
   case splitPlaces mol_v20_bond_flen s of
     [a0,a1,ty,_,_,_,_] -> ((read a0,read a1),read ty)
-    _ -> error ("mol_read_bond: " ++ s)
+    a0:a1:ty:_ -> ((read a0,read a1),read ty) -- ALLOW OMITTED FIELDS
+    r -> error (show ("mol_v20_read_bond",s,r))
 
 mol_v20_parse :: [String] -> MOL
 mol_v20_parse l =
-  let nm:dsc:_:cnt:dat = l
-      (a_n,b_n,v) = mol_v20_read_counts cnt
-      a = map mol_v20_read_atom (take a_n dat)
-      b = map mol_v20_read_bond (take b_n (drop a_n dat))
-  in (nm,dsc,a_n,b_n,a,b,v)
+  case l of
+    nm:dsc:_:cnt:dat ->
+      let (a_n,b_n,v) = mol_v20_read_counts cnt
+          a = map mol_v20_read_atom (take a_n dat)
+          b = map mol_v20_read_bond (take b_n (drop a_n dat))
+      in (nm,dsc,a_n,b_n,a,b,v)
+    _ -> error (show ("mol_v20_parse",l))
 
 -- * V30
 
