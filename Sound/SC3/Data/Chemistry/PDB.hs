@@ -93,9 +93,20 @@ pdb_to_mol pdb_fn mol_fn = callProcess "obabel" [pdb_fn,"-O",mol_fn]
 
 -- * MONOMER-HET
 
+-- | URI for het_dictionary (52,082,480 BYTES)
+het_dictionary_uri :: String
+het_dictionary_uri = "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/het_dictionary.txt"
+
+-- | URI for monomer RESIDUE file.
+--
+-- > het_residue_uri "GLY" == "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/GLY"
+het_residue_uri :: String -> String
+het_residue_uri = (++) "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/"
+
+-- | Type for RECORD in 'het_dictionary'
 type HET_RECORD = [B.ByteString]
 
--- | Get (NAME,N-CONECT) for residue
+-- | Get (NAME,N-CONECT) for residue at record.
 het_parse_residue :: HET_RECORD -> (String,Int)
 het_parse_residue r =
   case r of
@@ -104,9 +115,11 @@ het_parse_residue r =
              x -> error (show ("het_parse_residue",x))
     _ -> error (show ("het_parse_residue",r))
 
+-- | Select fields of type /k/ at record.
 het_field_sel :: String -> HET_RECORD -> [B.ByteString]
 het_field_sel k = filter (B.isPrefixOf (B.pack k))
 
+-- | Parse CONECT fields at record, which are of the form (lhs,[rhs])
 het_parse_conect :: HET_RECORD -> [(String,[String])]
 het_parse_conect r =
   let f s = case words (B.unpack s) of
@@ -116,18 +129,22 @@ het_parse_conect r =
               x -> error (show ("het_parse_conect",x))
   in map f (het_field_sel "CONECT" r)
 
+-- | Parse HETNAM field at record.
 het_parse_hetnam :: HET_RECORD -> String
 het_parse_hetnam = unwords . map (B.unpack . B.drop 15) . het_field_sel "HETNAM"
 
+-- | Parse FORMUL field at record.
 het_parse_formul :: HET_RECORD -> String
 het_parse_formul = unwords . map (B.unpack . B.drop 19) . het_field_sel "FORMUL"
 
+-- | Convert CONECT fields to edge set.
 het_edge_set :: [(String,[String])] -> [(String,String)]
 het_edge_set =
   let f (lhs,rhs) = zip (repeat lhs) rhs
       g (i,j) = (min i j,max i j)
   in map g . concatMap f
 
+-- | Load records from local copy of 'het_dictionary'.
 het_load_records :: FilePath -> IO [HET_RECORD]
 het_load_records fn = do
   s <- B.readFile fn
