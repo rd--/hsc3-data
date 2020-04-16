@@ -38,10 +38,26 @@ proteinogenic_amino_acid_tbl =
   ,('W',"Trp","Tryptophan")
   ,('Y',"Tyr","Tyrosine")]
 
+-- | Lookup IUPAC code in 'proteinogenic_amino_acid_tbl'.
+pdb_iupac_code_lookup :: Char -> Maybe (String,String)
+pdb_iupac_code_lookup x =
+  let f (c1,_,_) = x == c1
+      g (_,c3,dsc) = (c3,dsc)
+  in fmap g (find f proteinogenic_amino_acid_tbl)
+
+-- | Erroring variant.
+--
+-- > pdb_iupac_code_lookup_err 'G' == ("Gly","Glycine")
+pdb_iupac_code_lookup_err :: Char -> (String,String)
+pdb_iupac_code_lookup_err = fromMaybe (error "pdb_iupac_code_lookup?") . pdb_iupac_code_lookup
+
 -- | Lookup PDB SEQRES code in 'proteinogenic_amino_acid_tbl'.
+--
+-- > pdb_seqres_code_lookup "GLY" == Just ('G',"Glycine")
 pdb_seqres_code_lookup :: String -> Maybe (Char,String)
 pdb_seqres_code_lookup x =
-  let f (_,c3,_) = x == map toUpper c3
+  let x' = map toUpper x
+      f (_,c3,_) = x' == map toUpper c3
       g (c1,_,dsc) = (c1,dsc)
   in fmap g (find f proteinogenic_amino_acid_tbl)
 
@@ -103,10 +119,16 @@ het_dictionary_uri = "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/het_dictionary.t
 het_residue_uri :: String -> String
 het_residue_uri = (++) "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/"
 
+-- | URI for monomer CIF file.
+--
+-- > het_cif_uri "GLY" == "https://files.rcsb.org/ligands/download/GLY.cif"
+het_cif_uri :: String -> String
+het_cif_uri k = "https://files.rcsb.org/ligands/download/" ++ k ++ ".cif"
+
 -- | Type for RECORD in 'het_dictionary'
 type HET_RECORD = [B.ByteString]
 
--- | Get (NAME,N-CONECT) for residue at record.
+-- | Get (NAME,N-ATOMS) for residue at record.
 het_parse_residue :: HET_RECORD -> (String,Int)
 het_parse_residue r =
   case r of
@@ -144,6 +166,10 @@ het_edge_set =
       g (i,j) = (min i j,max i j)
   in map g . concatMap f
 
+-- | Convert CONECT fields to vertex set.
+het_vertex_set :: [(String,[String])] -> [String]
+het_vertex_set = let f (lhs,rhs) = lhs : rhs in nub . sort . concatMap f
+
 -- | Load records from local copy of 'het_dictionary'.
 het_load_records :: FilePath -> IO [HET_RECORD]
 het_load_records fn = do
@@ -151,6 +177,33 @@ het_load_records fn = do
   let l = B.lines s
       r = T.split_when_keeping_left (B.isPrefixOf (B.pack "RESIDUE")) l
   return (filter (not . null) r)
+
+-- | ((ID3,N-ATOMS),NAME,FORMUL,GRAPH)
+type HET_ENTRY = ((String,Int),String,String, ([String], [(String, String)]))
+
+-- | Parse record to entry.
+het_parse_entry :: HET_RECORD -> HET_ENTRY
+het_parse_entry r =
+  let c = het_parse_conect r
+  in (het_parse_residue r
+     ,het_parse_hetnam r
+     ,het_parse_formul r
+     ,(het_vertex_set c,het_edge_set c))
+
+-- | Lookup HET_ENTRY by name.
+het_entry_lookup :: String -> [HET_ENTRY] -> Maybe HET_ENTRY
+het_entry_lookup k = find (\((nm,_),_,_,_) -> nm == k)
+
+{- | Load HET_ENTRY from local copy of 'het_dictionary'.
+
+> fn = "/home/rohan/data/pdb/monomers/het_dictionary.txt"
+> e <- het_load_entries fn
+> length e == 31253
+> het_entry_lookup "GLY" e
+> map (flip het_entry_lookup e . map toUpper . \(_,x,_) -> x) proteinogenic_amino_acid_tbl
+-}
+het_load_entries :: FilePath -> IO [HET_ENTRY]
+het_load_entries = fmap (map het_parse_entry) . het_load_records
 
 -- * FILE-NAMES
 
