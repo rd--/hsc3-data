@@ -4,6 +4,12 @@ module Sound.SC3.Data.Chemistry.PDB where
 import Data.Char {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
+import System.FilePath {- filepath -}
+import System.Process {- process -}
+
+import qualified Data.ByteString.Char8 as B {- bytestring -}
+
+import qualified Music.Theory.List as T {- hmt -}
 
 {- | (IUPAC-CODE,THREE-LETTER-CODE,DESCRIPTION)
 
@@ -79,10 +85,63 @@ nucleotide_iupac =
   ,('-',"Gap (Zero)",'-')
   ,('.',"Gap (Zero)",'.')]
 
--- * URI
+-- * CONVERT
 
-pdb_ligand_summary_uri :: String -> String
-pdb_ligand_summary_uri k = "http://www.rcsb.org/ligand/" ++ k
+-- | Run obabel to convert PDB file to MOL file.
+pdb_to_mol :: FilePath -> FilePath -> IO ()
+pdb_to_mol pdb_fn mol_fn = callProcess "obabel" [pdb_fn,"-O",mol_fn]
+
+-- * MONOMER-HET
+
+type HET_RECORD = [B.ByteString]
+
+-- | Get (NAME,N-CONECT) for residue
+het_parse_residue :: HET_RECORD -> (String,Int)
+het_parse_residue r =
+  case r of
+    e:_ -> case words (B.unpack e) of
+             ["RESIDUE",nm,sz] -> (nm,read sz)
+             x -> error (show ("het_parse_residue",x))
+    _ -> error (show ("het_parse_residue",r))
+
+het_field_sel :: String -> HET_RECORD -> [B.ByteString]
+het_field_sel k = filter (B.isPrefixOf (B.pack k))
+
+het_parse_conect :: HET_RECORD -> [(String,[String])]
+het_parse_conect r =
+  let f s = case words (B.unpack s) of
+              "CONECT":lhs:cnt:rhs -> if length rhs == read cnt
+                                      then (lhs,rhs)
+                                      else error (show ("het_parse_conect",lhs,cnt,rhs))
+              x -> error (show ("het_parse_conect",x))
+  in map f (het_field_sel "CONECT" r)
+
+het_parse_hetnam :: HET_RECORD -> String
+het_parse_hetnam = unwords . map (B.unpack . B.drop 15) . het_field_sel "HETNAM"
+
+het_parse_formul :: HET_RECORD -> String
+het_parse_formul = unwords . map (B.unpack . B.drop 19) . het_field_sel "FORMUL"
+
+het_edge_set :: [(String,[String])] -> [(String,String)]
+het_edge_set =
+  let f (lhs,rhs) = zip (repeat lhs) rhs
+      g (i,j) = (min i j,max i j)
+  in map g . concatMap f
+
+het_load_records :: FilePath -> IO [HET_RECORD]
+het_load_records fn = do
+  s <- B.readFile fn
+  let l = B.lines s
+      r = T.split_when_keeping_left (B.isPrefixOf (B.pack "RESIDUE")) l
+  return (filter (not . null) r)
+
+-- * FILE-NAMES
+
+-- | PDB filenames are lower case, with a .pdb extension. Identifiers are upper-case.
+--
+-- > pdb_file_name_to_id "rscb/1poc.pdb" == "1POC"
+pdb_file_name_to_id :: FilePath -> String
+pdb_file_name_to_id = map toUpper . dropExtension . takeFileName
 
 -- | Filename for ligand /k/, /ty/ is "ideal" or "model"
 --
@@ -90,7 +149,25 @@ pdb_ligand_summary_uri k = "http://www.rcsb.org/ligand/" ++ k
 pdb_ligand_sdf_filename :: String -> String -> String
 pdb_ligand_sdf_filename ty k = concat [k,"_",ty,".sdf"]
 
--- | RCSB URI for ligand /k/.
+-- * RCSB-URI
+
+-- | URI for structure summary.
+pdb_structure_summary_uri :: String -> String
+pdb_structure_summary_uri = (++) "http://www.rcsb.org/structure/"
+
+-- | URI for structure PDB file.
+pdb_structure_pdb_uri :: String -> String
+pdb_structure_pdb_uri k = "https://files.rcsb.org/download/" ++ k ++ ".pdb"
+
+-- | URI for structure FASTA file.
+pdb_structure_fasta_uri :: String -> String
+pdb_structure_fasta_uri = (++) "https://www.rcsb.org/fasta/entry/"
+
+-- | URI for ligand summary.
+pdb_ligand_summary_uri :: String -> String
+pdb_ligand_summary_uri = (++) "http://www.rcsb.org/ligand/"
+
+-- | URI for ligand SDF file.
 --
 -- > pdb_ligand_sdf_uri "ideal" "ALA" == "http://files.rcsb.org/ligands/view/ALA_ideal.sdf"
 pdb_ligand_sdf_uri :: String -> String -> String
