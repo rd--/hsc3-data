@@ -12,6 +12,8 @@ import System.FilePath {- filepath -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
+import qualified Music.Theory.Show as T {- hmt -}
+
 import qualified Sound.SC3.Data.Chemistry.Elements as E {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.MOL as MOL {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.POSCAR as POSCAR {- hsc3-data -}
@@ -114,12 +116,12 @@ xyz_to_struct (nm,(k,dsc,atoms)) = (nm,(k,0),dsc,atoms,[])
 -- * FORMAT - STRUCT
 
 -- | Write simple plain text format for STRUCT data.
-struct_pp :: STRUCT -> [String]
-struct_pp (nm,(n_a,n_b),dsc,a,b) =
+struct_pp :: Int -> STRUCT -> [String]
+struct_pp k (nm,(n_a,n_b),dsc,a,b) =
   let hdr = [nm
             ,unwords (map show [n_a,n_b])
             ,dsc]
-      a_pp ((e,(x,y,z))) = unwords (e : map show [x,y,z])
+      a_pp ((e,(x,y,z))) = unwords (e : map (T.double_pp k) [x,y,z])
       b_pp (p,q) = unwords (map show [p,q])
   in concat [hdr,map a_pp a,map b_pp b]
 
@@ -150,8 +152,8 @@ struct_load :: FilePath -> IO STRUCT
 struct_load fn = return . struct_parse . lines =<< readFile fn
 
 -- | 'writeFile' of 'struct_pp'.
-struct_store :: FilePath -> STRUCT -> IO ()
-struct_store fn = writeFile fn . unlines . struct_pp
+struct_store :: Int -> FilePath -> STRUCT -> IO ()
+struct_store k fn = writeFile fn . unlines . struct_pp k
 
 -- * I/O - MOL/SDF,POSCAR,XYZ
 
