@@ -39,55 +39,28 @@ proteinogenic_amino_acid_tbl =
   ,('Y',"Tyr","Tyrosine")]
 
 -- | Lookup IUPAC code in 'proteinogenic_amino_acid_tbl'.
-pdb_iupac_code_lookup :: Char -> Maybe (String,String)
-pdb_iupac_code_lookup x =
+iupac_code_to_three_letter_code :: Char -> Maybe String
+iupac_code_to_three_letter_code x =
   let f (c1,_,_) = x == c1
-      g (_,c3,dsc) = (c3,dsc)
+      g (_,c3,_) = c3
   in fmap g (find f proteinogenic_amino_acid_tbl)
-
--- | Erroring variant.
---
--- > pdb_iupac_code_lookup_err 'G' == ("Gly","Glycine")
-pdb_iupac_code_lookup_err :: Char -> (String,String)
-pdb_iupac_code_lookup_err = fromMaybe (error "pdb_iupac_code_lookup?") . pdb_iupac_code_lookup
-
--- | Lookup PDB SEQRES code in 'proteinogenic_amino_acid_tbl'.
---
--- > pdb_seqres_code_lookup "GLY" == Just ('G',"Glycine")
-pdb_seqres_code_lookup :: String -> Maybe (Char,String)
-pdb_seqres_code_lookup x =
-  let x' = map toUpper x
-      f (_,c3,_) = x' == map toUpper c3
-      g (c1,_,dsc) = (c1,dsc)
-  in fmap g (find f proteinogenic_amino_acid_tbl)
-
-{- | Erroring variant.
-
-> let s = "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR"
-> map (fst . pdb_seqres_code_lookup_err) (words s) == "ACDEFGHIKLMNPQRSTVWY"
--}
-pdb_seqres_code_lookup_err :: String -> (Char, String)
-pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_seqres_code_lookup
 
 -- | (IUPAC-CODE,DESCRIPTION,COMPLEMENT)
-nucleotide :: [(Char,String,Char)]
-nucleotide =
+nucleotide_core :: [(Char,String,Char)]
+nucleotide_core =
   [('A',"Adenine",'T')
   ,('C',"Cytosine",'G')
   ,('G',"Guanine",'C')
-  ,('T',"Thymine",'A')]
+  ,('T',"Thymine",'A')
+  ,('U',"Uracil",'A')] -- IN RNA URACIL IS USED IN PLACE OF THYMINE
 
 -- | (IUPAC-CODE,DESCRIPTION,COMPLEMENT)
 --
 -- <https://www.bioinformatics.org/sms/iupac.html>
 nucleotide_iupac :: [(Char, String, Char)]
 nucleotide_iupac =
-  [('A',"Adenine",'T')
-  ,('C',"Cytosine",'G')
-  ,('G',"Guanine",'C')
-  ,('T',"Thymine",'A')
-  ,('U',"Uracil",'A')
-  ,('W',"Weak",'W')
+  nucleotide_core ++
+  [('W',"Weak",'W')
   ,('S',"Strong",'S')
   ,('M',"aMino",'K')
   ,('K',"Keto",'M')
@@ -100,6 +73,35 @@ nucleotide_iupac =
   ,('N',"any",'N')
   ,('-',"Gap (Zero)",'-')
   ,('.',"Gap (Zero)",'.')]
+
+-- | (PDB-CODE,IUPAC-CODE)
+pdb_code_tbl :: [(String,Char)]
+pdb_code_tbl =
+  map (\(c1,c3,_) -> (map toUpper c3,c1)) proteinogenic_amino_acid_tbl ++
+  [("DA",'A')
+  ,("DC",'C')
+  ,("DG",'G')
+  ,("DT",'T')]
+
+{- | Translate PDB SEQRES code to IUPAC code.
+
+> pdb_seqres_code_lookup "GLY" == Just 'G'
+-}
+pdb_seqres_code_lookup :: String -> Maybe Char
+pdb_seqres_code_lookup = flip lookup pdb_code_tbl
+
+{- | Erroring variant.
+
+> pdb_seqres_code_lookup_err "GLY" == 'G'
+
+> let s = "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR"
+> map pdb_seqres_code_lookup_err (words s) == "ACDEFGHIKLMNPQRSTVWY"
+
+> let s = "DA DC DG DT"
+> map pdb_seqres_code_lookup_err (words s) == "ACGT"
+-}
+pdb_seqres_code_lookup_err :: String -> Char
+pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_seqres_code_lookup
 
 -- * CONVERT
 
