@@ -4,11 +4,13 @@ module Sound.SC3.Data.Chemistry.PDB where
 import Data.Char {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
+import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 import System.Process {- process -}
 
 import qualified Data.ByteString.Char8 as B {- bytestring -}
 
+import qualified Music.Theory.Directory as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 
 {- | (IUPAC-CODE,THREE-LETTER-CODE,DESCRIPTION)
@@ -108,6 +110,11 @@ pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_s
 -- | Run obabel to convert PDB file to MOL file.
 pdb_to_mol :: FilePath -> FilePath -> IO ()
 pdb_to_mol pdb_fn mol_fn = callProcess "obabel" [pdb_fn,"-O",mol_fn]
+
+pdb_to_mol_x :: FilePath -> FilePath -> IO ()
+pdb_to_mol_x pdb_fn mol_fn = do
+  createDirectoryIfMissing True (takeDirectory mol_fn)
+  T.if_file_exists (mol_fn,pdb_to_mol pdb_fn mol_fn,return ())
 
 -- * MONOMER-HET
 
