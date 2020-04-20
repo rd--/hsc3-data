@@ -3,7 +3,10 @@
 module Sound.SC3.Data.Chemistry.Elements where
 
 import Data.Char {- base -}
+import Data.List {- base -}
 import Data.Maybe {- base -}
+
+import qualified Music.Theory.List as T {- hmt -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
@@ -713,3 +716,25 @@ atomic_ion_vdw_radii_table =
   ,(116,-1,-1,-1)
   ,(117,-1,-1,-1)
   ,(118,-1,-1,-1)]
+
+-- * FORMULA
+
+{- | Hill formula notation.
+
+The elements of the chemical formula are given in Hill ordering.
+The order of elements depends on whether carbon is present or not.
+If carbon is present, the order should be: C, then H, then the other elements in alphabetical order.
+If carbon is not present, the elements are listed purely in alphabetic order of their symbol.
+This is the 'Hill' system used by Chemical Abstracts.
+
+> map (hill_formula . words) ["A C H","A H","A C"] == ["C H A","A H","C A"]
+-}
+hill_formula :: [String] -> String
+hill_formula e =
+  let h = T.histogram e
+      f (sym,k) = if k == 1 then sym else sym ++ show k
+      sq = case lookup "C" h of
+             Nothing -> h
+             Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) h
+                       in p ++ q
+  in unwords (map f sq)
