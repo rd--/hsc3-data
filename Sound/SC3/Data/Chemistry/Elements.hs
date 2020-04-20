@@ -719,6 +719,13 @@ atomic_ion_vdw_radii_table =
 
 -- * FORMULA
 
+hill_formula_seq :: [String] -> [(String, Int)]
+hill_formula_seq e =
+  let h = T.histogram e
+  in case lookup "C" h of
+       Nothing -> h
+       Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) h in p ++ q
+
 {- | Hill formula notation.
 
 The elements of the chemical formula are given in Hill ordering.
@@ -730,11 +737,6 @@ This is the 'Hill' system used by Chemical Abstracts.
 > map (hill_formula . words) ["A C H","A H","A C"] == ["C H A","A H","C A"]
 -}
 hill_formula :: [String] -> String
-hill_formula e =
-  let h = T.histogram e
-      f (sym,k) = if k == 1 then sym else sym ++ show k
-      sq = case lookup "C" h of
-             Nothing -> h
-             Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) h
-                       in p ++ q
-  in unwords (map f sq)
+hill_formula =
+  let f (sym,k) = if k == 1 then sym else sym ++ show k
+  in unwords . map f . hill_formula_seq
