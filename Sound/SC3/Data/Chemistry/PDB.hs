@@ -1,4 +1,10 @@
--- | Protein Data Bank, <https://www.rcsb.org/>
+{- | PDB = Protein Data Bank = <http://www.wwpdb.org/>
+
+Research Collaboratory for Structural Bioinformatics PDB = <https://www.rcsb.org/>
+PDBj (Protein Data Bank Japan) = <https://pdbj.org/>
+PDBe (Protein Data Bank in Europe) = <https://www.ebi.ac.uk/pdbe/>
+Biological Magnetic Resonance Data Bank = <http://www.bmrb.wisc.edu/>
+-}
 module Sound.SC3.Data.Chemistry.PDB where
 
 import Data.Char {- base -}
@@ -107,10 +113,15 @@ pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_s
 
 -- * CONVERT
 
--- | Run obabel to convert PDB file to MOL file.
+{- | Run obabel process to convert PDB file to MOL file.
+
+PDB files are converted to MOL files using obabel,
+<https://packages.debian.org/stable/openbabel>
+-}
 pdb_to_mol :: FilePath -> FilePath -> IO ()
 pdb_to_mol pdb_fn mol_fn = callProcess "obabel" [pdb_fn,"-O",mol_fn]
 
+-- | Variant that only runs if the MOL file does not already exist.
 pdb_to_mol_x :: FilePath -> FilePath -> IO ()
 pdb_to_mol_x pdb_fn mol_fn = do
   createDirectoryIfMissing True (takeDirectory mol_fn)

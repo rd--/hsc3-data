@@ -7,11 +7,11 @@ There is also a simle plain text format for storing STRUCT data.
 module Sound.SC3.Data.Chemistry.STRUCT where
 
 import Data.Maybe {- base -}
-import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
+import qualified Music.Theory.Directory as T {- hmt -}
 import qualified Music.Theory.Show as T {- hmt -}
 
 import qualified Sound.SC3.Data.Chemistry.Elements as E {- hsc3-data -}
@@ -57,10 +57,12 @@ struct_bonds_atoms (_nm,_k,_dsc,a,b) =
   let f (i,j) = (a !! i,a !! j)
   in map f b
 
--- > map sym_radius ["Al","C","Cu","Fe","S"]
+-- | Covalent radius (angstroms) of element /sym/, defaults to 250.
+--
+-- > map sym_radius ["Al","C","Cu","Fe","FE","S"]
 sym_radius :: Fractional n => String -> n
 sym_radius sym =
-  let r = E.covalent_radius (E.atomic_number_err True sym)
+  let r = E.covalent_radius (E.atomic_number_err False sym)
   in E.picometres_to_angstroms (fromMaybe 250 r)
 
 struct_validate :: STRUCT -> Bool
@@ -178,7 +180,7 @@ struct_load_ext fn =
 struct_dir_entries :: FilePath -> IO [FilePath]
 struct_dir_entries =
   let ext = words ".mol .poscar .sdf .struct .xyz"
-  in fmap (filter (flip elem ext . takeExtension)) . listDirectory
+  in T.dir_subset ext
 
 {- | 'struct_load_ext' of 'struct_dir_entries'
 

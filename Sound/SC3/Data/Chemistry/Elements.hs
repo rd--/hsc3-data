@@ -40,6 +40,8 @@ type Dalton = Double
 > let f (_,sym,_,_) = if length sym == 1 then Just (head sym) else Nothing
 > Data.List.sort (mapMaybe f periodic_table) == "BCFHIKNOPSUVWY"
 
+> Data.List.nub (map (\(_,sym,_,_) -> length sym) periodic_table)
+
 Commission on Isotopic Abundances and Atomic Weights,
 The International Union of Pure and Applied Chemistry,
 <https://ciaaw.org/atomic-weights.htm>

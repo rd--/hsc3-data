@@ -6,8 +6,10 @@ Coordinates are ordinarily Angstroms.
 module Sound.SC3.Data.Chemistry.XYZ where
 
 import Data.List {- base -}
-import System.Directory {- directory -}
 import System.FilePath {- filepath -}
+
+import qualified Music.Theory.Directory as T {- hmt -}
+import qualified Music.Theory.Show as T {- hmt -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
@@ -63,6 +65,15 @@ xyz_parse fn s =
     k:dsc:ent -> (xyz_parse_cnt k,dsc,map (xyz_parse_entry fn) ent)
     _ -> error ("xyz_parse: " ++ fn)
 
+-- | Generate XYZ file text.
+--
+-- > unlines (xyz_pp 4 (1,"x",[("C",(1,2,3))])) == "1\nx\nC  1.0000 2.0000 3.0000\n"
+xyz_pp :: Int -> XYZ -> [String]
+xyz_pp k (n_a,dsc,a) =
+  let e_pp x = if length x == 2 then x else x ++ " "
+      a_pp ((e,(x,y,z))) = intercalate " " (e_pp e : map (T.double_pp k) [x,y,z])
+  in [show n_a,dsc] ++ map a_pp a
+
 -- | (minima,maxima) of atoms.
 xyz_bounds :: XYZ -> V2 (V3 Double)
 xyz_bounds (_,_,a) =
@@ -72,14 +83,21 @@ xyz_bounds (_,_,a) =
 
 -- | Load ".xyz" file.
 --
--- > xyz <- xyz_load "/home/rohan/data/chemistry/cls/xyz/Al12W.xyz"
--- > xyz_bounds xyz == ((0.0,7.5803),(0.0,7.5803),(0.0,7.5803))
+-- > xyz <- xyz_load "/home/rohan/sw/hsc3-data/data/chemistry/cls/xyz/Al12W.xyz"
+-- > xyz_bounds xyz == ((0.0,0.0,0.0),(7.5803,7.5803,7.5803))
 xyz_load :: FilePath -> IO XYZ
 xyz_load fn = fmap (xyz_parse fn) (readFile fn)
 
+-- | Write ".xyz" file, /k/ is precision to write co-ordinates to.
+--
+-- > xyz <- xyz_load "/home/rohan/sw/hsc3-data/data/chemistry/cls/xyz/Al12W.xyz"
+-- > xyz_store 6 "/tmp/Al12W.xyz" xyz
+xyz_store :: Int -> FilePath -> XYZ -> IO ()
+xyz_store k fn = writeFile fn . unlines . xyz_pp k
+
 -- | List of all ".xyz" files at /dir/.
 xyz_dir_entries :: FilePath -> IO [FilePath]
-xyz_dir_entries = fmap (filter ((==) ".xyz" . takeExtension)) . listDirectory
+xyz_dir_entries = T.dir_subset [".xyz"]
 
 -- | Load all ".xyz" files at /dir/.
 xyz_load_dir :: FilePath -> IO [(String, XYZ)]
