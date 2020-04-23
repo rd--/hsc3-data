@@ -19,6 +19,8 @@ import qualified Data.ByteString.Char8 as B {- bytestring -}
 import qualified Music.Theory.Directory as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 
+import qualified Sound.SC3.Data.Chemistry.Elements as E {- hsc3-data -}
+
 {- | (IUPAC-CODE,THREE-LETTER-CODE,DESCRIPTION)
 
 <https://www.bioinformatics.org/sms/iupac.html>
@@ -119,7 +121,7 @@ PDB files are converted to MOL files using obabel,
 <https://packages.debian.org/stable/openbabel>
 -}
 pdb_to_mol :: FilePath -> FilePath -> IO ()
-pdb_to_mol pdb_fn mol_fn = callProcess "obabel" [pdb_fn,"-O",mol_fn]
+pdb_to_mol pdb_fn mol_fn = callProcess "obabel" ["-ipdb",pdb_fn,"-omol","-O",mol_fn]
 
 -- | Variant that only runs if the MOL file does not already exist.
 pdb_to_mol_x :: FilePath -> FilePath -> IO ()
@@ -201,6 +203,14 @@ het_load_records fn = do
 -- | ((ID3,N-ATOMS),NAME,FORMUL,GRAPH)
 type HET_ENTRY = ((String,Int),String,String, ([String], [(String, String)]))
 
+-- | FORMULA field.
+het_entry_formula :: HET_ENTRY -> String
+het_entry_formula (_,_,x,_) = x
+
+-- | N-ATOMS field.
+het_entry_n_atoms :: HET_ENTRY -> Int
+het_entry_n_atoms ((_,k),_,_,_) = k
+
 -- | Parse record to entry.
 het_parse_entry :: HET_RECORD -> HET_ENTRY
 het_parse_entry r =
@@ -224,6 +234,16 @@ het_entry_lookup k = find (\((nm,_),_,_,_) -> nm == k)
 -}
 het_load_entries :: FilePath -> IO [HET_ENTRY]
 het_load_entries = fmap (map het_parse_entry) . het_load_records
+
+-- | Histogram of elememts dervied from FORMULA field.
+het_entry_formula_hist :: HET_ENTRY -> [(String,Int)]
+het_entry_formula_hist = sort . fst . E.formula_parse . het_entry_formula
+
+-- | Does the N-ATOMS field correlate with the FORMULA field?
+het_entry_formula_validate :: HET_ENTRY -> Bool
+het_entry_formula_validate e =
+  let k = sum (map snd (het_entry_formula_hist e))
+  in k == het_entry_n_atoms e
 
 -- * FILE-NAMES
 

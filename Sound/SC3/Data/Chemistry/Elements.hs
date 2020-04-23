@@ -3,6 +3,7 @@
 module Sound.SC3.Data.Chemistry.Elements where
 
 import Data.Char {- base -}
+import Data.Either {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
@@ -719,12 +720,43 @@ atomic_ion_vdw_radii_table =
 
 -- * FORMULA
 
-hill_formula_seq :: [String] -> [(String, Int)]
-hill_formula_seq e =
-  let h = T.histogram e
-  in case lookup "C" h of
-       Nothing -> h
-       Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) h in p ++ q
+-- | Given real signum, ie. -1, 0 or +1, given character of sign.
+--
+-- > map (signum_to_char . signum) [-10,0,10] == [Just '-',Nothing,Just '+']
+signum_to_char :: (Eq a, Num a) => a -> Maybe Char
+signum_to_char x =
+  case x of
+    -1 -> Just '-'
+    0 -> Nothing
+    1 -> Just '+'
+    _ -> error "signum_to_char?"
+
+-- | Given ordered sequence of (ELEMENT-SYMBOL,COUNT) and CHARGE, format formula string.
+formula_pp :: ([(String,Int)],Maybe Int) -> String
+formula_pp (e,c) =
+  let f (sym,k) = if k == 1 then sym else sym ++ show k
+      c' = maybe "" (\x -> show (abs x) ++ maybe "" return (signum_to_char x)) c
+  in unwords (map f e) ++ c'
+
+{- | Inverse of 'formula_pp', histogram is UN-SORTED.
+
+> map (formula_pp . formula_parse) ["H2 O","C2 H4 O3","O4 S1"] == ["H2 O","C2 H4 O3","O4 S"]
+> map formula_parse ["H A","C21 H26 Cl1 N4 O2 1+","O4 S1 2-"]
+-}
+formula_parse :: String -> ([(String,Int)],Maybe Int)
+formula_parse txt =
+  let f x = case span isDigit x of
+              ([],_) -> case span isAlpha x of
+                          ("",_) -> error ("formula_parse: " ++ x)
+                          (e,"") -> Left (e,1)
+                          (e,n) -> Left (e,read n)
+              (k,['-']) -> Right (negate (read k))
+              (k,['+']) -> Right (read k)
+              _ -> error "formula_parse?"
+  in case partitionEithers (map f (words txt)) of
+       (e,[]) -> (e,Nothing)
+       (e,[c]) -> (e,Just c)
+       _ -> error ("formula_parse: " ++ txt)
 
 {- | Hill formula notation.
 
@@ -734,9 +766,16 @@ If carbon is present, the order should be: C, then H, then the other elements in
 If carbon is not present, the elements are listed purely in alphabetic order of their symbol.
 This is the 'Hill' system used by Chemical Abstracts.
 
-> map (hill_formula . words) ["A C H","A H","A C"] == ["C H A","A H","C A"]
+> map (formula_pp . hill_formula_seq . words) ["A C H","A H","A C"] == ["C H A","A H","C A"]
+
 -}
+hill_formula_seq :: [String] -> [(String,Int)]
+hill_formula_seq e =
+  let h = T.histogram e
+  in case lookup "C" h of
+       Nothing -> h
+       Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) h in p ++ q
+
+-- | 'formula_pp' of 'hill_formula_seq'
 hill_formula :: [String] -> String
-hill_formula =
-  let f (sym,k) = if k == 1 then sym else sym ++ show k
-  in unwords . map f . hill_formula_seq
+hill_formula = formula_pp . (\x -> (x,Nothing)) . hill_formula_seq
