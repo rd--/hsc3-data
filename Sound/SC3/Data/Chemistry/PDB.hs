@@ -203,13 +203,17 @@ het_load_records fn = do
 -- | ((ID3,N-ATOMS),NAME,FORMUL,GRAPH)
 type HET_ENTRY = ((String,Int),String,String, ([String], [(String, String)]))
 
--- | FORMULA field.
-het_entry_formula :: HET_ENTRY -> String
-het_entry_formula (_,_,x,_) = x
+-- | ID3 field.
+het_entry_id3 :: HET_ENTRY -> String
+het_entry_id3 ((nm,_),_,_,_) = nm
 
 -- | N-ATOMS field.
 het_entry_n_atoms :: HET_ENTRY -> Int
 het_entry_n_atoms ((_,k),_,_,_) = k
+
+-- | FORMULA field.
+het_entry_formula :: HET_ENTRY -> String
+het_entry_formula (_,_,x,_) = x
 
 -- | Parse record to entry.
 het_parse_entry :: HET_RECORD -> HET_ENTRY
