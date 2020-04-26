@@ -56,8 +56,8 @@ iupac_code_to_three_letter_code x =
   in fmap g (find f proteinogenic_amino_acid_tbl)
 
 -- | (IUPAC-CODE,DESCRIPTION,COMPLEMENT)
-nucleotide_core :: [(Char,String,Char)]
-nucleotide_core =
+nucleotide_core_tbl :: [(Char,String,Char)]
+nucleotide_core_tbl =
   [('A',"Adenine",'T')
   ,('C',"Cytosine",'G')
   ,('G',"Guanine",'C')
@@ -67,9 +67,9 @@ nucleotide_core =
 -- | (IUPAC-CODE,DESCRIPTION,COMPLEMENT)
 --
 -- <https://www.bioinformatics.org/sms/iupac.html>
-nucleotide_iupac :: [(Char, String, Char)]
-nucleotide_iupac =
-  nucleotide_core ++
+nucleotide_iupac_tbl :: [(Char, String, Char)]
+nucleotide_iupac_tbl =
+  nucleotide_core_tbl ++
   [('W',"Weak",'W')
   ,('S',"Strong",'S')
   ,('M',"aMino",'K')
@@ -93,9 +93,10 @@ pdb_code_tbl =
   ,("DG",'G')
   ,("DT",'T')]
 
-{- | Translate PDB SEQRES code (upper case 3-letter code) to IUPAC code.
+{- | Translate PDB SEQRES code (upper case 2-letter or 3-letter code) to IUPAC code.
 
-> pdb_seqres_code_lookup "GLY" == Just 'G'
+> map pdb_seqres_code_lookup ["GLY","QUA"] == [Just 'G',Nothing]
+> map pdb_seqres_code_lookup ["DC","DX"] == [Just 'C',Nothing]
 -}
 pdb_seqres_code_lookup :: String -> Maybe Char
 pdb_seqres_code_lookup = flip lookup pdb_code_tbl

@@ -758,17 +758,18 @@ formula_ch_parse :: String -> FORMULA_CH
 formula_ch_parse txt =
   let f x = case span isDigit x of
               ([],_) -> case span isAlpha x of
-                          ("",_) -> error ("formula_parse: " ++ x)
+                          ("",_) -> error ("formula_ch_parse: " ++ x)
                           (e,"") -> Left (e,1)
                           (e,n) -> Left (e,read n)
               (k,['-']) -> Right (negate (read k))
               (k,['+']) -> Right (read k)
-              _ -> error "formula_parse?"
+              _ -> error "formula_ch_parse?"
   in case partitionEithers (map f (words txt)) of
        (e,[]) -> (e,Nothing)
        (e,[c]) -> (e,Just c)
-       _ -> error ("formula_parse: " ++ txt)
+       _ -> error ("formula_ch_parse: " ++ txt)
 
+-- | Parse FORMULA, it is an 'error' for CHARGE to be given.
 formula_parse :: String -> FORMULA
 formula_parse txt =
   case formula_ch_parse txt of
