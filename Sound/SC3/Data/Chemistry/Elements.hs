@@ -731,20 +731,31 @@ signum_to_char x =
     1 -> Just '+'
     _ -> error "signum_to_char?"
 
--- | Given ordered sequence of (ELEMENT-SYMBOL,COUNT) and CHARGE, format formula string.
-formula_pp :: ([(String,Int)],Maybe Int) -> String
-formula_pp (e,c) =
+-- | [(ELEMENT-SYMBOL,COUNT)]
+type FORMULA = [(String,Int)]
+
+-- | Ordered FORMULA and CHARGE.
+type FORMULA_CH = (FORMULA,Maybe Int)
+
+-- | Format FORMULA.
+formula_pp :: FORMULA -> String
+formula_pp =
   let f (sym,k) = if k == 1 then sym else sym ++ show k
-      c' = maybe "" (\x -> show (abs x) ++ maybe "" return (signum_to_char x)) c
-  in unwords (map f e) ++ c'
+  in unwords . map f
 
-{- | Inverse of 'formula_pp', histogram is UN-SORTED.
+-- | Format FORMULA_CH.
+formula_ch_pp :: FORMULA_CH -> String
+formula_ch_pp (e,c) =
+  let c' = maybe "" (\x -> show (abs x) ++ maybe "" return (signum_to_char x)) c
+  in formula_pp e ++ c'
 
-> map (formula_pp . formula_parse) ["H2 O","C2 H4 O3","O4 S1"] == ["H2 O","C2 H4 O3","O4 S"]
-> map formula_parse ["H A","C21 H26 Cl1 N4 O2 1+","O4 S1 2-"]
+{- | Inverse of 'formula_ch_pp', histogram is UN-SORTED.
+
+> map (formula_ch_pp . formula_ch_parse) ["H2 O","C2 H4 O3","O4 S1"] == ["H2 O","C2 H4 O3","O4 S"]
+> map formula_ch_parse ["H A","C21 H26 Cl1 N4 O2 1+","O4 S1 2-"]
 -}
-formula_parse :: String -> ([(String,Int)],Maybe Int)
-formula_parse txt =
+formula_ch_parse :: String -> FORMULA_CH
+formula_ch_parse txt =
   let f x = case span isDigit x of
               ([],_) -> case span isAlpha x of
                           ("",_) -> error ("formula_parse: " ++ x)
@@ -758,24 +769,51 @@ formula_parse txt =
        (e,[c]) -> (e,Just c)
        _ -> error ("formula_parse: " ++ txt)
 
-{- | Hill formula notation.
+formula_parse :: String -> FORMULA
+formula_parse txt =
+  case formula_ch_parse txt of
+    (e,Nothing) -> e
+    _ -> error ("formula_parse: " ++ txt)
+
+{- | Hill formula sequence.
 
 The elements of the chemical formula are given in Hill ordering.
 The order of elements depends on whether carbon is present or not.
 If carbon is present, the order should be: C, then H, then the other elements in alphabetical order.
 If carbon is not present, the elements are listed purely in alphabetic order of their symbol.
 This is the 'Hill' system used by Chemical Abstracts.
+-}
+formula_sort_hill :: FORMULA -> FORMULA
+formula_sort_hill e =
+  case lookup "C" e of
+    Nothing -> e
+    Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) e in p ++ q
+
+{- | 'formula_sort_hill' of 'T.histogram'.
 
 > map (formula_pp . hill_formula_seq . words) ["A C H","A H","A C"] == ["C H A","A H","C A"]
-
 -}
-hill_formula_seq :: [String] -> [(String,Int)]
-hill_formula_seq e =
-  let h = T.histogram e
-  in case lookup "C" h of
-       Nothing -> h
-       Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) h in p ++ q
+hill_formula_seq :: [String] -> FORMULA
+hill_formula_seq = formula_sort_hill . T.histogram
 
 -- | 'formula_pp' of 'hill_formula_seq'
 hill_formula :: [String] -> String
-hill_formula = formula_pp . (\x -> (x,Nothing)) . hill_formula_seq
+hill_formula = formula_pp . hill_formula_seq
+
+-- | Apply 'abs' to COUNT at FORMULA.
+formula_abs :: FORMULA -> FORMULA
+formula_abs = map (fmap abs)
+
+{- | Difference between two formula.
+
+> let f f1 f2 = formula_pp (formula_diff (formula_parse f1) (formula_parse f2))
+> f "C4 H9 N1 O3" "C4 H7 N1 O2" == "H2 O"
+> f "H2 O" "C4 H O" == "H C4"
+-}
+formula_diff :: FORMULA -> FORMULA -> FORMULA
+formula_diff x y =
+  let f (e,m) = case lookup e y of
+                  Nothing -> Just (e,m)
+                  Just n -> if n == m then Nothing else Just (e,m - n)
+      g (e1,_) (e2,_) = e1 == e2
+  in mapMaybe f x ++ deleteFirstsBy g y x

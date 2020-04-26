@@ -93,7 +93,7 @@ pdb_code_tbl =
   ,("DG",'G')
   ,("DT",'T')]
 
-{- | Translate PDB SEQRES code to IUPAC code.
+{- | Translate PDB SEQRES code (upper case 3-letter code) to IUPAC code.
 
 > pdb_seqres_code_lookup "GLY" == Just 'G'
 -}
@@ -239,9 +239,9 @@ het_entry_lookup k = find (\((nm,_),_,_,_) -> nm == k)
 het_load_entries :: FilePath -> IO [HET_ENTRY]
 het_load_entries = fmap (map het_parse_entry) . het_load_records
 
--- | Histogram of elememts dervied from FORMULA field.
+-- | Histogram of elememts derived from FORMULA field.
 het_entry_formula_hist :: HET_ENTRY -> [(String,Int)]
-het_entry_formula_hist = sort . fst . E.formula_parse . het_entry_formula
+het_entry_formula_hist = sort . fst . E.formula_ch_parse . het_entry_formula
 
 -- | Does the N-ATOMS field correlate with the FORMULA field?
 het_entry_formula_validate :: HET_ENTRY -> Bool
@@ -273,7 +273,7 @@ pdb_structure_summary_uri = (++) "http://www.rcsb.org/structure/"
 pdb_structure_pdb_uri :: String -> String
 pdb_structure_pdb_uri k = "https://files.rcsb.org/download/" ++ k ++ ".pdb"
 
--- | URI for structure FASTA file.
+-- | URI for structure FASTA file, accepts 4-letter PDB code.
 pdb_structure_fasta_uri :: String -> String
 pdb_structure_fasta_uri = (++) "https://www.rcsb.org/fasta/entry/"
 
@@ -290,3 +290,55 @@ pdb_ligand_sdf_uri ty k = "http://files.rcsb.org/ligands/view/" ++ pdb_ligand_sd
 {-
 https://pdb101.rcsb.org/learn/guide-to-understanding-pdb-data/small-molecule-ligands
 -}
+
+-- * AMINO ACID TABLES
+
+-- | Kyte, J; Doolittle, R. F. (1982).
+--   "A simple method for displaying the hydropathic character of a protein".
+--   Journal of Molecular Biology. 157 (1): 105–32
+amino_acid_hydropathy_tbl :: [(String,Char,Double)]
+amino_acid_hydropathy_tbl =
+  [("Isoleucine",'I',4.5)
+  ,("Valine",'V',4.2)
+  ,("Leucine",'L',3.8)
+  ,("Phenylalanine",'F',2.8)
+  ,("Cysteine",'C',2.5)
+  ,("Methionine",'M',1.9)
+  ,("Alanine",'A',1.8)
+  ,("Glycine",'G',-0.4)
+  ,("Threonine",'T',-0.7)
+  ,("Serine",'S',-0.8)
+  ,("Tryptophan",'W',-0.9)
+  ,("Tyrosine",'Y',-1.3)
+  ,("Proline",'P',-1.6)
+  ,("Histidine",'H',-3.2)
+  ,("Glutamic Acid",'E',-3.5)
+  ,("Glutamine",'Q',-3.5)
+  ,("Aspartic Acid",'D',-3.5)
+  ,("Asparagine",'N',-3.5)
+  ,("Lysine",'K',-3.9)
+  ,("Arginine",'R',-4.5)]
+
+-- | <http://education.expasy.org/student_projects/isotopident/htdocs/aa-list.html>
+amino_acid_monoisotopic_mass_tbl :: [(String,Double)]
+amino_acid_monoisotopic_mass_tbl =
+  [("Gly",57.021464)
+  ,("Ala",71.037114)
+  ,("Ser",87.032029)
+  ,("Pro",97.052764)
+  ,("Val",99.068414)
+  ,("Thr",101.04768)
+  ,("Cys",103.00919)
+  ,("Asn",114.04293)
+  ,("Asp",115.02694)
+  ,("Leu",113.08406)
+  ,("Ile",113.08406)
+  ,("Gln",128.05858)
+  ,("Lys",128.09496)
+  ,("Glu",129.04259)
+  ,("Met",131.04048)
+  ,("His",137.05891)
+  ,("Phe",147.06841)
+  ,("Arg",156.10111)
+  ,("Tyr",163.06333)
+  ,("Trp",186.07931)]
