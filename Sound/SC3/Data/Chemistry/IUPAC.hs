@@ -21,6 +21,8 @@ iupac_nucleotide_tbl =
 {- | (IUPAC-CODE,THREE-LETTER-CODE,DESCRIPTION)
 
 <https://www.bioinformatics.org/sms/iupac.html>
+
+> length iupac_amino_acid_tbl == 22
 -}
 iupac_amino_acid_tbl :: [(Char,String,String)]
 iupac_amino_acid_tbl =
@@ -43,7 +45,10 @@ iupac_amino_acid_tbl =
   ,('T',"Thr","Threonine")
   ,('V',"Val","Valine")
   ,('W',"Trp","Tryptophan")
-  ,('Y',"Tyr","Tyrosine")]
+  ,('Y',"Tyr","Tyrosine")
+  -- EXT
+  ,('U',"Sec","Selenocysteine")
+  ,('O',"Pyl","Pyrrolysine")]
 
 -- | Translate from 1-letter IUPAC code to 3-letter IUPAC code.
 iupac_one_letter_code_to_three_letter_code :: Char -> Maybe String

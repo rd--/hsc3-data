@@ -33,6 +33,9 @@ type MOL_BOND = (V2 Int, Int)
 -- | (name,description,atom-count,bond-count,atoms,bonds,version)
 type MOL = (String, String, Int, Int, [MOL_ATOM], [MOL_BOND], Int)
 
+mol_empty :: MOL
+mol_empty = ("","",0,0,[],[],2000)
+
 -- * GENERA
 
 mol_version :: String -> Int
@@ -106,6 +109,7 @@ mol_v20_read_bond s =
 mol_v20_parse :: [String] -> MOL
 mol_v20_parse l =
   case l of
+    [] -> mol_empty -- ALLOW NIL MOL FILES
     nm:dsc:_:cnt:dat ->
       let (a_n,b_n,v) = mol_v20_read_counts cnt
           a = map mol_v20_read_atom (take a_n dat)

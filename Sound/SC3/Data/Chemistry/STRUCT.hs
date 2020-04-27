@@ -68,6 +68,12 @@ sym_radius sym =
 struct_validate :: STRUCT -> Bool
 struct_validate (_,(n_a,n_b),_,a,b) = n_a == length a && n_b == length b
 
+struct_is_empty :: STRUCT -> Bool
+struct_is_empty s =
+  case s of
+    (_,(0,0),_,[],[]) -> True
+    _ -> False
+
 type TOLERANCE = (Double,Double)
 
 -- | Replaces existing BONDS, if any, with calculated bonds.
