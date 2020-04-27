@@ -19,84 +19,16 @@ import qualified Data.ByteString.Char8 as B {- bytestring -}
 import qualified Music.Theory.Directory as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
 
-import qualified Sound.SC3.Data.Chemistry.Elements as E {- hsc3-data -}
-
-{- | (IUPAC-CODE,THREE-LETTER-CODE,DESCRIPTION)
-
-<https://www.bioinformatics.org/sms/iupac.html>
--}
-proteinogenic_amino_acid_tbl :: [(Char,String,String)]
-proteinogenic_amino_acid_tbl =
-  [('A',"Ala","Alanine")
-  ,('C',"Cys","Cysteine")
-  ,('D',"Asp","Aspartic Acid")
-  ,('E',"Glu","Glutamic Acid")
-  ,('F',"Phe","Phenylalanine")
-  ,('G',"Gly","Glycine")
-  ,('H',"His","Histidine")
-  ,('I',"Ile","Isoleucine")
-  ,('K',"Lys","Lysine")
-  ,('L',"Leu","Leucine")
-  ,('M',"Met","Methionine")
-  ,('N',"Asn","Asparagine")
-  ,('P',"Pro","Proline")
-  ,('Q',"Gln","Glutamine")
-  ,('R',"Arg","Arginine")
-  ,('S',"Ser","Serine")
-  ,('T',"Thr","Threonine")
-  ,('V',"Val","Valine")
-  ,('W',"Trp","Tryptophan")
-  ,('Y',"Tyr","Tyrosine")]
-
--- | Lookup IUPAC code in 'proteinogenic_amino_acid_tbl'.
-iupac_code_to_three_letter_code :: Char -> Maybe String
-iupac_code_to_three_letter_code x =
-  let f (c1,_,_) = x == c1
-      g (_,c3,_) = c3
-  in fmap g (find f proteinogenic_amino_acid_tbl)
-
--- | (IUPAC-CODE,DESCRIPTION,COMPLEMENT)
-nucleotide_core_tbl :: [(Char,String,Char)]
-nucleotide_core_tbl =
-  [('A',"Adenine",'T')
-  ,('C',"Cytosine",'G')
-  ,('G',"Guanine",'C')
-  ,('T',"Thymine",'A')
-  ,('U',"Uracil",'A')] -- IN RNA URACIL IS USED IN PLACE OF THYMINE
-
--- | (IUPAC-CODE,DESCRIPTION,COMPLEMENT)
---
--- <https://www.bioinformatics.org/sms/iupac.html>
-nucleotide_iupac_tbl :: [(Char, String, Char)]
-nucleotide_iupac_tbl =
-  nucleotide_core_tbl ++
-  [('W',"Weak",'W')
-  ,('S',"Strong",'S')
-  ,('M',"aMino",'K')
-  ,('K',"Keto",'M')
-  ,('R',"puRine",'Y')
-  ,('Y',"pYrimidine",'R')
-  ,('B',"not A",'V')
-  ,('D',"not C",'H')
-  ,('H',"not G",'D')
-  ,('V',"not T",'B')
-  ,('N',"any",'N')
-  ,('-',"Gap (Zero)",'-')
-  ,('.',"Gap (Zero)",'.')]
+import qualified Sound.SC3.Data.Chemistry.Elements as C {- hsc3-data -}
+import qualified Sound.SC3.Data.Chemistry.IUPAC as C {- hsc3-data -}
 
 -- | (PDB-CODE,IUPAC-CODE)
 pdb_code_tbl :: [(String,Char)]
-pdb_code_tbl =
-  map (\(c1,c3,_) -> (map toUpper c3,c1)) proteinogenic_amino_acid_tbl ++
-  [("DA",'A')
-  ,("DC",'C')
-  ,("DG",'G')
-  ,("DT",'T')]
+pdb_code_tbl = map (\(c1,c3,_) -> (map toUpper c3,c1)) C.iupac_amino_acid_tbl
 
-{- | Translate PDB SEQRES code (upper case 2-letter or 3-letter code) to IUPAC code.
+{- | Translate PDB SEQRES code (upper case 3-letter code) to IUPAC code.
 
 > map pdb_seqres_code_lookup ["GLY","QUA"] == [Just 'G',Nothing]
-> map pdb_seqres_code_lookup ["DC","DX"] == [Just 'C',Nothing]
 -}
 pdb_seqres_code_lookup :: String -> Maybe Char
 pdb_seqres_code_lookup = flip lookup pdb_code_tbl
@@ -107,9 +39,6 @@ pdb_seqres_code_lookup = flip lookup pdb_code_tbl
 
 > let s = "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR"
 > map pdb_seqres_code_lookup_err (words s) == "ACDEFGHIKLMNPQRSTVWY"
-
-> let s = "DA DC DG DT"
-> map pdb_seqres_code_lookup_err (words s) == "ACGT"
 -}
 pdb_seqres_code_lookup_err :: String -> Char
 pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_seqres_code_lookup
@@ -242,7 +171,7 @@ het_load_entries = fmap (map het_parse_entry) . het_load_records
 
 -- | Histogram of elememts derived from FORMULA field.
 het_entry_formula_hist :: HET_ENTRY -> [(String,Int)]
-het_entry_formula_hist = sort . fst . E.formula_ch_parse . het_entry_formula
+het_entry_formula_hist = sort . fst . C.formula_ch_parse . het_entry_formula
 
 -- | Does the N-ATOMS field correlate with the FORMULA field?
 het_entry_formula_validate :: HET_ENTRY -> Bool
