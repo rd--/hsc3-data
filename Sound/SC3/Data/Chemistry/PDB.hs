@@ -57,7 +57,7 @@ pdb_to_mol pdb_fn mol_fn = callProcess "obabel" ["-ipdb",pdb_fn,"-omol","-O",mol
 pdb_to_mol_x :: FilePath -> FilePath -> IO ()
 pdb_to_mol_x pdb_fn mol_fn = do
   createDirectoryIfMissing True (takeDirectory mol_fn)
-  T.if_file_exists (mol_fn,pdb_to_mol pdb_fn mol_fn,return ())
+  T.if_file_exists (mol_fn,return (),pdb_to_mol pdb_fn mol_fn)
 
 -- * MONOMER-HET
 
