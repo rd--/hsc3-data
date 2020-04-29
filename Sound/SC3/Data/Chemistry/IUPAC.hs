@@ -1,6 +1,7 @@
 -- | International Union of Pure and Applied Chemistry <https://iupac.org/>
 module Sound.SC3.Data.Chemistry.IUPAC where
 
+import Data.Char {- base -}
 import Data.List {- base -}
 
 {- | (IUPAC-CODE,BASES-REPRESENTED)
@@ -50,9 +51,19 @@ iupac_amino_acid_tbl =
   ,('U',"Sec","Selenocysteine")
   ,('O',"Pyl","Pyrrolysine")]
 
--- | Translate from 1-letter IUPAC code to 3-letter IUPAC code.
+-- | Translate from 1-letter IUPAC code (upper-case only) to 3-letter IUPAC code.
 iupac_one_letter_code_to_three_letter_code :: Char -> Maybe String
 iupac_one_letter_code_to_three_letter_code x =
   let f (c1,_,_) = x == c1
       g (_,c3,_) = c3
+  in fmap g (find f iupac_amino_acid_tbl)
+
+-- | Translate from 3-letter IUPAC code (case insensitive) to 1-letter IUPAC code.
+--
+-- > iupac_three_letter_code_to_one_letter_code "GLY" == Just 'G'
+iupac_three_letter_code_to_one_letter_code :: String -> Maybe Char
+iupac_three_letter_code_to_one_letter_code x =
+  let ci p q = map toUpper p == map toUpper q
+      f (_,c3,_) = ci x c3
+      g (c1,_,_) = c1
   in fmap g (find f iupac_amino_acid_tbl)
