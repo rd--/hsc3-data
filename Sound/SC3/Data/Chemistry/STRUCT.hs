@@ -7,6 +7,7 @@ There is also a simle plain text format for storing STRUCT data.
 module Sound.SC3.Data.Chemistry.STRUCT where
 
 import Data.Maybe {- base -}
+import Data.List {- base -}
 import System.FilePath {- filepath -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
@@ -19,8 +20,13 @@ import qualified Sound.SC3.Data.Chemistry.MOL as MOL {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.POSCAR as POSCAR {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
 
+-- * TYPES
+
 -- | (atomic-symbol,xyz-coordinate)
 type ATOM = (String,V3 Double)
+
+atom_sym :: ATOM -> String
+atom_sym (e,_) = e
 
 -- | (i,j), indicies into ATOM sequence (ZERO indexed)
 type BOND = (Int,Int)
@@ -57,6 +63,19 @@ struct_bonds_atoms (_nm,_k,_dsc,a,b) =
   let f (i,j) = (a !! i,a !! j)
   in map f b
 
+-- | Do atom count and bond count match atom and bond data?
+struct_validate :: STRUCT -> Bool
+struct_validate (_,(n_a,n_b),_,a,b) = n_a == length a && n_b == length b
+
+-- | Is STRUCT valid and empty?
+struct_is_empty :: STRUCT -> Bool
+struct_is_empty s =
+  case s of
+    (_,(0,0),_,[],[]) -> True
+    _ -> False
+
+-- * CONNECTION
+
 -- | Covalent radius (angstroms) of element /sym/, defaults to 250.
 --
 -- > map sym_radius ["Al","C","Cu","Fe","FE","S"]
@@ -64,15 +83,6 @@ sym_radius :: Fractional n => String -> n
 sym_radius sym =
   let r = E.covalent_radius (E.atomic_number_err False sym)
   in E.picometres_to_angstroms (fromMaybe 250 r)
-
-struct_validate :: STRUCT -> Bool
-struct_validate (_,(n_a,n_b),_,a,b) = n_a == length a && n_b == length b
-
-struct_is_empty :: STRUCT -> Bool
-struct_is_empty s =
-  case s of
-    (_,(0,0),_,[],[]) -> True
-    _ -> False
 
 type TOLERANCE = (Double,Double)
 
@@ -82,6 +92,8 @@ struct_calculate_bonds tol (nm,(n_a,_),dsc,a,_b) =
   let b = map fst (E.calculate_bonds sym_radius tol a)
       n_b = length b
   in (nm,(n_a,n_b),dsc,a,b)
+
+-- * QUERY/EDIT
 
 -- | (minima,maxima) of atoms.
 struct_bounds :: STRUCT -> V2 (V3 Double)
@@ -104,12 +116,14 @@ struct_center c (nm,k,dsc,a,b) =
 
 -- * CONVERT - MOD/SDF, POSCAR, XYZ
 
+-- | Convert MOL data to STRUCT data.  MOL bond data is one-indexed.
 mol_to_struct :: (String,MOL.MOL) -> STRUCT
 mol_to_struct (fn,(nm,dsc,a_n,b_n,a,b,_)) =
   let atom_f (i,j) = (j,i)
-      bond_f ((i,j),_) = (i - 1,j - 1) -- MOL bond data is one-indexed
+      bond_f ((i,j),_) = (i - 1,j - 1)
   in (fn,(a_n,b_n),concat [nm," -- ",dsc],map atom_f a,map bond_f b)
 
+-- | Convert POSCAR data to STRUCT data.
 poscar_to_struct :: POSCAR.POSCAR_TY -> (String,POSCAR.POSCAR) -> STRUCT
 poscar_to_struct ty (nm,p) =
   let k = POSCAR.poscar_degree p
@@ -118,12 +132,43 @@ poscar_to_struct ty (nm,p) =
       swap (i,j) = (j,i)
   in (nm,(k,0),dsc,map swap atoms,[])
 
+-- | Convert XYZ data to STRUCT data.  XYZ files have no connection (bond) data.
 xyz_to_struct :: (String,XYZ.XYZ) -> STRUCT
 xyz_to_struct (nm,(k,dsc,atoms)) = (nm,(k,0),dsc,atoms,[])
 
+-- * STAT
+
+-- | Print summary of STRUCT data.
+struct_stat :: STRUCT -> [String]
+struct_stat s =
+  let (nm,(n_a,n_b),dsc,a,_) = s
+      e = sort (map atom_sym a)
+      u = nub e
+      f (i,j) = concat [i,": ",j]
+      q = [("NAME",nm)
+          ,("DESCRIPTION",dsc)
+          ,("N-ATOMS",show n_a)
+          ,("N-BONDS",show n_b)
+          ,("N-ELEMENTS",show (length u))
+          ,("ELEMENTS",unwords u)
+          ,("FORMULA",E.hill_formula e)
+          ,("VALID",show (struct_validate s))]
+  in map f q
+
+-- | 'putStrLn' of 'unlines' of 'stuct_stat'
+struct_stat_wr :: STRUCT -> IO ()
+struct_stat_wr = putStrLn . unlines . struct_stat
+
 -- * FORMAT - STRUCT
 
--- | Write simple plain text format for STRUCT data.
+{- | Write simple plain text format for STRUCT data.
+
+1. struct-name
+2. atom-count bond-count
+3. description
+4. atom-data: element x y z
+   bond-data: atom-ix atom-ix
+-}
 struct_pp :: Int -> STRUCT -> [String]
 struct_pp k (nm,(n_a,n_b),dsc,a,b) =
   let hdr = [nm
