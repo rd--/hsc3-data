@@ -177,8 +177,28 @@ mol_v30_parse (nm,dsc) l =
 mol_v30_ent :: [String] -> [String]
 mol_v30_ent = filter ("M  V30 " `isPrefixOf`)
 
+-- * ASSOCIATED DATA ITEMS
+
+{- | Read the associated data items entries from MOL/SDF file.
+
+> txt <- readFile "/home/rohan/rd/j/2020-02-22/sdf/DB01452.sdf"
+> mol_adi txt
+-}
+mol_adi :: String -> [(String,String)]
+mol_adi =
+  let f ln = case ln of
+               ('>':' ':'<':k):v:"":ln' -> (takeWhile ((/=) '>') k,v) : f ln'
+               _ -> []
+  in f . tail . dropWhile ((/=) "M  END") . lines
+
+mol_adi_pp :: [(String,String)] -> String
+mol_adi_pp =
+  let f (k,v) = concat [k,": ",v]
+  in unlines . map f
+
 -- * LOAD
 
+-- | 'mol_v20_parse' or 'mol_v30_parse' of 'readFile'.
 mol_load :: FilePath -> IO MOL
 mol_load fn = do
   s <- readFile fn
@@ -188,11 +208,20 @@ mol_load fn = do
     (nm,dsc,0,0,[],[],3000) -> return (mol_v30_parse (nm,dsc) (mol_v30_ent l))
     _ -> return r
 
+-- | 'mol_adi' of 'readFile'.
+mol_load_adi :: FilePath -> IO [(String, String)]
+mol_load_adi = fmap mol_adi . readFile
+
 -- | List of all .ext files at /dir/.  SDF is a superset of MOL, extensions are ".mol" and ".sdf".
 --
 -- > mol_dir_entries ".mol" "/home/rohan/rd/j/2020-03-30/mol/"
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
 mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
+
+mol_dir_filenames :: String -> FilePath -> IO [FilePath]
+mol_dir_filenames ext dir = do
+  fn <- mol_dir_entries ext dir
+  return (map ((</>) dir) fn)
 
 -- | Load all .ext files at directory, extensions are ".mol" or ".sdf"
 mol_load_dir :: String -> FilePath -> IO [(String, MOL)]
@@ -201,6 +230,14 @@ mol_load_dir ext dir = do
   let nm = map takeBaseName fn
   dat <- mapM (mol_load . (</>) dir) fn
   return (zip nm dat)
+
+-- | 'mol_load_adi' of 'mol_dir_filenames'.
+--
+-- > mol_load_dir_adi ".sdf" "/home/rohan/rd/j/2020-02-22/sdf/"
+mol_load_dir_adi :: String -> FilePath -> IO [[(String,String)]]
+mol_load_dir_adi ext dir = do
+  fn <- mol_dir_filenames ext dir
+  mapM mol_load_adi fn
 
 {-
 
