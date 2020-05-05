@@ -14,6 +14,7 @@ module Sound.SC3.Data.Chemistry.MOL where
 import Data.Char {- base -}
 import Data.List {- base -}
 import Data.List.Split {- split -}
+import Data.Maybe {- base -}
 import Safe {- safe -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
@@ -179,21 +180,27 @@ mol_v30_ent = filter ("M  V30 " `isPrefixOf`)
 
 -- * ASSOCIATED DATA ITEMS
 
+type MOL_ADI = (String,[String])
+
 {- | Read the associated data items entries from MOL/SDF file.
 
 > txt <- readFile "/home/rohan/rd/j/2020-02-22/sdf/DB01452.sdf"
 > mol_adi txt
 -}
-mol_adi :: String -> [(String,String)]
+mol_adi :: String -> [MOL_ADI]
 mol_adi =
-  let f ln = case ln of
-               ('>':' ':'<':k):v:"":ln' -> (takeWhile ((/=) '>') k,v) : f ln'
-               _ -> []
-  in f . tail . dropWhile ((/=) "M  END") . lines
+  let un_key = takeWhile ((/=) '>') . fromMaybe (error "mol_adi: NON-KEY?") . stripPrefix "> <"
+      not_term = ((/=) "$$$$")
+      not_end = ((/=) "M  END")
+      rem_null = filter (not . null)
+      f ln = case ln of
+               k:v -> (un_key k,v)
+               _ -> error "mol_adi: NO-KEY?"
+  in map f . rem_null . splitWhen null . takeWhile not_term . tail . dropWhile not_end . lines
 
-mol_adi_pp :: [(String,String)] -> String
+mol_adi_pp :: [MOL_ADI] -> String
 mol_adi_pp =
-  let f (k,v) = concat [k,": ",v]
+  let f (k,v) = concat [k,": ",intercalate "\\n" v]
   in unlines . map f
 
 -- * LOAD
@@ -209,7 +216,7 @@ mol_load fn = do
     _ -> return r
 
 -- | 'mol_adi' of 'readFile'.
-mol_load_adi :: FilePath -> IO [(String, String)]
+mol_load_adi :: FilePath -> IO [MOL_ADI]
 mol_load_adi = fmap mol_adi . readFile
 
 -- | List of all .ext files at /dir/.  SDF is a superset of MOL, extensions are ".mol" and ".sdf".
@@ -233,8 +240,9 @@ mol_load_dir ext dir = do
 
 -- | 'mol_load_adi' of 'mol_dir_filenames'.
 --
--- > mol_load_dir_adi ".sdf" "/home/rohan/rd/j/2020-02-22/sdf/"
-mol_load_dir_adi :: String -> FilePath -> IO [[(String,String)]]
+-- > adi <- mol_load_dir_adi ".sdf" "/home/rohan/rd/j/2020-02-22/sdf/"
+-- > mapM_ (putStrLn . mol_adi_pp) adi
+mol_load_dir_adi :: String -> FilePath -> IO [[MOL_ADI]]
 mol_load_dir_adi ext dir = do
   fn <- mol_dir_filenames ext dir
   mapM mol_load_adi fn
