@@ -2,6 +2,7 @@
 
 <https://cms.mpi.univie.ac.at/vasp/guide/node59.html>.
 Coordinates are in Angstroms.
+Connection data is not present.
 -}
 module Sound.SC3.Data.Chemistry.POSCAR where
 
@@ -85,7 +86,7 @@ poscar_bounds :: POSCAR -> V2 (V3 Double)
 poscar_bounds p =
   let c = map fst (poscar_atoms_cartesian p)
       r = unzip3 c
-  in (v3_uop minimum r,v3_uop maximum r)
+  in (v3_map minimum r,v3_map maximum r)
 
 -- | Load ".poscar" file.
 --

@@ -79,7 +79,7 @@ xyz_bounds :: XYZ -> V2 (V3 Double)
 xyz_bounds (_,_,a) =
   let c = map snd a
       r = unzip3 c
-  in (v3_uop minimum r,v3_uop maximum r)
+  in (v3_map minimum r,v3_map maximum r)
 
 -- | Load ".xyz" file.
 --

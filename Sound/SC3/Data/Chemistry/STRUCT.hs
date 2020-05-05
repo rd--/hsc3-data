@@ -100,7 +100,7 @@ struct_bounds :: STRUCT -> V2 (V3 Double)
 struct_bounds (_,_,_,atm,_) =
   let c = map snd atm
       r = unzip3 c
-  in (v3_uop minimum r,v3_uop maximum r)
+  in (v3_map minimum r,v3_map maximum r)
 
 -- | Apply /f/ at all atom positions.
 struct_v3_map :: (V3 Double -> V3 Double) -> STRUCT -> STRUCT
