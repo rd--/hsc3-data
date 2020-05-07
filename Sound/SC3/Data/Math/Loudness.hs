@@ -6,15 +6,15 @@ module Sound.SC3.Data.Math.Loudness where
 {- | A-weighting curve multiplier function, ie. for linear magnitude
 -- value.  See <http://en.wikipedia.org/wiki/A-weighting>
 
-> import Sound.SC3.Plot
+> import Sound.SC3.Plot {- hsc3-plot -}
 
-> let {f w = map w [20::Double,50 .. 20000]
->     ;r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]}
-> in plotTable (map f r)
+> f w = map w [20::Double,50 .. 20000]
+> r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]
+> plot_p1_ln (map f r)
 
-> let {f w = zip (map log [1..]) (map w [25,50 .. 20000])
->     ;r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]}
-> in plot_p2_ln (map f r)
+> f w = zip (map log [1..]) (map w [25,50 .. 20000])
+> r = [a_weighting_R,b_weighting_R,c_weighting_R,d_weighting_R]
+> plot_p2_ln (map f r)
 
 -}
 a_weighting_R :: Floating a => a -> a
@@ -31,19 +31,19 @@ a_weighting_R f =
 -- | A-weighting curve Db offset (additive) function, ie. for
 -- un-weighted Db readings.
 --
--- > plotTable1 (map a_weighting [20,50 .. 20000])
+-- > plot_p1_ln [map a_weighting [20,50 .. 20000]]
 -- > plot_p2_ln [zip (map log [1..]) (map a_weighting [25,50 .. 20000])]
 a_weighting :: Floating a => a -> a
 a_weighting f = 2 + 20 * logBase 10 (a_weighting_R f)
 
 -- * B Weighting
 
--- | B-weighting curve multiplier function, ie. for linear magnitude
--- value.  See <http://en.wikipedia.org/wiki/A-weighting>
---
--- > import Sound.SC3.Plot
--- > plotTable1 (map b_weighting_R [20,50 .. 20000])
--- > plot_p2_ln [zip (map log [1..]) (map b_weighting_R [25,50 .. 20000])]
+{- | B-weighting curve multiplier function, ie. for linear magnitude
+value.  See <http://en.wikipedia.org/wiki/A-weighting>
+
+> plot_p1_ln [map b_weighting_R [20,50 .. 20000]]
+> plot_p2_ln [zip (map log [1..]) (map b_weighting_R [25,50 .. 20000])]
+-}
 b_weighting_R :: Floating a => a -> a
 b_weighting_R f =
     let sq x = x * x
@@ -58,7 +58,7 @@ b_weighting_R f =
 -- | B-weighting curve Db offset (additive) function, ie. for
 -- un-weighted Db readings.
 --
--- > plotTable1 (map b_weighting [20,50 .. 20000])
+-- > plot_p1_ln [map b_weighting [20,50 .. 20000]]
 -- > plot_p2_ln [zip (map log [1..]) (map b_weighting [25,50 .. 20000])]
 b_weighting :: Floating a => a -> a
 b_weighting f = 0.17 + 20 * logBase 10 (b_weighting_R f)
@@ -68,8 +68,7 @@ b_weighting f = 0.17 + 20 * logBase 10 (b_weighting_R f)
 -- | C-weighting curve multiplier function, ie. for linear magnitude
 -- value.  See <http://en.wikipedia.org/wiki/A-weighting>
 --
--- > import Sound.SC3.Plot
--- > plotTable1 (map c_weighting_R [20,50 .. 20000])
+-- > plot_p1_ln [map c_weighting_R [20,50 .. 20000]]
 -- > plot_p2_ln [zip (map log [1..]) (map c_weighting_R [25,50 .. 20000])]
 c_weighting_R :: Floating a => a -> a
 c_weighting_R f =
@@ -84,7 +83,7 @@ c_weighting_R f =
 -- | C-weighting curve Db offset (additive) function, ie. for
 -- un-weighted Db readings.
 --
--- > plotTable1 (map c_weighting [20,50 .. 20000])
+-- > plot_p1_ln [map c_weighting [20,50 .. 20000]]
 -- > plot_p2_ln [zip (map log [1..]) (map c_weighting [25,50 .. 20000])]
 c_weighting :: Floating a => a -> a
 c_weighting f = 0.06 + 20 * logBase 10 (c_weighting_R f)
@@ -102,8 +101,7 @@ d_h_function f =
 -- | D-weighting curve multiplier function, ie. for linear magnitude
 -- value.  See <http://en.wikipedia.org/wiki/A-weighting>
 --
--- > import Sound.SC3.Plot
--- > plotTable1 (map d_weighting_R [20,50 .. 20000])
+-- > plot_p1_ln [map d_weighting_R [20,50 .. 20000]]
 -- > plot_p2_ln [zip (map log [1..]) (map d_weighting_R [25,50 .. 20000])]
 d_weighting_R :: Floating a => a -> a
 d_weighting_R f =
@@ -115,7 +113,7 @@ d_weighting_R f =
 -- | D-weighting curve Db offset (additive) function, ie. for
 -- un-weighted Db readings.
 --
--- > plotTable1 (map d_weighting [20,50 .. 20000])
+-- > plot_p1_ln [map d_weighting [20,50 .. 20000]]
 -- > plot_p2_ln [zip (map log [1..]) (map d_weighting [25,50 .. 20000])]
 d_weighting :: Floating a => a -> a
 d_weighting f = 20 * logBase 10 (d_weighting_R f)

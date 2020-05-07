@@ -1,7 +1,7 @@
 -- | See Easing.h from <http://libcinder.org>, via f0 <http://fredrikolofsson.com/>.
 module Sound.SC3.Data.Math.Easing where
 
--- > import Sound.SC3.Plot
+-- > import Sound.SC3.Plot {- hsc3-plot -}
 -- > let ix = [0,0.01 .. 1]
 -- > let ix_f f = map f ix
 -- > let plot_ease p q = plotTable [ix_f p,ix_f q]

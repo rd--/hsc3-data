@@ -292,7 +292,7 @@ codes_3 =
     ,("INRRXLCEYLFHYAPFSTPHHJMYRYJFBNM","Fig 4-4")
     ,("IWDWOGDGWGORJOBTUHFQBPRNTCBYQHP","Fig 4-8")]
 
--- > let cf = map sprott_coef_err "FUXRRRUIRDYKDUBPHHHOMOBRIRBINCS"
+-- > cf = map sprott_coef_err "FUXRRRUIRDYKDUBPHHHOMOBRIRBINCS"
 -- > plot_p2_pt [take 25000 (iterate (quartic_2l cf) (0.1,0))]
 
 -- * Specialised forms

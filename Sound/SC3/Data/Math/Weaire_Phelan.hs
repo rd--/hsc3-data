@@ -2,7 +2,7 @@
       "A counter-example to Kelvin's conjecture on minimal surfaces",
       Phil. Mag. Lett., 69: 107–110, doi:10.1080/09500839408241577.
 
-      <http://www.steelpillow.com/polyhedra/wp/wp.htm>
+      <http://www.steelpillow.com/polyhedra/wp/wp.html>
 -}
 module Sound.SC3.Data.Math.Weaire_Phelan where
 
