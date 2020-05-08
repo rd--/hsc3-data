@@ -56,7 +56,7 @@ rossler_h h a b c = h_transform_3 h (rossler a b c)
 
 {- | <http://paulbourke.net/fractals/peterdejong/>
 
-> vw x = plot_p2_pt [take 15000 x]
+> vw x = plot_p2_pt [take 12500 x]
 > pdj a b c d = vw (iterate (peter_de_jong a b c d) (-0.72,-0.64))
 
 > pdj 1.4 (-2.3) 2.4 (-2.1)
@@ -64,6 +64,10 @@ rossler_h h a b c = h_transform_3 h (rossler a b c)
 > pdj (-2.7) (-0.09) (-0.86) (-2.2)
 > pdj (-2.24) 0.43 (-0.65) (-2.43)
 > pdj (-2.0) (-2.0) (-1.2) 2.0
+> pdj 1.641 1.902 0.316 1.525
+> pdj 0.970 (-1.899) 1.381 (-1.506)
+> pdj (-0.827) (-1.637) 1.659 (-0.943)
+> pdj (-0.709) 1.638 0.452 1.740
 
 -}
 peter_de_jong :: Floating t => t -> t -> t -> t -> V2 t -> V2 t
@@ -80,6 +84,10 @@ peter_de_jong a b c d (x,y) =
 > clf (1.1) (-1.0) (1.0) (1.5) {- not as pb indicates -}
 > clf (1.6) (-0.6) (-1.2) (1.6)
 > clf (1.7) (1.7) (0.6) (1.2)
+> clf 1.5 (-1.8) 1.6 0.9
+> clf (-1.7) 1.3 (-0.1) (-1.2)
+> clf (-1.7) 1.8 (-1.9) (-0.4)
+> clf (-1.8) (-2.0) (-0.5) (-0.9)
 
 -}
 clifford :: Floating t => t -> t -> t -> t -> V2 t -> V2 t

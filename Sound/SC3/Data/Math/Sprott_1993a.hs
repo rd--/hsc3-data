@@ -1,4 +1,5 @@
--- | <http://sprott.physics.wisc.edu/sa.htm>
+-- | Julien C. Sprott "Strange Attractors: Creating Patterns in Chaos" 1993
+--   <http://sprott.physics.wisc.edu/sa.htm>
 module Sound.SC3.Data.Math.Sprott_1993a where
 
 import Data.Maybe {- base -}
@@ -248,7 +249,7 @@ codes_1 =
 
 -- | Two-dimensional codes.
 --
--- > plot_code_2 False 25000 (0.1,0) (codes_2 !! 25)
+-- > plot_code_2 False 8500 (0.1,0) (codes_2 !! 25)
 codes_2 :: [(Code,Annotation)]
 codes_2 =
     [("EWM?MPMMWMMMM","Fig 3-1") -- 0
@@ -284,7 +285,7 @@ codes_2 =
 
 -- | Three-dimensional codes.
 --
--- > plot_code_3 15000 (0.1,0,0) (codes_3 !! 1)
+-- > plot_code_3 8500 (0.1,0,0) (codes_3 !! 3)
 codes_3 :: [(Code,Annotation)]
 codes_3 =
     [("IJKRADSXGDBHIJTQJJDICEJKYSTXFNU","Fig 4-1")
