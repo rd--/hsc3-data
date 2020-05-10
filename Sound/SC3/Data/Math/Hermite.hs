@@ -83,6 +83,7 @@ kochanek_bartels_spline_h (t,b,c) (p0,p1,p2,p3) =
            ((((1 - t) * (1 - b) * (1 + c)) / 2) * (p3 - p2))
   in ((p1,p2),(m1,m2))
 
+-- > kochanek_bartels_spline (0,0,0) [0,1,1/3]
 kochanek_bartels_spline :: Fractional t => V3 t -> [t] -> [HERMITE t]
 kochanek_bartels_spline o =
   let rpt_bnd l = head l : l ++ [last l]

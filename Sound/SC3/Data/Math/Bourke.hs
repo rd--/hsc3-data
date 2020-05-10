@@ -101,6 +101,13 @@ clifford a b c d (x,y) =
 interpolate_linear :: Num a => V2 a -> a -> a
 interpolate_linear (y1,y2) mu = (y1 * (1 - mu)) + (y2 * mu)
 
+interpolate_linear_v2 :: Num a => V2 (V2 a) -> a -> V2 a
+interpolate_linear_v2 ((x1,y1),(x2,y2)) mu = let f = interpolate_linear in (f (x1,x2) mu,f (y1,y2) mu)
+
+interpolate_linear_v3 :: Num a => V2 (V3 a) -> a -> V3 a
+interpolate_linear_v3 ((x1,y1,z1),(x2,y2,z2)) mu =
+  let f = interpolate_linear in (f (x1,x2) mu,f (y1,y2) mu,f (z1,z2) mu)
+
 interpolate_cosine :: Floating a => V2 a -> a -> a
 interpolate_cosine (y1,y2) mu =
   let mu2 = (1 - cos (mu * pi)) / 2

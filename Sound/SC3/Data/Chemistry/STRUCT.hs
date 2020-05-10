@@ -203,12 +203,12 @@ struct_parse txt =
 -- * IO - STRUCT
 
 -- | 'struct_parse' of 'readFile'.
-struct_load :: FilePath -> IO STRUCT
-struct_load fn = return . struct_parse . lines =<< readFile fn
+struct_load_txt :: FilePath -> IO STRUCT
+struct_load_txt fn = return . struct_parse . lines =<< readFile fn
 
 -- | 'writeFile' of 'struct_pp'.
-struct_store :: Int -> FilePath -> STRUCT -> IO ()
-struct_store k fn = writeFile fn . unlines . struct_pp k
+struct_store_txt :: Int -> FilePath -> STRUCT -> IO ()
+struct_store_txt k fn = writeFile fn . unlines . struct_pp k
 
 -- * I/O - MOL/SDF,POSCAR,XYZ
 
@@ -220,7 +220,7 @@ struct_load_ext fn =
        ".mol" -> fmap (mol_to_struct . f) (MOL.mol_load fn)
        ".poscar" -> fmap (poscar_to_struct POSCAR.POSCAR_C . f) (POSCAR.poscar_load fn)
        ".sdf" -> fmap (mol_to_struct . f) (MOL.mol_load fn)
-       ".struct" -> struct_load fn
+       ".struct" -> struct_load_txt fn
        ".xyz" -> fmap (xyz_to_struct . f) (XYZ.xyz_load fn)
        ext -> error (show ("load_struct",fn,ext))
 
