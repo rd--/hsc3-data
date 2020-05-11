@@ -264,10 +264,10 @@ struct_to_ply k =
   in T.v3_graph_to_ply (Just k) . f . struct_to_lbl
 
 -- | 'T.v3_graph_to_obj' of 'struct_to_lbl', element names are discarded.
-struct_to_obj :: Bool -> Int -> STRUCT -> [String]
-struct_to_obj wr_p k =
+struct_to_obj :: Int -> STRUCT -> [String]
+struct_to_obj k =
   let f (v,e) = (map (fmap snd) v,e)
-  in T.v3_graph_to_obj wr_p (Just k) . f . struct_to_lbl
+  in T.v3_graph_to_obj (Just k) . f . struct_to_lbl
 
 {-
 -- * I/O - DIR
