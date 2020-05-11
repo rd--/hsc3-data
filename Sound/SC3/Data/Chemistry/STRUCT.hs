@@ -13,6 +13,7 @@ import System.FilePath {- filepath -}
 import Data.CG.Minus.Plain {- hcg-minus -}
 
 import qualified Music.Theory.Directory as T {- hmt -}
+import qualified Music.Theory.Graph.OBJ as T {- hmt -}
 import qualified Music.Theory.Graph.PLY as T {- hmt -}
 import qualified Music.Theory.Graph.Type as T {- hmt -}
 import qualified Music.Theory.Show as T {- hmt -}
@@ -261,6 +262,12 @@ struct_to_ply :: Int -> STRUCT -> [String]
 struct_to_ply k =
   let f (v,e) = (map (fmap snd) v,e)
   in T.v3_graph_to_ply (Just k) . f . struct_to_lbl
+
+-- | 'T.v3_graph_to_obj' of 'struct_to_lbl', element names are discarded.
+struct_to_obj :: Bool -> Int -> STRUCT -> [String]
+struct_to_obj wr_p k =
+  let f (v,e) = (map (fmap snd) v,e)
+  in T.v3_graph_to_obj wr_p (Just k) . f . struct_to_lbl
 
 {-
 -- * I/O - DIR
