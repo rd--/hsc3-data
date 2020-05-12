@@ -22,14 +22,32 @@ import qualified Music.Theory.List as T {- hmt -}
 import qualified Sound.SC3.Data.Chemistry.Elements as C {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.IUPAC as C {- hsc3-data -}
 
+-- * Amino Acid and Nucleotide Nomenclature
+
+-- | The standard PDB codes for amino acids, deoxyribonucleotides and ribonucleotides.
+pdb_std_codes :: ([String], [String], [String])
+pdb_std_codes =
+  (words "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR"
+  ,words "DA DC DG DT DI"
+  ,words "A C G U I")
+
+-- | The standard 3-character codes for Amino Acids.
+pdb_amino_acids :: [String]
+pdb_amino_acids = let (a,_,_) = pdb_std_codes in a
+
+-- | The standard 2-character codes for Deoxyribonucleotides.
+pdb_deoxyribonucleotides :: [String]
+pdb_deoxyribonucleotides = let (_,d,_) = pdb_std_codes in d
+
+-- | The standard 1-character codes for Ribonucleotides.
+pdb_ribonucleotides :: [String]
+pdb_ribonucleotides = let (_,_,r) = pdb_std_codes in r
+
 -- | (PDB-CODE,IUPAC-CODE)
 pdb_code_tbl :: [(String,Char)]
 pdb_code_tbl = map (\(c1,c3,_) -> (map toUpper c3,c1)) C.iupac_amino_acid_tbl
 
-{- | Translate PDB SEQRES code (upper case 3-letter code) to IUPAC code.
-
-> map pdb_seqres_code_lookup ["GLY","QUA"] == [Just 'G',Nothing]
--}
+-- | Translate PDB SEQRES code (upper case 3-letter code) to IUPAC code.
 pdb_seqres_code_lookup :: String -> Maybe Char
 pdb_seqres_code_lookup = flip lookup pdb_code_tbl
 
@@ -37,8 +55,7 @@ pdb_seqres_code_lookup = flip lookup pdb_code_tbl
 
 > pdb_seqres_code_lookup_err "GLY" == 'G'
 
-> let s = "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR"
-> map pdb_seqres_code_lookup_err (words s) == "ACDEFGHIKLMNPQRSTVWY"
+> map pdb_seqres_code_lookup_err pdb_amino_acids == "ACDEFGHIKLMNPQRSTVWY"
 -}
 pdb_seqres_code_lookup_err :: String -> Char
 pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_seqres_code_lookup
