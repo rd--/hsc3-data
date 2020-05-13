@@ -31,6 +31,18 @@ pdb_std_codes =
   ,words "DA DC DG DT DI"
   ,words "A C G U I")
 
+-- | Is /x/ a standard PDB code?
+--
+-- > all pdb_is_std_code (words "LEU DT U") == True
+pdb_is_std_code :: String -> Bool
+pdb_is_std_code x =
+  let (a,d,r) = pdb_std_codes
+  in case length x of
+       1 -> x `elem` r
+       2 -> x `elem` d
+       3 -> x `elem` a
+       _ -> False
+
 -- | The standard 3-character codes for Amino Acids.
 pdb_amino_acids :: [String]
 pdb_amino_acids = let (a,_,_) = pdb_std_codes in a
