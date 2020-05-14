@@ -479,6 +479,12 @@ atom_element_or_name (_,_,nm,_,_,_,el) = if null el then nm else el
 -- | ((SERIAL,ID),INIT-RESIDUE,END-RESIDUE,CLASS,LENGTH)
 type HELIX = ((Int,String),RESIDUE_ID,RESIDUE_ID,Int,Int)
 
+helix_serial :: HELIX -> Int
+helix_serial ((k,_),_,_,_,_) = k
+
+helix_chain_id :: HELIX -> Char
+helix_chain_id (_,(_,c1,_,_),(_,c2,_,_),_,_) = if c1 /= c2 then error "helix_chain_id?" else c1
+
 helix_unpack :: REC -> HELIX
 helix_unpack (_,x) =
   let (c,s,i,_) = txt_readers x
@@ -522,6 +528,9 @@ sheet_unpack (_,x) =
   let (c,s,i,_) = txt_readers x
   in (i 0,s 1,i 2,(s 3,c 4,i 5,c 6),(s 7,c 8,i 9,c 10))
 
+sheet_chain_id :: SHEET -> Char
+sheet_chain_id (_,_,_,(_,c1,_,_),(_,c2,_,_)) = if c1 /= c2 then error "sheet_chain_id?" else c1
+
 -- | (SERIAL,RESIDUE-ID)
 type TER = (Int,RESIDUE_ID)
 
@@ -542,3 +551,11 @@ dat_nummdl d =
 -- | Group atoms by chain and ensure sequence
 atom_group :: [ATOM] -> [(Char,[ATOM])]
 atom_group = map (fmap (sortOn atom_serial)) . T.collate_on atom_chain_id id
+
+-- | Group helices by chain and ensure sequence
+helix_group :: [HELIX] -> [(Char,[HELIX])]
+helix_group = map (fmap (sortOn helix_serial)) . T.collate_on helix_chain_id id
+
+-- | Group helices by chain
+sheet_group :: [SHEET] -> [(Char,[SHEET])]
+sheet_group = T.collate_on sheet_chain_id id
