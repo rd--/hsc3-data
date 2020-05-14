@@ -333,6 +333,7 @@ sheet_se =
   ,[6,10,14,16,20,22,26,27,31,33,37,38,40,45,48,50,54,55,60,63,65,69,70])
 
 {- | TER
+
 COLUMNS        DATA  TYPE    FIELD           DEFINITION
 -------------------------------------------------------------------------
  1 -  6        Record name   "TER   "
@@ -465,6 +466,7 @@ atom_element (_,_,_,_,_,_,e) = e
 atom_element_or_name :: ATOM -> String
 atom_element_or_name (_,_,nm,_,_,_,el) = if null el then nm else el
 
+-- | ((SERIAL,ID),INIT-RESIDUE,END-RESIDUE,CLASS,LENGTH)
 type HELIX = ((Int,String),RESIDUE_ID,RESIDUE_ID,Int,Int)
 
 helix_unpack :: REC -> HELIX
@@ -501,6 +503,14 @@ model_serial r =
 -- | (resName,stdRes) fields of MODRES record.
 modres_names :: REC -> (String,String)
 modres_names (_,x) = (txt_str (x !! 1),txt_str (x !! 5))
+
+-- | (STRAND,ID,NUM-STRANDS,INIT-RESIDUE,END-RESIDUE)
+type SHEET = (Int,String,Int,RESIDUE_ID,RESIDUE_ID)
+
+sheet_unpack :: REC -> SHEET
+sheet_unpack (_,x) =
+  let (c,s,i,_) = txt_readers x
+  in (i 0,s 1,i 2,(s 3,c 4,i 5,c 6),(s 7,c 8,i 9,c 10))
 
 -- | (SERIAL,RESIDUE-ID)
 type TER = (Int,RESIDUE_ID)
