@@ -386,7 +386,12 @@ atom_coord (_,x) = let f i = read (txt_str (x !! i)) in (f 7,f 8,f 9)
 atom_element :: REC -> String
 atom_element (_,x) = txt_str (x !! 12)
 
-helix_unpack :: REC -> ((Int,String),(String,Char,Int,Char),(String,Char,Int,Char),Int,Int)
+type RESIDUE_ID = (String,Char,Int,Char)
+
+atom_residue_id :: REC -> RESIDUE_ID
+atom_residue_id (_,x) = (txt_str (x !! 3),txt_char (x !! 4),txt_int (x !! 5),(txt_char (x !! 6)))
+
+helix_unpack :: REC -> ((Int,String),RESIDUE_ID,RESIDUE_ID,Int,Int)
 helix_unpack (_,r) =
   case r of
     [h_k,h_id,r1_nm,r1_ch,r1_id,r1_ins,r2_nm,r2_ch,r2_id,r2_ins,h_cl,_,h_n] ->
