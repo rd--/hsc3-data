@@ -2,9 +2,12 @@
 module Sound.SC3.Data.Chemistry.PDB.Parse where
 
 import Data.Char {- base -}
+import Data.List {- base -}
 import Data.Maybe {- base -}
 
 import qualified Data.ByteString.Char8 as T {- bytestring -}
+
+import qualified Music.Theory.List as T {- hmt -}
 
 -- * TXT
 
@@ -23,12 +26,19 @@ txt_str = T.unpack . T.takeWhile (not . isSpace) . T.dropWhile isSpace
 txt_int :: TXT -> Int
 txt_int = read . txt_str
 
+-- | 'read' of 'txt_str'
+txt_flt :: TXT -> Double
+txt_flt = read . txt_str
+
 -- | Unpack single element TXT.
-txt_char :: TXT -> Char
-txt_char x =
+txt_chr :: TXT -> Char
+txt_chr x =
   case T.unpack x of
     [c] -> c
-    _ -> error "txt_char?"
+    _ -> error "txt_chr?"
+
+txt_readers :: [TXT] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
+txt_readers x = (txt_chr . (x !!),txt_str . (x !!),txt_int . (x !!),txt_flt . (x !!))
 
 -- | Pack TXT.
 txt :: String -> TXT
@@ -380,28 +390,53 @@ pdb_load_dat = fmap T.lines . T.readFile
 
 -- * SPECIFIC
 
-atom_coord :: REC -> (Double,Double,Double)
-atom_coord (_,x) = let f i = read (txt_str (x !! i)) in (f 7,f 8,f 9)
-
-atom_element :: REC -> String
-atom_element (_,x) = txt_str (x !! 12)
-
 -- | (NAME,CHAIN,SEQNO,INSCODE)
 type RESIDUE_ID = (String,Char,Int,Char)
 
-atom_residue_id :: REC -> RESIDUE_ID
-atom_residue_id (_,x) = (txt_str (x !! 3),txt_char (x !! 4),txt_int (x !! 5),(txt_char (x !! 6)))
+residue_id_chain :: RESIDUE_ID -> Char
+residue_id_chain (_,ch,_,_) = ch
 
-helix_unpack :: REC -> ((Int,String),RESIDUE_ID,RESIDUE_ID,Int,Int)
-helix_unpack (_,r) =
-  case r of
-    [h_k,h_id,r1_nm,r1_ch,r1_id,r1_ins,r2_nm,r2_ch,r2_id,r2_ins,h_cl,_,h_n] ->
-      ((txt_int h_k,txt_str h_id)
-      ,(txt_str r1_nm,txt_char r1_ch,txt_int r1_id,txt_char r1_ins)
-      ,(txt_str r2_nm,txt_char r2_ch,txt_int r2_id,txt_char r2_ins)
-      ,txt_int h_cl
-      ,txt_int h_n)
-    _ -> error "helix_unpack?"
+-- | (hetatm,serial,atom-name,alt-loc,(residue-name,chain-id,seqno,inscode),coordinate,element)
+type ATOM = (Bool,Int,String,Char,RESIDUE_ID,(Double,Double,Double),String)
+
+atom_het :: ATOM -> Bool
+atom_het (h,_,_,_,_,_,_) = h
+
+atom_unpack :: REC -> ATOM
+atom_unpack (r,x) =
+  let (c,s,i,f) = txt_readers x
+  in (r == txt "HETATM",i 0,s 1,c 2,(s 3,c 4,i 5,c 6),(f 7,f 8,f 9),s 12)
+
+atom_serial :: ATOM -> Int
+atom_serial (_,k,_,_,_,_,_) = k
+
+atom_name :: ATOM -> String
+atom_name (_,_,nm,_,_,_,_) = nm
+
+atom_altloc :: ATOM -> Char
+atom_altloc (_,_,_,alt,_,_,_) = alt
+
+atom_residue_id :: ATOM -> RESIDUE_ID
+atom_residue_id (_,_,_,_,r,_,_) = r
+
+atom_chain_id :: ATOM -> Char
+atom_chain_id = residue_id_chain . atom_residue_id
+
+atom_coord :: ATOM -> (Double,Double,Double)
+atom_coord (_,_,_,_,_,c,_) = c
+
+atom_element :: ATOM -> String
+atom_element (_,_,_,_,_,_,e) = e
+
+atom_element_or_name :: ATOM -> String
+atom_element_or_name (_,_,nm,_,_,_,el) = if null el then nm else el
+
+type HELIX = ((Int,String),RESIDUE_ID,RESIDUE_ID,Int,Int)
+
+helix_unpack :: REC -> HELIX
+helix_unpack (_,x) =
+  let (c,s,i,_) = txt_readers x
+  in ((i 0,s 1),(s 2,c 3,i 4,c 5),(s 6,c 7,i 8,c 9),i 10,i 12)
 
 nummdl_n :: REC -> Int
 nummdl_n r =
@@ -427,3 +462,9 @@ dat_nummdl d =
     [] -> Nothing
     [r] -> Just (nummdl_n r)
     _ -> error "dat_nummdl"
+
+-- * GROUP
+
+-- | Group atoms by chain and ensure sequence
+atom_group :: [ATOM] -> [(Char,[ATOM])]
+atom_group = map (fmap (sortOn atom_serial)) . T.collate_on atom_chain_id id
