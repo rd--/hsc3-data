@@ -332,6 +332,19 @@ sheet_se =
   ([1, 8,12,15,18,22,23,27,29,33,34,38,39,42,46,50,51,55,57,61,65,66,70]
   ,[6,10,14,16,20,22,26,27,31,33,37,38,40,45,48,50,54,55,60,63,65,69,70])
 
+{- | TER
+COLUMNS        DATA  TYPE    FIELD           DEFINITION
+-------------------------------------------------------------------------
+ 1 -  6        Record name   "TER   "
+ 7 - 11        Integer       serial          Serial number.
+18 - 20        Residue name  resName         Residue name.
+22             Character     chainID         Chain identifier.
+23 - 26        Integer       resSeq          Residue sequence number.
+27             AChar         iCode           Insertion code.
+-}
+ter_se :: Num i => ([i],[i])
+ter_se = ([1,7,18,22,23,27],[6,11,20,22,26,27])
+
 {- | TITLE
 
 COLUMNS       DATA  TYPE     FIELD         DEFINITION
@@ -368,6 +381,7 @@ pdb_rec_str_se =
   ,("OBSLTE",obslte_se)
   ,("SEQRES",seqres_se)
   ,("SHEET ",sheet_se)
+  ,("TER ",ter_se)
   ,("TITLE ",title_se)
   ]
 
@@ -487,6 +501,12 @@ model_serial r =
 -- | (resName,stdRes) fields of MODRES record.
 modres_names :: REC -> (String,String)
 modres_names (_,x) = (txt_str (x !! 1),txt_str (x !! 5))
+
+-- | (SERIAL,RESIDUE-ID)
+type TER = (Int,RESIDUE_ID)
+
+ter_unpack :: REC -> TER
+ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
 
 -- * DAT-SPECIFIC
 
