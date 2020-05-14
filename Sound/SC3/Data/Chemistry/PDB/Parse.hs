@@ -431,7 +431,17 @@ residue_id_name (nm,_,_,_) = nm
 residue_id_chain :: RESIDUE_ID -> Char
 residue_id_chain (_,ch,_,_) = ch
 
--- | (hetatm,serial,atom-name,alt-loc,(residue-name,chain-id,seqno,inscode),coordinate,element)
+residue_id_seqno_inscode :: RESIDUE_ID -> (Int,Char)
+residue_id_seqno_inscode (_,_,k,i) = (k,i)
+
+-- | Give (R1,R3) is R2 in range (inclusive).
+residue_id_in_range :: (RESIDUE_ID,RESIDUE_ID) -> RESIDUE_ID -> Bool
+residue_id_in_range ((_,c1,k1,i1),(_,c3,k3,i3)) (_,c2,k2,i2) =
+  if c1 /= c3 || (k1,i1) >= (k3,i3)
+  then error "residue_id_in_range?"
+  else if c2 /= c1 then False else (k1,i1) <= (k2,i2) && (k2,i2) <= (k3,i3)
+
+-- | (HETATM,SERIAL,NAME,ALT-LOC,RESIDUE-ID,COORDINATE,ELEMENT)
 type ATOM = (Bool,Int,String,Char,RESIDUE_ID,(Double,Double,Double),String)
 
 atom_het :: ATOM -> Bool
