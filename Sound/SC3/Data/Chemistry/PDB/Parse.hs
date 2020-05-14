@@ -386,6 +386,7 @@ atom_coord (_,x) = let f i = read (txt_str (x !! i)) in (f 7,f 8,f 9)
 atom_element :: REC -> String
 atom_element (_,x) = txt_str (x !! 12)
 
+-- | (NAME,CHAIN,SEQNO,INSCODE)
 type RESIDUE_ID = (String,Char,Int,Char)
 
 atom_residue_id :: REC -> RESIDUE_ID
