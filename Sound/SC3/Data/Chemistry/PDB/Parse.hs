@@ -145,6 +145,22 @@ helix_se =
   ([1, 8,12,16,20,22,26,28,32,34,38,39,41,72]
   ,[6,10,14,18,20,25,26,30,32,37,38,40,70,76])
 
+{- | HET
+
+COLUMNS       DATA  TYPE     FIELD         DEFINITION
+---------------------------------------------------------------------------------
+ 1 -  6       Record name   "HET   "
+ 8 - 10       LString(3)    hetID          Het identifier, right-justified.
+13            Character     ChainID        Chain  identifier.
+14 - 17       Integer       seqNum         Sequence  number.
+18            AChar         iCode          Insertion  code.
+21 - 25       Integer       numHetAtoms    Number of HETATM records for the group
+                                           present in the entry.
+31 - 70       String        text           Text describing Het group.
+-}
+het_se :: Num i => ([i],[i])
+het_se = ([1,8,13,14,18,21,31],[6,10,13,17,18,25,70])
+
 {- | MASTER
 
 
@@ -342,6 +358,7 @@ pdb_rec_str_se =
   ,("FORMUL",formul_se)
   ,("HEADER",header_se)
   ,("HELIX ",helix_se)
+  ,("HET   ",het_se)
   ,("HETATM",atom_se)
   ,("MASTER",master_se)
   ,("MDLTYP",mdltyp_se)
@@ -393,6 +410,9 @@ pdb_load_dat = fmap T.lines . T.readFile
 -- | (NAME,CHAIN,SEQNO,INSCODE)
 type RESIDUE_ID = (String,Char,Int,Char)
 
+residue_id_name :: RESIDUE_ID -> String
+residue_id_name (nm,_,_,_) = nm
+
 residue_id_chain :: RESIDUE_ID -> Char
 residue_id_chain (_,ch,_,_) = ch
 
@@ -437,6 +457,20 @@ helix_unpack :: REC -> HELIX
 helix_unpack (_,x) =
   let (c,s,i,_) = txt_readers x
   in ((i 0,s 1),(s 2,c 3,i 4,c 5),(s 6,c 7,i 8,c 9),i 10,i 12)
+
+type HET = (RESIDUE_ID,Int,String)
+
+het_id :: HET -> String
+het_id ((x,_,_,_),_,_) = x
+
+het_chain :: HET -> Char
+het_chain ((_,x,_,_),_,_) = x
+
+het_n_atom :: HET -> Int
+het_n_atom (_,x,_) = x
+
+het_unpack :: REC -> HET
+het_unpack (_,x) = let (c,s,i,_) = txt_readers x in ((s 0,c 1,i 2,c 3),i 4,s 5)
 
 nummdl_n :: REC -> Int
 nummdl_n r =
