@@ -553,6 +553,9 @@ dat_atom = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
 dat_helix :: [TXT] -> [HELIX]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
 
+dat_het :: [TXT] -> [HET]
+dat_het = map het_unpack . pdb_dat_rec (txt "HET   ")
+
 dat_modres :: [TXT] -> [MODRES]
 dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 
