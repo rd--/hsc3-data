@@ -463,6 +463,9 @@ atom_name (_,_,nm,_,_,_,_) = nm
 atom_altloc :: ATOM -> Char
 atom_altloc (_,_,_,alt,_,_,_) = alt
 
+atom_sel_altloc_A :: ATOM -> Bool
+atom_sel_altloc_A = flip elem " A" . atom_altloc
+
 atom_residue_id :: ATOM -> RESIDUE_ID
 atom_residue_id (_,_,_,_,r,_,_) = r
 
