@@ -37,6 +37,10 @@ txt_chr x =
     [c] -> c
     _ -> error "txt_chr?"
 
+-- | Is TXT nil (ie. empty or all whitespace)
+txt_nil :: TXT -> Bool
+txt_nil = T.all isSpace
+
 txt_readers :: [TXT] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
 txt_readers x = (txt_chr . (x !!),txt_str . (x !!),txt_int . (x !!),txt_flt . (x !!))
 
@@ -70,6 +74,20 @@ atom_se :: Num i => ([i],[i])
 atom_se =
   ([ 1, 7,13,17,18,22,23,27,31,39,47,55,61,77,79]
   ,[ 6,11,16,17,20,22,26,27,38,46,54,60,66,78,80])
+
+{- | CONECT
+
+COLUMNS       DATA  TYPE      FIELD        DEFINITION
+-------------------------------------------------------------------------
+ 1 -  6        Record name    "CONECT"
+ 7 - 11       Integer        serial       Atom  serial number
+12 - 16        Integer        serial       Serial number of bonded atom
+17 - 21        Integer        serial       Serial  number of bonded atom
+22 - 26        Integer        serial       Serial number of bonded atom
+27 - 31        Integer        serial       Serial number of bonded atom
+-}
+conect_se :: Num i => ([i],[i])
+conect_se = ([1,7,12,17,22,27],[6,11,16,21,26,31])
 
 {- | END
 
@@ -367,6 +385,7 @@ se_to_ix (i,j) = zip (map (subtract 1) i) (map (+ 1) (zipWith (-) j i))
 pdb_rec_str_se :: [(String,([Int],[Int]))]
 pdb_rec_str_se =
   [("ATOM  ",atom_se)
+  ,("CONECT",conect_se)
   ,("END   ",end_se)
   ,("ENDMDL",endmdl_se)
   ,("FORMUL",formul_se)
@@ -481,6 +500,17 @@ atom_element (_,_,_,_,_,_,e) = e
 atom_element_or_name :: ATOM -> String
 atom_element_or_name (_,_,nm,_,_,_,el) = if null el then nm else el
 
+type CONECT = [(Int,Int)]
+
+conect_unpack :: REC -> CONECT
+conect_unpack (_,x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
+
+-- | (CLASSIFICATION,DEP-DATE,ID-CODE)
+type HEADER = (String,String,String)
+
+header_unpack :: REC -> HEADER
+header_unpack (_,x) = let s = txt_str . (x !!) in (s 0,s 1,s 2)
+
 -- | ((SERIAL,ID),INIT-RESIDUE,END-RESIDUE,CLASS,LENGTH)
 type HELIX = ((Int,String),RESIDUE_ID,RESIDUE_ID,Int,Int)
 
@@ -552,6 +582,12 @@ ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
 
 dat_atom :: [TXT] -> [ATOM]
 dat_atom = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
+
+dat_conect :: [TXT] -> [CONECT]
+dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
+
+dat_header :: [TXT] -> [HEADER]
+dat_header = map header_unpack . pdb_dat_rec (txt "HEADER")
 
 dat_helix :: [TXT] -> [HELIX]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
