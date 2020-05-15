@@ -20,6 +20,7 @@ import qualified Music.Theory.Show as T {- hmt -}
 
 import qualified Sound.SC3.Data.Chemistry.Elements as E {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.MOL as MOL {- hsc3-data -}
+import qualified Sound.SC3.Data.Chemistry.PDB.Parse as PDB {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.POSCAR as POSCAR {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
 
@@ -117,7 +118,7 @@ struct_center c (nm,k,dsc,a,b) =
   let (sym,pt) = unzip a
   in (nm,k,dsc,zip sym (v3_center_at c pt),b)
 
--- * CONVERT - MOD/SDF, POSCAR, XYZ
+-- * CONVERT - MOD/SDF, POSCAR, XYZ, PDB
 
 -- | Convert MOL data to STRUCT data.  MOL bond data is one-indexed.
 mol_to_struct :: (String,MOL.MOL) -> STRUCT
@@ -138,6 +139,17 @@ poscar_to_struct ty (nm,p) =
 -- | Convert XYZ data to STRUCT data.  XYZ files have no connection (bond) data.
 xyz_to_struct :: (String,XYZ.XYZ) -> STRUCT
 xyz_to_struct (nm,(k,dsc,atoms)) = (nm,(k,0),dsc,atoms,[])
+
+pdb_atom_to_xyz :: (String,[PDB.ATOM]) -> XYZ.XYZ
+pdb_atom_to_xyz (dsc,a) =
+  let n = length a
+  in (n,dsc,zip (map PDB.atom_element_or_name a) (map PDB.atom_coord a))
+
+pdb_atom_to_xyz_wr :: FilePath -> (String, [PDB.ATOM]) -> IO ()
+pdb_atom_to_xyz_wr fn = XYZ.xyz_store 5 fn . pdb_atom_to_xyz
+
+pdb_atom_to_struct :: TOLERANCE -> String -> (String, [PDB.ATOM]) -> STRUCT
+pdb_atom_to_struct tol nm = struct_calculate_bonds tol . xyz_to_struct . ((,) nm) . pdb_atom_to_xyz
 
 -- * STAT
 
