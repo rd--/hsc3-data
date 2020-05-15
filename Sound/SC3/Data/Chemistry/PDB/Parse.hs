@@ -404,7 +404,9 @@ parse_txt_ix f s = let spl x = (head x,tail x) in fmap (spl . txt_parts s) (f (t
 pdb_rec_parse :: TXT -> TXT -> Maybe REC
 pdb_rec_parse nm =
   let ix = fromMaybe (error "pdb_rec_parse") (lookup nm pdb_rec_txt_ix)
-  in parse_txt_ix (\z -> if z == nm then Just ix else Nothing)
+  in if T.length nm /= 6
+     then error "pdb_rec_parse?"
+     else parse_txt_ix (\z -> if z == nm then Just ix else Nothing)
 
 pdb_rec_parse_set :: [TXT] -> TXT -> Maybe REC
 pdb_rec_parse_set nm = parse_txt_ix (\z -> if z `elem` nm then lookup z pdb_rec_txt_ix else Nothing)
@@ -516,9 +518,15 @@ model_serial r =
     (_,[i]) -> read (txt_str i)
     _ -> error "model_serial"
 
+-- | (ID,RESIDUE-ID,STD-RES,COMMENT)
+type MODRES = (String,RESIDUE_ID,String,String)
+
+modres_unpack :: REC -> MODRES
+modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 5,s 6)
+
 -- | (resName,stdRes) fields of MODRES record.
-modres_names :: REC -> (String,String)
-modres_names (_,x) = (txt_str (x !! 1),txt_str (x !! 5))
+modres_names :: MODRES -> (String,String)
+modres_names (_,(r1,_,_,_),r2,_) = (r1,r2)
 
 -- | (STRAND,ID,NUM-STRANDS,INIT-RESIDUE,END-RESIDUE)
 type SHEET = (Int,String,Int,RESIDUE_ID,RESIDUE_ID)
@@ -539,12 +547,27 @@ ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
 
 -- * DAT-SPECIFIC
 
+dat_atom :: [TXT] -> [ATOM]
+dat_atom = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
+
+dat_helix :: [TXT] -> [HELIX]
+dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
+
+dat_modres :: [TXT] -> [MODRES]
+dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
+
 dat_nummdl :: [TXT] -> Maybe Int
 dat_nummdl d =
   case pdb_dat_rec (txt "NUMMDL") d of
     [] -> Nothing
     [r] -> Just (nummdl_n r)
     _ -> error "dat_nummdl"
+
+dat_sheet :: [TXT] -> [SHEET]
+dat_sheet = map sheet_unpack . pdb_dat_rec (txt "SHEET ")
+
+dat_ter :: [TXT] -> [TER]
+dat_ter = map ter_unpack . pdb_dat_rec (txt "TER   ")
 
 -- * GROUP
 
