@@ -405,7 +405,7 @@ pdb_rec_str_se =
   ,("OBSLTE",obslte_se)
   ,("SEQRES",seqres_se)
   ,("SHEET ",sheet_se)
-  ,("TER ",ter_se)
+  ,("TER   ",ter_se)
   ,("TITLE ",title_se)
   ]
 
@@ -429,7 +429,7 @@ parse_txt_ix f s = let spl x = (head x,tail x) in fmap (spl . txt_parts s) (f (t
 
 pdb_rec_parse :: TXT -> TXT -> Maybe REC
 pdb_rec_parse nm =
-  let ix = fromMaybe (error "pdb_rec_parse") (lookup nm pdb_rec_txt_ix)
+  let ix = fromMaybe (error (show ("pdb_rec_parse",nm))) (lookup nm pdb_rec_txt_ix)
   in if T.length nm /= 6
      then error "pdb_rec_parse?"
      else parse_txt_ix (\z -> if z == nm then Just ix else Nothing)
@@ -445,11 +445,6 @@ pdb_dat_rec ty = mapMaybe (pdb_rec_parse ty)
 
 pdb_dat_rec_set :: [TXT] -> [TXT] -> [REC]
 pdb_dat_rec_set ty = mapMaybe (pdb_rec_parse_set ty)
-
--- * IO
-
-pdb_load_dat :: FilePath -> IO [TXT]
-pdb_load_dat = fmap T.lines . T.readFile
 
 -- * SPECIFIC
 
@@ -679,3 +674,9 @@ sheet_group = T.collate_on sheet_chain_id id
 
 title_group :: [TITLE] -> String
 title_group = unwords . map snd . sort
+
+-- * IO
+
+pdb_load_dat :: FilePath -> IO [TXT]
+pdb_load_dat = fmap T.lines . T.readFile
+
