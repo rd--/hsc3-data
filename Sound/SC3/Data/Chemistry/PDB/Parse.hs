@@ -2,6 +2,7 @@
 module Sound.SC3.Data.Chemistry.PDB.Parse where
 
 import Data.Char {- base -}
+import Data.Function {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
@@ -561,6 +562,12 @@ modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 
 modres_names :: MODRES -> (String,String)
 modres_names (_,(r1,_,_,_),r2,_) = (r1,r2)
 
+-- | (SERIAL,CHAIN-ID,NUM-RES,[RES])
+type SEQRES = (Int,Char,Int,[String])
+
+seqres_unpack :: REC -> SEQRES
+seqres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,c 1,i 2,map s [3 .. 15])
+
 -- | (STRAND,ID,NUM-STRANDS,INIT-RESIDUE,END-RESIDUE)
 type SHEET = (Int,String,Int,RESIDUE_ID,RESIDUE_ID)
 
@@ -605,6 +612,9 @@ dat_nummdl d =
     [r] -> Just (nummdl_n r)
     _ -> error "dat_nummdl"
 
+dat_seqres :: [TXT] -> [SEQRES]
+dat_seqres = map seqres_unpack . pdb_dat_rec (txt "SEQRES")
+
 dat_sheet :: [TXT] -> [SHEET]
 dat_sheet = map sheet_unpack . pdb_dat_rec (txt "SHEET ")
 
@@ -612,6 +622,15 @@ dat_ter :: [TXT] -> [TER]
 dat_ter = map ter_unpack . pdb_dat_rec (txt "TER   ")
 
 -- * GROUP
+
+-- | Group residues by CHAIN, remove NIL entries.
+seqres_group :: [SEQRES] -> [(Char,[String])]
+seqres_group =
+  let f (k,c,_,_) = (c,k)
+      g (_,c,_,_) = c
+      h (_,c,_,r) = (c,filter (not . null) r)
+      i j = let (c,r) = unzip j in (head c,concat r)
+  in map i . map (map h) . groupBy ((==) `on` g) . sortOn f
 
 -- | Group atoms by chain and ensure sequence
 atom_group :: [ATOM] -> [(Char,[ATOM])]
