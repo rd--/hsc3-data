@@ -1,6 +1,7 @@
 -- | Minimal PDB parser.  <https://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html>
 module Sound.SC3.Data.Chemistry.PDB.Parse where
 
+import Control.Monad {- base -}
 import Data.Char {- base -}
 import Data.Function {- base -}
 import Data.List {- base -}
@@ -420,6 +421,9 @@ type REC = (TXT,[TXT])
 txt_rec_name :: TXT -> TXT
 txt_rec_name = T.take 6
 
+txt_rec_match :: TXT -> TXT -> Bool
+txt_rec_match x = (==) x . txt_rec_name
+
 parse_txt_ix :: (TXT -> Maybe [(Int, Int)]) -> TXT -> Maybe REC
 parse_txt_ix f s = let spl x = (head x,tail x) in fmap (spl . txt_parts s) (f (txt_rec_name s))
 
@@ -432,6 +436,9 @@ pdb_rec_parse nm =
 
 pdb_rec_parse_set :: [TXT] -> TXT -> Maybe REC
 pdb_rec_parse_set nm = parse_txt_ix (\z -> if z `elem` nm then lookup z pdb_rec_txt_ix else Nothing)
+
+pdb_dat_rec_1 :: TXT -> [TXT] -> Maybe REC
+pdb_dat_rec_1 ty = join . fmap (pdb_rec_parse ty) . find (txt_rec_match ty)
 
 pdb_dat_rec :: TXT -> [TXT] -> [REC]
 pdb_dat_rec ty = mapMaybe (pdb_rec_parse ty)
@@ -546,10 +553,7 @@ het_unpack :: REC -> HET
 het_unpack (_,x) = let (c,s,i,_) = txt_readers x in ((s 0,c 1,i 2,c 3),i 4,s 5)
 
 nummdl_n :: REC -> Int
-nummdl_n r =
-  case r of
-    (_,[i]) -> read (txt_str i)
-    _ -> error "nummdl_n"
+nummdl_n (_,x) = read (txt_str (x !! 0))
 
 model_serial :: REC -> Int
 model_serial r =
@@ -598,16 +602,27 @@ title_unpack (_,x) = (x !! 0,txt_str (x !! 1))
 
 -- * DAT-SPECIFIC
 
-dat_atom :: [TXT] -> [ATOM]
-dat_atom = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
+-- | ATOM and HETATM
+dat_atom_all :: [TXT] -> [ATOM]
+dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
+
+-- | (ATOM,HETATM)
+dat_atom :: [TXT] -> ([ATOM],[ATOM])
+dat_atom = partition (not . atom_het) . dat_atom_all
+
+-- | ATOM
+dat_atom__ :: [TXT] -> [ATOM]
+dat_atom__ = map atom_unpack . pdb_dat_rec (txt "ATOM  ")
+
+-- | HETATM
+dat_hetatm :: [TXT] -> [ATOM]
+dat_hetatm = map atom_unpack . pdb_dat_rec (txt "HETATM")
 
 dat_conect :: [TXT] -> [CONECT]
 dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
 
 dat_header :: [TXT] -> HEADER
-dat_header =
-  let uniq x = case x of {[e] -> e;_ -> error "dat_header: uniq?"}
-  in header_unpack . uniq . pdb_dat_rec (txt "HEADER")
+dat_header = header_unpack . fromMaybe (error "dat_header?") . pdb_dat_rec_1 (txt "HEADER")
 
 dat_helix :: [TXT] -> [HELIX]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
@@ -619,11 +634,7 @@ dat_modres :: [TXT] -> [MODRES]
 dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 
 dat_nummdl :: [TXT] -> Maybe Int
-dat_nummdl d =
-  case pdb_dat_rec (txt "NUMMDL") d of
-    [] -> Nothing
-    [r] -> Just (nummdl_n r)
-    _ -> error "dat_nummdl"
+dat_nummdl = fmap nummdl_n . pdb_dat_rec_1 (txt "NUMMDL")
 
 dat_seqres :: [TXT] -> [SEQRES]
 dat_seqres = map seqres_unpack . pdb_dat_rec (txt "SEQRES")
@@ -642,6 +653,12 @@ dat_title = map title_unpack . pdb_dat_rec (txt "TITLE ")
 -- | Group atoms by chain and ensure sequence
 atom_group :: [ATOM] -> [(Char,[ATOM])]
 atom_group = map (fmap (sortOn atom_serial)) . T.collate_on atom_chain_id id
+
+-- | Merge CONECT records, sort and remove (i,j)-(j,i) duplicates.
+conect_group :: [CONECT] -> [(Int,Int)]
+conect_group =
+  let o (i,j) = (min i j,max i j)
+  in nub . sort . map o . concat
 
 -- | Group helices by chain and ensure sequence
 helix_group :: [HELIX] -> [(Char,[HELIX])]
