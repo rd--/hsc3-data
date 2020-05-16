@@ -20,8 +20,10 @@ txt_parts :: TXT -> [(Int, Int)] -> [TXT]
 txt_parts s ix = let f (i,j) = T.take j (T.drop i s) in map f ix
 
 -- | Unpack and trim TXT.
+--
+-- > txt_str (txt " a b c ")
 txt_str :: TXT -> String
-txt_str = T.unpack . T.takeWhile (not . isSpace) . T.dropWhile isSpace
+txt_str = T.unpack . fst . T.spanEnd isSpace . T.dropWhile isSpace
 
 -- | 'read' of 'txt_str'
 txt_int :: TXT -> Int
@@ -509,6 +511,9 @@ conect_unpack (_,x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not 
 -- | (CLASSIFICATION,DEP-DATE,ID-CODE)
 type HEADER = (String,String,String)
 
+header_id4 :: HEADER -> String
+header_id4 (_,_,x) = x
+
 header_unpack :: REC -> HEADER
 header_unpack (_,x) = let s = txt_str . (x !!) in (s 0,s 1,s 2)
 
@@ -585,6 +590,12 @@ type TER = (Int,RESIDUE_ID)
 ter_unpack :: REC -> TER
 ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
 
+-- | (CONTINUATION,TITLE)
+type TITLE = (TXT,String)
+
+title_unpack :: REC -> TITLE
+title_unpack (_,x) = (x !! 0,txt_str (x !! 1))
+
 -- * DAT-SPECIFIC
 
 dat_atom :: [TXT] -> [ATOM]
@@ -593,8 +604,10 @@ dat_atom = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
 dat_conect :: [TXT] -> [CONECT]
 dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
 
-dat_header :: [TXT] -> [HEADER]
-dat_header = map header_unpack . pdb_dat_rec (txt "HEADER")
+dat_header :: [TXT] -> HEADER
+dat_header =
+  let uniq x = case x of {[e] -> e;_ -> error "dat_header: uniq?"}
+  in header_unpack . uniq . pdb_dat_rec (txt "HEADER")
 
 dat_helix :: [TXT] -> [HELIX]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
@@ -621,7 +634,18 @@ dat_sheet = map sheet_unpack . pdb_dat_rec (txt "SHEET ")
 dat_ter :: [TXT] -> [TER]
 dat_ter = map ter_unpack . pdb_dat_rec (txt "TER   ")
 
+dat_title :: [TXT] -> [TITLE]
+dat_title = map title_unpack . pdb_dat_rec (txt "TITLE ")
+
 -- * GROUP
+
+-- | Group atoms by chain and ensure sequence
+atom_group :: [ATOM] -> [(Char,[ATOM])]
+atom_group = map (fmap (sortOn atom_serial)) . T.collate_on atom_chain_id id
+
+-- | Group helices by chain and ensure sequence
+helix_group :: [HELIX] -> [(Char,[HELIX])]
+helix_group = map (fmap (sortOn helix_serial)) . T.collate_on helix_chain_id id
 
 -- | Group residues by CHAIN, remove NIL entries.
 seqres_group :: [SEQRES] -> [(Char,[String])]
@@ -632,14 +656,9 @@ seqres_group =
       i j = let (c,r) = unzip j in (head c,concat r)
   in map i . map (map h) . groupBy ((==) `on` g) . sortOn f
 
--- | Group atoms by chain and ensure sequence
-atom_group :: [ATOM] -> [(Char,[ATOM])]
-atom_group = map (fmap (sortOn atom_serial)) . T.collate_on atom_chain_id id
-
--- | Group helices by chain and ensure sequence
-helix_group :: [HELIX] -> [(Char,[HELIX])]
-helix_group = map (fmap (sortOn helix_serial)) . T.collate_on helix_chain_id id
-
 -- | Group helices by chain
 sheet_group :: [SHEET] -> [(Char,[SHEET])]
 sheet_group = T.collate_on sheet_chain_id id
+
+title_group :: [TITLE] -> String
+title_group = unwords . map snd . sort
