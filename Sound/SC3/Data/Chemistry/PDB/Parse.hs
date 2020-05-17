@@ -79,6 +79,28 @@ atom_se =
   ([ 1, 7,13,17,18,22,23,27,31,39,47,55,61,77,79]
   ,[ 6,11,16,17,20,22,26,27,38,46,54,60,66,78,80])
 
+{- | CISPEP
+
+COLUMNS       DATA  TYPE    FIELD         DEFINITION
+-------------------------------------------------------------------------
+ 1 -  6       Record name   "CISPEP"
+ 8 - 10       Integer       serNum        Record serial number.
+12 - 14       LString(3)    pep1          Residue name.
+16            Character     chainID1      Chain identifier.
+18 - 21       Integer       seqNum1       Residue sequence number.
+22            AChar         icode1        Insertion code.
+26 - 28       LString(3)    pep2          Residue name.
+30            Character     chainID2      Chain identifier.
+32 - 35       Integer       seqNum2       Residue sequence number.
+36            AChar         icode2        Insertion code.
+44 - 46       Integer       modNum        Identifies the specific model.
+54 - 59       Real(6.2)     measure       Angle measurement in degrees.
+-}
+cispep_se :: Num i => ([i],[i])
+cispep_se =
+  ([ 1, 8,12,16,18,22,26,30,32,36,44,54]
+  ,[ 6,10,14,16,21,22,28,30,35,36,46,59])
+
 {- | CONECT
 
 COLUMNS       DATA  TYPE      FIELD        DEFINITION
@@ -182,6 +204,31 @@ COLUMNS       DATA  TYPE     FIELD         DEFINITION
 -}
 het_se :: Num i => ([i],[i])
 het_se = ([1,8,13,14,18,21,31],[6,10,13,17,18,25,70])
+
+{- | LINK
+
+COLUMNS         DATA TYPE      FIELD           DEFINITION
+------------------------------------------------------------------------------------
+ 1 -  6         Record name    "LINK  "
+13 - 16         Atom           name1           Atom name.
+17              Character      altLoc1         Alternate location indicator.
+18 - 20         Residue name   resName1        Residue  name.
+22              Character      chainID1        Chain identifier.
+23 - 26         Integer        resSeq1         Residue sequence number.
+27              AChar          iCode1          Insertion code.
+43 - 46         Atom           name2           Atom name.
+47              Character      altLoc2         Alternate location indicator.
+48 - 50         Residue name   resName2        Residue name.
+52              Character      chainID2        Chain identifier.
+53 - 56         Integer        resSeq2         Residue sequence number.
+57              AChar          iCode2          Insertion code.
+60 - 65         SymOP          sym1            Symmetry operator atom 1.
+67 - 72         SymOP          sym2            Symmetry operator atom 2.
+74 – 78         Real(5.2)      Length          Link distance
+-}
+link_se :: Num i => ([i],[i])
+link_se = ([1,13,17,18,22,23,27,43,47,48,52,53,57,60,67,74]
+          ,[6,16,17,20,22,26,27,46,47,50,52,56,57,65,72,78])
 
 {- | MASTER
 
@@ -354,6 +401,28 @@ sheet_se =
   ([1, 8,12,15,18,22,23,27,29,33,34,38,39,42,46,50,51,55,57,61,65,66,70]
   ,[6,10,14,16,20,22,26,27,31,33,37,38,40,45,48,50,54,55,60,63,65,69,70])
 
+{- | SSBOND
+
+COLUMNS        DATA  TYPE     FIELD            DEFINITION
+--------------------------------------------------------------------------------
+ 1 -  6        Record name    "SSBOND"
+ 8 - 10        Integer        serNum           Serial number.
+12 - 14        LString(3)     "CYS"            Residue name.
+16             Character      chainID1         Chain identifier.
+18 - 21        Integer        seqNum1          Residue sequence number.
+22             AChar          icode1           Insertion code.
+26 - 28        LString(3)     "CYS"            Residue name.
+30             Character      chainID2         Chain identifier.
+32 - 35        Integer        seqNum2          Residue sequence number.
+36             AChar          icode2           Insertion code.
+60 - 65        SymOP          sym1             Symmetry operator for residue 1.
+67 - 72        SymOP          sym2             Symmetry operator for residue 2.
+74 – 78        Real(5.2)      Length           Disulfide bond distance
+-}
+ssbond_se :: Num i => ([i],[i])
+ssbond_se = ([1, 8,12,16,18,22,26,30,32,36,60,67,74]
+            ,[6,10,14,16,21,22,28,30,35,36,65,72,78])
+
 {- | TER
 
 COLUMNS        DATA  TYPE    FIELD           DEFINITION
@@ -389,6 +458,7 @@ se_to_ix (i,j) = zip (map (subtract 1) i) (map (+ 1) (zipWith (-) j i))
 pdb_rec_str_se :: [(String,([Int],[Int]))]
 pdb_rec_str_se =
   [("ATOM  ",atom_se)
+  ,("CISPEP",cispep_se)
   ,("CONECT",conect_se)
   ,("END   ",end_se)
   ,("ENDMDL",endmdl_se)
@@ -397,6 +467,7 @@ pdb_rec_str_se =
   ,("HELIX ",helix_se)
   ,("HET   ",het_se)
   ,("HETATM",atom_se)
+  ,("LINK  ",link_se)
   ,("MASTER",master_se)
   ,("MDLTYP",mdltyp_se)
   ,("MODEL ",model_se)
@@ -405,6 +476,7 @@ pdb_rec_str_se =
   ,("OBSLTE",obslte_se)
   ,("SEQRES",seqres_se)
   ,("SHEET ",sheet_se)
+  ,("SSBOND",ssbond_se)
   ,("TER   ",ter_se)
   ,("TITLE ",title_se)
   ]
@@ -547,8 +619,19 @@ het_n_atom (_,x,_) = x
 het_unpack :: REC -> HET
 het_unpack (_,x) = let (c,s,i,_) = txt_readers x in ((s 0,c 1,i 2,c 3),i 4,s 5)
 
-nummdl_n :: REC -> Int
-nummdl_n (_,x) = read (txt_str (x !! 0))
+-- | (ATOM-NAME-1,ALT-LOC-1,RESIDUE-ID-1,ATOM-NAME-2,ALT-LOC-2,RESIDUE-ID-2,SYM-1,SYM-2,DISTANCE)
+type LINK = (String,Char,RESIDUE_ID,String,Char,RESIDUE_ID,Int,Int,Double)
+
+link_unpack :: REC -> LINK
+link_unpack (_,x) =
+  let (c,s,i,f) = txt_readers x
+  in (s 0,c 1,(s 2,c 3,i 4,c 5),s 6,c 7,(s 8,c 9,i 10,c 11),i 12,i 13,f 14)
+
+-- | (CONTINUATION,TEXT)
+type MDLTYP = (TXT,String)
+
+mdltyp_unpack :: REC -> (TXT, String)
+mdltyp_unpack (_,x) = (x !! 0,txt_str (x !! 1))
 
 model_serial :: REC -> Int
 model_serial r =
@@ -559,12 +642,15 @@ model_serial r =
 -- | (ID,RESIDUE-ID,STD-RES,COMMENT)
 type MODRES = (String,RESIDUE_ID,String,String)
 
-modres_unpack :: REC -> MODRES
-modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 5,s 6)
-
 -- | (resName,stdRes) fields of MODRES record.
 modres_names :: MODRES -> (String,String)
 modres_names (_,(r1,_,_,_),r2,_) = (r1,r2)
+
+modres_unpack :: REC -> MODRES
+modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 5,s 6)
+
+nummdl_n :: REC -> Int
+nummdl_n (_,x) = read (txt_str (x !! 0))
 
 -- | (SERIAL,CHAIN-ID,NUM-RES,[RES])
 type SEQRES = (Int,Char,Int,[String])
@@ -582,6 +668,14 @@ sheet_unpack (_,x) =
 
 sheet_chain_id :: SHEET -> Char
 sheet_chain_id (_,_,_,(_,c1,_,_),(_,c2,_,_)) = if c1 /= c2 then error "sheet_chain_id?" else c1
+
+type SSBOND = (Int, RESIDUE_ID, RESIDUE_ID, Int, Int, Double)
+
+ssbond_unpack :: REC -> SSBOND
+ssbond_unpack (_,x) =
+  let (c,s,i,f) = txt_readers x
+      cys n = if s n /= "CYS" then error "ssbond_unpack?" else "CYS"
+  in (i 0,(cys 1,c 2,i 3,c 4),(cys 5,c 6,i 7,c 8),i 9,i 10,f 11)
 
 -- | (SERIAL,RESIDUE-ID)
 type TER = (Int,RESIDUE_ID)
@@ -625,6 +719,9 @@ dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
 dat_het :: [TXT] -> [HET]
 dat_het = map het_unpack . pdb_dat_rec (txt "HET   ")
 
+dat_link :: [TXT] -> [LINK]
+dat_link = map link_unpack . pdb_dat_rec (txt "LINK  ")
+
 dat_modres :: [TXT] -> [MODRES]
 dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 
@@ -636,6 +733,9 @@ dat_seqres = map seqres_unpack . pdb_dat_rec (txt "SEQRES")
 
 dat_sheet :: [TXT] -> [SHEET]
 dat_sheet = map sheet_unpack . pdb_dat_rec (txt "SHEET ")
+
+dat_ssbond :: [TXT] -> [SSBOND]
+dat_ssbond = map ssbond_unpack . pdb_dat_rec (txt "SSBOND")
 
 dat_ter :: [TXT] -> [TER]
 dat_ter = map ter_unpack . pdb_dat_rec (txt "TER   ")
@@ -658,6 +758,9 @@ conect_group =
 -- | Group helices by chain and ensure sequence
 helix_group :: [HELIX] -> [(Char,[HELIX])]
 helix_group = map (fmap (sortOn helix_serial)) . T.collate_on helix_chain_id id
+
+mdltyp_group :: [MDLTYP] -> String
+mdltyp_group = unwords . map snd . sort
 
 -- | Group residues by CHAIN, remove NIL entries.
 seqres_group :: [SEQRES] -> [(Char,[String])]
