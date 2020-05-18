@@ -115,6 +115,23 @@ COLUMNS       DATA  TYPE      FIELD        DEFINITION
 conect_se :: Num i => ([i],[i])
 conect_se = ([1,7,12,17,22,27],[6,11,16,21,26,31])
 
+{- | CRYST1
+
+COLUMNS       DATA  TYPE    FIELD          DEFINITION
+-------------------------------------------------------------
+ 1 -  6       Record name   "CRYST1"
+ 7 - 15       Real(9.3)     a              a (Angstroms).
+16 - 24       Real(9.3)     b              b (Angstroms).
+25 - 33       Real(9.3)     c              c (Angstroms).
+34 - 40       Real(7.2)     alpha          alpha (degrees).
+41 - 47       Real(7.2)     beta           beta (degrees).
+48 - 54       Real(7.2)     gamma          gamma (degrees).
+56 - 66       LString       sGroup         Space  group.
+67 - 70       Integer       z              Z value.
+-}
+cryst1_se :: Num i => ([i],[i])
+cryst1_se = ([1,7,16,25,34,41,48,56,67],[6,15,24,33,40,47,54,66,70])
+
 {- | END
 
 COLUMNS       DATA  TYPE     FIELD         DEFINITION
@@ -460,6 +477,7 @@ pdb_rec_str_se =
   [("ATOM  ",atom_se)
   ,("CISPEP",cispep_se)
   ,("CONECT",conect_se)
+  ,("CRYST1",cryst1_se)
   ,("END   ",end_se)
   ,("ENDMDL",endmdl_se)
   ,("FORMUL",formul_se)
@@ -581,6 +599,15 @@ type CONECT = [(Int,Int)]
 
 conect_unpack :: REC -> CONECT
 conect_unpack (_,x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
+
+{- | ((A,B,C),(ALPHA,BETA,GAMMA),SPACE-GROUP,Z)
+
+NON-CRYSTALLOGRAPHY = ((1,1,1),(90,90,90),P1,1)
+-}
+type CRYST1 = ((Double, Double, Double), (Double, Double, Double), String, Int)
+
+cryst1_unpack :: REC -> CRYST1
+cryst1_unpack (_,x) = let (_,s,i,f) = txt_readers x in ((f 0,f 1,f 2),(f 3,f 4,f 5),s 7,i 8)
 
 -- | (CLASSIFICATION,DEP-DATE,ID-CODE)
 type HEADER = (String,String,String)
@@ -716,6 +743,9 @@ dat_hetatm = map atom_unpack . pdb_dat_rec (txt "HETATM")
 
 dat_conect :: [TXT] -> [CONECT]
 dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
+
+dat_cryst1 :: [TXT] -> CRYST1
+dat_cryst1 = cryst1_unpack . fromMaybe (error "dat_cryst1?") . pdb_dat_rec_1 (txt "CRYST1")
 
 dat_header :: [TXT] -> HEADER
 dat_header = header_unpack . fromMaybe (error "dat_header?") . pdb_dat_rec_1 (txt "HEADER")
