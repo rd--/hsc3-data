@@ -627,6 +627,12 @@ link_unpack (_,x) =
   let (c,s,i,f) = txt_readers x
   in (s 0,c 1,(s 2,c 3,i 4,c 5),s 6,c 7,(s 8,c 9,i 10,c 11),i 12,i 13,f 14)
 
+-- | (REMARK,HET,HELIX,SHEET,SITE,XFORM,COORD,TER,CONECT,SEQ)
+type MASTER = (Int,Int,Int,Int,Int,Int,Int,Int,Int,Int)
+
+master_unpack :: REC -> MASTER
+master_unpack (_,x) = let i = txt_int . (x !!) in (i 0,i 2,i 3,i 4,i 6,i 7,i 8,i 9,i 10,i 11)
+
 -- | (CONTINUATION,TEXT)
 type MDLTYP = (TXT,String)
 
@@ -649,8 +655,8 @@ modres_names (_,(r1,_,_,_),r2,_) = (r1,r2)
 modres_unpack :: REC -> MODRES
 modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 5,s 6)
 
-nummdl_n :: REC -> Int
-nummdl_n (_,x) = read (txt_str (x !! 0))
+nummdl_unpack :: REC -> Int
+nummdl_unpack (_,x) = txt_int (x !! 0)
 
 -- | (SERIAL,CHAIN-ID,NUM-RES,[RES])
 type SEQRES = (Int,Char,Int,[String])
@@ -669,6 +675,7 @@ sheet_unpack (_,x) =
 sheet_chain_id :: SHEET -> Char
 sheet_chain_id (_,_,_,(_,c1,_,_),(_,c2,_,_)) = if c1 /= c2 then error "sheet_chain_id?" else c1
 
+-- | (SERIAL,RESIDUE-ID-1,RESIDUE-ID-2,SYM-1,SYM-2,DISTANCE)
 type SSBOND = (Int, RESIDUE_ID, RESIDUE_ID, Int, Int, Double)
 
 ssbond_unpack :: REC -> SSBOND
@@ -722,11 +729,14 @@ dat_het = map het_unpack . pdb_dat_rec (txt "HET   ")
 dat_link :: [TXT] -> [LINK]
 dat_link = map link_unpack . pdb_dat_rec (txt "LINK  ")
 
+dat_master :: [TXT] -> Maybe MASTER
+dat_master = fmap master_unpack . pdb_dat_rec_1 (txt "MASTER")
+
 dat_modres :: [TXT] -> [MODRES]
 dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 
 dat_nummdl :: [TXT] -> Maybe Int
-dat_nummdl = fmap nummdl_n . pdb_dat_rec_1 (txt "NUMMDL")
+dat_nummdl = fmap nummdl_unpack . pdb_dat_rec_1 (txt "NUMMDL")
 
 dat_seqres :: [TXT] -> [SEQRES]
 dat_seqres = map seqres_unpack . pdb_dat_rec (txt "SEQRES")
