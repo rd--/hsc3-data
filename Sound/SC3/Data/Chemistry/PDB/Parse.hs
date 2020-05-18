@@ -106,7 +106,7 @@ cispep_se =
 COLUMNS       DATA  TYPE      FIELD        DEFINITION
 -------------------------------------------------------------------------
  1 -  6        Record name    "CONECT"
- 7 - 11       Integer        serial       Atom  serial number
+ 7 - 11        Integer        serial       Atom  serial number
 12 - 16        Integer        serial       Serial number of bonded atom
 17 - 21        Integer        serial       Serial  number of bonded atom
 22 - 26        Integer        serial       Serial number of bonded atom
@@ -523,6 +523,7 @@ pdb_rec_txt_ix = let f (nm,se) = (txt nm,se_to_ix se) in map f pdb_rec_str_se
 -- | (RECORD-TYPE,RECORD-FIELDS)
 type REC = (TXT,[TXT])
 
+-- | Record names are six-character strings, ie. "HET   " and "ATOM  " and "HETATM"
 txt_rec_name :: TXT -> TXT
 txt_rec_name = T.take 6
 
@@ -700,8 +701,8 @@ modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 
 nummdl_unpack :: REC -> Int
 nummdl_unpack (_,x) = txt_int (x !! 0)
 
-remark_unpack :: REC -> (Int,String)
-remark_unpack (_,x) = (txt_int (x !! 0),txt_str (x !! 1))
+remark_unpack :: REC -> (Int,TXT)
+remark_unpack (_,x) = (txt_int (x !! 0),x !! 1)
 
 -- | (SERIAL,CHAIN-ID,NUM-RES,[RES])
 type SEQRES = (Int,Char,Int,[String])
@@ -786,7 +787,7 @@ dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 dat_nummdl :: [TXT] -> Maybe Int
 dat_nummdl = fmap nummdl_unpack . pdb_dat_rec_1 (txt "NUMMDL")
 
-dat_remark :: [TXT] -> [(Int,String)]
+dat_remark :: [TXT] -> [(Int,TXT)]
 dat_remark = map remark_unpack . pdb_dat_rec (txt "REMARK")
 
 dat_seqres :: [TXT] -> [SEQRES]
