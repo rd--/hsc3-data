@@ -342,6 +342,20 @@ COLUMNS       DATA  TYPE     FIELD         DEFINITION
 obslte_se :: Num i => ([i],[i])
 obslte_se = ([1,9,12,22,32,37,42,27,52,57,62,67,72],[6,10,20,25,35,40,45,50,55,60,65,70,75])
 
+{- | REMARK
+
+COLUMNS       DATA TYPE     FIELD         DEFINITION
+--------------------------------------------------------------------------------------
+ 1 -  6       Record name   "REMARK"
+ 8 - 10       Integer       remarkNum     Remark  number. It is not an error for
+                                          remark n to exist in an entry when
+                                          remark n-1 does not.
+12 - 79       LString       empty         Left  as white space in first line
+                                          of each  new remark.
+-}
+remark_se :: Num i => ([i],[i])
+remark_se = ([1,8,12],[6,10,79])
+
 {- | SEQRES
 
 COLUMNS        DATA TYPE      FIELD        DEFINITION
@@ -492,6 +506,7 @@ pdb_rec_str_se =
   ,("MODRES",modres_se)
   ,("NUMMDL",nummdl_se)
   ,("OBSLTE",obslte_se)
+  ,("REMARK",remark_se)
   ,("SEQRES",seqres_se)
   ,("SHEET ",sheet_se)
   ,("SSBOND",ssbond_se)
@@ -685,6 +700,9 @@ modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 
 nummdl_unpack :: REC -> Int
 nummdl_unpack (_,x) = txt_int (x !! 0)
 
+remark_unpack :: REC -> (Int,String)
+remark_unpack (_,x) = (txt_int (x !! 0),txt_str (x !! 1))
+
 -- | (SERIAL,CHAIN-ID,NUM-RES,[RES])
 type SEQRES = (Int,Char,Int,[String])
 
@@ -767,6 +785,9 @@ dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 
 dat_nummdl :: [TXT] -> Maybe Int
 dat_nummdl = fmap nummdl_unpack . pdb_dat_rec_1 (txt "NUMMDL")
+
+dat_remark :: [TXT] -> [(Int,String)]
+dat_remark = map remark_unpack . pdb_dat_rec (txt "REMARK")
 
 dat_seqres :: [TXT] -> [SEQRES]
 dat_seqres = map seqres_unpack . pdb_dat_rec (txt "SEQRES")
