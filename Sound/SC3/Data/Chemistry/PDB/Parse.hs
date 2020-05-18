@@ -20,6 +20,9 @@ type TXT = T.ByteString
 txt_parts :: TXT -> [(Int, Int)] -> [TXT]
 txt_parts s ix = let f (i,j) = T.take j (T.drop i s) in map f ix
 
+txt_parts_spl :: TXT -> [(Int, Int)] -> (TXT, [TXT])
+txt_parts_spl = let spl x = (head x,tail x) in fmap spl . txt_parts
+
 -- | Unpack and trim TXT.
 --
 -- > txt_str (txt " a b c ")
@@ -45,6 +48,7 @@ txt_chr x =
 txt_nil :: TXT -> Bool
 txt_nil = T.all isSpace
 
+-- | Readers for 'Char', 'String', 'Int' and 'Double'.
 txt_readers :: [TXT] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
 txt_readers x = (txt_chr . (x !!),txt_str . (x !!),txt_int . (x !!),txt_flt . (x !!))
 
@@ -531,7 +535,7 @@ txt_rec_match :: TXT -> TXT -> Bool
 txt_rec_match x = (==) x . txt_rec_name
 
 parse_txt_ix :: (TXT -> Maybe [(Int, Int)]) -> TXT -> Maybe REC
-parse_txt_ix f s = let spl x = (head x,tail x) in fmap (spl . txt_parts s) (f (txt_rec_name s))
+parse_txt_ix f s = fmap (txt_parts_spl s) (f (txt_rec_name s))
 
 pdb_rec_parse :: TXT -> TXT -> Maybe REC
 pdb_rec_parse nm =
