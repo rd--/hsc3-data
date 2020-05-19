@@ -8,6 +8,8 @@ import Data.Maybe {- base -}
 
 import qualified Data.ByteString.Char8 as T {- bytestring -}
 
+import qualified Music.Theory.Directory as T {- hmt -}
+
 import Sound.SC3.Data.Chemistry.PDB.Types {- hsc3-data -}
 
 -- * RECORDS-SE
@@ -722,3 +724,6 @@ dat_parse x =
 
 pdb_load_dat :: FilePath -> IO DAT
 pdb_load_dat = fmap T.lines . T.readFile
+
+pdb_load_dat_dir :: FilePath -> IO [DAT]
+pdb_load_dat_dir dir = T.dir_subset [".pdb"] dir >>= mapM pdb_load_dat
