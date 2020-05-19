@@ -76,6 +76,7 @@ Library
                    Sound.SC3.Data.Chemistry.MP
                    Sound.SC3.Data.Chemistry.PDB
                    Sound.SC3.Data.Chemistry.PDB.Parse
+                   Sound.SC3.Data.Chemistry.PDB.Query
                    Sound.SC3.Data.Chemistry.PDB.Remark
                    Sound.SC3.Data.Chemistry.PDB.Types
                    Sound.SC3.Data.Chemistry.POSCAR

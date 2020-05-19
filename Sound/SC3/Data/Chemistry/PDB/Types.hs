@@ -44,6 +44,13 @@ residue_id_in_range ((_,c1,k1,i1),(_,c3,k3,i3)) (_,c2,k2,i2) =
 -- | (HETATM,SERIAL,NAME,ALT-LOC,RESIDUE-ID,COORDINATE,ELEMENT)
 type ATOM = (Bool,Int,String,Char,RESIDUE_ID,(Double,Double,Double),String)
 
+altloc_id_set :: [Char] -> [Char]
+altloc_id_set x =
+  case nub (sort x) of
+    " " -> "NIL"
+    ' ':y -> y
+    _ -> error "alt_id_set?"
+
 atom_het :: ATOM -> Bool
 atom_het (h,_,_,_,_,_,_) = h
 
@@ -144,6 +151,13 @@ type TER = (Int,RESIDUE_ID)
 
 -- | (CONTINUATION,TITLE)
 type TITLE = (String,String)
+
+-- * COMPOSITE
+
+-- | (HEADER,TITLE,NUMMDL,CRYST1,(ATOM,HETATM),CONECT,SEQRES,HELIX,SHEET,LINK,SSBOND)
+type PDB = (HEADER,String,Maybe Int,CRYST1
+           ,([ATOM],[ATOM]),[(Int,Int)],[(Char,[String])]
+           ,[HELIX],[SHEET],[LINK],[SSBOND])
 
 -- * GROUP
 

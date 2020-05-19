@@ -702,6 +702,22 @@ dat_ter = map ter_unpack . pdb_dat_rec (txt "TER   ")
 dat_title :: DAT -> [TITLE]
 dat_title = map title_unpack . pdb_dat_rec (txt "TITLE ")
 
+-- * COMPOSITE
+
+dat_parse :: DAT -> PDB
+dat_parse x =
+  (dat_header x
+  ,title_group (dat_title x)
+  ,dat_nummdl x
+  ,dat_cryst1 x
+  ,dat_atom x
+  ,conect_group (dat_conect x)
+  ,seqres_group (dat_seqres x)
+  ,dat_helix x
+  ,dat_sheet x
+  ,dat_link x
+  ,dat_ssbond x)
+
 -- * IO
 
 pdb_load_dat :: FilePath -> IO DAT
