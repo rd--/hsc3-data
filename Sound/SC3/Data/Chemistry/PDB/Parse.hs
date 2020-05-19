@@ -449,9 +449,15 @@ txt_parts s ix = let f (i,j) = T.take j (T.drop i s) in map f ix
 txt_parts_spl :: TXT -> [(Int, Int)] -> (TXT, [TXT])
 txt_parts_spl = let spl x = (head x,tail x) in fmap spl . txt_parts
 
+-- | Plain text string (ie. as written)
+--
+-- > txt_pln (txt " a b c ") == " a b c "
+txt_pln :: TXT -> String
+txt_pln = T.unpack
+
 -- | Unpack and trim TXT.
 --
--- > txt_str (txt " a b c ")
+-- > txt_str (txt " a b c ") == "a b c"
 txt_str :: TXT -> String
 txt_str = T.unpack . fst . T.spanEnd isSpace . T.dropWhile isSpace
 
@@ -566,7 +572,7 @@ master_unpack :: REC -> MASTER
 master_unpack (_,x) = let i = txt_int . (x !!) in (i 0,i 2,i 3,i 4,i 6,i 7,i 8,i 9,i 10,i 11)
 
 mdltyp_unpack :: REC -> MDLTYP
-mdltyp_unpack (_,x) = (txt_str (x !! 0),txt_str (x !! 1))
+mdltyp_unpack (_,x) = (txt_pln (x !! 0),txt_str (x !! 1))
 
 -- | SERIAL
 model_unpack :: REC -> Int
@@ -579,7 +585,7 @@ nummdl_unpack :: REC -> Int
 nummdl_unpack (_,x) = txt_int (x !! 0)
 
 remark_unpack :: REC -> REMARK
-remark_unpack (_,x) = (txt_int (x !! 0),txt_str (x !! 1))
+remark_unpack (_,x) = (txt_int (x !! 0),txt_pln (x !! 1))
 
 seqres_unpack :: REC -> SEQRES
 seqres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,c 1,i 2,map s [3 .. 15])
@@ -599,7 +605,7 @@ ter_unpack :: REC -> TER
 ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
 
 title_unpack :: REC -> TITLE
-title_unpack (_,x) = (txt_str (x !! 0),txt_str (x !! 1))
+title_unpack (_,x) = (txt_pln (x !! 0),txt_str (x !! 1))
 
 -- * PARSE
 
