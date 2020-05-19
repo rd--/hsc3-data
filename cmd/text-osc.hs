@@ -30,7 +30,7 @@ opt_def = [("port","57350","int","UDP port number")]
 
 main :: IO ()
 main = do
-  (o,_a) <- get_opt_arg help opt_def
+  (o,_a) <- opt_get_arg True help opt_def
   initCurses
   w <- initScr
   let f fd = forever (recvMessage fd >>= maybe (return ()) (proc_msg w))

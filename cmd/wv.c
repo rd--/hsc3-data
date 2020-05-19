@@ -7,7 +7,12 @@
 
 int main(int argc, char *argv[]) {
     if(argc == 5) {
-        webview("wv",argv[1], atoi(argv[2]), atoi(argv[3]), tolower(argv[4][0]) == 't');
+        int rsz = tolower(argv[4][0]) == 't' ? WEBVIEW_HINT_NONE : WEBVIEW_HINT_FIXED;
+        webview::webview w(true, nullptr);
+        w.set_title("wv");
+        w.set_size(atoi(argv[2]), atoi(argv[3]), rsz);
+	w.navigate(argv[1]);
+	w.run();
         return 0;
     } else {
         fprintf(stderr,"wv uri width height resizeable\n");

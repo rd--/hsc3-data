@@ -55,9 +55,14 @@ pdb_deoxyribonucleotides = let (_,d,_) = pdb_std_codes in d
 pdb_ribonucleotides :: [String]
 pdb_ribonucleotides = let (_,_,r) = pdb_std_codes in r
 
+pdb_nucleotides :: [String]
+pdb_nucleotides = let (_,d,r) = pdb_std_codes in d ++ r
+
 -- | (PDB-CODE,IUPAC-CODE)
 pdb_code_tbl :: [(String,Char)]
-pdb_code_tbl = map (\(c1,c3,_) -> (map toUpper c3,c1)) C.iupac_amino_acid_tbl
+pdb_code_tbl =
+  concat [map (\(c1,c3,_) -> (map toUpper c3,c1)) C.iupac_amino_acid_tbl
+         ,map (\x -> (x,last x)) pdb_nucleotides]
 
 -- | Translate PDB SEQRES code (upper case 3-letter code) to IUPAC code.
 pdb_seqres_code_lookup :: String -> Maybe Char

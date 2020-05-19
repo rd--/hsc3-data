@@ -41,9 +41,9 @@ main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["ln",fn,x] -> csv_plot_1 plotTable (read x) fn
-    ["im",fn,x] -> csv_plot_1 plotImpulses (read x) fn
+    ["ln",fn,x] -> csv_plot_1 plot_p1_ln (read x) fn
+    ["im",fn,x] -> csv_plot_1 plot_p1_imp (read x) fn
     ["ln",fn,x,y] -> csv_plot_2 (read x,read y) fn
     ["ln",fn,x,y,z] -> csv_plot_3 plot_p3_ln (read x,read y,read z) fn
-    ["im",fn,x,y,z] -> csv_plot_3 plot_p3_impulses (read x,read y,read z) fn
+    ["im",fn,x,y,z] -> csv_plot_3 plot_p3_imp (read x,read y,read z) fn
     _ -> putStrLn "csv-plot {ln|im} csv-file x [y z]"

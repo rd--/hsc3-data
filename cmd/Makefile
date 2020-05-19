@@ -7,6 +7,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 	lpc \
 	midi \
 	pbm-indices pbm-to-csv-mnd pbm-to-tbl pbm-trace \
+	pdb \
 	pgm-to-au \
 	pvoc \
 	sf-condense sf-draw sf-to-png \
@@ -23,7 +24,7 @@ dx7-unpack: dx7-unpack.c
 WV_OPT = -I ~/opt/src/webview `pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0`
 
 wv: wv.c
-	gcc $(WV_OPT) wv.c -o wv
+	g++ $(WV_OPT) wv.c -o wv
 
 # VST
 
@@ -47,6 +48,9 @@ mk-dx7:
 
 mk-dx7-unpack:
 	(rm -f dx7-unpack ; make dx7-unpack ; cp dx7-unpack $(prefix)/bin/hsc3-dx7-unpack)
+
+mk-pdb:
+	(rm -f pdb ; make pdb ; cp pdb $(prefix)/bin/hsc3-pdb)
 
 dep:
 	cabal install hscurses
