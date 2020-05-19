@@ -14,18 +14,21 @@ import Sound.SC3.Data.Chemistry.PDB.Types {- hsc3-data -}
 
 -- * REMARK 350 - BIOMT
 
-parse_remark_350_biomt :: REMARK -> Maybe [String]
-parse_remark_350_biomt (n,s) =
-  if n == 350 && take 7 s == "  BIOMT"
-  then Just (words (drop 7 s))
-  else Nothing
-
+-- | (N,SEQ,MX-N,VEC-N)
 type REMARK_350_BIOMT = (Int,Int,V3 Double,Double)
 
-remark_350_biomt_unpack :: [String] -> REMARK_350_BIOMT
-remark_350_biomt_unpack x =
-  let (i,f) = (read . (x !!),read . (x !!))
-  in (i 0,i 1,(f 2,f 3,f 4),f 5)
+{- | Parse REMARK 350 - BIOMT
+
+x = (350,"  BIOMT2   2  0.866025 -0.500000  0.000000     -237.03981")
+parse_remark_350_biomt x == Just (2,2,(0.866025,-0.5,0.0),-237.03981)
+-}
+parse_remark_350_biomt :: REMARK -> Maybe REMARK_350_BIOMT
+parse_remark_350_biomt (n,s) =
+  if n == 350 && take 7 s == "  BIOMT"
+  then let x = words (drop 7 s)
+           (i,f) = (read . (x !!),read . (x !!))
+       in Just (i 0,i 1,(f 2,f 3,f 4),f 5)
+  else Nothing
 
 remark_350_biomt_group :: [REMARK_350_BIOMT] -> [[MTRX Double]]
 remark_350_biomt_group =
@@ -45,5 +48,4 @@ dat_remark_350_biomt :: DAT -> [[MTRX Double]]
 dat_remark_350_biomt d =
   let r = dat_remark d
       m = mapMaybe parse_remark_350_biomt r
-      u = map remark_350_biomt_unpack m
-  in remark_350_biomt_group u
+  in remark_350_biomt_group m
