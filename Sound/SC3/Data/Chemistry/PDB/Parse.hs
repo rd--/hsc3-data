@@ -3,60 +3,14 @@ module Sound.SC3.Data.Chemistry.PDB.Parse where
 
 import Control.Monad {- base -}
 import Data.Char {- base -}
-import Data.Function {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
 import qualified Data.ByteString.Char8 as T {- bytestring -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import Sound.SC3.Data.Chemistry.PDB.Types {- hsc3-data -}
 
--- * TXT
-
--- | Alias for U8-BYTESTRING
-type TXT = T.ByteString
-
--- | ZERO-INDEXED [(START,LENGTH)] -> [SUB-STR]
-txt_parts :: TXT -> [(Int, Int)] -> [TXT]
-txt_parts s ix = let f (i,j) = T.take j (T.drop i s) in map f ix
-
-txt_parts_spl :: TXT -> [(Int, Int)] -> (TXT, [TXT])
-txt_parts_spl = let spl x = (head x,tail x) in fmap spl . txt_parts
-
--- | Unpack and trim TXT.
---
--- > txt_str (txt " a b c ")
-txt_str :: TXT -> String
-txt_str = T.unpack . fst . T.spanEnd isSpace . T.dropWhile isSpace
-
--- | 'read' of 'txt_str'
-txt_int :: TXT -> Int
-txt_int = read . txt_str
-
--- | 'read' of 'txt_str'
-txt_flt :: TXT -> Double
-txt_flt = read . txt_str
-
--- | Unpack single element TXT.
-txt_chr :: TXT -> Char
-txt_chr x =
-  case T.unpack x of
-    [c] -> c
-    _ -> error "txt_chr?"
-
--- | Is TXT nil (ie. empty or all whitespace)
-txt_nil :: TXT -> Bool
-txt_nil = T.all isSpace
-
--- | Readers for 'Char', 'String', 'Int' and 'Double'.
-txt_readers :: [TXT] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
-txt_readers x = (txt_chr . (x !!),txt_str . (x !!),txt_int . (x !!),txt_flt . (x !!))
-
--- | Pack TXT.
-txt :: String -> TXT
-txt = T.pack
-
--- * RECORDS
+-- * RECORDS-SE
 
 {- | ATOM/HETATM
 
@@ -483,6 +437,63 @@ COLUMNS       DATA  TYPE     FIELD         DEFINITION
 title_se :: Num i => ([i],[i])
 title_se = ([1,9,11],[6,10,80])
 
+-- * TXT
+
+-- | Alias for CHAR8-BYTESTRING
+type TXT = T.ByteString
+
+-- | ZERO-INDEXED [(START,LENGTH)] -> [SUB-STR]
+txt_parts :: TXT -> [(Int, Int)] -> [TXT]
+txt_parts s ix = let f (i,j) = T.take j (T.drop i s) in map f ix
+
+txt_parts_spl :: TXT -> [(Int, Int)] -> (TXT, [TXT])
+txt_parts_spl = let spl x = (head x,tail x) in fmap spl . txt_parts
+
+-- | Unpack and trim TXT.
+--
+-- > txt_str (txt " a b c ")
+txt_str :: TXT -> String
+txt_str = T.unpack . fst . T.spanEnd isSpace . T.dropWhile isSpace
+
+-- | 'read' of 'txt_str'
+txt_int :: TXT -> Int
+txt_int = read . txt_str
+
+-- | 'read' of 'txt_str'
+txt_flt :: TXT -> Double
+txt_flt = read . txt_str
+
+-- | Unpack single element TXT.
+txt_chr :: TXT -> Char
+txt_chr x =
+  case T.unpack x of
+    [c] -> c
+    _ -> error "txt_chr?"
+
+-- | Is TXT nil (ie. empty or all whitespace)
+txt_nil :: TXT -> Bool
+txt_nil = T.all isSpace
+
+-- | Readers for 'Char', 'String', 'Int' and 'Double'.
+txt_readers :: [TXT] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
+txt_readers x = (txt_chr . (x !!),txt_str . (x !!),txt_int . (x !!),txt_flt . (x !!))
+
+-- | Pack TXT.
+txt :: String -> TXT
+txt = T.pack
+
+-- * REC
+
+-- | (RECORD-TYPE,RECORD-FIELDS)
+type REC = (TXT,[TXT])
+
+-- | Record names are the initial six-characters, ie. "HET   " and "ATOM  " and "HETATM"
+txt_rec_name :: TXT -> TXT
+txt_rec_name = T.take 6
+
+txt_rec_match :: TXT -> TXT -> Bool
+txt_rec_match x = (==) x . txt_rec_name
+
 -- * RECORD TABLE
 
 -- | ONE-INDEXED (START,END) to ZERO-INDEXED (START,LENGTH)
@@ -522,17 +533,75 @@ pdb_rec_str_se =
 pdb_rec_txt_ix :: [(TXT, [(Int, Int)])]
 pdb_rec_txt_ix = let f (nm,se) = (txt nm,se_to_ix se) in map f pdb_rec_str_se
 
+-- * UNPACK
+
+atom_unpack :: REC -> ATOM
+atom_unpack (r,x) =
+  let (c,s,i,f) = txt_readers x
+  in (r == txt "HETATM",i 0,s 1,c 2,(s 3,c 4,i 5,c 6),(f 7,f 8,f 9),s 12)
+
+conect_unpack :: REC -> CONECT
+conect_unpack (_,x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
+
+cryst1_unpack :: REC -> CRYST1
+cryst1_unpack (_,x) = let (_,s,i,f) = txt_readers x in ((f 0,f 1,f 2),(f 3,f 4,f 5),s 7,i 8)
+
+header_unpack :: REC -> HEADER
+header_unpack (_,x) = let s = txt_str . (x !!) in (s 0,s 1,s 2)
+
+helix_unpack :: REC -> HELIX
+helix_unpack (_,x) =
+  let (c,s,i,_) = txt_readers x
+  in ((i 0,s 1),(s 2,c 3,i 4,c 5),(s 6,c 7,i 8,c 9),i 10,i 12)
+
+het_unpack :: REC -> HET
+het_unpack (_,x) = let (c,s,i,_) = txt_readers x in ((s 0,c 1,i 2,c 3),i 4,s 5)
+
+link_unpack :: REC -> LINK
+link_unpack (_,x) =
+  let (c,s,i,f) = txt_readers x
+  in (s 0,c 1,(s 2,c 3,i 4,c 5),s 6,c 7,(s 8,c 9,i 10,c 11),i 12,i 13,f 14)
+
+master_unpack :: REC -> MASTER
+master_unpack (_,x) = let i = txt_int . (x !!) in (i 0,i 2,i 3,i 4,i 6,i 7,i 8,i 9,i 10,i 11)
+
+mdltyp_unpack :: REC -> MDLTYP
+mdltyp_unpack (_,x) = (txt_str (x !! 0),txt_str (x !! 1))
+
+-- | SERIAL
+model_unpack :: REC -> Int
+model_unpack (_,x) = txt_int (x !! 0)
+
+modres_unpack :: REC -> MODRES
+modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 5,s 6)
+
+nummdl_unpack :: REC -> Int
+nummdl_unpack (_,x) = txt_int (x !! 0)
+
+remark_unpack :: REC -> REMARK
+remark_unpack (_,x) = (txt_int (x !! 0),txt_str (x !! 1))
+
+seqres_unpack :: REC -> SEQRES
+seqres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,c 1,i 2,map s [3 .. 15])
+
+sheet_unpack :: REC -> SHEET
+sheet_unpack (_,x) =
+  let (c,s,i,_) = txt_readers x
+  in (i 0,s 1,i 2,(s 3,c 4,i 5,c 6),(s 7,c 8,i 9,c 10))
+
+ssbond_unpack :: REC -> SSBOND
+ssbond_unpack (_,x) =
+  let (c,s,i,f) = txt_readers x
+      cys n = if s n /= "CYS" then error "ssbond_unpack?" else "CYS"
+  in (i 0,(cys 1,c 2,i 3,c 4),(cys 5,c 6,i 7,c 8),i 9,i 10,f 11)
+
+ter_unpack :: REC -> TER
+ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
+
+title_unpack :: REC -> TITLE
+title_unpack (_,x) = (txt_str (x !! 0),txt_str (x !! 1))
+
 -- * PARSE
-
--- | (RECORD-TYPE,RECORD-FIELDS)
-type REC = (TXT,[TXT])
-
--- | Record names are six-character strings, ie. "HET   " and "ATOM  " and "HETATM"
-txt_rec_name :: TXT -> TXT
-txt_rec_name = T.take 6
-
-txt_rec_match :: TXT -> TXT -> Bool
-txt_rec_match x = (==) x . txt_rec_name
 
 parse_txt_ix :: (TXT -> Maybe [(Int, Int)]) -> TXT -> Maybe REC
 parse_txt_ix f s = fmap (txt_parts_spl s) (f (txt_rec_name s))
@@ -547,305 +616,87 @@ pdb_rec_parse nm =
 pdb_rec_parse_set :: [TXT] -> TXT -> Maybe REC
 pdb_rec_parse_set nm = parse_txt_ix (\z -> if z `elem` nm then lookup z pdb_rec_txt_ix else Nothing)
 
-pdb_dat_rec_1 :: TXT -> [TXT] -> Maybe REC
+-- * DAT
+
+-- | PDB DATA
+type DAT = [TXT]
+
+-- | Find first instance of /ty/ record.
+pdb_dat_rec_1 :: TXT -> DAT -> Maybe REC
 pdb_dat_rec_1 ty = join . fmap (pdb_rec_parse ty) . find (txt_rec_match ty)
 
-pdb_dat_rec :: TXT -> [TXT] -> [REC]
+-- | Collect all instances of /ty/ record.
+pdb_dat_rec :: TXT -> DAT -> [REC]
 pdb_dat_rec ty = mapMaybe (pdb_rec_parse ty)
 
-pdb_dat_rec_set :: [TXT] -> [TXT] -> [REC]
-pdb_dat_rec_set ty = mapMaybe (pdb_rec_parse_set ty)
+-- | Collect all instances of /ty-set/ records.
+pdb_dat_rec_set :: [TXT] -> DAT -> [REC]
+pdb_dat_rec_set ty_set = mapMaybe (pdb_rec_parse_set ty_set)
 
--- * SPECIFIC
+-- * RECORDS
 
--- | (NAME,CHAIN,SEQNO,INSCODE)
-type RESIDUE_ID = (String,Char,Int,Char)
-
-residue_id_name :: RESIDUE_ID -> String
-residue_id_name (nm,_,_,_) = nm
-
-residue_id_chain :: RESIDUE_ID -> Char
-residue_id_chain (_,ch,_,_) = ch
-
-residue_id_seqno_inscode :: RESIDUE_ID -> (Int,Char)
-residue_id_seqno_inscode (_,_,k,i) = (k,i)
-
--- | Give (R1,R3) is R2 in range (inclusive).
-residue_id_in_range :: (RESIDUE_ID,RESIDUE_ID) -> RESIDUE_ID -> Bool
-residue_id_in_range ((_,c1,k1,i1),(_,c3,k3,i3)) (_,c2,k2,i2) =
-  if c1 /= c3 || (k1,i1) >= (k3,i3)
-  then error "residue_id_in_range?"
-  else if c2 /= c1 then False else (k1,i1) <= (k2,i2) && (k2,i2) <= (k3,i3)
-
--- | (HETATM,SERIAL,NAME,ALT-LOC,RESIDUE-ID,COORDINATE,ELEMENT)
-type ATOM = (Bool,Int,String,Char,RESIDUE_ID,(Double,Double,Double),String)
-
-atom_het :: ATOM -> Bool
-atom_het (h,_,_,_,_,_,_) = h
-
-atom_unpack :: REC -> ATOM
-atom_unpack (r,x) =
-  let (c,s,i,f) = txt_readers x
-  in (r == txt "HETATM",i 0,s 1,c 2,(s 3,c 4,i 5,c 6),(f 7,f 8,f 9),s 12)
-
-atom_serial :: ATOM -> Int
-atom_serial (_,k,_,_,_,_,_) = k
-
-atom_name :: ATOM -> String
-atom_name (_,_,nm,_,_,_,_) = nm
-
-atom_altloc :: ATOM -> Char
-atom_altloc (_,_,_,alt,_,_,_) = alt
-
-atom_sel_altloc_A :: ATOM -> Bool
-atom_sel_altloc_A = flip elem " A" . atom_altloc
-
-atom_residue_id :: ATOM -> RESIDUE_ID
-atom_residue_id (_,_,_,_,r,_,_) = r
-
-atom_chain_id :: ATOM -> Char
-atom_chain_id = residue_id_chain . atom_residue_id
-
-atom_coord :: ATOM -> (Double,Double,Double)
-atom_coord (_,_,_,_,_,c,_) = c
-
-atom_element :: ATOM -> String
-atom_element (_,_,_,_,_,_,e) = e
-
-atom_element_or_name :: ATOM -> String
-atom_element_or_name (_,_,nm,_,_,_,el) = if null el then nm else el
-
-type CONECT = [(Int,Int)]
-
-conect_unpack :: REC -> CONECT
-conect_unpack (_,x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
-
-{- | ((A,B,C),(ALPHA,BETA,GAMMA),SPACE-GROUP,Z)
-
-NON-CRYSTALLOGRAPHY = ((1,1,1),(90,90,90),P1,1)
--}
-type CRYST1 = ((Double, Double, Double), (Double, Double, Double), String, Int)
-
-cryst1_unpack :: REC -> CRYST1
-cryst1_unpack (_,x) = let (_,s,i,f) = txt_readers x in ((f 0,f 1,f 2),(f 3,f 4,f 5),s 7,i 8)
-
--- | (CLASSIFICATION,DEP-DATE,ID-CODE)
-type HEADER = (String,String,String)
-
-header_id4 :: HEADER -> String
-header_id4 (_,_,x) = x
-
-header_unpack :: REC -> HEADER
-header_unpack (_,x) = let s = txt_str . (x !!) in (s 0,s 1,s 2)
-
--- | ((SERIAL,ID),INIT-RESIDUE,END-RESIDUE,CLASS,LENGTH)
-type HELIX = ((Int,String),RESIDUE_ID,RESIDUE_ID,Int,Int)
-
-helix_serial :: HELIX -> Int
-helix_serial ((k,_),_,_,_,_) = k
-
-helix_chain_id :: HELIX -> Char
-helix_chain_id (_,(_,c1,_,_),(_,c2,_,_),_,_) = if c1 /= c2 then error "helix_chain_id?" else c1
-
-helix_unpack :: REC -> HELIX
-helix_unpack (_,x) =
-  let (c,s,i,_) = txt_readers x
-  in ((i 0,s 1),(s 2,c 3,i 4,c 5),(s 6,c 7,i 8,c 9),i 10,i 12)
-
-type HET = (RESIDUE_ID,Int,String)
-
-het_id :: HET -> String
-het_id ((x,_,_,_),_,_) = x
-
-het_chain :: HET -> Char
-het_chain ((_,x,_,_),_,_) = x
-
-het_n_atom :: HET -> Int
-het_n_atom (_,x,_) = x
-
-het_unpack :: REC -> HET
-het_unpack (_,x) = let (c,s,i,_) = txt_readers x in ((s 0,c 1,i 2,c 3),i 4,s 5)
-
--- | (ATOM-NAME-1,ALT-LOC-1,RESIDUE-ID-1,ATOM-NAME-2,ALT-LOC-2,RESIDUE-ID-2,SYM-1,SYM-2,DISTANCE)
-type LINK = (String,Char,RESIDUE_ID,String,Char,RESIDUE_ID,Int,Int,Double)
-
-link_unpack :: REC -> LINK
-link_unpack (_,x) =
-  let (c,s,i,f) = txt_readers x
-  in (s 0,c 1,(s 2,c 3,i 4,c 5),s 6,c 7,(s 8,c 9,i 10,c 11),i 12,i 13,f 14)
-
--- | (REMARK,HET,HELIX,SHEET,SITE,XFORM,COORD,TER,CONECT,SEQ)
-type MASTER = (Int,Int,Int,Int,Int,Int,Int,Int,Int,Int)
-
-master_unpack :: REC -> MASTER
-master_unpack (_,x) = let i = txt_int . (x !!) in (i 0,i 2,i 3,i 4,i 6,i 7,i 8,i 9,i 10,i 11)
-
--- | (CONTINUATION,TEXT)
-type MDLTYP = (TXT,String)
-
-mdltyp_unpack :: REC -> (TXT, String)
-mdltyp_unpack (_,x) = (x !! 0,txt_str (x !! 1))
-
-model_serial :: REC -> Int
-model_serial r =
-  case r of
-    (_,[i]) -> read (txt_str i)
-    _ -> error "model_serial"
-
--- | (ID,RESIDUE-ID,STD-RES,COMMENT)
-type MODRES = (String,RESIDUE_ID,String,String)
-
--- | (resName,stdRes) fields of MODRES record.
-modres_names :: MODRES -> (String,String)
-modres_names (_,(r1,_,_,_),r2,_) = (r1,r2)
-
-modres_unpack :: REC -> MODRES
-modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 5,s 6)
-
-nummdl_unpack :: REC -> Int
-nummdl_unpack (_,x) = txt_int (x !! 0)
-
-remark_unpack :: REC -> (Int,TXT)
-remark_unpack (_,x) = (txt_int (x !! 0),x !! 1)
-
--- | (SERIAL,CHAIN-ID,NUM-RES,[RES])
-type SEQRES = (Int,Char,Int,[String])
-
-seqres_unpack :: REC -> SEQRES
-seqres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,c 1,i 2,map s [3 .. 15])
-
--- | (STRAND,ID,NUM-STRANDS,INIT-RESIDUE,END-RESIDUE)
-type SHEET = (Int,String,Int,RESIDUE_ID,RESIDUE_ID)
-
-sheet_unpack :: REC -> SHEET
-sheet_unpack (_,x) =
-  let (c,s,i,_) = txt_readers x
-  in (i 0,s 1,i 2,(s 3,c 4,i 5,c 6),(s 7,c 8,i 9,c 10))
-
-sheet_chain_id :: SHEET -> Char
-sheet_chain_id (_,_,_,(_,c1,_,_),(_,c2,_,_)) = if c1 /= c2 then error "sheet_chain_id?" else c1
-
--- | (SERIAL,RESIDUE-ID-1,RESIDUE-ID-2,SYM-1,SYM-2,DISTANCE)
-type SSBOND = (Int, RESIDUE_ID, RESIDUE_ID, Int, Int, Double)
-
-ssbond_unpack :: REC -> SSBOND
-ssbond_unpack (_,x) =
-  let (c,s,i,f) = txt_readers x
-      cys n = if s n /= "CYS" then error "ssbond_unpack?" else "CYS"
-  in (i 0,(cys 1,c 2,i 3,c 4),(cys 5,c 6,i 7,c 8),i 9,i 10,f 11)
-
--- | (SERIAL,RESIDUE-ID)
-type TER = (Int,RESIDUE_ID)
-
-ter_unpack :: REC -> TER
-ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
-
--- | (CONTINUATION,TITLE)
-type TITLE = (TXT,String)
-
-title_unpack :: REC -> TITLE
-title_unpack (_,x) = (x !! 0,txt_str (x !! 1))
-
--- * DAT-SPECIFIC
-
--- | ATOM and HETATM
-dat_atom_all :: [TXT] -> [ATOM]
+-- | ATOM and HETATM records
+dat_atom_all :: DAT -> [ATOM]
 dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
 
 -- | (ATOM,HETATM)
-dat_atom :: [TXT] -> ([ATOM],[ATOM])
+dat_atom :: DAT -> ([ATOM],[ATOM])
 dat_atom = partition (not . atom_het) . dat_atom_all
 
 -- | ATOM
-dat_atom__ :: [TXT] -> [ATOM]
+dat_atom__ :: DAT -> [ATOM]
 dat_atom__ = map atom_unpack . pdb_dat_rec (txt "ATOM  ")
 
 -- | HETATM
-dat_hetatm :: [TXT] -> [ATOM]
+dat_hetatm :: DAT -> [ATOM]
 dat_hetatm = map atom_unpack . pdb_dat_rec (txt "HETATM")
 
-dat_conect :: [TXT] -> [CONECT]
+dat_conect :: DAT -> [CONECT]
 dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
 
-dat_cryst1 :: [TXT] -> CRYST1
+dat_cryst1 :: DAT -> CRYST1
 dat_cryst1 = cryst1_unpack . fromMaybe (error "dat_cryst1?") . pdb_dat_rec_1 (txt "CRYST1")
 
-dat_header :: [TXT] -> HEADER
+dat_header :: DAT -> HEADER
 dat_header = header_unpack . fromMaybe (error "dat_header?") . pdb_dat_rec_1 (txt "HEADER")
 
-dat_helix :: [TXT] -> [HELIX]
+dat_helix :: DAT -> [HELIX]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
 
-dat_het :: [TXT] -> [HET]
+dat_het :: DAT -> [HET]
 dat_het = map het_unpack . pdb_dat_rec (txt "HET   ")
 
-dat_link :: [TXT] -> [LINK]
+dat_link :: DAT -> [LINK]
 dat_link = map link_unpack . pdb_dat_rec (txt "LINK  ")
 
-dat_master :: [TXT] -> Maybe MASTER
+dat_master :: DAT -> Maybe MASTER
 dat_master = fmap master_unpack . pdb_dat_rec_1 (txt "MASTER")
 
-dat_modres :: [TXT] -> [MODRES]
+dat_modres :: DAT -> [MODRES]
 dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 
-dat_nummdl :: [TXT] -> Maybe Int
+dat_nummdl :: DAT -> Maybe Int
 dat_nummdl = fmap nummdl_unpack . pdb_dat_rec_1 (txt "NUMMDL")
 
-dat_remark :: [TXT] -> [(Int,TXT)]
+dat_remark :: DAT -> [REMARK]
 dat_remark = map remark_unpack . pdb_dat_rec (txt "REMARK")
 
-dat_seqres :: [TXT] -> [SEQRES]
+dat_seqres :: DAT -> [SEQRES]
 dat_seqres = map seqres_unpack . pdb_dat_rec (txt "SEQRES")
 
-dat_sheet :: [TXT] -> [SHEET]
+dat_sheet :: DAT -> [SHEET]
 dat_sheet = map sheet_unpack . pdb_dat_rec (txt "SHEET ")
 
-dat_ssbond :: [TXT] -> [SSBOND]
+dat_ssbond :: DAT -> [SSBOND]
 dat_ssbond = map ssbond_unpack . pdb_dat_rec (txt "SSBOND")
 
-dat_ter :: [TXT] -> [TER]
+dat_ter :: DAT -> [TER]
 dat_ter = map ter_unpack . pdb_dat_rec (txt "TER   ")
 
-dat_title :: [TXT] -> [TITLE]
+dat_title :: DAT -> [TITLE]
 dat_title = map title_unpack . pdb_dat_rec (txt "TITLE ")
-
--- * GROUP
-
--- | Group atoms by chain and ensure sequence
-atom_group :: [ATOM] -> [(Char,[ATOM])]
-atom_group = map (fmap (sortOn atom_serial)) . T.collate_on atom_chain_id id
-
--- | Merge CONECT records, sort and remove (i,j)-(j,i) duplicates.
-conect_group :: [CONECT] -> [(Int,Int)]
-conect_group =
-  let o (i,j) = (min i j,max i j)
-  in nub . sort . map o . concat
-
--- | Group helices by chain and ensure sequence
-helix_group :: [HELIX] -> [(Char,[HELIX])]
-helix_group = map (fmap (sortOn helix_serial)) . T.collate_on helix_chain_id id
-
-mdltyp_group :: [MDLTYP] -> String
-mdltyp_group = unwords . map snd . sort
-
--- | Group residues by CHAIN, remove NIL entries.
-seqres_group :: [SEQRES] -> [(Char,[String])]
-seqres_group =
-  let f (k,c,_,_) = (c,k)
-      g (_,c,_,_) = c
-      h (_,c,_,r) = (c,filter (not . null) r)
-      i j = let (c,r) = unzip j in (head c,concat r)
-  in map i . map (map h) . groupBy ((==) `on` g) . sortOn f
-
--- | Group helices by chain
-sheet_group :: [SHEET] -> [(Char,[SHEET])]
-sheet_group = T.collate_on sheet_chain_id id
-
-title_group :: [TITLE] -> String
-title_group = unwords . map snd . sort
 
 -- * IO
 
-pdb_load_dat :: FilePath -> IO [TXT]
+pdb_load_dat :: FilePath -> IO DAT
 pdb_load_dat = fmap T.lines . T.readFile
-

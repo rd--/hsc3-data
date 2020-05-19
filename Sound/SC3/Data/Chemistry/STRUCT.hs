@@ -20,7 +20,7 @@ import qualified Music.Theory.Show as T {- hmt -}
 
 import qualified Sound.SC3.Data.Chemistry.Elements as E {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.MOL as MOL {- hsc3-data -}
-import qualified Sound.SC3.Data.Chemistry.PDB.Parse as PDB {- hsc3-data -}
+import qualified Sound.SC3.Data.Chemistry.PDB.Types as PDB {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.POSCAR as POSCAR {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
 
