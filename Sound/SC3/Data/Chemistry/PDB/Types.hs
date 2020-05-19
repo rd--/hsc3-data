@@ -4,7 +4,19 @@ module Sound.SC3.Data.Chemistry.PDB.Types where
 import Data.Function {- base -}
 import Data.List {- base -}
 
+import Data.CG.Minus.Plain {- hcg-minus -}
+
 import qualified Music.Theory.List as T {- hmt -}
+
+-- * MATRIX
+
+type MTRX x = (M33 x,V3 x)
+
+mtrx_identity :: Num n => MTRX n
+mtrx_identity = (((1,0,0),(0,1,0),(0,0,1)),(0,0,0))
+
+mtrx_apply :: Num n => MTRX n -> V3 n -> V3 n
+mtrx_apply (m,v) x = v3_add (m33_apply m x) v
 
 -- * RESIDUE-ID
 
