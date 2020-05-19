@@ -193,3 +193,12 @@ sheet_group = T.collate_on sheet_chain_id id
 
 title_group :: [TITLE] -> String
 title_group = unwords . map snd . sort
+
+-- * TER
+
+-- | Remove 'ATOM's that are located past any 'TER' entry for the chain.
+atom_apply_ter :: [TER] -> (Char,[ATOM]) -> (Char,[ATOM])
+atom_apply_ter ter (ch,a) =
+  case find (\(_,(_,x,_,_)) -> x == ch) ter of
+    Just (k,_) -> (ch,filter ((< k) . atom_serial) a)
+    _ -> (ch,a)

@@ -4,8 +4,12 @@ import Data.Function {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
+import Data.CG.Minus.Plain {- hcg-minus -}
+
 import Sound.SC3.Data.Chemistry.PDB.Parse {- hsc3-data -}
 import Sound.SC3.Data.Chemistry.PDB.Types {- hsc3-data -}
+
+-- * STAT
 
 pdb_stat :: PDB -> [(String,String)]
 pdb_stat ((h1,h2,h3),t,m,_,(a,h),c,sq,hlx,sht,lnk,ssb) =
@@ -43,3 +47,22 @@ pdb_stat ((h1,h2,h3),t,m,_,(a,h),c,sq,hlx,sht,lnk,ssb) =
 
 dat_stat :: DAT -> [(String,String)]
 dat_stat = pdb_stat . dat_parse
+
+-- * ALPHA CARBON
+
+{- | Generate Cα chains of single model PDB.
+     Atoms where ALTLOC is not ' ' or 'A' are deleted.
+     Atoms that are located past a TER record are deleted.
+     Nucleotide chains are NOT given as NULL entries.
+-}
+dat_to_alpha_carbon_chains :: Bool -> DAT -> Maybe [(Char,[V3 Double])]
+dat_to_alpha_carbon_chains uniq dat =
+  if isJust (dat_nummdl dat)
+  then Nothing
+  else let t = dat_ter dat
+           a = map (atom_apply_ter t) (atom_group (filter atom_sel_altloc_A (dat_atom_all dat)))
+           uniq_ch = map fst . nubBy ((==) `on` snd)
+           u = uniq_ch (seqres_group (dat_seqres dat))
+           c = if uniq then filter (flip elem u . fst) a else a
+           p = map (map atom_coord . filter ((==) "CA" . atom_name) . snd) c
+       in Just (filter (not . null . snd) (zip (map fst c) p))
