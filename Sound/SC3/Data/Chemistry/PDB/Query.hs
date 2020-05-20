@@ -66,3 +66,29 @@ dat_to_alpha_carbon_chains uniq dat =
            c = if uniq then filter (flip elem u . fst) a else a
            p = map (map atom_coord . filter ((==) "CA" . atom_name) . snd) c
        in Just (filter (not . null . snd) (zip (map fst c) p))
+
+-- * RESIDUES
+
+-- | Set of all residue names at ATOM records.
+atom_residue_set :: DAT -> [String]
+atom_residue_set = nub . sort . map (residue_id_name . atom_residue_id) . dat_atom__
+
+-- | Set of all residue names at HETATM records.
+hetatm_residue_set :: DAT -> [String]
+hetatm_residue_set = nub . sort . map (residue_id_name . atom_residue_id) . dat_hetatm
+
+-- | Set of all residue names at SEQRES records.
+seqres_residue_set :: DAT -> [String]
+seqres_residue_set = nub . sort . concatMap seqres_residue_names . dat_seqres
+
+-- | Set of all residue names at MODRES records.
+modres_residue_set :: DAT -> [String]
+modres_residue_set = nub . sort . concatMap (\(i,j) -> [i,j]) . map modres_names . dat_modres
+
+-- | Residue sets (ATOM,HETATM,SEQRES,MODRES).
+residue_sets :: DAT -> ([String], [String], [String], [String])
+residue_sets x = (atom_residue_set x,hetatm_residue_set x,seqres_residue_set x,modres_residue_set x)
+
+-- | Set of 'residue_sets'
+residue_sets_concat :: DAT -> [String]
+residue_sets_concat = nub . sort . concat . (\(a,b,c,d) -> [a,b,c,d]) . residue_sets
