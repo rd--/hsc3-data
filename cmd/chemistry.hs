@@ -1,4 +1,7 @@
 import System.Environment {- base -}
+import System.FilePath {- filepath -}
+
+import qualified Music.Theory.Directory as T {- hmt -}
 
 import Sound.SC3.Data.Chemistry.STRUCT {- hsc3-data -}
 

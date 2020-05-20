@@ -290,6 +290,14 @@ xyz_to_obj k tol xyz_fn obj_fn = do
   s <- fmap (struct_calculate_bonds tol) (struct_load_ext xyz_fn)
   writeFile obj_fn (unlines (struct_to_obj k s))
 
+-- | 'xyz_to_obj' at all XYZ files at /xyz_dir/.  Output files are written to /obj_dir/.
+xyz_to_obj_dir :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
+xyz_to_obj_dir k tol xyz_dir obj_dir = do
+  fn <- T.dir_subset [".xyz"] xyz_dir
+  let rw x = obj_dir </> replaceExtension (takeFileName x) ".obj"
+      cv x = xyz_to_obj k tol x (rw x)
+  mapM_ cv fn
+
 {-
 -- * I/O - DIR
 
