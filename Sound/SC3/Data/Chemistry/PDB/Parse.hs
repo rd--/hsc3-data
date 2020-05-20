@@ -589,8 +589,11 @@ nummdl_unpack (_,x) = txt_int (x !! 0)
 remark_unpack :: REC -> REMARK
 remark_unpack (_,x) = (txt_int (x !! 0),txt_pln (x !! 1))
 
+-- | Removes NIL entries.
 seqres_unpack :: REC -> SEQRES
-seqres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,c 1,i 2,map s [3 .. 15])
+seqres_unpack (_,x) =
+  let (c,s,i,_) = txt_readers x
+  in (i 0,c 1,i 2,filter (not . null) (map s [3 .. 15]))
 
 sheet_unpack :: REC -> SHEET
 sheet_unpack (_,x) =

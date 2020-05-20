@@ -137,6 +137,9 @@ type REMARK = (Int,String)
 -- | (SERIAL,CHAIN-ID,NUM-RES,[RES])
 type SEQRES = (Int,Char,Int,[String])
 
+seqres_residue_names :: SEQRES -> [String]
+seqres_residue_names (_,_,_,x) = x
+
 -- | (STRAND,ID,NUM-STRANDS,INIT-RESIDUE,END-RESIDUE)
 type SHEET = (Int,String,Int,RESIDUE_ID,RESIDUE_ID)
 
@@ -178,12 +181,12 @@ helix_group = map (fmap (sortOn helix_serial)) . T.collate_on helix_chain_id id
 mdltyp_group :: [MDLTYP] -> String
 mdltyp_group = unwords . map snd . sort
 
--- | Group residues by CHAIN, remove NIL entries.
+-- | Group residues by CHAIN.
 seqres_group :: [SEQRES] -> [(Char,[String])]
 seqres_group =
   let f (k,c,_,_) = (c,k)
       g (_,c,_,_) = c
-      h (_,c,_,r) = (c,filter (not . null) r)
+      h (_,c,_,r) = (c,r)
       i j = let (c,r) = unzip j in (head c,concat r)
   in map i . map (map h) . groupBy ((==) `on` g) . sortOn f
 
