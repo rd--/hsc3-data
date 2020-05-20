@@ -1,4 +1,5 @@
 cmd =	ats au-to-pbm au-to-pgm \
+	chemistry \
 	csv-mnd-to-midi csv-mnd-to-pgm csv-plot csv-to-img \
 	d50 dx7 dx7-unpack \
 	hex \

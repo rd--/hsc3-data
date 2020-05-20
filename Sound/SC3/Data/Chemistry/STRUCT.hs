@@ -88,6 +88,7 @@ sym_radius sym =
   let r = E.covalent_radius (E.atomic_number_err False sym)
   in E.picometres_to_angstroms (fromMaybe 250 r)
 
+-- | (-0.8,+0.4)
 type TOLERANCE = (Double,Double)
 
 -- | Replaces existing BONDS, if any, with calculated bonds.
@@ -280,6 +281,14 @@ struct_to_obj :: Int -> STRUCT -> [String]
 struct_to_obj k =
   let f (v,e) = (map (fmap snd) v,e)
   in T.v3_graph_to_obj k . f . struct_to_lbl
+
+-- * CONVERT
+
+-- | Load XYZ file, calculate bonds, write OBJ file.
+xyz_to_obj :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
+xyz_to_obj k tol xyz_fn obj_fn = do
+  s <- fmap (struct_calculate_bonds tol) (struct_load_ext xyz_fn)
+  writeFile obj_fn (unlines (struct_to_obj k s))
 
 {-
 -- * I/O - DIR
