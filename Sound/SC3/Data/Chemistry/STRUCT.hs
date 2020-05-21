@@ -284,19 +284,33 @@ struct_to_obj k =
 
 -- * CONVERT
 
+ext_to_obj :: Int -> Maybe TOLERANCE -> FilePath -> FilePath -> IO ()
+ext_to_obj k tol xyz_fn obj_fn = do
+  s <- fmap (maybe id struct_calculate_bonds tol) (struct_load_ext xyz_fn)
+  writeFile obj_fn (unlines (struct_to_obj k s))
+
+ext_to_obj_dir :: String -> Int -> Maybe TOLERANCE -> FilePath -> FilePath -> IO ()
+ext_to_obj_dir ext k tol ext_dir obj_dir = do
+  fn <- T.dir_subset [ext] ext_dir
+  let rw x = obj_dir </> replaceExtension (takeFileName x) ".obj"
+      cv x = ext_to_obj k tol x (rw x)
+  mapM_ cv fn
+
 -- | Load XYZ file, calculate bonds, write OBJ file.
 xyz_to_obj :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
-xyz_to_obj k tol xyz_fn obj_fn = do
-  s <- fmap (struct_calculate_bonds tol) (struct_load_ext xyz_fn)
-  writeFile obj_fn (unlines (struct_to_obj k s))
+xyz_to_obj k t = ext_to_obj k (Just t)
 
 -- | 'xyz_to_obj' at all XYZ files at /xyz_dir/.  Output files are written to /obj_dir/.
 xyz_to_obj_dir :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
-xyz_to_obj_dir k tol xyz_dir obj_dir = do
-  fn <- T.dir_subset [".xyz"] xyz_dir
-  let rw x = obj_dir </> replaceExtension (takeFileName x) ".obj"
-      cv x = xyz_to_obj k tol x (rw x)
-  mapM_ cv fn
+xyz_to_obj_dir k t = ext_to_obj_dir ".xyz" k (Just t)
+
+-- | Load POSCAR file, calculate bonds, write OBJ file.
+poscar_to_obj :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
+poscar_to_obj k t = ext_to_obj k (Just t)
+
+-- | 'poscar_to_obj' at all POSCAR files at /poscar_dir/.  Output files are written to /obj_dir/.
+poscar_to_obj_dir :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
+poscar_to_obj_dir k t = ext_to_obj_dir ".poscar" k (Just t)
 
 {-
 -- * I/O - DIR
