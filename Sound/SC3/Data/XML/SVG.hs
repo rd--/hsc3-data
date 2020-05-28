@@ -25,15 +25,18 @@ svg_name nm =
          {X.qName = nm
          ,X.qURI = Just "http://www.w3.org/2000/svg"}
 
-pathFromString' :: String -> Either String [P.PathCommand]
-pathFromString' = Right . Unsafe.unsafePerformIO . P.pathFromString
+-- | Non-IO variant of 'P.pathFromString'.
+pathFromString_unsafe :: String -> Either String [P.PathCommand]
+pathFromString_unsafe = Right . Unsafe.unsafePerformIO . P.pathFromString
 
+-- | 'pathFromString_unsafe' with 'error' on failed parse.
 parse_path :: String -> [P.PathCommand]
 parse_path str =
-    case pathFromString' str of
+    case pathFromString_unsafe str of
       Left err -> error err
       Right cmd -> cmd
 
+-- | 'parse_path' at /path/ elements of XML 'String'.
 svg_read_path_d :: String -> [[P.PathCommand]]
 svg_read_path_d s =
     let p = case X.parseXMLDoc s of
@@ -42,18 +45,21 @@ svg_read_path_d s =
         d = mapMaybe (X.findAttr (X.unqual "d")) p
     in map parse_path d
 
+-- | 'svg_read_path_d' of 'readFile'.
+svg_load_paths :: FilePath -> IO [[P.PathCommand]]
+svg_load_paths = fmap svg_read_path_d . readFile
+
+-- | 'Ls' variant of 'P.commandsToPoints'.
+--   (dx,dy) is the size of a pixel and is used for rasterisation.
 subpaths_to_ls :: (R,R) -> [P.PathCommand] -> [Ls R]
 subpaths_to_ls (dx,dy) r =
     case P.commandsToPoints r (dx,dy) (0,0) of
       [] -> error "subpaths_to_ls: no sub-paths"
       p -> map (Ls . map mk_pt) p
 
+-- | 'subpaths_to_ls' of 'svg_load_paths'
 svg_load_ls :: (R, R) -> FilePath -> IO [Ls R]
-svg_load_ls rs fn = do
-  s <- readFile fn
-  let d = svg_read_path_d s
-      p = concatMap (subpaths_to_ls rs) d
-  return p
+svg_load_ls rs = fmap (concatMap (subpaths_to_ls rs)) . svg_load_paths
 
 -- | 'plotCoord' of 'pt_xy'.
 plot_ls :: Plot.PNum t => [Ls t] -> IO ()

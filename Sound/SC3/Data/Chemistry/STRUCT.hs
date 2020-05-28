@@ -14,7 +14,6 @@ import Data.CG.Minus.Plain {- hcg-minus -}
 
 import qualified Music.Theory.Directory as T {- hmt -}
 import qualified Music.Theory.Graph.OBJ as T {- hmt -}
-import qualified Music.Theory.Graph.PLY as T {- hmt -}
 import qualified Music.Theory.Graph.Type as T {- hmt -}
 import qualified Music.Theory.Show as T {- hmt -}
 
@@ -269,12 +268,6 @@ load_poscar_structs_ty ty = fmap (map (poscar_to_struct ty)) . POSCAR.poscar_loa
 -- | 'STRUCT' to 'T.LBL' with 'ATOM' labels at vertices.
 struct_to_lbl :: STRUCT -> T.LBL ATOM ()
 struct_to_lbl (_,_,_,a,b) = (zip [0..] a,zip b (repeat ()))
-
--- | 'T.v3_graph_to_ply' of 'struct_to_lbl', element names are discarded.
-struct_to_ply :: Int -> STRUCT -> [String]
-struct_to_ply k =
-  let f (v,e) = (map (fmap snd) v,e)
-  in T.v3_graph_to_ply (Just k) . f . struct_to_lbl
 
 -- | 'T.v3_graph_to_obj' of 'struct_to_lbl', element names are discarded.
 struct_to_obj :: Int -> STRUCT -> [String]

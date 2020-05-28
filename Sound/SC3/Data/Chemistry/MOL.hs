@@ -180,12 +180,13 @@ mol_v30_ent = filter ("M  V30 " `isPrefixOf`)
 
 -- * ASSOCIATED DATA ITEMS
 
+-- | (KEY,[VALUE])
 type MOL_ADI = (String,[String])
 
 {- | Read the associated data items entries from MOL/SDF file.
 
 > txt <- readFile "/home/rohan/rd/j/2020-02-22/sdf/DB01452.sdf"
-> mol_adi txt
+> putStrLn $ mol_adi_pp $ mol_adi txt
 -}
 mol_adi :: String -> [MOL_ADI]
 mol_adi =
