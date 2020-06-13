@@ -1,5 +1,5 @@
 Name:              hsc3-data
-Version:           0.18
+Version:           0.19
 Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL
@@ -28,19 +28,19 @@ Library
                    FloatingHex,
                    Glob,
                    graphviz,
-                   hcg-minus == 0.18.*,
+                   hcg-minus == 0.19.*,
                    HCodecs,
-                   hmt == 0.18.*,
-                   hosc == 0.18.*,
-                   hosc-json == 0.18.*,
-                   hsc3 == 0.18.*,
-                   hsc3-lang == 0.18.*,
-                   hsc3-plot == 0.18.*,
-                   hsc3-sf == 0.18.*,
-                   hsc3-sf-hsndfile == 0.18.*,
+                   hmt == 0.19.*,
+                   hosc == 0.19.*,
+                   hosc-json == 0.19.*,
+                   hsc3 == 0.19.*,
+                   hsc3-lang == 0.19.*,
+                   hsc3-plot == 0.19.*,
+                   hsc3-sf == 0.19.*,
+                   hsc3-sf-hsndfile == 0.19.*,
                    JuicyPixels,
                    language-dot,
-                   midi-osc == 0.18.*,
+                   midi-osc == 0.19.*,
                    murmur-hash,
                    parsec,
                    pgm,
