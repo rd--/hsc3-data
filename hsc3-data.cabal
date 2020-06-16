@@ -98,6 +98,7 @@ Library
                    Sound.SC3.Data.Math.Bouwkamp
                    Sound.SC3.Data.Math.Easing
                    Sound.SC3.Data.Math.Hermite
+                   Sound.SC3.Data.Math.IFS
                    Sound.SC3.Data.Math.Loudness
                    Sound.SC3.Data.Math.Sprott_1993a
                    Sound.SC3.Data.Math.Types
