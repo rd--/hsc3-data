@@ -7,7 +7,17 @@ import Data.CG.Minus.Plain {- hcg-minus -}
 
 import qualified Sound.SC3.Data.XML as XML {- hsc3-data -}
 
--- * GENERA
+p_to_p2 :: [t] -> V2 t
+p_to_p2 p =
+  case p of
+    [x,y] -> (x,y)
+    _ -> error "p_to_p2"
+
+p_to_p3 :: [t] -> V3 t
+p_to_p3 p =
+  case p of
+    [x,y,z] -> (x,y,z)
+    _ -> error "p_to_p3"
 
 -- | JVX DOCTYPE.
 jvx_doctype :: String
@@ -34,12 +44,6 @@ jvx_geometries = XML.x_get_elem_set "geometry" . XML.x_get_elem "geometries"
 jvx_read_p :: X.Element -> [Double]
 jvx_read_p = map read . words . XML.xml_elem_text_cdata_uniq
 
-p_to_p3 :: [t] -> V3 t
-p_to_p3 p =
-  case p of
-    [x,y,z] -> (x,y,z)
-    _ -> error "p_to_p3"
-
 -- | (jvx-model.geometries.geometry).pointSet.points.p
 jvx_points_v3 :: X.Element -> [V3 Double]
 jvx_points_v3 =
@@ -59,3 +63,16 @@ jvx_faces =
 
 jvx_faces_m :: X.Element -> Maybe [[Int]]
 jvx_faces_m e = if XML.x_has_elem "faceSet" e then Just (jvx_faces e) else Nothing
+
+jvx_read_l :: X.Element -> [Int]
+jvx_read_l = map read . words . XML.xml_elem_text_cdata_uniq
+
+-- | (jvx-model.geometries.geometry).lineSet.lines.l
+jvx_lines :: X.Element -> [V2 Int]
+jvx_lines =
+  map (p_to_p2 . jvx_read_l) .
+  XML.x_get_elem_set "l" .
+  XML.x_get_elem_path ["lineSet","lines"]
+
+jvx_lines_m :: X.Element -> Maybe [V2 Int]
+jvx_lines_m e = if XML.x_has_elem "lineSet" e then Just (jvx_lines e) else Nothing
