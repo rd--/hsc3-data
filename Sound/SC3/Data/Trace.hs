@@ -209,8 +209,8 @@ trace_linearise n lerp_f t (t0,t1) = trace_lookup_seq_asc lerp_f t (iota t0 t1 n
 -- ('trace_window').
 --
 -- > t <- trace_load_sf2_dir "/home/rohan/sw/hsc3-data/help/au/*.txy.au"
--- > plotCoord (map (trace_linearise_w 1024 lerpn . trace_map fst) t)
--- > plotCoord (map (trace_map fst) t)
+-- > plot_p2_ln (map (trace_linearise_w 1024 lerpn . trace_map fst) t)
+-- > plot_p2_ln (map (trace_map fst) t)
 -- > trace2_plot_tbl t
 trace_linearise_w :: (Ord t,Fractional t) => Int -> Lerp_F t a b -> Trace t a -> Trace t b
 trace_linearise_w n lerp_f t = trace_linearise n lerp_f t (trace_window t)
@@ -319,24 +319,24 @@ deinterleave2 = T.t2_from_list . transpose . chunksOf 2
 
 -- * Plotting
 
--- | Three-dimensional plot of two-dimensional traces (/time/ on @x@ axis), ie. 'plotPath'.
+-- | Three-dimensional plot of two-dimensional traces (/time/ on @x@ axis), ie. 'plot_p3_ln'.
 --
 -- > t <- trace_load_csv2 "/home/rohan/sw/hsc3-data/data/csv/trace/b.csv"
 -- > trace2_plot_3d [t]
 trace2_plot_3d :: P.PNum t => [Trace t (t,t)] -> IO ()
-trace2_plot_3d = P.plotPath . map (map (\(t,(p,q)) -> (t,p,q)))
+trace2_plot_3d = P.plot_p3_ln . map (map (\(t,(p,q)) -> (t,p,q)))
 
--- | Two-dimensional plot of two-dimensional traces (/time/ not drawn), ie. 'plotCoord'.
+-- | Two-dimensional plot of two-dimensional traces (/time/ not drawn), ie. 'plot_p2_ln'.
 --
 -- > trace2_plot_2d [t]
 trace2_plot_2d :: P.PNum t => [Trace t (t,t)] -> IO ()
-trace2_plot_2d = P.plotCoord . map (map snd)
+trace2_plot_2d = P.plot_p2_ln . map (map snd)
 
 -- > trace2_plot_tbl [t]
 trace2_plot_tbl :: P.PNum t => [Trace t (t,t)] -> IO ()
 trace2_plot_tbl =
     let f t = [trace_map fst t,trace_map snd t]
-    in P.plotCoord . concatMap f
+    in P.plot_p2_ln . concatMap f
 
 -- * CSV
 

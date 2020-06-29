@@ -133,6 +133,7 @@ Library
                    Sound.SC3.Data.WT.AKWF
                    Sound.SC3.Data.X11.Ptr
                    Sound.SC3.Data.XML
+                   Sound.SC3.Data.XML.JVX
                    Sound.SC3.Data.XML.KML
                    Sound.SC3.Data.XML.SVG
                    Sound.SC3.Data.XML.SVL

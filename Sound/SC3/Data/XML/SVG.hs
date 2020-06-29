@@ -61,9 +61,9 @@ subpaths_to_ls (dx,dy) r =
 svg_load_ls :: (R, R) -> FilePath -> IO [Ls R]
 svg_load_ls rs = fmap (concatMap (subpaths_to_ls rs)) . svg_load_paths
 
--- | 'plotCoord' of 'pt_xy'.
+-- | 'plot_p2_ln' of 'pt_xy'.
 plot_ls :: Plot.PNum t => [Ls t] -> IO ()
-plot_ls = Plot.plotCoord . map (map pt_xy . ls_elem)
+plot_ls = Plot.plot_p2_ln . map (map pt_xy . ls_elem)
 
 {- | Convert a relative 'P.PathCommand' to the absolute form, giving also the absolute end point.
 
