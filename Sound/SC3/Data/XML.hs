@@ -13,11 +13,11 @@ error_if_null msg ls = if null ls then error msg else ls
 
 -- | 'X.findChild'
 x_get_elem :: String -> X.Element -> X.Element
-x_get_elem nm = fromMaybe (error "x_get_elem") . X.findChild (X.unqual nm)
+x_get_elem nm = fromMaybe (error ("x_get_elem: " ++ nm)) . X.findChild (X.unqual nm)
 
 -- | 'X.findChildren'
 x_get_elem_set :: String -> X.Element -> [X.Element]
-x_get_elem_set nm = error_if_null "x_get_elem_set" . X.findChildren (X.unqual nm)
+x_get_elem_set nm = error_if_null ("x_get_elem_set: " ++ nm) . X.findChildren (X.unqual nm)
 
 -- | Descending sequence of 'x_get_elem'
 x_get_elem_path :: [String] -> X.Element -> X.Element
@@ -27,12 +27,16 @@ x_get_elem_path p x =
       nm:p1 -> x_get_elem_path p1 (x_get_elem nm x)
 
 -- | 'X.findElement'
+x_has_elem :: String -> X.Element -> Bool
+x_has_elem nm = isJust . X.findElement (X.unqual nm)
+
+-- | 'X.findElement'
 x_find_elem :: String -> X.Element -> X.Element
-x_find_elem nm = fromMaybe (error "x_find_elem") . X.findElement (X.unqual nm)
+x_find_elem nm = fromMaybe (error ("x_find_elem: " ++ nm)) . X.findElement (X.unqual nm)
 
 -- | 'X.findAttr'
 x_get_attr :: String -> X.Element -> String
-x_get_attr nm = fromMaybe (error "x_get_attr") . X.findAttr (X.unqual nm)
+x_get_attr nm = fromMaybe (error ("x_get_attr: " ++ nm)) . X.findAttr (X.unqual nm)
 
 -- | 'X.qName' of 'X.elName'
 x_elem_name :: X.Element -> String
