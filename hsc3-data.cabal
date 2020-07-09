@@ -48,6 +48,7 @@ Library
                    process,
                    safe,
                    split,
+                   strict,
                    SVGPath >= 1.1.1,
                    text,
                    time,
@@ -88,6 +89,7 @@ Library
                    Sound.SC3.Data.Fairlight.CMI
                    Sound.SC3.Data.Geography.Core
                    Sound.SC3.Data.Geography.G
+                   Sound.SC3.Data.Geometry.OBJ
                    Sound.SC3.Data.Gnus
                    Sound.SC3.Data.Graph.Dot
                    Sound.SC3.Data.Image.PGM
