@@ -13,7 +13,6 @@ import System.FilePath {- filepath -}
 import Data.CG.Minus.Plain {- hcg-minus -}
 
 import qualified Music.Theory.Directory as T {- hmt -}
-import qualified Music.Theory.Graph.OBJ as T {- hmt -}
 import qualified Music.Theory.Graph.Type as T {- hmt -}
 import qualified Music.Theory.Show as T {- hmt -}
 
@@ -22,6 +21,7 @@ import qualified Sound.SC3.Data.Chemistry.MOL as MOL {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.PDB.Types as PDB {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.POSCAR as POSCAR {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
+import qualified Sound.SC3.Data.Geometry.OBJ as OBJ {- hmt -}
 
 -- * TYPES
 
@@ -266,21 +266,21 @@ load_poscar_structs_ty ty = fmap (map (poscar_to_struct ty)) . POSCAR.poscar_loa
 -- * GRAPH
 
 -- | 'STRUCT' to 'T.LBL' with 'ATOM' labels at vertices.
-struct_to_lbl :: STRUCT -> T.LBL ATOM ()
+struct_to_lbl :: STRUCT -> T.LBL_ ATOM
 struct_to_lbl (_,_,_,a,b) = (zip [0..] a,zip b (repeat ()))
 
 -- | 'T.v3_graph_to_obj' of 'struct_to_lbl', element names are discarded.
-struct_to_obj :: Int -> STRUCT -> [String]
-struct_to_obj k =
+struct_to_obj :: STRUCT -> OBJ.OBJ
+struct_to_obj =
   let f (v,e) = (map (fmap snd) v,e)
-  in T.v3_graph_to_obj k . f . struct_to_lbl
+  in OBJ.lbl_to_obj . f . struct_to_lbl
 
 -- * CONVERT
 
 ext_to_obj :: Int -> Maybe TOLERANCE -> FilePath -> FilePath -> IO ()
 ext_to_obj k tol xyz_fn obj_fn = do
   s <- fmap (maybe id struct_calculate_bonds tol) (struct_load_ext xyz_fn)
-  writeFile obj_fn (unlines (struct_to_obj k s))
+  OBJ.obj_store k obj_fn (struct_to_obj s)
 
 ext_to_obj_dir :: String -> Int -> Maybe TOLERANCE -> FilePath -> FilePath -> IO ()
 ext_to_obj_dir ext k tol ext_dir obj_dir = do
