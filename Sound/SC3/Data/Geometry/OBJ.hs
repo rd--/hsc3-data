@@ -21,6 +21,11 @@ import qualified Music.Theory.Tuple as T {- hmt -}
 
 -- * OBJ
 
+type OBJ_ t = ([t],[(Char,[Int])])
+
+obj_vertex_map :: (t -> u) -> OBJ_ t -> OBJ_ u
+obj_vertex_map f (v,c) = (map f v,c)
+
 -- | R = REAL
 type R = Double
 
@@ -28,7 +33,7 @@ type R = Double
 
 OBJ files store data one-indexed, the OBJ type is zero-indexed.
 -}
-type OBJ = ([V3 R],[(Char,[Int])])
+type OBJ = OBJ_ (V3 R)
 
 obj_parse_entry :: String -> Either (V3 R) (Char,[Int])
 obj_parse_entry s =
@@ -137,13 +142,13 @@ face_dat_to_obj (v,f) = (v,map ((,) 'f') f)
 obj_store_face_dat :: Int -> FilePath -> FACE_DAT -> IO ()
 obj_store_face_dat k fn = obj_store k fn . face_dat_to_obj
 
--- | 'writeFile' of 'obj_face_set_fmt'
+-- | 'obj_store_face_dat' of 'face_dat_from_vertex_seq'
 obj_store_face_set :: Int -> FilePath -> [[V3 R]] -> IO ()
 obj_store_face_set k fn = obj_store_face_dat k fn . face_dat_from_vertex_seq
 
 obj_to_face_dat :: OBJ -> FACE_DAT
 obj_to_face_dat (v,c) = (v,map snd (filter ((== 'f') . fst) c))
 
--- | 'obj_face_set_parse' of 'obj_load_txt'
+-- | 'obj_to_face_dat' of 'obj_load'
 obj_load_face_dat :: FilePath -> IO FACE_DAT
 obj_load_face_dat = fmap obj_to_face_dat . obj_load
