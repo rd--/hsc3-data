@@ -133,3 +133,9 @@ path_ep_bounds = foldl pathcommand_extend_ep_bounds
 
 path_ep_bounds_o :: [P.PathCommand] -> ((R,R),(R,R))
 path_ep_bounds_o = path_ep_bounds ((0,0),(0,0))
+
+is_z :: P.PathCommand -> Bool
+is_z cmd = case cmd of {P.Z -> True;_ -> False}
+
+m_abs_xy :: P.PathCommand -> Maybe (R,R)
+m_abs_xy cmd = case cmd of {P.M_abs (x,y) -> Just (x,y);_ -> Nothing}
