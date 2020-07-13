@@ -8,10 +8,15 @@ import qualified Text.XML.Light as X {- xml -}
 
 import qualified Graphics.SVG.ReadPath as P {- SVGPath -}
 
+import Data.CG.Minus.Plain {- hcg-minus -}
 import Data.CG.Minus.Types {- hcg-minus -}
 import Data.CG.Minus.Core {- hcg-minus -}
 
+import qualified Music.Theory.Tuple as T {- hmt -}
+
 import qualified Sound.SC3.Plot as Plot {- hsc3-plot -}
+
+import qualified Sound.SC3.Data.XML as XML {- hsc3-data -}
 
 -- | Real number, synonym for 'Double'.
 type R = Double
@@ -24,6 +29,36 @@ svg_name nm =
     X.blank_name
          {X.qName = nm
          ,X.qURI = Just "http://www.w3.org/2000/svg"}
+
+svg_load :: FilePath -> IO X.Element
+svg_load fn = do
+  txt <- readFile fn
+  case X.parseXMLDoc txt of
+    Nothing -> error "svg_load"
+    Just e -> return e
+
+-- | svg:viewBox
+svg_viewbox :: X.Element -> V4 Double
+svg_viewbox = T.t4_from_list . map read . words . XML.x_get_attr "viewBox"
+
+-- | svg:width
+svg_width :: X.Element -> Double
+svg_width = read . XML.x_get_attr "width"
+
+-- | svg:height
+svg_height :: X.Element -> Double
+svg_height = read . XML.x_get_attr "height"
+
+-- | Line elements that are direct children of e.
+svg_line_elem :: X.Element -> [X.Element]
+svg_line_elem e = X.findElements (svg_name "line") e
+
+svg_line_coord :: X.Element -> V2 (V2 Double)
+svg_line_coord e =
+  let f nm = read (XML.x_get_attr nm e)
+  in ((f "x1",f "y1"),(f "x2",f "y2"))
+
+-- * PATH
 
 -- | Non-IO variant of 'P.pathFromString'.
 pathFromString_unsafe :: String -> Either String [P.PathCommand]

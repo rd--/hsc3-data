@@ -11,6 +11,12 @@ import qualified Music.Theory.Permutations.Morris_1984 as T {- hmt -}
 
 import qualified Sound.SC3.Data.XML as XML {- hsc3-data -}
 
+-- | Qualify name, unused since the XML.x_get functions require unqualified names.
+cccbr_name :: String -> X.QName
+cccbr_name nm =
+  X.blank_name
+  {X.qName = nm
+  ,X.qURI = Just "http://www.methods.org.uk/schemas/2007/05/methods"}
 
 -- | Load collection.
 cccbr_load_collection :: FilePath -> IO X.Element
