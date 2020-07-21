@@ -1,6 +1,6 @@
 {- | PLY functions.
 
-This module is used instead of 'Sound.SC3.Data.Geometry.PLY' when edges are coloured.
+This module is used instead of 'Sound.SC3.Data.Geometry.OBJ' when faces are coloured.
 
 There is no reader.
 
@@ -76,7 +76,7 @@ ply_face_set_dat t =
 -- | Format a set of coloured faces as an PLY file.
 --    (CCW triples of (x,y,z) coordinates, (r,g,b) colour)
 --   PLY files are one-indexed.
-ply_face_set_fmt :: (Show n, Ord n,Show i) => [([(n,n,n)],(i,i,i))] -> [String]
+ply_face_set_fmt :: (Show n,Ord n,Show i) => [([(n,n,n)],(i,i,i))] -> [String]
 ply_face_set_fmt t =
   let v_f (_,(x,y,z)) = unwords [show x,show y,show z]
       f_f (ix,(r,g,b)) = unwords (map show (length ix : ix) ++ map show [r,g,b])
@@ -84,5 +84,5 @@ ply_face_set_fmt t =
   in concat [ply_header (length v,length f,0), map v_f v, map f_f f]
 
 -- | 'writeFile' of 'ply_face_set_fmt'
-ply_face_set_store :: (Show n, Ord n,Show i) => FilePath -> [([(n,n,n)],(i,i,i))] -> IO ()
+ply_face_set_store :: (Show n,Ord n,Show i) => FilePath -> [([(n,n,n)],(i,i,i))] -> IO ()
 ply_face_set_store fn = writeFile fn . unlines . ply_face_set_fmt

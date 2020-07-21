@@ -1,4 +1,4 @@
--- | SCHLEGEL
+-- | Schlegel Diagrams <http://u.math.biu.ac.il/~mlazar/schlegels.html>
 module Sound.SC3.Data.Geometry.Schlegel where
 
 import Data.CG.Minus.Plain {- hcg-minus -}
