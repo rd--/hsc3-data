@@ -1,5 +1,6 @@
--- | Schlegel Diagrams <http://u.math.biu.ac.il/~mlazar/schlegels.html>
-module Sound.SC3.Data.Geometry.Schlegel where
+-- | Tutte, W. T. (1963), "How to draw a graph",
+--   Proceedings of the London Mathematical Society, 13: 743–767,
+module Sound.SC3.Data.Geometry.Tutte where
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 import Data.CG.Minus.Geometry {- hcg-minus -}
@@ -39,24 +40,24 @@ v_loc_centre :: V_LOC -> [Int] -> V2 R
 v_loc_centre v e = v2_centroid (map (\i -> T.lookup_err i v) e)
 
 -- | a = adj-mtx, fc = face, v = vertices-loc
-schlegel_step :: T.ADJ_MTX Int -> [Int] -> V_LOC -> V_LOC
-schlegel_step adj fc v =
+tutte_step :: T.ADJ_MTX Int -> [Int] -> V_LOC -> V_LOC
+tutte_step adj fc v =
   let f (i,j) = if i `elem` fc then (i,j) else (i,v_loc_centre v (T.adj_mtx_con (0,1) adj i))
   in map f v
 
--- | Generate sequence of Schlegels of /o/
-schlegel_gen :: OFF.OFF3 R -> Int -> ([V_LOC],[V2 Int])
-schlegel_gen o i =
+-- | Generate sequence of Tuttes of /o/
+tutte_gen :: OFF.OFF3 R -> Int -> ([V_LOC],[V2 Int])
+tutte_gen o i =
   let ((k,_),(_,fc)) = o
       gr = T.lbl_to_g (OFF.off_graph o)
       adj = T.edg_to_adj_mtx_undir (0,1) (T.g_to_edg gr)
       (_,fc_i) = fc !! i
       v0 = v_init_loc k fc_i
-  in (iterate (schlegel_step adj fc_i) v0,snd gr)
+  in (iterate (tutte_step adj fc_i) v0,snd gr)
 
--- | Store schlegel to OBJ file.
-schlegel_obj :: FilePath -> V_LOC -> [V2 Int] -> IO ()
-schlegel_obj fn v e = do
+-- | Store tutte to OBJ file.
+tutte_obj :: FilePath -> V_LOC -> [V2 Int] -> IO ()
+tutte_obj fn v e = do
   let e' = map (\(p,q) -> ('l',[p,q])) e
       add_z (x,y) = (x,y,0)
   OBJ.obj_store 4 fn (map (add_z . snd) v,e')
