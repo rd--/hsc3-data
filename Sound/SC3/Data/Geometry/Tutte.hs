@@ -46,20 +46,20 @@ tutte_step adj fc v =
   in map f v
 
 -- | Generate sequence of Tuttes given graph, face list and outer face index.
-tutte_gen :: T.G -> [[Int]] -> Int -> ([V_LOC],[V2 Int])
+tutte_gen :: T.G -> [[Int]] -> Int -> [V_LOC]
 tutte_gen (v,e) fc i =
   let k = length v
       adj = T.edg_to_adj_mtx_undir (0,1) (T.g_to_edg (v,e))
       fc_i = fc !! i
       v0 = v_init_loc k fc_i
-  in (iterate (tutte_step adj fc_i) v0,e)
+  in iterate (tutte_step adj fc_i) v0
 
 -- | 'tutte_gen' of OFF3
 tutte_gen_off3 :: OFF.OFF3 R -> Int -> ([V_LOC],[V2 Int])
 tutte_gen_off3 o i =
-  let gr = T.lbl_to_g (OFF.off_graph o)
+  let (v,e) = T.lbl_to_g (OFF.off_graph o)
       ((_,_),(_,fc)) = o
-  in tutte_gen gr (map snd fc) i
+  in (tutte_gen (v,e) (map snd fc) i,e)
 
 -- | Store tutte to OBJ file.
 tutte_obj :: FilePath -> V_LOC -> [V2 Int] -> IO ()
