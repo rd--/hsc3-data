@@ -70,8 +70,8 @@ tutte_obj fn v e = do
   OBJ.obj_store 4 fn (map (add_z . snd) v,e')
 
 -- | Store tutte to OBJ file.
-tutte_svg :: (V2 R,R) -> FilePath -> V_LOC -> [V2 Int] -> IO ()
-tutte_svg (sz,m) fn v e = do
+tutte_svg :: (V2 R,R,Int) -> FilePath -> V_LOC -> [V2 Int] -> IO ()
+tutte_svg opt fn v e = do
   let ix k = T.lookup_err k v
       ln = map (\(p,q) -> (ix p,ix q)) e
-  SVG.svg_store_line_unif ((0,0,0),1) fn sz m ln
+  SVG.svg_store_line_unif ((0,0,0),1) fn opt ln
