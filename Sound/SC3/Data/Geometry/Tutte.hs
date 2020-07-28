@@ -5,6 +5,7 @@ module Sound.SC3.Data.Geometry.Tutte where
 import Data.CG.Minus.Plain {- hcg-minus -}
 import Data.CG.Minus.Geometry {- hcg-minus -}
 
+import qualified Data.CG.Minus.Plain.SVG as SVG {- hcg-minus -}
 import qualified Data.CG.Minus.Geometry.OFF as OFF {- hcg-minus -}
 
 import qualified Music.Theory.Graph.Type as T {- hmt -}
@@ -67,3 +68,10 @@ tutte_obj fn v e = do
   let e' = map (\(p,q) -> ('l',[p,q])) e
       add_z (x,y) = (x,y,0)
   OBJ.obj_store 4 fn (map (add_z . snd) v,e')
+
+-- | Store tutte to OBJ file.
+tutte_svg :: FilePath -> V_LOC -> [V2 Int] -> IO ()
+tutte_svg fn v e = do
+  let ix k = T.lookup_err k v
+      ln = map (\(p,q) -> (ix p,ix q)) e
+  SVG.svg_store_line_unif ((0,0,0),1) fn (100,100) 0 ln
