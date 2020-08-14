@@ -1,5 +1,8 @@
 all:
-	echo hsc3-data
+	echo "hsc3-data"
+
+mk-cmd:
+	(cd cmd ; make all install)
 
 clean:
 	(cd cmd ; make clean)
