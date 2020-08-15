@@ -144,14 +144,14 @@ parse_qdms_unicode = C.parse p_qdms_unicode "parse_qdms_unicode"
 parse_qdms_ws :: String -> Either C.ParseError QDMS
 parse_qdms_ws s =
   case C.parse p_qdms_ws "parse_qdms_ws" s of
-    Left err -> fail (show err)
+    Left err -> error (show err)
     Right g -> return g
 
-parse_qdms_ws_err :: Monad m => String -> m QDMS
+parse_qdms_ws_err :: String -> QDMS
 parse_qdms_ws_err s =
   case parse_qdms_ws s of
-    Left err -> fail (show err)
-    Right g -> return g
+    Left err -> error (show err)
+    Right g -> g
 
 -- | Run 'p_coord'
 --
@@ -159,11 +159,11 @@ parse_qdms_ws_err s =
 parse_coord :: String -> Either C.ParseError PT
 parse_coord s = C.parse p_coord "parse_coord" s
 
-parse_coord_err :: Monad m => String -> m PT
+parse_coord_err :: String -> PT
 parse_coord_err s =
   case parse_coord s of
-    Left err -> fail (show err)
-    Right g -> return g
+    Left err -> error (show err)
+    Right g -> g
 
 -- | Run 'p_coord_by' of 'p_qdms_unicode'.
 --
