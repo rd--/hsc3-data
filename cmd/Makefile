@@ -13,9 +13,9 @@ cmd =	ats au-to-pbm au-to-pgm \
 	pvoc \
 	sf-condense sf-draw sf-to-png \
 	svl \
-	text-monitor text-osc trace-rec-x11 \
+	text-monitor text-osc \
 	wv \
-	x11-ptr-to-midi-osc
+	x11
 
 include ~/sw/hsc3/mk/cmd.mk
 

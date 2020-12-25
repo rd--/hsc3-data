@@ -6,7 +6,7 @@ import Foreign.C.Types {- base -}
 import qualified Graphics.X11.Xlib as X {- X11 -}
 import qualified Graphics.X11.Xlib.Extras as E {- X11 -}
 
--- | X11 connection state.
+-- | X11 connection state, (display,root-window,(width,height),1/(width,height))
 type X11 n = (X.Display,X.Window,(CInt,CInt),(n,n))
 
 -- | Initialize X11 connection.
@@ -25,6 +25,7 @@ x11_init n = do
 x11_close :: X11 n -> IO ()
 x11_close (d, _, _, _) = X.closeDisplay d
 
+-- | Read pointer as (raw,location relative to root window.
 x11_ptr_raw :: (Ord n,Fractional n) => X11 n -> IO ((Int,Int),(n,n),(n,n),X.Modifier)
 x11_ptr_raw (d, r, (_w,h), (w_mul,h_mul)) = do
   (_, _, _, _, _, x, y, mdf) <- X.queryPointer d r
