@@ -156,6 +156,7 @@ Library
                    Sound.SC3.Data.Yamaha.DX7.Hash
                    Sound.SC3.Data.Yamaha.DX7.PP
                    Sound.SC3.Data.Yamaha.DX7.PX7
+                   Sound.SC3.Data.Yamaha.DX7.SC3
                    Sound.SC3.Data.Yamaha.DX7.TX7
                    Sound.SC3.Data.Yamaha.DX7.TX816
                    Sound.SC3.Data.Yamaha.DX7.UI
