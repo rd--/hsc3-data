@@ -4,12 +4,12 @@ Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL
 Category:          Sound
-Copyright:         (c) Rohan Drape, 2013-2020
+Copyright:         (c) Rohan Drape, 2013-2021
 Author:            Rohan Drape
 Maintainer:        rd@rohandrape.net
 Stability:         Experimental
 Homepage:          http://rohandrape.net/t/hsc3-data
-Tested-With:       GHC == 8.6.5
+Tested-With:       GHC == 8.8.4
 Build-Type:        Simple
 Cabal-Version:     >= 1.8
 
