@@ -54,7 +54,7 @@ z_parse_midi_voice_event e =
     Z.NoteAftertouch st d1 d2 -> M.Polyphonic_Key_Pressure (M.status_ch st) d1 d2
     Z.Controller st d1 d2 -> M.Control_Change (M.status_ch st) d1 d2
     Z.ProgramChange st d1 -> M.Program_Change (M.status_ch st) d1
-    Z.ChanAftertouch st d1 -> M.Chanel_Aftertouch (M.status_ch st) d1
+    Z.ChanAftertouch st d1 -> M.Channel_Aftertouch (M.status_ch st) d1
     Z.PitchBend st d ->
       let (d1,d2) = M.bits_14_sep_le (z_word14_to_word16 d)
       in M.Pitch_Bend (M.status_ch st) d1 d2

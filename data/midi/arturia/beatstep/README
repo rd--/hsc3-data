@@ -1,0 +1,22 @@
+This directory contains SYSEX files to edit an Arturia BeatStep USB/MIDI controller.
+
+The SYSEX files may contain multiple SYSEX messages.
+
+To send under debian use (editing the ADDR variable):
+
+~~~~
+$ export PORT=hw:1,0,0
+$ amidi -p $PORT -i 1 -s enc-seq-C00-I00-ABS.syx
+$ amidi -p $PORT -i 1 -s led-all-red.syx
+$ amidi -p $PORT -i 1 -s led-all-blue.syx
+$ amidi -p $PORT -i 1 -s led-all-off.syx
+$
+~~~~
+
+The SYSEX files are:
+
+- enc-seq-INDEX-MODE: set all encoders to send CC messages at consecutive indices starting at INDEX
+- enc-seq-CHANNEL-INDEX-MODE: variant setting fixed output channel
+- led-all-STATE: set all LED to STATE (RED, BLUE, MAGENTA, OFF)
+- led-cntrl-seq-off: turn off CNTRL/SEQ LED
+- led-pad-INDEX-STATE: set LED at pad INDEX to STATE

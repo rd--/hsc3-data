@@ -121,7 +121,7 @@ c_parse_channel_message c =
     C.KeyPressure ch d1 d2 -> Just (M.Polyphonic_Key_Pressure (T.int_to_word8 ch) d1 d2)
     C.ControlChange ch i j -> Just (M.Control_Change (T.int_to_word8 ch) i j)
     C.ProgramChange ch pc -> Just (M.Program_Change (T.int_to_word8 ch) pc)
-    C.ChannelPressure ch d1 -> Just (M.Chanel_Aftertouch (T.int_to_word8 ch) d1)
+    C.ChannelPressure ch d1 -> Just (M.Channel_Aftertouch (T.int_to_word8 ch) d1)
     C.PitchWheel ch d ->
       let (d1,d2) = M.bits_14_sep_le (T.int_to_word16 d)
       in Just (M.Pitch_Bend (T.int_to_word8 ch) (T.word8_to_int d1) (T.word8_to_int d2))
