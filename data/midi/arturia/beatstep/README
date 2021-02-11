@@ -32,6 +32,8 @@ The SYSEX files are:
 - pad-seq-cc-INDEX-MODE: set all pads to send CC messages at consecutive indices starting at INDEX
 - pad-seq-mn-INDEX-MODE: set all pads to send MNN messages at consecutive indices starting at INDEX
 
+The ENC and PAD files follow the global channel setting (set using CHAN+PAD on device).
+
 Encoder modes are: ABS = absolute values, REL = relative values (centre 0x40)
 
 Pad CC modes are: SW1 = ON/OFF (consecutive presses), SW2 = ON/OFF (on release), PRS = pressure
