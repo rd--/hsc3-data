@@ -180,6 +180,10 @@ enc_pn_set j (ch,ty,(msb,lsb),md) =
 -- | Enumeration of pad switch modes.
 data Switch_Mode = Toggle | Gate deriving (Eq,Enum,Show)
 
+-- | cs=consecutive, rl=release
+switch_mode_str :: Switch_Mode -> String
+switch_mode_str x = case x of {Toggle -> "CS" ; Gate -> "RL"}
+
 -- | Set pad to midi-note mode (mn).
 pad_mn_set :: Ctl_Id -> (U8, U8, Switch_Mode) -> [M.SYSEX U8]
 pad_mn_set j (ch,mnn,md) =
@@ -385,36 +389,93 @@ lhs_control_id_dsc =
 
 -- * LIBRARY
 
+type SYSEX_LIB = [(String, [M.SYSEX U8])]
+
+sysex_lib_accel :: SYSEX_LIB
+sysex_lib_accel =
+  [("enc-acceleration-SLOW",[global_encoder_acceleration_set Slow])
+  ,("enc-acceleration-MEDIUM",[global_encoder_acceleration_set Medium])
+  ,("enc-acceleration-FAST",[global_encoder_acceleration_set Fast])]
+
+sysex_lib_curve :: SYSEX_LIB
+sysex_lib_curve =
+  [("pad-velocity-curve-LINEAR",[global_pad_velocity_curve_set Linear])
+  ,("pad-velocity-curve-LOGARITHMIC",[global_pad_velocity_curve_set Logarithmic])
+  ,("pad-velocity-curve-EXPONENTIAL",[global_pad_velocity_curve_set Exponential])
+  ,("pad-velocity-curve-FULL",[global_pad_velocity_curve_set Full])]
+
+sysex_lib_channel :: SYSEX_LIB
+sysex_lib_channel =
+  [("midi-channel-C00",[global_midi_channel_set 0])
+  ,("cv-midi-channel-C00",[global_cv_gate_interface_receive_channel_set 0])]
+
+sysex_lib_enc_ch :: SYSEX_LIB
+sysex_lib_enc_ch =
+  let mk_enc_cc_ch ch ix md =
+        (printf "enc-cc-seq-C%02X-I%02X-%s" ch ix (encoder_mode_str md)
+        ,enc_cc_set_16 (ch,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F),md))
+  in [mk_enc_cc_ch ch ix md | ch <- [0..1]
+                            , ix <- [0x00,0x10 .. 0x70]
+                            , md <- [Absolute,Relative_X40]]
+
+sysex_lib_enc :: SYSEX_LIB
+sysex_lib_enc =
+  let mk_enc_cc ix md =
+        (printf "enc-cc-seq-I%02X-%s" ix (encoder_mode_str md)
+        ,enc_cc_set_16 (0x41,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F),md))
+  in [mk_enc_cc ix md | ix <- [0x00,0x10 .. 0x70]
+                      , md <- [Absolute,Relative_X40]]
+
+sysex_lib_led :: SYSEX_LIB
+sysex_lib_led =
+  let mk_led_all x = map (\k -> set_sysex 0x10 k (led_status_to_u8 x)) led_ix_set
+  in [("led-all-OFF",mk_led_all LED_Off)
+     ,("led-all-BLUE",mk_led_all LED_Blue)
+     ,("led-all-MAGENTA",mk_led_all LED_Magenta)
+     ,("led-all-RED",mk_led_all LED_Red)
+     ,("led-cntrl-seq-OFF",[led_cntrl_seq_off])]
+
+sysex_lib_led_pad :: SYSEX_LIB
+sysex_lib_led_pad =
+  let mk_led_pad x =
+        map (\j -> (printf "led-pad-%02X-%s" j (led_status_str x)
+                   ,[led_pad_set j x])) [0 .. 15]
+  in concatMap mk_led_pad [LED_Off,LED_Red,LED_Blue,LED_Magenta]
+
+sysex_lib_pad_cc_ch :: SYSEX_LIB
+sysex_lib_pad_cc_ch =
+  let mk_pad_cc ch ix md =
+        (printf "pad-cc-seq-C%02X-I%02X-%s" ch ix (pad_cc_mode_str md)
+        ,pad_cc_set_16 (md,ch,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F)))
+  in [mk_pad_cc ch ix md | ch <- [0..3]
+                         , ix <- [0, 0x10 .. 0x70]
+                         , md <- [Pad_Switch Toggle,Pad_Switch Gate,Pad_Pressure]]
+
+sysex_lib_pad_cc :: SYSEX_LIB
+sysex_lib_pad_cc =
+  let mk_pad_cc ix md =
+        (printf "pad-cc-seq-I%02X-%s" ix (pad_cc_mode_str md)
+        ,pad_cc_set_16 (md,0x41,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F)))
+  in [mk_pad_cc ix md | ix <- [0, 0x10 .. 0x70]
+                      , md <- [Pad_Switch Toggle,Pad_Switch Gate,Pad_Pressure]]
+
+sysex_lib_pad_mn :: SYSEX_LIB
+sysex_lib_pad_mn =
+  let mk_pad_mn ix md =
+        (printf "pad-mn-seq-I%02X-%s" ix (switch_mode_str md)
+        ,pad_mn_set_16 (0x41,map (+ ix) [0x00 .. 0x0F],md))
+  in [mk_pad_mn ix md | ix <- [0x30,0x3C,0x48]
+                      , md <- [Toggle,Gate]]
+
 -- | Library of named SYSEX message sequences.
 --
 -- > map fst sysex_library
 sysex_library :: [(String, [M.SYSEX U8])]
 sysex_library =
-  let mk_enc_cc ch ix md = (printf "enc-cc-seq-C%02X-I%02X-%s" ch ix (encoder_mode_str md)
-                           ,enc_cc_set_16 (ch,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F),md))
-      mk_enc_cc_global ix md = (printf "enc-cc-seq-I%02X-%s" ix (encoder_mode_str md)
-                               ,enc_cc_set_16 (0x41,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F),md))
-      enc_lib = concat [[mk_enc_cc ch ix md | ch <- [0..1], ix <- [0,16 .. 112], md <- [Absolute,Relative_X40]]
-                       ,[mk_enc_cc_global ix md | ix <- [0,16 .. 112], md <- [Absolute,Relative_X40]]]
-      global_lib = [("global-midi-channel-C00",[global_midi_channel_set 0])
-                   ,("global-cv-channel-C00",[global_cv_gate_interface_receive_channel_set 0])
-                   ,("global-encoder-acceleration-SLOW",[global_encoder_acceleration_set Slow])
-                   ,("global-encoder-acceleration-MEDIUM",[global_encoder_acceleration_set Medium])
-                   ,("global-encoder-acceleration-FAST",[global_encoder_acceleration_set Fast])
-                   ,("global-pad-velocity-curve-LINEAR",[global_pad_velocity_curve_set Linear])]
-      mk_led_all x = map (\k -> set_sysex 0x10 k (led_status_to_u8 x)) led_ix_set
-      mk_led_pad x = map (\j -> (printf "led-pad-%02X-%s" j (led_status_str x)
-                                ,[led_pad_set j x])) [0 .. 15]
-      led_lib = concat [[("led-all-OFF",mk_led_all LED_Off)
-                        ,("led-all-BLUE",mk_led_all LED_Blue)
-                        ,("led-all-MAGENTA",mk_led_all LED_Magenta)
-                        ,("led-all-RED",mk_led_all LED_Red)
-                        ,("led-cntrl-seq-OFF",[led_cntrl_seq_off])]
-                       ,concatMap mk_led_pad [LED_Off,LED_Red,LED_Blue,LED_Magenta]]
-      mk_pad_cc ch ix md = (printf "pad-cc-seq-C%02X-I%02X-%s" ch ix (pad_cc_mode_str md)
-                           ,pad_cc_set_16 (md,ch,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F)))
-      pad_lib = concat [[mk_pad_cc ch ix md | ch <- [0..3], ix <- [0,16 .. 112], md <- [Pad_Switch Toggle,Pad_Switch Gate,Pad_Pressure]]]
-  in concat [enc_lib,global_lib,led_lib,pad_lib]
+  concat [sysex_lib_accel,sysex_lib_curve
+         ,sysex_lib_enc
+         ,sysex_lib_led
+         ,sysex_lib_pad_cc,sysex_lib_pad_mn]
 
 -- | Write 'sysex_library' to indicated directory.
 --

@@ -2,21 +2,43 @@ This directory contains SYSEX files to edit an Arturia BeatStep USB/MIDI control
 
 The SYSEX files may contain multiple SYSEX messages.
 
-To send under debian use (editing the ADDR variable):
+To send usinf `amidi` (debian) use (editing the ADDR variable, see `amidi -l`):
 
 ~~~~
 $ export PORT=hw:1,0,0
-$ amidi -p $PORT -i 1 -s enc-seq-C00-I00-ABS.syx
+$ amidi -p $PORT -i 1 -s enc-seq-I00-REL.syx
 $ amidi -p $PORT -i 1 -s led-all-red.syx
 $ amidi -p $PORT -i 1 -s led-all-blue.syx
 $ amidi -p $PORT -i 1 -s led-all-off.syx
 $
 ~~~~
 
+To send using `midi-osc-pm` (editing the PORT variable, see `midi-osc-pm stat`):
+
+~~~~
+$ export PORT=1
+$ midi-osc-pm sysex send 1 $PORT < enc-seq-C00-I00-ABS.syx
+$ midi-osc-pm sysex send 1 $PORT < led-all-blue.syx
+$ midi-osc-pm sysex send 1 $PORT < led-all-off.syx
+$
+~~~~
+
 The SYSEX files are:
 
 - enc-seq-INDEX-MODE: set all encoders to send CC messages at consecutive indices starting at INDEX
-- enc-seq-CHANNEL-INDEX-MODE: variant setting fixed output channel
 - led-all-STATE: set all LED to STATE (RED, BLUE, MAGENTA, OFF)
 - led-cntrl-seq-off: turn off CNTRL/SEQ LED
 - led-pad-INDEX-STATE: set LED at pad INDEX to STATE
+- pad-seq-cc-INDEX-MODE: set all pads to send CC messages at consecutive indices starting at INDEX
+- pad-seq-mn-INDEX-MODE: set all pads to send MNN messages at consecutive indices starting at INDEX
+
+Encoder modes are: ABS = absolute values, REL = relative values (centre 0x40)
+
+Pad CC modes are: SW1 = ON/OFF (consecutive presses), SW2 = ON/OFF (on release), PRS = pressure
+
+Pad MN modes are: CS = ON/OFF (consecutive presses), RL = ON/OFF (on release)
+
+The module has code for the following variants (not stored):
+
+- enc-seq-CHANNEL-INDEX-MODE: variant setting fixed output channel
+- pad-seq-CHANNEL-INDEX-MODE: variant setting fixed output channel
