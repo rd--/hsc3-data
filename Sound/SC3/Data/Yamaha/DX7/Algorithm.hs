@@ -2,14 +2,31 @@
 module Sound.SC3.Data.Yamaha.DX7.Algorithm where
 
 import Data.Maybe {- base -}
+import Data.List {- base -}
 import Text.Printf {- base -}
 
-import Sound.SC3.Data.Yamaha.DX7
+import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 
--- | DX7 Algorithm.
---   List of (dst,src) operator edges and a list of output (carrier) operators.
---   Operators are zero-indexed.
+{- | DX7 Algorithm.
+     List of (dst,src) operator edges and a list of output (carrier) operators.
+     Operators are zero-indexed.
+-}
 type DX7_Algorithm = ([(U8,U8)],[U8])
+
+{- | Feedback is indicated by a (dst,src) pair where dst >= src.
+     Feedback edges have an amplitude multiplier, ordinary edges are at unit gain.
+
+> map dx7_algorithm_feedback_edge dx7_algorithms
+
+Each algorithm has exactly one feedback edge.
+
+> all (== 1) (map (length . filter (\(dst,src) -> dst >= src) . fst) dx7_algorithms)
+-}
+dx7_algorithm_feedback_edge :: DX7_Algorithm -> (U8,U8)
+dx7_algorithm_feedback_edge =
+  fromMaybe (error "dx7_algorithm_feedback_edge") .
+  find (\(dst,src) -> dst >= src) .
+  fst
 
 -- | The 32 DX7 algorithms in sequence.
 dx7_algorithms :: [DX7_Algorithm]
@@ -59,6 +76,7 @@ dx7_algorithm_group_structure =
   ,[[2,1,2,2]]]
 
 {- | Simple dot graph of algorithm.
+     Feedback edges are drawn in a distinct colour and do not constrain graph layout.
 
 > let ad = unlines . dx7_algorithm_dot . (!!) dx7_algorithms
 > let wr k = writeFile (printf "/tmp/dx7.%02d.dot" k) (ad k)
@@ -72,8 +90,8 @@ dx7_algorithm_dot (e,o) =
                       "%d -> %d [color=%s,constraint=%s];"
                       src
                       dst
-                      (if src > dst then "black" else "slategray")
-                      (if src > dst then "true" else "false") -- orangered
+                      (if src > dst then "black" else "slategray") -- orangered
+                      (if src > dst then "true" else "false")
       o_f k = printf "%d -> o;" k
   in concat
      [["digraph g {"
