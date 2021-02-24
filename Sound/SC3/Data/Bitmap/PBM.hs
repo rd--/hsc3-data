@@ -2,13 +2,14 @@
 module Sound.SC3.Data.Bitmap.PBM where
 
 import Data.Bits {- base -}
-import qualified Data.ByteString as B {- bytestring -}
 import Data.List {- base -}
 import Data.Word {- base -}
 
+import qualified Data.ByteString as B {- bytestring -}
+import qualified Data.Map as Map {- containers -}
+
 import qualified Codec.Image.PBM as I {- bitwise -}
 import qualified Data.Array.BitArray as A {- bitwise -}
-import qualified Data.Map as M {- containers -}
 
 import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
 
@@ -96,7 +97,7 @@ bitindices_to_pbm ((nr,nc),ix) =
 pbm_to_bitmap :: I.PBM -> BitMap
 pbm_to_bitmap pbm =
     let (dm,ix) = pbm_to_bitindices pbm
-    in (dm,M.fromList (zip ix (repeat True)))
+    in (dm,Map.fromList (zip ix (repeat True)))
 
 bitmap_to_pbm :: BitMap -> I.PBM
 bitmap_to_pbm = bitindices_to_pbm . bitmap_to_bitindices

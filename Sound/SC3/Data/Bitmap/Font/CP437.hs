@@ -5,7 +5,8 @@ import Data.Bits {- base -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
 
-import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
+import qualified Sound.SC3.Data.Bitmap.PBM as PBM {- hsc3-data -}
+import qualified Sound.SC3.Data.Bitmap.Type as Bitmap  {- hsc3-data -}
 
 type T8 a = (a,a,a,a,a,a,a,a)
 
@@ -19,7 +20,7 @@ type CP437_GLYPH = T8 Word8
 --
 -- > let b = cp437_glyph_to_bitindices (cp437_font !! fromEnum 'O')
 -- > putStrLn $ bitindices_show b
-cp437_glyph_to_bitindices :: CP437_GLYPH -> Bitindices
+cp437_glyph_to_bitindices :: CP437_GLYPH -> Bitmap.Bitindices
 cp437_glyph_to_bitindices =
     let col c x = mapMaybe (\r -> if testBit x r then Just (r,c) else Nothing) [0 .. 7]
     in (,) (8,8) . concat . zipWith col [0 .. 7] . t8_list
@@ -30,7 +31,11 @@ cp437_glyph_to_bitindices =
 -- > f (cp437_font !! fromEnum 'A')
 -- > mapM_ f cp437_font
 cp437_glyph_show :: CP437_GLYPH -> String
-cp437_glyph_show = bitindices_show . cp437_glyph_to_bitindices
+cp437_glyph_show = Bitmap.bitindices_show . cp437_glyph_to_bitindices
+
+-- | 'PBM1' of 'Glyph'.
+cp437_glyph_pbm1 :: CP437_GLYPH -> PBM.PBM1
+cp437_glyph_pbm1 = PBM.bitindices_pbm1 . cp437_glyph_to_bitindices
 
 -- | 8x8 CP437 font data, courtesy <http://www.gammon.com.au/forum/?id=11516>
 --
@@ -294,3 +299,10 @@ cp437_font =
   ,(0x00, 0x00, 0x3C, 0x3C, 0x3C, 0x3C, 0x00, 0x00) -- 0xFE
   ,(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00) -- 0xFF
   ]
+
+{-
+import Text.Printf {- base -}
+wr (k,g) = writeFile (printf "/tmp/cp437-%02X.pbm" k) (cp437_glyph_pbm1 g)
+mapM_ wr (zip [0..] cp437_font)
+
+-}

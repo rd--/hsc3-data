@@ -186,6 +186,7 @@ bitindices_columns ((_,nc),ix) =
     let f = map snd . T.fill_gaps_ascending [] (0,nc - 1)
     in f (indices_by_column ix)
 
+-- | Transpose rows and columns.
 bitindices_swap :: Bitindices -> Bitindices
 bitindices_swap (dm,ix) = let f (i,j) = (j,i) in (f dm,map f ix)
 

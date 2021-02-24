@@ -6,17 +6,18 @@ module Sound.SC3.Data.Bitmap.Font.BDF where
 
 import Data.Char {- base -}
 import Data.List {- base -}
-import Data.List.Split {- split -}
 import Data.Maybe {- base -}
 import Data.Word {- base -}
 import System.FilePath {- filepath -}
 
-import Sound.SC3.Data.Bitmap.PBM {- hsc3-data -}
-import Sound.SC3.Data.Bitmap.Type {- hsc3-data -}
+import qualified Data.List.Split as Split {- split -}
+
+import qualified Sound.SC3.Data.Bitmap.PBM as PBM {- hsc3-data -}
+import qualified Sound.SC3.Data.Bitmap.Type as Bitmap  {- hsc3-data -}
 
 -- * Glyphs
 
--- | Bounding box
+-- | Bounding box (w,h,dx,dy)
 data Box = Box (Int,Int,Int,Int) deriving (Eq,Show)
 
 -- | The name of the glyph.
@@ -33,7 +34,7 @@ type Property = (String,String)
 data Glyph = Glyph {glyph_name :: Name
                    ,glyph_encoding :: Encoding
                    ,glyph_bbox :: Box
-                   ,glyph_bitpattern :: BitPattern Word8
+                   ,glyph_bitpattern :: Bitmap.BitPattern Word8
                    ,glyph_properties :: [Property]}
              deriving (Eq,Show)
 
@@ -48,7 +49,7 @@ glyph_char g =
 -- index, lookup the bit at that index.
 --
 -- nh = normal height, bl = base-line, r = row, c = column
-glyph_ix :: Box -> Glyph -> (Int,Int) -> Bit
+glyph_ix :: Box -> Glyph -> (Int,Int) -> Bitmap.Bit
 glyph_ix fb g (r,c) =
     let Box (_,h,dx,dy) = fb
         Box (g_w,g_h,g_dx,g_dy) = glyph_bbox g
@@ -56,16 +57,16 @@ glyph_ix fb g (r,c) =
         j = c - g_dx + dx -- ?
     in if i < 0 || i >= g_h || j < 0 || j >= g_w
        then False
-       else bitpattern_ix (glyph_bitpattern g) (i,j)
+       else Bitmap.bitpattern_ix (glyph_bitpattern g) (i,j)
 
-glyph_bitarray :: Box -> Glyph -> Bitarray
+glyph_bitarray :: Box -> Glyph -> Bitmap.Bitarray
 glyph_bitarray fb g =
     let Box (w,h,_,_) = fb
         f i j = glyph_ix fb g (i,j)
     in ((h,w),map (\n -> map (f n) [0 .. w - 1]) [0 .. h - 1])
 
-glyph_bitindices :: Box -> Glyph -> Bitindices
-glyph_bitindices bx = bitarray_to_bitindices . glyph_bitarray bx
+glyph_bitindices :: Box -> Glyph -> Bitmap.Bitindices
+glyph_bitindices bx = Bitmap.bitarray_to_bitindices . glyph_bitarray bx
 
 -- * BDF
 
@@ -85,7 +86,7 @@ properties =
 property :: [Property] -> String -> String
 property p n = maybe "" snd (find ((==) n . fst) p)
 
-parse_bitpattern :: Read b => Dimensions -> Source -> BitPattern b
+parse_bitpattern :: Read b => Bitmap.Dimensions -> Source -> Bitmap.BitPattern b
 parse_bitpattern d =
     (\m -> (d,m)) .
     map (read . ("0x" ++)) .
@@ -115,13 +116,14 @@ parse_glyph s =
 
 -- splitWhen variant (keeps delimiters at left)
 sep_when :: (a -> Bool) -> [a] -> [[a]]
-sep_when = split . keepDelimsL . whenElt
+sep_when = Split.split . Split.keepDelimsL . Split.whenElt
 
 bdf_parse :: Source -> BDF
 bdf_parse s =
   let (h:g) = sep_when (isPrefixOf "STARTCHAR") s
   in (properties h,map parse_glyph g)
 
+-- | 'bdf_parse' of 'readFile'
 bdf_read :: FilePath -> IO BDF
 bdf_read fn = do
   s <- readFile fn
@@ -168,7 +170,7 @@ from_ascii_err f c = fromMaybe (error ("from_ascii: " ++ [c])) (from_ascii f c)
 -- * E/I
 
 -- | ('Encoding','Bitindices') representation of a glyph.
-type Glyph_EI = (Encoding,Bitindices)
+type Glyph_EI = (Encoding,Bitmap.Bitindices)
 
 -- | Load 'Glyph_EI' representations of 'bdf_printing_ascii' of font.
 bdf_load_ei :: FilePath -> IO [Glyph_EI]
@@ -176,7 +178,7 @@ bdf_load_ei fn = do
   f <- bdf_read fn
   let fb = bdf_fontboundingbox f
       cs = bdf_printing_ascii f
-      is = map (bitarray_to_bitindices . glyph_bitarray fb) cs
+      is = map (Bitmap.bitarray_to_bitindices . glyph_bitarray fb) cs
   return (zip (map glyph_encoding cs) is)
 
 -- * Show and PP
@@ -184,9 +186,9 @@ bdf_load_ei fn = do
 -- | Variant of 'Show' instance that locates the glyph in the
 -- 'bdf_fontboundingbox', ie. 'bitarray_show' of 'glyph_bitarray'.
 glyph_pp :: BDF -> Glyph -> String
-glyph_pp f = bitarray_show . glyph_bitarray (bdf_fontboundingbox f)
+glyph_pp f = Bitmap.bitarray_show . glyph_bitarray (bdf_fontboundingbox f)
 
--- | 'glyph_pp' of all 'bdf_printing_ascii' of font given by 'FilePath'..
+-- | 'glyph_pp' of all 'bdf_printing_ascii' of font given by 'FilePath'.
 bdf_ascii :: FilePath -> IO ()
 bdf_ascii nm = do
   f <- bdf_read nm
@@ -195,8 +197,8 @@ bdf_ascii nm = do
 -- * PBM1
 
 -- | 'PBM1' of 'Glyph'.
-glyph_pbm1 :: BDF -> Glyph -> PBM1
-glyph_pbm1 f = bitarray_pbm1 . glyph_bitarray (bdf_fontboundingbox f)
+glyph_pbm1 :: BDF -> Glyph -> PBM.PBM1
+glyph_pbm1 f = PBM.bitarray_pbm1 . glyph_bitarray (bdf_fontboundingbox f)
 
 -- | Given 'BDF' /font/ and directory name, write all glyphs as 'PBM1'
 -- files, the name of the file is given by 'glyph_name'.
@@ -210,7 +212,7 @@ bdf_pbm1 f dir = do
 -- | Given a 'BDF' /font/ and a 'String' /text/, generate a
 -- 'Bitindices' value.  All glyphs are equal size, given by
 -- 'bdf_fontboundingbox'.
-text_bitindices :: BDF -> String -> Bitindices
+text_bitindices :: BDF -> String -> Bitmap.Bitindices
 text_bitindices bdf t =
     let bx = bdf_fontboundingbox bdf
         Box (w,h,_,_) = bx
@@ -219,14 +221,15 @@ text_bitindices bdf t =
         nc = maximum (map length l)
         c = map (\(ln,i) -> map (\(ch,j) -> ((i * h,j * w),ch)) (zip ln [0..])) (zip l [0..])
         f (sh,ch) = let (_,ix) = glyph_bitindices bx (from_ascii_err bdf ch)
-                    in indices_displace sh ix
+                    in Bitmap.indices_displace sh ix
     in ((nr * h,nc * w),concatMap f (concat c))
 
 -- | 'PBM1' of 'text_bitindices'.
-text_pbm1 :: BDF -> String -> PBM1
-text_pbm1 bdf = bitindices_pbm1 . text_bitindices bdf
+text_pbm1 :: BDF -> String -> PBM.PBM1
+text_pbm1 bdf = PBM.bitindices_pbm1 . text_bitindices bdf
 
 {-
+
 ibm <- bdf_read "/home/rohan/sw/hsc3-data/data/font/ibm.bdf"
 crp <- bdf_read "/home/rohan/sw/hsc3-data/data/font/creep.bdf"
 
