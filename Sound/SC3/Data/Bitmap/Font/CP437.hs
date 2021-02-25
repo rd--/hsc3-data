@@ -301,6 +301,7 @@ cp437_font =
   ]
 
 {-
+
 import Text.Printf {- base -}
 wr (k,g) = writeFile (printf "/tmp/cp437-%02X.pbm" k) (cp437_glyph_pbm1 g)
 mapM_ wr (zip [0..] cp437_font)

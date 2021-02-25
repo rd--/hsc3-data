@@ -65,6 +65,7 @@ Library
                    Sound.SC3.Data.ATS
                    Sound.SC3.Data.Bitmap.Font.BDF
                    Sound.SC3.Data.Bitmap.Font.CP437
+                   Sound.SC3.Data.Bitmap.Font.Segment
                    Sound.SC3.Data.Bitmap.PBM
                    Sound.SC3.Data.Bitmap.Type
                    Sound.SC3.Data.Buffer

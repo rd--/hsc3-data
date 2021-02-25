@@ -5,10 +5,11 @@ module Sound.SC3.Data.Bitmap.Type where
 import Data.Bits {- base -}
 import Data.Char {- base -}
 import Data.List {- base -}
-import qualified Data.Map as M {- containers -}
 import Data.Maybe {- base -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Data.Map as Map {- containers -}
+
+import qualified Music.Theory.List as List {- hmt -}
 
 -- * Dimensions and Indices
 
@@ -70,8 +71,7 @@ linear_to_ix_co (nr,_) i = i `divMod` nr
 indices_displace :: (Int,Int) -> Indices -> Indices
 indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
 
--- | The eight vectors (ie. (dy,dx)) to move to a neighbouring cell,
--- clockwise.
+-- | The eight vectors (ie. (dy,dx)) to move to a neighbouring cell, clockwise.
 --
 -- > length neighbour_vectors_at_1_cw == 8
 neighbour_vectors_at_1_cw :: Num n => [(n,n)]
@@ -115,22 +115,36 @@ bit_to_char :: (Char,Char) -> Bit -> Char
 bit_to_char (one,zero) x = if x then one else zero
 
 -- | List of 'Bit's, the first 'Bit' is the leftmost.
+--   "Bits are numbered from 0 with bit 0 being the least significant bit." (Data.Bits)
 type Bitseq = [Bit]
 
 -- | Show 'Bitseq', using @\@@ for 'True' and @.@ for 'False'.
 bitseq_show :: Bitseq -> String
 bitseq_show = map (bit_to_char ('@','.'))
 
--- | Given 'Bits' value of size /sz/ test the /i/th _most_ significant
--- bit.
-bitenc_test :: Bits a => Int -> a -> Int -> Bool
-bitenc_test sz x i = testBit x (sz - 1 - i)
+-- | Given 'Bits' test the /i/th _least_ significant bit.
+bitenc_test_lsb :: Bits b => b -> Int -> Bool
+bitenc_test_lsb = testBit
+
+-- | Given 'Bits' value of size /sz/ test the /i/th _most_ significant bit.
+bitenc_test_msb :: Bits b => Int -> b -> Int -> Bool
+bitenc_test_msb sz x i = testBit x (sz - 1 - i)
 
 -- | Unpack the /n/ _most_ significant elements of a 'FiniteBits' value.
 --
--- > bitseq_show (bitseq 4 (0x90::Word8)) == "@..@"
-bitseq :: FiniteBits b => Int -> b -> Bitseq
-bitseq n x = let sz = finiteBitSize x in map (bitenc_test sz x) [0 .. n - 1]
+-- > bitseq_show (bitseq_msb 4 (0xA0::Data.Word.Word8)) == "@.@."
+bitseq_msb :: FiniteBits b => Int -> b -> Bitseq
+bitseq_msb n x = let sz = finiteBitSize x in map (bitenc_test_msb sz x) [0 .. n - 1]
+
+-- | Unpack the /n/ _least_ significant elements of a 'FiniteBits' value.
+--
+-- > bitseq_show (bitseq_lsb 4 (0x05::Data.Word.Word8)) == "@.@."
+bitseq_lsb :: FiniteBits b => Int -> b -> Bitseq
+bitseq_lsb n x = map (bitenc_test_lsb x) [0 .. n - 1]
+
+-- > bitseq_elem (bitseq_lsb 8 (0x05::Data.Word.Word8)) == [0,2]
+bitseq_elem :: (Num n,Enum n) => Bitseq -> [n]
+bitseq_elem = mapMaybe (\(ix,b) -> if b then Just ix else Nothing) . zip [0..]
 
 -- | List of rows, each a 'Bitseq', the first is the uppermost.
 type Bitarray = (Dimensions,[Bitseq])
@@ -163,11 +177,11 @@ bitindices_row (_,d) r = map ix_column (filter ((== r) . ix_row) d)
 indices_by_row :: [Ix] -> [(Row,[Column])]
 indices_by_row =
     let f x = (ix_row (head x),map ix_column x)
-    in map f . T.group_on ix_row . sortOn ix_row
+    in map f . List.group_on ix_row . sortOn ix_row
 
 bitindices_rows :: Bitindices -> [[Column]]
 bitindices_rows ((nr,_),ix) =
-    let f = map snd . T.fill_gaps_ascending [] (0,nr - 1)
+    let f = map snd . List.fill_gaps_ascending [] (0,nr - 1)
     in f (indices_by_row ix)
 
 bitindices_width :: Bitindices -> Width
@@ -179,11 +193,11 @@ bitindices_column b c = map fst (filter ((== c) . snd) (snd b))
 indices_by_column :: [Ix] -> [(Column,[Row])]
 indices_by_column =
     let f x = (ix_column (head x),map ix_row x)
-    in map f . T.group_on ix_column . sortOn ix_column
+    in map f . List.group_on ix_column . sortOn ix_column
 
 bitindices_columns :: Bitindices -> [[Row]]
 bitindices_columns ((_,nc),ix) =
-    let f = map snd . T.fill_gaps_ascending [] (0,nc - 1)
+    let f = map snd . List.fill_gaps_ascending [] (0,nc - 1)
     in f (indices_by_column ix)
 
 -- | Transpose rows and columns.
@@ -217,11 +231,11 @@ bitindices_show = bitarray_show . bitindices_to_bitarray
 type BitPattern b = (Dimensions,[b])
 
 bitpattern_to_bitarray :: FiniteBits b => BitPattern b -> Bitarray
-bitpattern_to_bitarray ((h,w),m) = ((h,w),map (bitseq w) m)
+bitpattern_to_bitarray ((h,w),m) = ((h,w),map (bitseq_msb w) m)
 
 -- | Index into 'BitPattern' at (row,column).
 bitpattern_ix :: Bits b => BitPattern b -> (Int,Int) -> Bit
-bitpattern_ix (_,m) (i,j) = bitenc_test 8 (m !! i) j
+bitpattern_ix (_,m) (i,j) = bitenc_test_msb 8 (m !! i) j
 
 bitpattern_show :: FiniteBits b => BitPattern b -> String
 bitpattern_show = bitarray_show . bitpattern_to_bitarray
@@ -229,19 +243,19 @@ bitpattern_show = bitarray_show . bitpattern_to_bitarray
 -- | * BitMap
 
 -- | By convention is sparse, with only 'True' entries.
-type BitMap = (Dimensions,M.Map Ix Bool)
+type BitMap = (Dimensions,Map.Map Ix Bool)
 
 bitmap_get :: BitMap -> Ix -> Bool
-bitmap_get (_,m) ix = M.findWithDefault False ix m
+bitmap_get (_,m) ix = Map.findWithDefault False ix m
 
 -- | Lookup a sequence of keys in a map, halting when one is present.
 --
--- > map_lookup_set (M.fromList (zip [1..9] ['a'..])) [0,1] == Just (1,'a')
-map_lookup_set :: Ord k => M.Map k a -> [k] -> Maybe (k,a)
+-- > map_lookup_set (Map.fromList (zip [1..9] ['a'..])) [0,1] == Just (1,'a')
+map_lookup_set :: Ord k => Map.Map k a -> [k] -> Maybe (k,a)
 map_lookup_set m set =
     case set of
       [] -> Nothing
-      k:set' -> case M.lookup k m of
+      k:set' -> case Map.lookup k m of
                   Nothing -> map_lookup_set m set'
                   Just r -> Just (k,r)
 
@@ -250,10 +264,10 @@ bitmap_neighbour_1 :: [(Int,Int)] -> BitMap -> Ix -> Maybe (Ix,Bool)
 bitmap_neighbour_1 n_fn (d,m) ix = map_lookup_set m (neighbour_indices n_fn d ix)
 
 bitmap_to_bitindices :: BitMap -> Bitindices
-bitmap_to_bitindices (d,m) = (d,map fst (filter snd (M.toList m)))
+bitmap_to_bitindices (d,m) = (d,map fst (filter snd (Map.toList m)))
 
 bitindices_to_bitmap :: Bitindices -> BitMap
-bitindices_to_bitmap (dm,ix) = (dm,M.fromList (zip ix (repeat True)))
+bitindices_to_bitmap (dm,ix) = (dm,Map.fromList (zip ix (repeat True)))
 
 -- * Leading edge
 
@@ -294,5 +308,5 @@ bitindices_leading_edges dir (dm,ix) =
 
 bitmap_leading_edges :: DIRECTION -> BitMap -> BitMap
 bitmap_leading_edges dir (d,m) =
-    let le_f ix' _ = leading_edge_f dir d (\ix -> not (M.findWithDefault False ix m)) ix'
-    in (d,M.filterWithKey le_f m)
+    let le_f ix' _ = leading_edge_f dir d (\ix -> not (Map.findWithDefault False ix m)) ix'
+    in (d,Map.filterWithKey le_f m)
