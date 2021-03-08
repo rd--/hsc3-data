@@ -44,7 +44,7 @@ ix_row = fst
 ix_column :: Ix -> Column
 ix_column = snd
 
--- | Row-order indices for given 'Dimensions'.
+-- | Row-order indices given 'Dimensions'.
 --
 -- > bm_indices (2,3) == [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2)]
 bm_indices :: Dimensions -> [Ix]

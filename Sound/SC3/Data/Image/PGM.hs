@@ -11,6 +11,8 @@ import qualified Data.Map as Map {- containers -}
 
 import qualified Graphics.Pgm as Pgm {- pgm -}
 
+import qualified Music.Theory.Math.Convert as Convert {- hmt -}
+
 import qualified Sound.SC3.Data.Bitmap.Type as Bitmap {- hsc3-data -}
 
 -- | Bit depth, either 8 or 16.
@@ -87,15 +89,11 @@ depth_to_max n =
       16 -> 65535
       _ -> error "depth_to_max: not 8 or 16"
 
--- | Type specialised 'fromIntegral'.
-int_to_float :: Int -> Float
-int_to_float = fromIntegral
-
 -- | Convert 'PGM' to 'PGMF'.
 pgm_to_pgmf :: PGM -> PGMF
 pgm_to_pgmf (d,a) =
-    let n = int_to_float (depth_to_max d)
-    in Array.amap ((/ n) . int_to_float) a
+    let n = Convert.int_to_float (depth_to_max d)
+    in Array.amap ((/ n) . Convert.int_to_float) a
 
 -- | Type specialised 'round'.
 float_to_int :: Float -> Int
@@ -104,7 +102,7 @@ float_to_int = round
 -- | Given bit /depth/ (typically either 8 or 16) convert 'PGMF' to 'PGM'.
 pgmf_to_pgm :: Depth -> PGMF -> PGM
 pgmf_to_pgm d a =
-    let n = int_to_float (depth_to_max d)
+    let n = Convert.int_to_float (depth_to_max d)
     in (d,Array.amap (float_to_int . (* n)) a)
 
 -- | Convert 'PGMF' to row order 'Vector.Vector'.
