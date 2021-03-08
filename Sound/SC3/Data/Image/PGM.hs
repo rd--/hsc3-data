@@ -26,16 +26,20 @@ type PGM = (Depth,Greyarray Int)
 pgm_array :: PGM -> Greyarray Int
 pgm_array = snd
 
+-- | 'Bitmap.Dimensions' of 'PGM'
+pgm_dimensions :: PGM -> Bitmap.Dimensions
+pgm_dimensions = array_dimensions . pgm_array
+
+-- | 'Bitmap.bm_indices' of 'pgm_dimensions'
+pgm_indices :: PGM -> [Bitmap.Ix]
+pgm_indices = Bitmap.bm_indices . pgm_dimensions
+
 -- | PGMF is an unboxed array of 'Float'.
 type PGMF = Greyarray Float
 
 -- | Dimensions of array.
 array_dimensions :: (Num t,Array.Ix t,Array.IArray a e) => a (t,t) e -> (t,t)
 array_dimensions a = let (_,(r,c)) = Array.bounds a in (r + 1,c + 1)
-
--- | 'Bitmap.Dimensions' of 'PGM'
-pgm_dimensions :: PGM -> Bitmap.Dimensions
-pgm_dimensions = array_dimensions . pgm_array
 
 -- | 'Bitmap.Dimensions' of 'PGMF'
 pgmf_dimensions :: PGMF -> Bitmap.Dimensions
