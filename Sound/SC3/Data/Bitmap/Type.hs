@@ -32,6 +32,10 @@ type Column = Int
 -- | ('Row','Column') index.
 type Ix = (Row,Column)
 
+-- | Minima and maxima 'Ix' given 'Dimensions'.
+dimensions_to_bounds :: Dimensions -> (Ix,Ix)
+dimensions_to_bounds (nr,nc) = ((0,0),(nr - 1,nc - 1))
+
 -- | Type specialised 'fst'.
 ix_row :: Ix -> Row
 ix_row = fst
