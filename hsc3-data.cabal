@@ -135,6 +135,7 @@ Library
                    Sound.SC3.Data.UI.HTML
                    Sound.SC3.Data.UI.ST
                    Sound.SC3.Data.UI.WS
+                   Sound.SC3.Data.UI.WV
                    Sound.SC3.Data.URandom
                    Sound.SC3.Data.VST
                    Sound.SC3.Data.VST.Obxd

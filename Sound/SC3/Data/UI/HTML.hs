@@ -1,11 +1,17 @@
+-- | UI HTML
 module Sound.SC3.Data.UI.HTML where
 
 import Data.List {- base -}
 import Text.Printf {- base -}
 
-import System.Process {- process -}
+-- | UI element types.
+data UI_Elem
+  = UI_Label Int Int String -- ^ width:n-char uid text
+  | UI_Enum Int Int Int [String] -- ^ width:n-char uid initial-ix texts
+  | UI_LineBreak
+  deriving (Eq,Show)
 
--- | h = height:n-line ; w = width:n-char ; z = uid ; lbl = label
+-- | h = height:n-line ; w = width:n-char ; z = uid (label index); lbl = label
 ui_lbl_html :: Int -> Int -> Int -> String -> String
 ui_lbl_html h w z lbl =
   printf
@@ -21,9 +27,7 @@ ui_enum_html h w z k e =
                      ix (if ix == k then " selected" else "") txt
   in sel : map opt (zip [0 ..] e) ++ ["</select>"]
 
-data UI_Elem = UI_Label Int Int String | UI_Enum Int Int Int [String] | UI_LineBreak
-  deriving (Eq,Show)
-
+-- | Generate HTML for UI_Elem.
 ui_elem_html :: Int -> UI_Elem -> [String]
 ui_elem_html h e =
   case e of
@@ -144,11 +148,3 @@ ui_html ws_p h nm lst =
 -- > ui_html_wr 9160 1 "/tmp/t.html" "test" (ui_text_to_elem txt)
 ui_html_wr :: Int -> Int -> FilePath -> String -> [UI_Elem] -> IO ()
 ui_html_wr ws_p h fn nm lst = writeFile fn (unlines (ui_html ws_p h nm lst))
-
--- | wv = web-view, uri = uniform-resource-identifier
-ui_hsc3_wv_uri :: String -> (Int,Int) -> Bool -> IO ()
-ui_hsc3_wv_uri uri (w,h) rs = callProcess "hsc3-wv" [uri,show w,show h,show rs]
-
--- | fn = file-name
-ui_hsc3_wv_fn :: FilePath -> (Int,Int) -> Bool -> IO ()
-ui_hsc3_wv_fn fn = ui_hsc3_wv_uri ("file://" ++ fn)

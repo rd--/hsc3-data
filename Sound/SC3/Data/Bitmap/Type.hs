@@ -166,7 +166,7 @@ bitarray_show = unlines . map bitseq_show . snd
 
 -- * Bitindices
 
--- | List of 'Ix'.
+-- | List of 'Ix', ie. (r,c).
 type Indices = [Ix]
 
 -- | The (row,column) indices for 'True' bits of a 'Bitarray'.
