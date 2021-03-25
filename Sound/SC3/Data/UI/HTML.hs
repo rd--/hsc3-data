@@ -1,8 +1,12 @@
--- | UI HTML
+-- | UI HTML.  Very simple UI consisting only of text enumeration inputs.
 module Sound.SC3.Data.UI.HTML where
 
+import Control.Concurrent {- base -}
 import Data.List {- base -}
 import Text.Printf {- base -}
+
+import Sound.SC3.Data.UI.WS as WS
+import Sound.SC3.Data.UI.WV as WV
 
 -- | UI element types.
 data UI_Elem
@@ -35,9 +39,13 @@ ui_elem_html h e =
     UI_Enum wd z k lst -> ui_enum_html h wd z k lst
     UI_LineBreak -> ["<br />"]
 
--- | Enumerations given as (char-wd,enum-lst) pairs.
---   Null entries are interpreted as line-breaks.
---   Unary entries are interpreted as labels.
+{- | Enumerations given as (width:n-char,enum:[string]) pairs.
+     Null entries are interpreted as line-breaks.
+     Unary entries are interpreted as labels.
+     Label and Enum elements are assigned distinct identifier sequences, each of the form [0..].
+
+> ui_plain_to_elem (zip (repeat 1) (map words ["x","a b","C D E"]))
+-}
 ui_plain_to_elem :: [(Int,[String])] -> [UI_Elem]
 ui_plain_to_elem tbl =
   let acc_f (l,p) (wd,e) =
@@ -96,7 +104,6 @@ ui_js ws_p =
   ,"      var d1 = parseInt(k.slice(1));"
   ,"      var d2 = parseInt(e.target.value);"
   ,"      ws.send(JSON.stringify([addr,d1,d2]));"
-  ,"      console.log(k,d2);"
   ,"    });"
   ,"  };"
   ,"  ws.onmessage = function(e) {"
@@ -148,3 +155,17 @@ ui_html ws_p h nm lst =
 -- > ui_html_wr 9160 1 "/tmp/t.html" "test" (ui_text_to_elem txt)
 ui_html_wr :: Int -> Int -> FilePath -> String -> [UI_Elem] -> IO ()
 ui_html_wr ws_p h fn nm lst = writeFile fn (unlines (ui_html ws_p h nm lst))
+
+{- | 'ui_html_wr' of 'ui_plain_to_elem'.
+     Run 'WV.ui_hsc3_wv_fn' to run UI and 'WS.ws_reader' to process UI input.
+     When UI process ends, kill input receive process.
+
+> pln = ui_plain_derive_width (map words ["x","a b","c d e"])
+> ui_html_proc 9160 3 "/tmp/x.html" "x" pln () (\(_,(i,j)) -> print (i,j)) (960,600) True
+-}
+ui_html_proc :: Int -> Int -> FilePath -> String -> [(Int,[String])] -> st -> WS.WS_RECV_F st -> (Int, Int) -> Bool -> IO ()
+ui_html_proc ws_p h html_fn nm pln st f dm rs = do
+  ui_html_wr ws_p h html_fn nm (ui_plain_to_elem pln)
+  th <- forkIO (WS.ws_reader ws_p st f)
+  WV.ui_hsc3_wv_fn html_fn dm rs
+  killThread th
