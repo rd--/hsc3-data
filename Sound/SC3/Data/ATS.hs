@@ -179,7 +179,7 @@ ats_tm_fr_am ats =
     let tm = ats_time ats
         fr = ats_freq ats
         am = ats_ampl ats
-    in zipWith (\f a -> zip3 tm f a) fr am
+    in zipWith (zip3 tm) fr am
 
 -- * SC3
 

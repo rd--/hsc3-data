@@ -18,7 +18,7 @@ import qualified Sound.SC3.Data.Bitmap.Type as Bitmap  {- hsc3-data -}
 -- * Glyphs
 
 -- | Bounding box (w,h,dx,dy)
-data Box = Box (Int,Int,Int,Int) deriving (Eq,Show)
+newtype Box = Box (Int,Int,Int,Int) deriving (Eq,Show)
 
 -- | The name of the glyph.
 type Name = String
@@ -55,9 +55,8 @@ glyph_ix fb g (r,c) =
         Box (g_w,g_h,g_dx,g_dy) = glyph_bbox g
         i = r + g_dy - (h - g_h) - dy -- ?
         j = c - g_dx + dx -- ?
-    in if i < 0 || i >= g_h || j < 0 || j >= g_w
-       then False
-       else Bitmap.bitpattern_ix (glyph_bitpattern g) (i,j)
+    in not (i < 0 || i >= g_h || j < 0 || j >= g_w) &&
+       Bitmap.bitpattern_ix (glyph_bitpattern g) (i,j)
 
 glyph_bitarray :: Box -> Glyph -> Bitmap.Bitarray
 glyph_bitarray fb g =
@@ -79,7 +78,7 @@ type BDF = (Header,[Glyph])
 
 properties :: Source -> [Property]
 properties =
-    let f r = let (k,v) = span (not . isSpace) r
+    let f r = let (k,v) = break isSpace r
               in (k,dropWhile isSpace v)
     in map f
 
@@ -90,9 +89,9 @@ parse_bitpattern :: Read b => Bitmap.Dimensions -> Source -> Bitmap.BitPattern b
 parse_bitpattern d =
     (\m -> (d,m)) .
     map (read . ("0x" ++)) .
-    takeWhile ((/=) "ENDCHAR") .
+    takeWhile (/= "ENDCHAR") .
     tail .
-    dropWhile ((/=) "BITMAP")
+    dropWhile (/= "BITMAP")
 
 bdf_glyph_property_keys :: [String]
 bdf_glyph_property_keys =
@@ -155,7 +154,7 @@ from_name (_,g) e = find ((==) e . glyph_name) g
 -- | Given 'Char', lookup 'Glyph'.
 from_char :: BDF -> Char -> Maybe Glyph
 from_char (_,g) e =
-    let f = maybe False ((==) e) . glyph_char
+    let f = maybe False (== e) . glyph_char
     in find f g
 
 from_char_err :: BDF -> Char -> Glyph
@@ -219,7 +218,7 @@ text_bitindices bdf t =
         l = lines t
         nr = length l
         nc = maximum (map length l)
-        c = map (\(ln,i) -> map (\(ch,j) -> ((i * h,j * w),ch)) (zip ln [0..])) (zip l [0..])
+        c = zipWith (\ln i -> zipWith (\ch j -> ((i * h,j * w),ch)) ln [0..]) l [0..]
         f (sh,ch) = let (_,ix) = glyph_bitindices bx (from_ascii_err bdf ch)
                     in Bitmap.indices_displace sh ix
     in ((nr * h,nc * w),concatMap f (concat c))

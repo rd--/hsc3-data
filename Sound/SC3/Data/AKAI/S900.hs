@@ -204,7 +204,8 @@ s900_sf_data_unpack n d =
   let (p,q) = unzip (T.adj2 2 (u32_take n d))
       (p0,p1) = (map M.u8_hi p,map M.u8_lo p)
       r = u32_drop n d
-  in map u12_as_i12 (map u12_pack_le (zip p0 q) ++ map u12_pack_le (zip p1 r))
+      f = curry u12_pack_le
+  in map u12_as_i12 (zipWith f p0 q ++ zipWith f p1 r)
 
 s900_sf_write_wav :: FilePath -> [U8] -> IO ()
 s900_sf_write_wav dir d = do
