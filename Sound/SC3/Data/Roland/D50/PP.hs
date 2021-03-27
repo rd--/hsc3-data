@@ -33,7 +33,7 @@ d50_parameter_type_pp ty =
 --
 -- > map (d50_addr_pp . d50_addr_read) (words "02-00-00 02-03-40 03-5C-40 03-60-00 03-62-78 04-0C-08")
 d50_addr_pp :: D50_ADDRESS -> String
-d50_addr_pp x = printf "%05X" x
+d50_addr_pp = printf "%05X"
 
 -- | Range as @p - q@.
 --
@@ -398,7 +398,7 @@ d50_patch_area_gen p =
 d50_patch_area_pp :: D50_Patch -> [String]
 d50_patch_area_pp p =
   let (hdr_sq,dat_sq) = unzip (concat (d50_patch_area_gen p))
-  in concat (intersperse [""] (zipWith (:) hdr_sq dat_sq))
+  in intercalate [""] (zipWith (:) hdr_sq dat_sq)
 
 -- * CONCISE-TABLE
 

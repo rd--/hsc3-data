@@ -1,0 +1,5 @@
+- ignore: {name: Use camelCase}
+- ignore: {name: Use guards}
+- ignore: {name: Use ++}
+- ignore: {name: Use head}
+- ignore: {name: Use tuple-section}

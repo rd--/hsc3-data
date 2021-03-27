@@ -33,16 +33,16 @@ akwf_fn ext dir k = concat ["AKWF_",dir,"/AKWF_",k,ext]
 akwf_gen_fn :: Extension -> AKWF_GRP -> [FilePath]
 akwf_gen_fn ext (dir,sq) = map (akwf_fn ext dir) sq
 
--- > map (\k -> show_int_k k 5) [2,4]
+-- > map (\k -> show_int_k k 5) [2,4] == ["05","0005"]
 show_int_k :: Int -> Int -> String
-show_int_k k n = printf "%0*ld" k n
+show_int_k = printf "%0*ld"
 
 -- > gen_nseq 4 (0,100) []
 gen_nseq :: Int -> (Int, Int) -> [Int] -> [String]
 gen_nseq k (p,q) z = map (show_int_k k) (filter (`notElem` z) [p .. q])
 
 gen_pseq_flt :: Int -> String -> (Int, Int) -> [Int] -> [String]
-gen_pseq_flt k p n z = map (\s -> p ++ s) (gen_nseq k n z)
+gen_pseq_flt k p n z = map (p ++) (gen_nseq k n z)
 
 gen_pseq :: Int -> String -> (Int, Int) -> [String]
 gen_pseq k p n = gen_pseq_flt k p n []

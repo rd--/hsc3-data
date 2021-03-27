@@ -53,13 +53,13 @@ dx7_sh_char_count = [2,2,2,2, 2,2,2,2, 2,1,3, 2,2,2,2,3,2, 1,3]
 dx7_voice_concise_tbl :: DX7_Voice -> (String,T.TABLE,T.TABLE)
 dx7_voice_concise_tbl v =
   let [o6,o5,o4,o3,o2,o1,sh,nm] = dx7_voice_grp v
-      w_fn k l = zipWith (\s i -> T.pad_left ' ' i s) l k
+      w_fn k l = zipWith (flip (T.pad_left ' ')) l k
       o_hdr = "OP" : map fst dx7ii_op_parameter_names
-      o_fn i = (show i :) . map (\(k,x) -> dx7_parameter_value_pp (dx7_parameter_get k) x) . zip [0..]
+      o_fn i = (show i :) . zipWith (dx7_parameter_value_pp . dx7_parameter_get) [0..]
       o_tbl = w_fn (2 : dx7_op_char_count) o_hdr : zipWith o_fn [6::U8,5,4,3,2,1] [o6,o5,o4,o3,o2,o1]
       sh_rw s = if head s == 'P' then tail s else s
       sh_hdr = "" : map (sh_rw . fst) dx7ii_sh_parameter_names
-      sh_fn = ("SH" :) . map (\(k,x) -> dx7_parameter_value_pp (dx7_parameter_get k) x) . zip [126..]
+      sh_fn = ("SH" :) . zipWith (dx7_parameter_value_pp . dx7_parameter_get) [126..]
       sh_tbl = [w_fn (2 : dx7_sh_char_count) sh_hdr,sh_fn sh]
   in (map (dx7_ascii_char '?') nm,o_tbl,sh_tbl)
 
@@ -128,8 +128,8 @@ dx7_voice_data_list_pp d =
   let u8_at = Byte.word8_at
       op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
       op_ix_pp n = map
-                   (dx7_parameter_value_pp (u8_at dx7_op_parameter_tbl n))
-                   (map (u8_at d) (op_ix_set n))
+                   (dx7_parameter_value_pp (u8_at dx7_op_parameter_tbl n) . u8_at d)
+                   (op_ix_set n)
       is_op_ix n = n < 126
       ix_val n =
         if is_op_ix n
@@ -224,7 +224,7 @@ dx7ii_pced_summary vc (n,pf) =
 
 -- | 'dx7ii_pced_summary' for sequence.
 dx7ii_pced_summary_seq :: ([DX7_Voice], [DX7II_PCED]) -> [String]
-dx7ii_pced_summary_seq (vc,pf) = map (dx7ii_pced_summary vc) (zip [1..] pf)
+dx7ii_pced_summary_seq (vc,pf) = zipWith (curry (dx7ii_pced_summary vc)) [1..] pf
 
 dx7ii_pced_summary_hdr :: [String]
 dx7ii_pced_summary_hdr =

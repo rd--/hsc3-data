@@ -25,7 +25,7 @@ Each algorithm has exactly one feedback edge.
 dx7_algorithm_feedback_edge :: DX7_Algorithm -> (U8,U8)
 dx7_algorithm_feedback_edge =
   fromMaybe (error "dx7_algorithm_feedback_edge") .
-  find (\(dst,src) -> dst >= src) .
+  find (uncurry (>=)) .
   fst
 
 -- | The 32 DX7 algorithms in sequence.

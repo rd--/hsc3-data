@@ -119,16 +119,16 @@ dx7_voice_out_of_range d =
 dx7_voice_param_correct :: DX7_Voice -> DX7_Voice
 dx7_voice_param_correct d =
   let rng = map dx7_parameter_range dx7_parameter_tbl
-      clp (n,(l,r)) = if n < l then l else if n > r then r else n
-  in map clp (zip d rng)
+      clp n (l,r) = if n < l then l else if n > r then r else n
+  in zipWith clp d rng
 
 -- | Check the voice has 'dx7_nvoice' bytes, and perhaps that all parameter data is in range.
 dx7_voice_verify :: Bool -> DX7_Voice -> Bool
-dx7_voice_verify chk_rng d = length d == dx7_nvoice && (not chk_rng || dx7_voice_out_of_range d == [])
+dx7_voice_verify chk_rng d = length d == dx7_nvoice && (not chk_rng || null (dx7_voice_out_of_range d))
 
 -- | Error if any voice fails to verify.
 dx7_voice_set_verify :: Bool -> [DX7_Voice] -> IO ()
-dx7_voice_set_verify chk_rng v = when (any not (map (dx7_voice_verify chk_rng) v)) (error "dx7_voice?")
+dx7_voice_set_verify chk_rng v = unless (all (dx7_voice_verify chk_rng) v) (error "dx7_voice?")
 
 -- | Voice operators, in sequence 6,5,4,3,2,1 (# = 6 x 21 = 126)
 dx7_voice_op_params :: DX7_Voice -> [[U8]]
@@ -162,7 +162,7 @@ dx7_init_sh = dx7_init_pitch_eg ++ [0,0,1] ++ dx7_init_lfo ++ [3,24]
 -- | DX7 INIT VOICE, from DX7-II CART 64-B.
 --
 -- > dx7_voice_verify True dx7_init_voice == True
--- > dx7_voice_name dx7_init_voice == "INIT VOICE"
+-- > dx7_voice_name '?' dx7_init_voice == "INIT VOICE"
 -- > (minimum dx7_init_voice,maximum dx7_init_voice) == (0,99)
 dx7_init_voice :: DX7_Voice
 dx7_init_voice =
@@ -196,7 +196,7 @@ type DX7_Bank = [DX7_Voice]
 
 -- | Check there are 32 voices and each run 'dx7_voice_verify' at each.
 dx7_bank_verify :: Bool -> DX7_Bank -> Bool
-dx7_bank_verify chk_rng b = length b == 32 && all id (map (dx7_voice_verify chk_rng) b)
+dx7_bank_verify chk_rng b = length b == 32 && all (dx7_voice_verify chk_rng) b
 
 -- | Make bank from /v/, if there are less than 32 voices extend with 'dx7_init_voice'.
 --   It is an error for there to be more than 32 voices.
@@ -217,7 +217,7 @@ dx7_yamaha_id = 0x43
 
 -- | DX7 checksum function.
 dx7_checksum :: [U8] -> U8
-dx7_checksum d = (complement (sum (map ((.&.) 0x7F) d)) + 1) .&. 0x7F
+dx7_checksum d = (complement (sum (map (0x7F .&.) d)) + 1) .&. 0x7F
 
 -- | ; separated sequence of USR display values.
 type DX7_USR = String
@@ -441,9 +441,10 @@ dx7_parameter_name = dx7_parameter_nm . dx7_parameter_get
 -- > dx7_parameter_index "OP 6 OSC DETUNE" == 0x14
 dx7_parameter_index :: String -> U8
 dx7_parameter_index nm =
-    fromMaybe (error "dx7_parameter_ix") $
-    fmap dx7_parameter_ix $
-    find ((== nm) . dx7_parameter_nm) dx7_parameter_tbl
+    maybe
+    (error "dx7_parameter_ix")
+    dx7_parameter_ix
+    (find ((== nm) . dx7_parameter_nm) dx7_parameter_tbl)
 
 dx7_voice_grp_places :: [Int]
 dx7_voice_grp_places = concat [replicate 6 dx7_op_nparam,[dx7_sh_nparam,dx7_name_nchar]]

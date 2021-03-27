@@ -71,7 +71,7 @@ sfz_region_has_opcode_in k (g,c) = any ((`elem` k) . fst) (g ++ c)
 
 -- | Delete any opcode with given key.
 sfz_opcode_delete :: String -> [SFZ_Opcode] -> [SFZ_Opcode]
-sfz_opcode_delete k c = filter ((/= k) . fst) c
+sfz_opcode_delete k = filter ((/= k) . fst)
 
 -- * PARSE
 
@@ -94,7 +94,7 @@ sfz_tokenize =
   let recur l = case l of
                   x1:x2:r ->
                     if not (sfz_is_header x2) && '=' `notElem` x2
-                    then recur ((unwords [x1,x2]) : r)
+                    then recur (unwords [x1,x2] : r)
                     else x1 : recur (x2 : r)
                   _ -> l
   in recur . words -- INCORRECT IMPLEMENTATION, WORKS FOR NON-CONSECUTIVE SPACES ONLY...

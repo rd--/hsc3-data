@@ -78,10 +78,10 @@ fx_CcnK_FBCh_hdr_sz = sum fx_CcnK_FBCh_hdr_structure
 type FX_CcnK_FBCh = (Word32, Word32, Word32, [Word8])
 
 fx_verify_word32_eq :: String -> Word32 -> Word32 -> Bool
-fx_verify_word32_eq err p q = if p /= q then error (show (err,p,q)) else True
+fx_verify_word32_eq err p q = p == q || error (show (err,p,q))
 
 fx_verify_word32_elem :: String -> Word32 -> [Word32] -> Bool
-fx_verify_word32_elem err p q = if p `notElem` q then error (show (err,p,q)) else True
+fx_verify_word32_elem err p q = not (p `notElem` q) || error (show (err,p,q))
 
 fx_CcnK_FBCh_hdr_verify :: [Word8] -> FX_CcnK_FBCh
 fx_CcnK_FBCh_hdr_verify chk =

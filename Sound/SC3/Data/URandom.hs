@@ -1,14 +1,15 @@
 module Sound.SC3.Data.URandom where
 
 import Control.Monad {- base -}
-import qualified Data.ByteString.Lazy as B {- bytestring -}
 import Data.Int {- base -}
-import qualified Data.Binary as Binary {- binary -}
 import System.IO {- base -}
+
+import qualified Data.ByteString.Lazy as B {- bytestring -}
+import qualified Data.Binary as Binary {- binary -}
 
 -- | Read /n/ bytes from @/dev/urandom@.
 ur_bytes :: Int -> IO B.ByteString
-ur_bytes n = withFile "/dev/urandom" ReadMode (flip B.hGet n)
+ur_bytes n = withFile "/dev/urandom" ReadMode (`B.hGet` n)
 
 -- | urandom 'Int32'.
 ur_int32 :: IO Int32

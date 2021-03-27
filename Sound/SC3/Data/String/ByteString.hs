@@ -20,7 +20,7 @@ str_concat :: [STR] -> STR
 str_concat = S.concat
 
 str_read_err :: String -> Maybe (t,STR) -> t
-str_read_err msg = maybe (error msg) (\(i,j) -> if str_null j then i else (error msg))
+str_read_err msg = maybe (error msg) (\(i,j) -> if str_null j then i else error msg)
 
 -- > str_read_int (str "12345678901234567890")
 str_read_int :: STR -> Int

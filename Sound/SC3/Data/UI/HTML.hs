@@ -17,19 +17,19 @@ data UI_Elem
 
 -- | h = height:n-line ; w = width:n-char ; z = uid (label index); lbl = label
 ui_lbl_html :: Int -> Int -> Int -> String -> String
-ui_lbl_html h w z lbl =
+ui_lbl_html h w z =
   printf
   "<select id=\"L%d\" style=\"width:%dem\" size=\"%d\" disabled><option>%s</option></select>"
-  z w h lbl
+  z w h
 
 -- | k = initial-ix ; e = enumeration
 ui_enum_html :: Int -> Int -> Int -> Int -> [String] -> [String]
 ui_enum_html h w z k e =
   let sel = printf "<select id=\"P%d\" style=\"width:%dem\" size=\"%d\">" z w h
-      opt (ix,txt) = printf
-                     "<option value=\"%d\"%s>%s</option>"
-                     ix (if ix == k then " selected" else "") txt
-  in sel : map opt (zip [0 ..] e) ++ ["</select>"]
+      opt ix txt = printf
+                   "<option value=\"%d\"%s>%s</option>"
+                   ix (if ix == k then " selected" else "") txt
+  in sel : zipWith opt [0 ..] e ++ ["</select>"]
 
 -- | Generate HTML for UI_Elem.
 ui_elem_html :: Int -> UI_Elem -> [String]

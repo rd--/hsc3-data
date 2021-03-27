@@ -20,7 +20,7 @@ module Sound.SC3.Data.Math.Loudness where
 a_weighting_R :: Floating a => a -> a
 a_weighting_R f =
     let sq x = x * x
-        dot = foldl1 (*)
+        dot = product
         n = dot [sq 12200
                 ,f ** 4]
         d = dot [sq f + sq 20.6
@@ -47,7 +47,7 @@ value.  See <http://en.wikipedia.org/wiki/A-weighting>
 b_weighting_R :: Floating a => a -> a
 b_weighting_R f =
     let sq x = x * x
-        dot = foldl1 (*)
+        dot = product
         n = dot [sq 12200
                 ,f ** 3]
         d = dot [sq f + sq 20.6
@@ -73,7 +73,7 @@ b_weighting f = 0.17 + 20 * logBase 10 (b_weighting_R f)
 c_weighting_R :: Floating a => a -> a
 c_weighting_R f =
     let sq x = x * x
-        dot = foldl1 (*)
+        dot = product
         n = dot [sq 12200
                 ,f ** 2]
         d = dot [sq f + sq 20.6

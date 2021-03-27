@@ -281,7 +281,7 @@ dexed_to_dx7 x = fst (fromMaybe (error "dexed_to_dx7") (find ((== x) . snd) dx7_
 dx7_voice_to_dexed_param :: [Word8] -> [Double]
 dx7_voice_to_dexed_param vc =
   let word8_to_double = fromIntegral
-      u8_at l n = l !! (fromIntegral n)
+      u8_at l n = l !! fromIntegral n
       f k = case lookup k non_dx7_defaults of
               Just v -> v
               Nothing -> word8_to_double (vc `u8_at` dexed_to_dx7 k) / 99.0

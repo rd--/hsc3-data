@@ -150,11 +150,11 @@ dexed_EG_rate_rise_percent =
 dexed_getDuration ::Integral i => i -> i -> i -> R
 dexed_getDuration p_rate p_level_l p_level_r =
   let ix = genericIndex
-      duration_table = if (p_level_r > p_level_l)
+      duration_table = if p_level_r > p_level_l
                        then dexed_EG_rate_rise_duration
                        else dexed_EG_rate_decay_duration;
       duration = duration_table `ix` p_rate
-      percent_table = if (p_level_r > p_level_l)
+      percent_table = if p_level_r > p_level_l
                       then dexed_EG_rate_rise_percent
                       else dexed_EG_rate_decay_percent;
       percent = abs (percent_table `ix` p_level_r - percent_table `ix` p_level_l)

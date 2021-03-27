@@ -158,7 +158,7 @@ dx7_hash_db_locate :: (String -> String -> Bool,Char -> Char) -> DX7_Hash_DB -> 
 dx7_hash_db_locate (eq_f,cf_f) (nm,pr) x =
   let f p q = map cf_f p `eq_f` map cf_f q
       nm' = filter (f x . snd) nm
-      pr' = filter ((`elem` (map fst nm')) . fst) pr
+      pr' = filter ((`elem` map fst nm') . fst) pr
   in (nm',pr')
 
 -- | Get all PARAM having NAME.

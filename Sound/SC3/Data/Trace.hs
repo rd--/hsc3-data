@@ -88,7 +88,7 @@ trace_load_sf nc fn = do
   return (zip t (transpose d))
 
 trace_to_t2 :: Trace t [n] -> Trace t (n,n)
-trace_to_t2 = map (bimap id T.t2_from_list)
+trace_to_t2 = map (second T.t2_from_list)
 
 -- | Variant for loading two-channel trace file.
 trace_load_sf2 :: FilePath -> IO (Trace Time (Double,Double))
@@ -121,11 +121,11 @@ trace_load_csv2 = fmap trace_to_t2 . trace_load_csv (Just 2)
 
 -- | Map over trace times.
 trace_map_t :: (t -> t') -> Trace t a -> Trace t' a
-trace_map_t f = map (\(t,a) -> (f t,a))
+trace_map_t f = map (first f)
 
 -- | Map over trace values.
 trace_map :: (a -> b) -> Trace t a -> Trace t b
-trace_map f = map (\(t,a) -> (t,f a))
+trace_map f = map (second f)
 
 -- * Lookup
 
@@ -171,7 +171,7 @@ trace_lookup lerp_f t n =
 
 -- | 'trace_lookup' with default value.
 trace_lookup_def :: (Ord t,Fractional t) => b -> Lerp_F t a b -> Trace t a -> t -> (t,b)
-trace_lookup_def def lerp_f t n = maybe (n,def) id (trace_lookup lerp_f t n)
+trace_lookup_def def lerp_f t n = fromMaybe (n,def) (trace_lookup lerp_f t n)
 
 -- | 'fromJust' of 'trace_lookup'.
 trace_lookup_err :: (Ord t,Fractional t) => Lerp_F t a b -> Trace t a -> t -> (t,b)

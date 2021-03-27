@@ -78,7 +78,7 @@ d50_usr_ix def usr_str x =
 --
 -- > d50_usr_lookup d50_partial_mute_usr "01" == Just 2
 d50_usr_lookup :: D50_USR_STR -> String -> Maybe U8
-d50_usr_lookup usr_str nm = fmap int_to_u8_err (findIndex (== nm) (Split.splitOn ";" usr_str))
+d50_usr_lookup usr_str nm = fmap int_to_u8_err (elemIndex nm (Split.splitOn ";" usr_str))
 
 -- | Erroring variant.
 d50_usr_lookup_err :: D50_USR_STR -> String -> U8
@@ -408,7 +408,7 @@ d50_wg_pitch_kf_rat = ([-1,1/2,-1/4,0,1/8,1/4,3/8,1/2,5/6,3/4,7/8,1,5/4,3/2,2],[
 --
 -- > mapMaybe d50_wg_pitch_kf_to_enum [1/8,1/4,1] == [4,5,11]
 d50_wg_pitch_kf_to_enum :: (Eq n,Fractional n) => n -> Maybe U8
-d50_wg_pitch_kf_to_enum n = fmap int_to_u8_err (findIndex (== n) (fst d50_wg_pitch_kf_rat))
+d50_wg_pitch_kf_to_enum n = fmap int_to_u8_err (elemIndex n (fst d50_wg_pitch_kf_rat))
 
 -- | Erroring variant.
 d50_wg_pitch_kf_to_enum_err :: (Eq n,Fractional n) => n -> U8
@@ -718,7 +718,7 @@ type D50_Diff = [(D50_ADDRESS,U8)]
 
 -- | Apply 'D50_Diff' to 'D50_Patch'.
 d50_diff_apply :: D50_Patch -> D50_Diff -> D50_Patch
-d50_diff_apply p d = map snd (T.merge_by_resolve (\x _ -> x) (compare `on` fst) (sort d) (zip [0..] p))
+d50_diff_apply p d = map snd (T.merge_by_resolve const (compare `on` fst) (sort d) (zip [0..] p))
 
 -- | Number of D50 non-name parameters.
 --
@@ -738,7 +738,7 @@ d50_param_segment = Split.splitPlaces d50_param_places
 
 -- | Check D50_Param has correct number of elements (314).
 d50_param_verify :: D50_Param -> Bool
-d50_param_verify = ((==) d50_param_places) . map length
+d50_param_verify = (==) d50_param_places . map length
 
 -- | Addresses for 'D50_Param'
 --
@@ -1195,7 +1195,7 @@ d50_load_hex fn = do
   b <- T.load_hex_byte_seq fn
   case b of
     [] -> error "d50_load_hex?"
-    x -> if any (((/=) 448) . length) x then error "d50_load_hex: 448?" else return x
+    x -> if any ((/=) 448 . length) x then error "d50_load_hex: 448?" else return x
 
 -- | Type specialised 'T.store_hex_byte_seq'
 d50_store_hex :: FilePath -> [D50_Patch] -> IO ()

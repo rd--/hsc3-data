@@ -1,6 +1,7 @@
 -- | SVL files are produced by <https://www.sonicvisualiser.org/>.
 module Sound.SC3.Data.XML.SVL where
 
+import Data.Bifunctor {- base -}
 import Data.List {- base -}
 
 import qualified Text.XML.Light as X {- xml -}
@@ -162,7 +163,7 @@ svl_load_node_m tm_f mnn_f fn = do
   pt <- svl_load_sparse_note_tm tm_f fn
   let n = T.collate (map (\((tm,du),(mnn,_,_)) -> (tm,(mnn,du))) pt)
       to_p (tm,(mnn,du)) = (tm,(map mnn_f mnn,du))
-  return (map (to_p . (\(tm,el) -> (tm,unzip el))) n)
+  return (map (to_p . second unzip) n)
 
 -- * SVL_NODE_p
 

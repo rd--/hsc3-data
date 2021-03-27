@@ -8,7 +8,6 @@ are sequentially placed in the highest (and leftmost) possible slots.
 -}
 module Sound.SC3.Data.Math.Bouwkamp where
 
-import Control.Monad {- base -}
 import Data.Colour.SRGB {- colour -}
 import Data.List {- base -}
 import Text.Printf {- base -}
@@ -72,7 +71,7 @@ uppermost_leftmost (x0,y0) (x1,y1) =
 next_slot :: [Sq] -> Pt
 next_slot sq =
     let f = minimumBy uppermost_leftmost .
-            filter (\p -> not (any id (map (\e -> sq_contains_xlr e p) sq))) .
+            filter (\p -> not (any (`sq_contains_xlr` p) sq)) .
             map sq_lower_left
     in f sq
 
@@ -119,7 +118,7 @@ gen_pic m_clr sz sq = do
   let p = gen_poly sz sq
       black_pen = CG.Pen 0.1 (CG.rgba_to_ca (0,0,0,1)) CG.no_dash
     in case m_clr of
-         Just clr_seq -> zipWith (CG.polygon_f) clr_seq p
+         Just clr_seq -> zipWith CG.polygon_f clr_seq p
          Nothing -> map (CG.polygon_l black_pen) p
 
 -- * CSV
@@ -147,7 +146,7 @@ p_comma :: P Char
 p_comma = P.char ','
 
 p_int :: P Int
-p_int = liftM read (P.many1 P.digit)
+p_int = fmap read (P.many1 P.digit)
 
 p_int_list :: P [Int]
 p_int_list = P.sepEndBy1 p_int p_comma

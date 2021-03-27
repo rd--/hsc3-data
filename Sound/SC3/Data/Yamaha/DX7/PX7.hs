@@ -117,12 +117,12 @@ type PX7_Param = [U8]
 -- | Translate data sequence in PX7 order to DX7 order, reverse data as required.
 px7_param_data_to_dx7 :: PX7_Param -> DX7_Param
 px7_param_data_to_dx7 =
-  let f ((nm,ix),d) = (ix,if px7_param_is_reversed nm then px7_reverse d else d)
-  in map snd . sort . map f . zip px7_param_seq
+  let f (nm,ix) d = (ix,if px7_param_is_reversed nm then px7_reverse d else d)
+  in map snd . sort . zipWith f px7_param_seq
 
 -- | Inverse of 'px7_param_data_to_dx7'.
 px7_param_data_from_dx7 :: DX7_Param -> PX7_Param
 px7_param_data_from_dx7 =
-  let f ((nm,ix),d) = (px7_ix_from_dx7_ix ix
-                      ,if px7_param_is_reversed nm then px7_reverse d else d)
-  in map snd . sort . map f . zip (sortOn snd px7_param_seq)
+  let f (nm,ix) d = (px7_ix_from_dx7_ix ix
+                    ,if px7_param_is_reversed nm then px7_reverse d else d)
+  in map snd . sort . zipWith f (sortOn snd px7_param_seq)

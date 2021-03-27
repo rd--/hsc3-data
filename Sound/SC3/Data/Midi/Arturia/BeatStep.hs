@@ -65,11 +65,11 @@ request_sysex pp cc = with_common_sysex_prefix [0x01,0x00,pp,cc,0xF7]
 --
 -- > global_midi_channel_set 0x0F == [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,0x40,0x06,0x0F,0xF7]
 global_midi_channel_set :: U8 -> M.SYSEX U8
-global_midi_channel_set ch = set_sysex 0x40 0x06 ch -- corrected from 0x50 0x06 & also 0x50 0x0B, see comments
+global_midi_channel_set = set_sysex 0x40 0x06 -- corrected from 0x50 0x06 & also 0x50 0x0B, see comments
 
 -- | Global CV/Gate interface receive channel (0-15) [untested]
 global_cv_gate_interface_receive_channel_set :: U8 -> M.SYSEX U8
-global_cv_gate_interface_receive_channel_set ch = set_sysex 0x50 0x0C ch
+global_cv_gate_interface_receive_channel_set = set_sysex 0x50 0x0C
 
 -- | Enumeration of encoder acceleration modes.
 --
@@ -132,16 +132,16 @@ enc_cc_set_16 (ch,cc_seq,rng,md) =
 
 -- | Set only CC value (not channel or range or mode)
 enc_cc_set_cc :: Ctl_Id -> U8 -> M.SYSEX U8
-enc_cc_set_cc j cc = set_sysex 0x03 (ctl_enc_ix0 + j) cc
+enc_cc_set_cc j = set_sysex 0x03 (ctl_enc_ix0 + j)
 
 enc_cc_set_cc_16 :: [U8] -> [M.SYSEX U8]
 enc_cc_set_cc_16 = let f j cc = enc_cc_set_cc j cc in zipWith f [0 .. 15]
 
 enc_cc_set_ch :: Ctl_Id -> U8 -> M.SYSEX U8
-enc_cc_set_ch j ch = set_sysex 0x02 (ctl_enc_ix0 + j) ch
+enc_cc_set_ch j = set_sysex 0x02 (ctl_enc_ix0 + j)
 
 enc_cc_set_value :: Ctl_Id -> U8 -> M.SYSEX U8
-enc_cc_set_value j n = set_sysex 0x00 (ctl_enc_ix0 + j) n
+enc_cc_set_value j = set_sysex 0x00 (ctl_enc_ix0 + j)
 
 -- * ENC PN MODE
 

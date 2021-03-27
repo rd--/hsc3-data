@@ -9,9 +9,10 @@ import qualified Data.Time as T {- time -}
 --
 -- > mapM gen_iso8601_time_stamp [True,False]
 gen_iso8601_time_stamp :: Bool -> IO String
-gen_iso8601_time_stamp ext = do
-  t <- T.getZonedTime
-  return (T.formatTime T.defaultTimeLocale (if ext then  "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S") t)
+gen_iso8601_time_stamp ext =
+  fmap
+  (T.formatTime T.defaultTimeLocale (if ext then  "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S"))
+  T.getZonedTime
 
 -- | Variant useful for forming portable file-names, with @:@ re-written as @-@.
 gen_iso8601_time_stamp_fn :: IO String
@@ -23,7 +24,7 @@ gen_iso8601_time_stamp_fn =
 
 -- | 'T.parseTimeOrError' of 'T.defaultTimeLocale'.
 parse_time_fmt :: String -> String -> T.LocalTime
-parse_time_fmt fmt = T.parseTimeOrError True T.defaultTimeLocale fmt
+parse_time_fmt = T.parseTimeOrError True T.defaultTimeLocale
 
 -- | Strict RFC822 format.
 --

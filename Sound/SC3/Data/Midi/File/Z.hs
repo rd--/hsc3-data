@@ -100,7 +100,10 @@ z_is_tempo_event = isJust . z_meta_event_tempo
 
 -- | Sequence of 'Z.SetTempo' events.
 z_midi_track_tempo :: Z.MidiTrack -> T.Tseq Word64 (Maybe Word32)
-z_midi_track_tempo = filter (isJust . snd) . map (fmap (join . fmap z_meta_event_tempo . z_meta_event)) . z_midi_track_to_abs
+z_midi_track_tempo =
+  filter (isJust . snd) .
+  map (fmap (z_meta_event_tempo <=< z_meta_event)) .
+  z_midi_track_to_abs
 
 -- | 'Z.MidiTrack' with delta time-stamps converted to absolute time.
 z_midi_track_to_abs :: Z.MidiTrack -> T.Tseq Word64 Z.MidiEvent

@@ -51,7 +51,7 @@ svg_height = read . XML.x_get_attr "height"
 
 -- | Line elements that are direct children of e.
 svg_line_elem :: X.Element -> [X.Element]
-svg_line_elem e = X.findElements (svg_name "line") e
+svg_line_elem = X.findElements (svg_name "line")
 
 svg_line_coord :: X.Element -> V2 (V2 Double)
 svg_line_coord e =
