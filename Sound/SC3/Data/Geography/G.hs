@@ -35,10 +35,10 @@ g_pp (coord,name) = intercalate ", " name ++ coord_pp coord
 
 -- > parse_geography "_" "Melbourne, Victoria, AU: S 37 48 50 E 144 57 47"
 parse_geography :: C.SourceName -> String -> Either C.ParseError G
-parse_geography src = C.parse p_geography src
+parse_geography = C.parse p_geography
 
 parse_geographies :: C.SourceName -> String -> Either C.ParseError [G]
-parse_geographies src = C.parse p_geographies src
+parse_geographies = C.parse p_geographies
 
 -- * EQ
 

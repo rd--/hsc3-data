@@ -45,5 +45,5 @@ cmi_load_dir :: FilePath -> IO [(String,CMI_SFZ)]
 cmi_load_dir dir = do
   fn <- T.dir_find_ext_rel ".sfz" dir
   let nm_seq = map dropExtension (sort fn)
-  cmi_seq <- mapM (cmi_load_sfz . ((<>) dir)) (sort fn)
+  cmi_seq <- mapM (cmi_load_sfz . (dir <>)) (sort fn)
   return (zip nm_seq cmi_seq)

@@ -634,7 +634,7 @@ type DAT = [TXT]
 
 -- | Find first instance of /ty/ record.
 pdb_dat_rec_1 :: TXT -> DAT -> Maybe REC
-pdb_dat_rec_1 ty = join . fmap (pdb_rec_parse ty) . find (txt_rec_match ty)
+pdb_dat_rec_1 ty = pdb_rec_parse ty <=< find (txt_rec_match ty)
 
 -- | Collect all instances of /ty/ record.
 pdb_dat_rec :: TXT -> DAT -> [REC]

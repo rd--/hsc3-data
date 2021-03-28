@@ -37,7 +37,7 @@ residue_id_in_range :: (RESIDUE_ID,RESIDUE_ID) -> RESIDUE_ID -> Bool
 residue_id_in_range ((_,c1,k1,i1),(_,c3,k3,i3)) (_,c2,k2,i2) =
   if c1 /= c3 || (k1,i1) >= (k3,i3)
   then error "residue_id_in_range?"
-  else if c2 /= c1 then False else (k1,i1) <= (k2,i2) && (k2,i2) <= (k3,i3)
+  else (c2 == c1) && ((k1,i1) <= (k2,i2) && (k2,i2) <= (k3,i3))
 
 -- * RECORD-TYPES
 
@@ -188,7 +188,7 @@ seqres_group =
       g (_,c,_,_) = c
       h (_,c,_,r) = (c,r)
       i j = let (c,r) = unzip j in (head c,concat r)
-  in map i . map (map h) . groupBy ((==) `on` g) . sortOn f
+  in map (i . map h) . groupBy ((==) `on` g) . sortOn f
 
 -- | Group helices by chain
 sheet_group :: [SHEET] -> [(Char,[SHEET])]

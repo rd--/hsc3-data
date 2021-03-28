@@ -161,7 +161,7 @@ mol_v30_bond s =
 mol_v30_parse :: (String,String) -> [String] -> MOL
 mol_v30_parse (nm,dsc) l =
   let ix = atNote "mol_v30_parse"
-      verify k s = if (ix l k) == s then True else error (show ("mol_v30_parse",k,l !! k,s))
+      verify k s = (ix l k == s) || error (show ("mol_v30_parse",k,l !! k,s))
       (a,b) = mol_v30_counts (ix l 1)
   in if verify 0 "M  V30 BEGIN CTAB" &&
         verify 2 "M  V30 BEGIN ATOM" &&
@@ -190,9 +190,9 @@ type MOL_ADI = (String,[String])
 -}
 mol_adi :: String -> [MOL_ADI]
 mol_adi =
-  let un_key = takeWhile ((/=) '>') . fromMaybe (error "mol_adi: NON-KEY?") . stripPrefix "> <"
-      not_term = ((/=) "$$$$")
-      not_end = ((/=) "M  END")
+  let un_key = takeWhile (/= '>') . fromMaybe (error "mol_adi: NON-KEY?") . stripPrefix "> <"
+      not_term = (/=) "$$$$"
+      not_end = (/=) "M  END"
       rem_null = filter (not . null)
       f ln = case ln of
                k:v -> (un_key k,v)
@@ -229,7 +229,7 @@ mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
 mol_dir_filenames :: String -> FilePath -> IO [FilePath]
 mol_dir_filenames ext dir = do
   fn <- mol_dir_entries ext dir
-  return (map ((</>) dir) fn)
+  return (map (dir </>) fn)
 
 -- | Load all .ext files at directory, extensions are ".mol" or ".sdf"
 mol_load_dir :: String -> FilePath -> IO [(String, MOL)]

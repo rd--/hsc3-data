@@ -7,6 +7,7 @@ Center for Computational Materials Science
 -}
 module Sound.SC3.Data.Chemistry.CLS where
 
+import Data.Maybe {- base -}
 import System.Environment {- base -}
 import System.FilePath {- filepath -}
 
@@ -17,9 +18,7 @@ import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
 cls_dir :: IO FilePath
 cls_dir = do
   r <-  lookupEnv "CLS_DIR"
-  return (case r of
-            Just dir -> dir
-            Nothing -> "/home/rohan/sw/hsc3-data/data/chemistry/cls/")
+  return (fromMaybe "/home/rohan/sw/hsc3-data/data/chemistry/cls/" r)
 
 -- | Make CLS xyz filename from ID.
 cls_xyz_file :: String -> FilePath

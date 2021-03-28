@@ -69,7 +69,7 @@ img_column i c =
     let (w,h) = img_dimensions i
     in if c >= w
        then error "img_column: domain error"
-       else map (\r -> I.pixelAt i c r) [0 .. h - 1]
+       else map (I.pixelAt i c) [0 .. h - 1]
 
 img_column_order :: IMAGE -> [[RGB24]]
 img_column_order i = map (img_column i) [0 .. I.imageWidth i - 1]

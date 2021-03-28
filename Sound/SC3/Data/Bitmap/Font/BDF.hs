@@ -154,7 +154,7 @@ from_name (_,g) e = find ((==) e . glyph_name) g
 -- | Given 'Char', lookup 'Glyph'.
 from_char :: BDF -> Char -> Maybe Glyph
 from_char (_,g) e =
-    let f = maybe False (== e) . glyph_char
+    let f = (Just e ==) . glyph_char
     in find f g
 
 from_char_err :: BDF -> Char -> Glyph

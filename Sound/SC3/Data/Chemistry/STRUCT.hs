@@ -149,7 +149,7 @@ pdb_atom_to_xyz_wr :: FilePath -> (String, [PDB.ATOM]) -> IO ()
 pdb_atom_to_xyz_wr fn = XYZ.xyz_store 5 fn . pdb_atom_to_xyz
 
 pdb_atom_to_struct :: TOLERANCE -> String -> (String, [PDB.ATOM]) -> STRUCT
-pdb_atom_to_struct tol nm = struct_calculate_bonds tol . xyz_to_struct . ((,) nm) . pdb_atom_to_xyz
+pdb_atom_to_struct tol nm = struct_calculate_bonds tol . xyz_to_struct . (,) nm . pdb_atom_to_xyz
 
 -- * STAT
 
@@ -189,7 +189,7 @@ struct_pp k (nm,(n_a,n_b),dsc,a,b) =
   let hdr = [nm
             ,unwords (map show [n_a,n_b])
             ,dsc]
-      a_pp ((e,(x,y,z))) = unwords (e : map (T.double_pp k) [x,y,z])
+      a_pp (e,(x,y,z)) = unwords (e : map (T.double_pp k) [x,y,z])
       b_pp (p,q) = unwords (map show [p,q])
   in concat [hdr,map a_pp a,map b_pp b]
 
@@ -217,7 +217,7 @@ struct_parse txt =
 
 -- | 'struct_parse' of 'readFile'.
 struct_load_txt :: FilePath -> IO STRUCT
-struct_load_txt fn = return . struct_parse . lines =<< readFile fn
+struct_load_txt fn = fmap (struct_parse . lines) (readFile fn)
 
 -- | 'writeFile' of 'struct_pp'.
 struct_store_txt :: Int -> FilePath -> STRUCT -> IO ()
@@ -255,7 +255,7 @@ struct_dir_entries =
 > maximum (map struct_n_atoms s) == 272
 -}
 struct_load_dir :: FilePath -> IO [STRUCT]
-struct_load_dir dir = struct_dir_entries dir >>= mapM struct_load_ext . map ((</>) dir)
+struct_load_dir dir = struct_dir_entries dir >>= mapM (struct_load_ext . (dir </>))
 
 -- * IO - TYPE
 

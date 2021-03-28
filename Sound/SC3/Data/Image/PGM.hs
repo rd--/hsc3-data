@@ -110,7 +110,7 @@ pgmf_to_vec :: Bitmap.Dimensions -> PGMF -> Vector.Vector Float
 pgmf_to_vec dm img =
     let (nr,nc) = dm
         n = nr * nc
-        f i = img Array.! (Bitmap.linear_to_ix dm i)
+        f i = img Array.! Bitmap.linear_to_ix dm i
     in Vector.generate n f
 
 -- | Derive 'PGMF' from dimensions and a list of (index,value) pairs.
@@ -119,7 +119,7 @@ pgmf_from_list dm = Array.array (Bitmap.dimensions_to_bounds dm)
 
 vec_to_list :: Vector.Storable t => (Bitmap.Dimensions -> Bitmap.Ix -> Int) -> Bitmap.Dimensions -> Vector.Vector t -> [(Bitmap.Ix,t)]
 vec_to_list linear_f dm vec =
-    let f ix = (ix,vec Vector.! (linear_f dm ix))
+    let f ix = (ix,vec Vector.! linear_f dm ix)
     in map f (Bitmap.bm_indices dm)
 
 -- | Convert row order 'Vector.Vector' to 'PGMF'.
@@ -140,7 +140,7 @@ pgm_from_vec dm = pgm_from_list dm . vec_to_list Bitmap.ix_to_linear dm
 
 -- | Invert colour data.
 pgm_invert :: PGM -> PGM
-pgm_invert (d,a) = let mx = depth_to_max d in (d,Array.amap (\n -> mx - n) a)
+pgm_invert (d,a) = let mx = depth_to_max d in (d,Array.amap (mx -) a)
 
 -- * Greymap
 

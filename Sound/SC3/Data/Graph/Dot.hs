@@ -1,7 +1,8 @@
 -- | DOT/Graph functions.
 module Sound.SC3.Data.Graph.Dot where
 
-import qualified Data.Foldable as F {- base -}
+import Data.Bifunctor {- base -}
+import qualified Data.Foldable as Foldable {- base -}
 import Data.Maybe {- base -}
 import System.Process {- process -}
 
@@ -26,7 +27,7 @@ dot_run_layout = readProcess "dot" ["-T","dot"]
 -- | 'GV.parseDotGraph' of 'T.pack'.
 --
 -- > st = [G.DE (G.DotEdge 1 2 []),G.DE (G.DotEdge 2 3 [])]
--- > F.toList (G.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
+-- > Foldable.toList (G.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
 dg_parse :: (Ord t,GV.ParseDot t) => String -> G.DotGraph t
 dg_parse = GV.parseDotGraph . T.pack
 
@@ -113,7 +114,7 @@ de_to_e e = (G.fromNode e,G.toNode e)
 -- However graphs that have been annotated with position data have a complete set.
 dg_to_gr_f :: (G.DotNode t -> v) -> G.DotGraph t -> ([v], [E t])
 dg_to_gr_f f g =
-  let st = F.toList (G.graphStatements g)
+  let st = Foldable.toList (G.graphStatements g)
       n = mapMaybe ds_to_dn st
       e = mapMaybe ds_to_de st
   in (map f n,map de_to_e e)
@@ -139,13 +140,13 @@ dg_to_gr_pos g =
 gr_pos_bounds :: GR_pos t -> (POS,POS)
 gr_pos_bounds (v,_) =
   let r = unzip (map snd v)
-      bimap f (i,j) = (f i,f j)
-  in (bimap minimum r,bimap maximum r)
+      bimap1 f = bimap f f
+  in (bimap1 minimum r,bimap1 maximum r)
 
 -- | Scale graph position data by /mul/.
 gr_pos_scale :: Double -> GR_pos t -> GR_pos t
 gr_pos_scale mul (v,e) =
-  let bimap f (i,j) = (f i,f j)
-      v' = map (\(k,p) -> (k,bimap (* mul) p)) v
+  let bimap1 f = bimap f f
+      v' = map (second (bimap1 (* mul))) v
   in (v',e)
 

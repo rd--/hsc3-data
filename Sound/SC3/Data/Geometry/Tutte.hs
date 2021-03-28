@@ -2,6 +2,8 @@
 --   Proceedings of the London Mathematical Society, 13: 743–767,
 module Sound.SC3.Data.Geometry.Tutte where
 
+import Data.Bifunctor {- base -}
+
 import Data.CG.Minus.Plain {- hcg-minus -}
 import Data.CG.Minus.Geometry {- hcg-minus -}
 
@@ -21,7 +23,7 @@ type R = Double
 -- > v_on_unit_circle 4
 v_on_unit_circle :: Int -> [V2 R]
 v_on_unit_circle k =
-  let i = two_pi / (fromIntegral k)
+  let i = two_pi / fromIntegral k
   in map (\ph -> polar_to_rectangular (1,ph)) (take k [0,i ..])
 
 -- | [(VERTEX,COORDINATE)]
@@ -38,7 +40,7 @@ v_init_loc k fc =
 
 -- | 'v2_centroid' of indexed 'V_LOC'
 v_loc_centre :: V_LOC -> [Int] -> V2 R
-v_loc_centre v e = v2_centroid (map (\i -> T.lookup_err i v) e)
+v_loc_centre v e = v2_centroid (map (`T.lookup_err` v) e)
 
 -- | a = adj-mtx, fc = face, v = vertices-loc
 tutte_step :: T.ADJ_MTX Int -> [Int] -> V_LOC -> V_LOC
@@ -73,5 +75,5 @@ tutte_obj fn v e = do
 tutte_svg :: (V2 R,R,Int) -> FilePath -> V_LOC -> [V2 Int] -> IO ()
 tutte_svg opt fn v e = do
   let ix k = T.lookup_err k v
-      ln = map (\(p,q) -> (ix p,ix q)) e
+      ln = map (bimap ix ix) e
   SVG.svg_store_line_unif ((0,0,0),1) fn opt ln

@@ -1,7 +1,5 @@
 module Sound.SC3.Data.Geography.Core where
 
-import Control.Monad {- base -}
-
 import qualified Text.ParserCombinators.Parsec as C {- parsec -}
 
 -- * TYPES
@@ -83,7 +81,7 @@ p_int_str = do
     (Just c) -> return (c : n)
 
 p_int :: P Int
-p_int = liftM read p_int_str
+p_int = fmap read p_int_str
 
 p_word :: P String
 p_word = C.many1 (C.letter C.<|> C.oneOf "-'") C.<?> "word"
@@ -157,7 +155,7 @@ parse_qdms_ws_err s =
 --
 -- > parse_coord "N 34 16 32 E 132 18 28" == Right (34.275555555555556,132.30777777777777)
 parse_coord :: String -> Either C.ParseError PT
-parse_coord s = C.parse p_coord "parse_coord" s
+parse_coord = C.parse p_coord "parse_coord"
 
 parse_coord_err :: String -> PT
 parse_coord_err s =

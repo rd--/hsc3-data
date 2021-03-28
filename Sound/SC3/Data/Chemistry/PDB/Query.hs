@@ -24,11 +24,11 @@ pdb_stat ((h1,h2,h3),t,m,_,(a,h),c,sq,hlx,sht,lnk,ssb) =
      ,("DEPOSITION-DATE",h2)
      ,("TITLE",t)
      ,("NUMMDL",show (fromMaybe 1 m))] ++
-     if m == Nothing
+     if isNothing m
      then [("N-ATOM",show (length a))
           ,("N-HETATM",show (length h))
           ,("ATOM-ALT-ID",altloc_id_set alt)
-          ,("N-ATOM-ALT",show (length (filter ((/=) ' ') alt)))
+          ,("N-ATOM-ALT",show (length (filter (/= ' ') alt)))
           ,("N-CHAIN",show (length sq))
           ,("N-UNIQ-CHAIN",show (length u))
           ,("CHAIN-ID-SEQ",map fst sq)
@@ -83,7 +83,7 @@ seqres_residue_set = nub . sort . concatMap seqres_residue_names . dat_seqres
 
 -- | Set of all residue names at MODRES records.
 modres_residue_set :: DAT -> [String]
-modres_residue_set = nub . sort . concatMap (\(i,j) -> [i,j]) . map modres_names . dat_modres
+modres_residue_set = nub . sort . concatMap ((\(i,j) -> [i,j]) . modres_names) . dat_modres
 
 -- | Residue sets (ATOM,HETATM,SEQRES,MODRES).
 residue_sets :: DAT -> ([String], [String], [String], [String])

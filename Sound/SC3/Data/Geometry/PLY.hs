@@ -67,10 +67,10 @@ v3_graph_to_ply_clr k (v,e) =
 --   Indices are zero-indexed.
 ply_face_set_dat :: Ord n => [([(n,n,n)],(i,i,i))] -> ([(Int,(n,n,n))],[([Int],(i,i,i))])
 ply_face_set_dat t =
-  let p = nub (sort (concat (map fst t)))
+  let p = nub (sort (concatMap fst t))
       c = map snd t
       v = zip [0..] p
-      f = map (map (flip T.reverse_lookup_err v)) (map fst t)
+      f = map (map (`T.reverse_lookup_err` v) . fst) t
   in (v,zip f c)
 
 -- | Format a set of coloured faces as an PLY file.

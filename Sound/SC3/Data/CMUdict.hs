@@ -118,9 +118,10 @@ arpabet_classification_table =
 arpabet_classification :: Phoneme -> Phoneme_Class
 arpabet_classification p =
     let f (_,l) = p `elem` l
-    in fromMaybe (error "arpabet_classification") $
-       fmap fst $
-       find f arpabet_classification_table
+    in maybe
+       (error "arpabet_classification")
+       fst
+       (find f arpabet_classification_table)
 
 -- | Load CMUdict given parser function.
 cmudict_load_ty :: (String -> (String,a)) -> FilePath -> IO (CMU_Dict_ty a)

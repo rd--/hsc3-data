@@ -74,7 +74,7 @@ type LN_DAT = ([V3 R],[[Int]])
 obj_to_ln :: OBJ -> LN_DAT
 obj_to_ln =
   let f (ty,ix) = if ty == 'l' then Just ix else Nothing
-  in bimap id (mapMaybe f)
+  in second (mapMaybe f)
 
 ln_to_obj :: LN_DAT -> OBJ
 ln_to_obj (v,l) = (v,map ((,) 'l') l)
@@ -88,7 +88,7 @@ ln_dat_from_vertex_seq t =
       reverse_lookup_err k = fromMaybe (error "reverse_lookup") . reverse_lookup k
       p = nub (sort (concat t))
       v = zip [0..] p
-  in (p,map (map (flip reverse_lookup_err v)) t)
+  in (p,map (map (`reverse_lookup_err` v)) t)
 
 obj_store_ln_dat :: Int -> FilePath -> LN_DAT -> IO ()
 obj_store_ln_dat k fn = obj_store k fn . ln_to_obj
@@ -129,12 +129,12 @@ face_dat_from_vertex_seq :: [[V3 R]] -> FACE_DAT
 face_dat_from_vertex_seq t =
   let v = nub (sort (concat t))
       v_ix = zip [0..] v
-      f = map (map (flip T.reverse_lookup_err v_ix)) t
+      f = map (map (`T.reverse_lookup_err` v_ix)) t
   in (v,f)
 
 -- | Inverse of 'face_dat_from_vertex_seq'.
 face_dat_to_vertex_seq :: FACE_DAT -> [[V3 R]]
-face_dat_to_vertex_seq (v,f) = map (map (flip T.lookup_err (zip [0..] v))) f
+face_dat_to_vertex_seq (v,f) = map (map (`T.lookup_err` zip [0..] v)) f
 
 face_dat_to_obj :: FACE_DAT -> OBJ
 face_dat_to_obj (v,f) = (v,map ((,) 'f') f)

@@ -6,6 +6,7 @@ Connection data is not present.
 -}
 module Sound.SC3.Data.Chemistry.POSCAR where
 
+import Data.Bifunctor {- base -}
 import Data.Char {- base -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
@@ -32,7 +33,7 @@ type LATTICE = V3 (V3 Double)
 -- | Convert DIRECT coordinate to cartesian.
 poscar_direct_to_cartesian :: LATTICE -> V3 Double -> V3 Double
 poscar_direct_to_cartesian (a1,a2,a3) (i,j,k) =
-  (v3_scale i a1) `v3_add` (v3_scale j a2) `v3_add` (v3_scale k a3)
+  v3_scale i a1 `v3_add` v3_scale j a2 `v3_add` v3_scale k a3
 
 -- | Direct or cartesian co-ordinates.
 data POSCAR_TY = POSCAR_D | POSCAR_C deriving (Eq,Enum,Show)
@@ -52,7 +53,7 @@ poscar_atom_data (_,_,_,_,_,a) = a
 poscar_atoms_cartesian :: POSCAR -> [(V3 Double,String)]
 poscar_atoms_cartesian (_,_,l,_,ty,a) =
   case ty of
-    POSCAR_D -> map (\(v,sym) -> (poscar_direct_to_cartesian l v,sym)) a
+    POSCAR_D -> map (first (poscar_direct_to_cartesian l)) a
     POSCAR_C -> error "poscar_atoms_cartestian"
 
 poscar_atoms_direct :: POSCAR -> [(V3 Double,String)]

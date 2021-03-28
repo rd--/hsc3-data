@@ -71,7 +71,7 @@ xyz_parse fn s =
 xyz_pp :: Int -> XYZ -> [String]
 xyz_pp k (n_a,dsc,a) =
   let e_pp x = if length x == 2 then x else x ++ " "
-      a_pp ((e,(x,y,z))) = intercalate " " (e_pp e : map (T.double_pp k) [x,y,z])
+      a_pp (e,(x,y,z)) = unwords (e_pp e : map (T.double_pp k) [x,y,z])
   in [show n_a,dsc] ++ map a_pp a
 
 -- | (minima,maxima) of atoms.
