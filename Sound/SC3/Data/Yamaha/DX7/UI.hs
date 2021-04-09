@@ -3,7 +3,8 @@ module Sound.SC3.Data.Yamaha.DX7.UI where
 
 import Data.List {- base -}
 
-import Sound.SC3.Data.UI.HTML
+import Sound.SC3.UI.Enum.HTML {- hsc3-ui -}
+
 import Sound.SC3.Data.Yamaha.DX7
 import Sound.SC3.Data.Yamaha.DX7.PP
 import Sound.SC3.Data.Yamaha.DX7.DX7II

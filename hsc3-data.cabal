@@ -38,6 +38,7 @@ Library
                    hsc3-plot == 0.19.*,
                    hsc3-sf == 0.19.*,
                    hsc3-sf-hsndfile == 0.19.*,
+                   hsc3-ui == 0.19.*,
                    JuicyPixels,
                    language-dot,
                    midi-osc == 0.19.*,
@@ -53,7 +54,6 @@ Library
                    time,
                    unordered-containers,
                    vector,
-                   websockets,
                    X11,
                    xml,
                    zmidi-core
@@ -131,10 +131,6 @@ Library
                    Sound.SC3.Data.String.String
                    Sound.SC3.Data.Timestamp
                    Sound.SC3.Data.Trace
-                   Sound.SC3.Data.UI.HTML
-                   Sound.SC3.Data.UI.ST
-                   Sound.SC3.Data.UI.WS
-                   Sound.SC3.Data.UI.WV
                    Sound.SC3.Data.URandom
                    Sound.SC3.Data.VST
                    Sound.SC3.Data.VST.Obxd
