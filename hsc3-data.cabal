@@ -33,7 +33,6 @@ Library
                    HCodecs,
                    hmt == 0.19.*,
                    hosc == 0.19.*,
-                   hosc-json == 0.19.*,
                    hsc3 == 0.19.*,
                    hsc3-lang == 0.19.*,
                    hsc3-plot == 0.19.*,

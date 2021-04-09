@@ -89,7 +89,7 @@ ui_css =
   ,"}"
   ]
 
--- | JS osc=[/P,d1,d2] ctl-edit=send-osc recv-osc=ctl-set
+-- | JS msg="p d1 d2" ctl-edit=send-msg recv-osc=ctl-set
 ui_js :: Int -> [String]
 ui_js ws_p =
   [""
@@ -100,17 +100,17 @@ ui_js ws_p =
   ,"  for(i = 0; i < sel.length; i++) {"
   ,"    sel[i].addEventListener('change', (e) => {"
   ,"      var k = e.target.getAttribute('id');"
-  ,"      var addr = ['/',k.charAt(0)].join('');"
-  ,"      var d1 = parseInt(k.slice(1));"
-  ,"      var d2 = parseInt(e.target.value);"
-  ,"      ws.send(JSON.stringify([addr,d1,d2]));"
+  ,"      var p = k.charAt(0);"
+  ,"      var d1 = k.slice(1,k.length);"
+  ,"      var d2 = e.target.value;"
+  ,"      ws.send([p,d1,d2].join(' '));"
   ,"    });"
   ,"  };"
   ,"  ws.onmessage = function(e) {"
-  ,"    var m = JSON.parse(e.data);"
-  ,"    var k = [m[0].charAt(1),m[1].toString()].join('');"
+  ,"    var m = e.data.split(' ');"
+  ,"    var k = [m[0],m[1]].join('');"
   ,"    var sel = d.getElementById(k);"
-  ,"    sel.value = m[2];"
+  ,"    sel.value = Number.parseInt(m[2]);"
   ,"  };"
   ,"};"
   ]
