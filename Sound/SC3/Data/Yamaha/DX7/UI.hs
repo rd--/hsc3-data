@@ -56,6 +56,6 @@ dx7_voice_ui vc = do
                           ,dx7_sh_hdr_ui
                           ,dx7_sh_parameter_ui sh]])
 
--- > dx7_voice_ui_wr "/tmp/t.html" dx7_init_voice
+-- > dx7_voice_ui_wr 9160 1 "/tmp/t.html" dx7_init_voice
 dx7_voice_ui_wr :: Int -> Int -> FilePath -> DX7_Voice -> IO ()
 dx7_voice_ui_wr ws_p h fn vc = ui_html_wr ws_p h fn (dx7_voice_name '?' vc) (dx7_voice_ui vc)
