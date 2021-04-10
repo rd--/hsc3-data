@@ -14,19 +14,12 @@ cmd =	ats au-to-pbm au-to-pgm \
 	sf-condense sf-draw sf-to-png \
 	svl \
 	text-monitor text-osc \
-	wv \
 	x11
 
 include ~/sw/hsc3/mk/cmd.mk
 
 dx7-unpack: dx7-unpack.c
 	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c c-common/lib-c-common.a
-
-WV_INCL = -I ~/opt/src/webview
-WV_LIB = `pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0`
-
-wv: wv.c
-	g++ $(WV_INCL) wv.c $(WV_LIB) -o wv
 
 # VST
 
