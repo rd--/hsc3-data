@@ -1,6 +1,6 @@
 cmd =	ats au-to-pbm au-to-pgm \
 	chemistry \
-	csv-mnd-to-midi csv-mnd-to-pgm csv-plot csv-to-img \
+	csv-mnd-to-midi csv-mnd-to-pgm csv-to-img \
 	d50 dx7 dx7-unpack \
 	hex \
 	img-edit img-query img-to-pbm img-to-pgm img-to-sf \
@@ -19,7 +19,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 include ~/sw/hsc3/mk/cmd.mk
 
 dx7-unpack: dx7-unpack.c
-	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c c-common/lib-c-common.a
+	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c c-commonr/lib-c-commonr.a
 
 # VST
 
@@ -28,12 +28,12 @@ VST_SDK = $(HOME)/opt/src/vstsdk2.4
 lxvst-stat: lxvst-stat.cpp
 	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
 
-ln-local-c-common:
-	rm -f c-common
-	ln -s $(HOME)/sw/c-common c-common
+ln-local-c-commonr:
+	rm -f c-commonr
+	ln -s $(HOME)/sw/c-commonr c-commonr
 
-mk-local-c-common:
-	(cd c-common ; make)
+mk-local-c-commonr:
+	(cd c-commonr ; make)
 
 mk-d50:
 	(rm -f d50 ; make d50 ; cp d50 $(prefix)/bin/hsc3-d50)

@@ -35,16 +35,18 @@ OBJ files store data one-indexed, the OBJ type is zero-indexed.
 -}
 type OBJ = OBJ_ (V3 R)
 
+-- | Parse OBJ entry, recognised types are v=vertex, p=point, l=line, f=face
 obj_parse_entry :: String -> Either (V3 R) (Char,[Int])
 obj_parse_entry s =
   let read_ix = subtract 1 . read
   in case words s of
        ["v",x,y,z] -> Left (read x,read y,read z)
+       "p":ix -> Right ('p',map read_ix ix)
        "l":ix -> Right ('l',map read_ix ix)
        "f":ix -> Right ('f',map read_ix ix)
-       "p":ix -> Right ('p',map read_ix ix)
        _ -> error "obj_parse_entry"
 
+-- | 'partitionEithers' of 'obj_parse_entry'
 obj_parse :: [String] -> OBJ
 obj_parse = partitionEithers . map obj_parse_entry
 
@@ -52,15 +54,18 @@ obj_parse = partitionEithers . map obj_parse_entry
 obj_is_nil_line :: String -> Bool
 obj_is_nil_line s = null s || head s == '#'
 
+-- | 'obj_parse' of 'readFile'
 obj_load :: FilePath -> IO OBJ
 obj_load = fmap (obj_parse . filter (not . obj_is_nil_line) . lines) . Strict.readFile
 
+-- | Given precision for printing, format OBJ entry.
 obj_format_entry :: Int -> Either (V3 R) (Char,[Int]) -> String
 obj_format_entry k =
   let f_pp = unwords . (:) "v" . map (T.realfloat_pp k) . T.t3_to_list
       i_pp (c,x) = unwords ([c] : map (show . (+) 1) x)
   in either f_pp i_pp
 
+-- | 'writeFile' of 'obj_format_entry'
 obj_store :: Int -> FilePath -> OBJ -> IO ()
 obj_store k fn =
   let f (i,j) = map Left i ++ map Right j
@@ -68,9 +73,10 @@ obj_store k fn =
 
 -- * LN
 
--- | L entries
+-- | l=line entries
 type LN_DAT = ([V3 R],[[Int]])
 
+-- | Select only l=line entries from 'OBJ'.
 obj_to_ln :: OBJ -> LN_DAT
 obj_to_ln =
   let f (ty,ix) = if ty == 'l' then Just ix else Nothing
@@ -79,6 +85,7 @@ obj_to_ln =
 ln_to_obj :: LN_DAT -> OBJ
 ln_to_obj (v,l) = (v,map ((,) 'l') l)
 
+-- | 'obj_to_ln' of 'obj_load'
 obj_load_ln :: FilePath -> IO LN_DAT
 obj_load_ln = fmap obj_to_ln . obj_load
 

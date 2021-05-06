@@ -71,7 +71,7 @@ tutte_obj fn v e = do
       add_z (x,y) = (x,y,0)
   OBJ.obj_store 4 fn (map (add_z . snd) v,e')
 
--- | Store tutte to OBJ file.
+-- | Store tutte to SVG file.
 tutte_svg :: (V2 R,R,Int) -> FilePath -> V_LOC -> [V2 Int] -> IO ()
 tutte_svg opt fn v e = do
   let ix k = T.lookup_err k v

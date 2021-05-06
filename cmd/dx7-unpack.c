@@ -20,9 +20,9 @@ http://sourceforge.net/u/tedfelix/dx7dump/
 #include <stdlib.h>
 #include <string.h>
 
-#include "c-common/int.h"
-#include "c-common/dx7.h"
-#include "c-common/failure.h"
+#include "c-commonr/int.h"
+#include "c-commonr/dx7.h"
+#include "c-commonr/failure.h"
 
 void fail_if(bool p,char *err)
 {

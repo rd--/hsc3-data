@@ -346,4 +346,10 @@ map sfz_region_sample r
 map sfz_region_key r
 map sfz_region_ampeg_attack r
 map sfz_region_ampeg_release r
+
+fn = "/home/rohan/A-String/000_A-String.sfz"
+z <- sfz_load_data fn
+sfz_data_get_nc fn z
+sfz_data_rng z
+
 -}
