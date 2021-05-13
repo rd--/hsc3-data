@@ -19,7 +19,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 include ~/sw/hsc3/mk/cmd.mk
 
 dx7-unpack: dx7-unpack.c
-	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c c-commonr/lib-c-commonr.a
+	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c r-common/c/lib-r-common.a
 
 # VST
 
@@ -28,12 +28,12 @@ VST_SDK = $(HOME)/opt/src/vstsdk2.4
 lxvst-stat: lxvst-stat.cpp
 	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
 
-ln-local-c-commonr:
-	rm -f c-commonr
-	ln -s $(HOME)/sw/c-commonr c-commonr
+ln-local-r-common:
+	rm -f r-common
+	ln -s $(HOME)/sw/r-common r-common
 
-mk-local-c-commonr:
-	(cd c-commonr ; make)
+mk-local-r-common:
+	(cd r-common/c ; make)
 
 mk-d50:
 	(rm -f d50 ; make d50 ; cp d50 $(prefix)/bin/hsc3-d50)
