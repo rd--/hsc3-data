@@ -1,5 +1,5 @@
 Name:              hsc3-data
-Version:           0.19
+Version:           0.20
 Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL
@@ -13,7 +13,7 @@ Tested-With:       GHC == 8.8.4
 Build-Type:        Simple
 Cabal-Version:     >= 1.8
 
-Data-files:        README
+Data-files:        README.md
 
 Library
   Build-Depends:   array,
@@ -29,19 +29,19 @@ Library
                    FloatingHex,
                    Glob,
                    graphviz,
-                   hcg-minus == 0.19.*,
+                   hcg-minus == 0.20.*,
                    HCodecs,
-                   hmt == 0.19.*,
-                   hosc == 0.19.*,
-                   hsc3 == 0.19.*,
-                   hsc3-lang == 0.19.*,
-                   hsc3-plot == 0.19.*,
-                   hsc3-sf == 0.19.*,
-                   hsc3-sf-hsndfile == 0.19.*,
-                   hsc3-ui == 0.19.*,
+                   hmt == 0.20.*,
+                   hosc == 0.20.*,
+                   hsc3 == 0.20.*,
+                   hsc3-lang == 0.20.*,
+                   hsc3-plot == 0.20.*,
+                   hsc3-sf == 0.20.*,
+                   hsc3-sf-hsndfile == 0.20.*,
+                   hsc3-ui == 0.20.*,
                    JuicyPixels,
                    language-dot,
-                   midi-osc == 0.19.*,
+                   midi-osc == 0.20.*,
                    murmur-hash,
                    parsec,
                    pgm,
@@ -159,5 +159,5 @@ Library
                    Sound.SC3.Data.Yamaha.DX7.UI
 
 Source-Repository  head
-  Type:            darcs
-  Location:        http://rohandrape.net/sw/hsc3-data
+  Type:            git
+  Location:        https://gitlab.com/rd--/hsc3-data
