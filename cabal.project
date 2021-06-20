@@ -1,0 +1,53 @@
+packages: hsc3-data.cabal
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hcg-minus.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hmt-base.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hmt.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hosc.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hsc3.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hsc3-db.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hsc3-lang.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hsc3-plot.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hsc3-sf.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hsc3-sf-hsndfile.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/hsc3-ui.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/html-minus.git
+
+source-repository-package
+    type: git
+    location: https://gitlab.com/rd--/midi-osc.git

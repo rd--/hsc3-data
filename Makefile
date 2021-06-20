@@ -8,6 +8,7 @@ mk-cmd:
 	(cd cmd ; make all install)
 
 clean:
+	rm -Rf dist dist-newstyle *~
 	(cd cmd ; make clean)
 	(cd data/roland/d50 ; make clean)
 

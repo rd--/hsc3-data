@@ -1,8 +1,9 @@
+Cabal-Version:     2.4
 Name:              hsc3-data
 Version:           0.20
 Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
-License:           GPL
+License:           GPL-3.0-only
 Category:          Sound
 Copyright:         (c) Rohan Drape, 2013-2021
 Author:            Rohan Drape
@@ -11,7 +12,6 @@ Stability:         Experimental
 Homepage:          http://rohandrape.net/t/hsc3-data
 Tested-With:       GHC == 8.8.4
 Build-Type:        Simple
-Cabal-Version:     >= 1.8
 
 Data-files:        README.md
 
@@ -29,8 +29,9 @@ Library
                    FloatingHex,
                    Glob,
                    graphviz,
-                   hcg-minus == 0.20.*,
                    HCodecs,
+                   hcg-minus == 0.20.*,
+                   hmt-base == 0.20.*,
                    hmt == 0.20.*,
                    hosc == 0.20.*,
                    hsc3 == 0.20.*,
@@ -57,6 +58,7 @@ Library
                    X11,
                    xml,
                    zmidi-core
+  default-language:Haskell2010
   GHC-Options:     -Wall -fwarn-tabs
   Exposed-modules: Sound.SC3.Data.AKAI.AKP
                    Sound.SC3.Data.AKAI.S900
