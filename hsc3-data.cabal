@@ -31,7 +31,6 @@ Library
                    graphviz,
                    HCodecs,
                    hcg-minus == 0.20.*,
-                   hmt-base == 0.20.*,
                    hmt == 0.20.*,
                    hosc == 0.20.*,
                    hsc3 == 0.20.*,
