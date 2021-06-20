@@ -1,5 +1,6 @@
-import qualified Music.Theory.Array.CSV as T {- hmt -}
-import qualified Music.Theory.Math as T {- hmt -}
+import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Math as T {- hmt-base -}
+
 --import Sound.SC3 {- hsc3 -}
 
 prj_file :: FilePath -> FilePath

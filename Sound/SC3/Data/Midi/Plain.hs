@@ -5,8 +5,9 @@ module Sound.SC3.Data.Midi.Plain where
 
 import Data.Maybe {- base -}
 
+import qualified Music.Theory.Math.Convert as T {- hmt-base -}
+
 import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
 import qualified Codec.Midi as C {- HCodecs -}

@@ -8,8 +8,8 @@ module Sound.SC3.Data.Chemistry.XYZ where
 import Data.List {- base -}
 import System.FilePath {- filepath -}
 
-import qualified Music.Theory.Directory as T {- hmt -}
-import qualified Music.Theory.Show as T {- hmt -}
+import qualified Music.Theory.Directory as T {- hmt-base -}
+import qualified Music.Theory.Show as T {- hmt-base -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 

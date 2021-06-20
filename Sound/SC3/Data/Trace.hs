@@ -11,9 +11,9 @@ import System.FilePath.Glob {- glob -}
 import Data.CG.Minus.Core {- hcg-minus -}
 import Data.CG.Minus.Types {- hcg-minus -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Tuple as T {- hmt -}
+import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Tuple as T {- hmt-base -}
 
 import qualified Sound.File.HSndFile as F {- hsc3-sf-hsndfile -}
 

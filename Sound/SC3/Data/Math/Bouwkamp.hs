@@ -19,7 +19,7 @@ import qualified Data.CG.Minus as CG {- hcg-minus -}
 import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
 import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 type Pt = (Int,Int)
 type Sz = Int

@@ -10,8 +10,8 @@ import Data.CG.Minus.Geometry {- hcg-minus -}
 import qualified Data.CG.Minus.Plain.SVG as SVG {- hcg-minus -}
 import qualified Data.CG.Minus.Geometry.OFF as OFF {- hcg-minus -}
 
-import qualified Music.Theory.Graph.Type as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Graph.Type as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 import qualified Sound.SC3.Data.Geometry.OBJ as OBJ {- hsc3-data -}
 

@@ -12,8 +12,8 @@ import System.IO {- base -}
 
 import qualified Data.ByteString.Lazy as L {- bytestring -}
 
-import qualified Music.Theory.Byte as T {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
+import qualified Music.Theory.Byte as T {- hmt-base -}
+import qualified Music.Theory.Math.Convert as T {- hmt-base -}
 
 import Sound.File.RIFF {- hsc3-sf -}
 

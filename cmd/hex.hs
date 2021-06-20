@@ -1,8 +1,8 @@
 import Data.Word {- base -}
 import System.Environment {- base -}
 
-import qualified Music.Theory.Byte as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Byte as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 id_w8_seq :: [Word8] -> [Word8]
 id_w8_seq = id

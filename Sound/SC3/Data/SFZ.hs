@@ -30,9 +30,10 @@ import System.FilePath {- filepath -}
 
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Read as T {- hmt-base -}
+
 import qualified Music.Theory.Pitch as T {- hmt -}
-import qualified Music.Theory.Read as T {- hmt -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 

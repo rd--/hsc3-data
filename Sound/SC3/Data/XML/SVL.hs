@@ -6,7 +6,8 @@ import Data.List {- base -}
 
 import qualified Text.XML.Light as X {- xml -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
+
 import qualified Music.Theory.Pitch as T {- hmt -}
 import qualified Music.Theory.Pitch.Spelling as T {- hmt -}
 import qualified Music.Theory.Time.Notation as T {- hmt -}

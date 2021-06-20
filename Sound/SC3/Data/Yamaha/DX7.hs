@@ -19,11 +19,11 @@ import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
 
-import qualified Music.Theory.Byte as Byte {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
-import qualified Music.Theory.Show as Show {- hmt -}
-import qualified Music.Theory.String as T {- hmt -}
+import qualified Music.Theory.Byte as Byte {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Math.Convert as T {- hmt-base -}
+import qualified Music.Theory.Show as Show {- hmt-base -}
+import qualified Music.Theory.String as T {- hmt-base -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 

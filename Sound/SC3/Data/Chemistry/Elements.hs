@@ -7,7 +7,7 @@ import Data.Either {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 

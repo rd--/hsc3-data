@@ -13,9 +13,9 @@ module Sound.SC3.Data.Geometry.PLY where
 
 import Data.List {- base -}
 
-import qualified Music.Theory.Graph.Type as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Show as T {- hmt -}
+import qualified Music.Theory.Graph.Type as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Show as T {- hmt-base -}
 
 {- | ASCII PLY-1.0 header for object of (n-vertices,n-faces,n-edges).
      Faces and edges are (r,g,b) coloured.

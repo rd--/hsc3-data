@@ -152,7 +152,7 @@ interpolate_hermite (tension,bias) (y0,y1,y2,y3) mu =
 
 {-
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
 import Sound.SC3.Plot {- hsc3-plot -}
 
 y = [145,60,75,55,155,0,100,25]

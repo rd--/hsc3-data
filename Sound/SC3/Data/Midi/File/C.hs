@@ -6,8 +6,9 @@ import Data.Maybe {- base -}
 
 import qualified Codec.Midi as C {- HCodecs -}
 
-import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Math.Convert as T {- hmt-base -}
+
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}

@@ -2,8 +2,8 @@ import System.Environment {- base -}
 
 import qualified Codec.Midi as C {- HCodecs -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
+import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Math.Convert as T {- hmt-base -}
 
 import qualified Sound.Midi.Type as M {- midi-osc -}
 

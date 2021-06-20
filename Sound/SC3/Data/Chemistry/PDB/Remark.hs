@@ -7,7 +7,7 @@ import Data.Maybe {- base -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 import Sound.SC3.Data.Chemistry.PDB.Parse {- hsc3-data -}
 import Sound.SC3.Data.Chemistry.PDB.Types {- hsc3-data -}

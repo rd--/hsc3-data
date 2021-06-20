@@ -9,7 +9,7 @@ import Data.Maybe {- base -}
 
 import qualified Data.Map as Map {- containers -}
 
-import qualified Music.Theory.List as List {- hmt -}
+import qualified Music.Theory.List as List {- hmt-base -}
 
 -- * Dimensions and Indices
 

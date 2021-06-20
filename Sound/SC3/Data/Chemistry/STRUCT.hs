@@ -12,9 +12,9 @@ import System.FilePath {- filepath -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
-import qualified Music.Theory.Directory as T {- hmt -}
-import qualified Music.Theory.Graph.Type as T {- hmt -}
-import qualified Music.Theory.Show as T {- hmt -}
+import qualified Music.Theory.Directory as T {- hmt-base -}
+import qualified Music.Theory.Graph.Type as T {- hmt-base -}
+import qualified Music.Theory.Show as T {- hmt-base -}
 
 import qualified Sound.SC3.Data.Chemistry.Elements as E {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.MOL as MOL {- hsc3-data -}

@@ -5,7 +5,7 @@ import Data.List {- base -}
 
 import qualified Text.ParserCombinators.Parsec as C {- parsec -}
 
-import qualified Music.Theory.IO as IO {- hmt -}
+import qualified Music.Theory.IO as IO {- hmt-base -}
 
 import Sound.SC3.Data.Geography.Core
 

@@ -9,7 +9,7 @@ import Data.Word {- base -}
 import System.FilePath {- filepath -}
 import Text.Printf {- base -}
 
-import qualified Music.Theory.Directory as T {- hmt -}
+import qualified Music.Theory.Directory as T {- hmt-base -}
 
 import Sound.SC3.Data.SFZ {- hsc3-data -}
 

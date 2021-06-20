@@ -4,10 +4,10 @@ module Sound.SC3.Data.Roland.D50.DB where
 import Data.List {- base -}
 import System.FilePath {- filepath -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt -}
-import qualified Music.Theory.Byte as T {- hmt -}
-import qualified Music.Theory.Directory as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Byte as T {- hmt-base -}
+import qualified Music.Theory.Directory as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 import Sound.SC3.Data.Roland.D50 {- hsc3-data -}
 import Sound.SC3.Data.Roland.D50.Hash {- hsc3-data -}

@@ -1,6 +1,6 @@
 import System.Environment {- base -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 import Sound.SC3.Common.Buffer {- hsc3 -}
 

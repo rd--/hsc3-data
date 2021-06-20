@@ -2,7 +2,7 @@ module Sound.SC3.Data.Array.CSV where
 
 import Sound.OSC.Datum {- hosc -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt -}
+import qualified Music.Theory.Array.CSV as T {- hmt-base -}
 
 -- | /ty/ gives the type tag for each /column/ of the table.
 array_to_datum :: [Datum_Type] -> [[String]] -> [[Datum]]

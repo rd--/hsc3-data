@@ -14,10 +14,10 @@ import qualified System.IO.Strict as Strict {- strict -}
 
 import Data.CG.Minus.Plain {- hcg-minus -}
 
-import qualified Music.Theory.Graph.Type as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Show as T {- hmt -}
-import qualified Music.Theory.Tuple as T {- hmt -}
+import qualified Music.Theory.Graph.Type as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Show as T {- hmt-base -}
+import qualified Music.Theory.Tuple as T {- hmt-base -}
 
 -- * OBJ
 

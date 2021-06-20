@@ -22,9 +22,9 @@ import Data.Maybe {- base -}
 import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.Byte as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Maybe as T {- hmt -}
+import qualified Music.Theory.Byte as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Maybe as T {- hmt-base -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Constant as M {- midi-osc -}

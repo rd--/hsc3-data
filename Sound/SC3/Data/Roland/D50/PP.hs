@@ -9,9 +9,9 @@ import Text.Printf {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.Array.Text as T {- hmt -}
-import qualified Music.Theory.Byte as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Array.Text as T {- hmt-base -}
+import qualified Music.Theory.Byte as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 import Sound.SC3.Data.Math.Types {- hsc3-data -}
 import Sound.SC3.Data.Roland.D50 {- hsc3-data -}

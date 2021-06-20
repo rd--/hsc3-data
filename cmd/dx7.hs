@@ -6,8 +6,8 @@ import Text.Printf {- base -}
 
 import Data.List.Split {- split -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt -}
-import qualified Music.Theory.Byte as T {- hmt -}
+import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Byte as T {- hmt-base -}
 
 import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
 import qualified Sound.SC3.Data.Yamaha.DX7.DB as DX7 {- hsc3-data -}

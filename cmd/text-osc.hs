@@ -3,7 +3,7 @@ import Control.Exception {- base -}
 
 import UI.HSCurses.Curses {- hscurses -}
 
-import Music.Theory.Opt {- hmt -}
+import Music.Theory.Opt {- hmt-base -}
 
 import Sound.OSC.FD {- hosc -}
 

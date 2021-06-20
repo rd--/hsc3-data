@@ -1,10 +1,13 @@
 import System.Environment {- base -}
 
+import qualified Music.Theory.List as T {- hmt-base -}
+
 import qualified Music.Theory.Array.CSV.Midi.MND as C {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
-import qualified Sound.SC3 as S {- hsc3 -}
+
 import qualified Sound.SC3.Data.Image.PGM as I {- hmt-diagrams -}
+
+import qualified Sound.SC3 as S {- hsc3 -}
 
 load_csv :: FilePath -> IO (T.Wseq Double (C.Event Double))
 load_csv = fmap C.midi_tseq_to_midi_wseq . C.csv_mnd_read_tseq

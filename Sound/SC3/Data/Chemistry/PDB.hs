@@ -16,8 +16,8 @@ import System.Process {- process -}
 
 import qualified Data.ByteString.Char8 as B {- bytestring -}
 
-import qualified Music.Theory.Directory as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Directory as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
 
 import qualified Sound.SC3.Data.Chemistry.Elements as C {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.IUPAC as C {- hsc3-data -}

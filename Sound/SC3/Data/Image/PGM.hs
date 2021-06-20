@@ -11,7 +11,7 @@ import qualified Data.Map as Map {- containers -}
 
 import qualified Graphics.Pgm as Pgm {- pgm -}
 
-import qualified Music.Theory.Math.Convert as Convert {- hmt -}
+import qualified Music.Theory.Math.Convert as Convert {- hmt-base -}
 
 import qualified Sound.SC3.Data.Bitmap.Type as Bitmap {- hsc3-data -}
 
