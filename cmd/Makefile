@@ -16,7 +16,7 @@ cmd =	ats au-to-pbm au-to-pgm \
 	text-monitor text-osc \
 	x11
 
-include ~/sw/hsc3/mk/cmd.mk
+include ~/sw/hsc3-meta/mk/cmd.mk
 
 dx7-unpack: dx7-unpack.c
 	gcc -Wall -std=c99 -O2 -o dx7-unpack dx7-unpack.c r-common/c/lib-r-common.a
@@ -28,11 +28,7 @@ VST_SDK = $(HOME)/opt/src/vstsdk2.4
 lxvst-stat: lxvst-stat.cpp
 	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
 
-ln-local-r-common:
-	rm -f r-common
-	ln -s $(HOME)/sw/r-common r-common
-
-mk-local-r-common:
+mk-r-common:
 	(cd r-common/c ; make)
 
 mk-d50:

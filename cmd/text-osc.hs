@@ -25,7 +25,7 @@ proc_msg w m =
 help :: [String]
 help = ["text-osc"]
 
-opt_def :: [OPT_USR]
+opt_def :: [OptUsr]
 opt_def = [("port","57350","int","UDP port number")]
 
 main :: IO ()
