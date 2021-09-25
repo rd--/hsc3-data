@@ -7,10 +7,10 @@ import Data.List {- base -}
 import qualified Text.XML.Light as X {- xml -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Time.Notation as T {- hmt-base -}
 
 import qualified Music.Theory.Pitch as T {- hmt -}
 import qualified Music.Theory.Pitch.Spelling as T {- hmt -}
-import qualified Music.Theory.Time.Notation as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
 import qualified Sound.SC3.Data.XML as XML {- hsc3-data -}
@@ -122,7 +122,7 @@ quantise k n =
 -- | q = quantise, sr = sample-rate, x = frame-count
 --
 -- > svl_frame_to_csec 50 48000 72000 == 150
-svl_frame_to_csec :: Int -> SR -> Int -> T.CSEC
+svl_frame_to_csec :: Int -> SR -> Int -> T.Csec
 svl_frame_to_csec q sr x = quantise q (round (100 * fromIntegral x / sr))
 
 svl_wseq_to_tm :: (SR -> FRAME -> t) -> (SR,T.Wseq FRAME u) -> T.Wseq t u
@@ -133,13 +133,13 @@ svl_wseq_to_tm tm_f (sr,sq) =
 svl_load_sparse_note_tm :: (SR -> FRAME -> t) -> FilePath -> IO (T.Wseq t SVL_NOTE)
 svl_load_sparse_note_tm tm_f fn = fmap (svl_wseq_to_tm tm_f) (svl_load_sparse_note fn)
 
-svl_load_sparse_note_csec :: Int -> FilePath -> IO (T.Wseq T.CSEC SVL_NOTE)
+svl_load_sparse_note_csec :: Int -> FilePath -> IO (T.Wseq T.Csec SVL_NOTE)
 svl_load_sparse_note_csec q = svl_load_sparse_note_tm (svl_frame_to_csec q)
 
-svl_frame_to_sec :: SR -> Int -> T.SEC
+svl_frame_to_sec :: SR -> Int -> T.Sec
 svl_frame_to_sec sr x = round (fromIntegral x / sr)
 
-svl_load_sparse_note_sec :: FilePath -> IO (T.Wseq T.SEC SVL_NOTE)
+svl_load_sparse_note_sec :: FilePath -> IO (T.Wseq T.Sec SVL_NOTE)
 svl_load_sparse_note_sec = svl_load_sparse_note_tm svl_frame_to_sec
 
 svl_load_sparse_note_mnn_accum :: (Ord t,Num t) => (SR -> FRAME -> t) -> FilePath -> IO (Bool,T.Tseq t ([T.Midi], [T.Midi], [T.Midi]))
@@ -175,7 +175,7 @@ svl_load_node_p tm_f mnn_f =
   fmap (map (svl_node_map T.spell_midi_set)) .
   svl_load_node_m tm_f mnn_f
 
-svl_node_p_csec_pp :: SVL_NODE_p T.CSEC -> String
+svl_node_p_csec_pp :: SVL_NODE_p T.Csec -> String
 svl_node_p_csec_pp (tm,(p,du)) =
   let csec_tm_pp = T.mincsec_pp_opt True . T.csec_to_mincsec
       csec_du_pp = show . flip div 100
@@ -183,5 +183,5 @@ svl_node_p_csec_pp (tm,(p,du)) =
              ,intercalate "," (map T.pitch_pp p)
              ,intercalate "," (map csec_du_pp du)]
 
-svl_node_p_csec_seq_wr :: [SVL_NODE_p T.CSEC] -> IO ()
+svl_node_p_csec_seq_wr :: [SVL_NODE_p T.Csec] -> IO ()
 svl_node_p_csec_seq_wr =  putStrLn . unlines . map svl_node_p_csec_pp
