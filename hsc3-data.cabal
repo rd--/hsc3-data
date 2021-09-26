@@ -88,7 +88,7 @@ Library
                    Sound.SC3.Data.Chemistry.XYZ
                    Sound.SC3.Data.CMUdict
                    Sound.SC3.Data.Colour
-                   Sound.SC3.Data.Fairlight.CMI
+                   Sound.SC3.Data.Fairlight.Cmi
                    Sound.SC3.Data.Geography.Core
                    Sound.SC3.Data.Geography.G
                    Sound.SC3.Data.Geometry.OBJ
@@ -128,7 +128,7 @@ Library
                    Sound.SC3.Data.Speech.CS
                    Sound.SC3.Data.Speech.PB
                    Sound.SC3.Data.Speech.Stk
-                   Sound.SC3.Data.SFZ
+                   Sound.SC3.Data.Sfz
                    Sound.SC3.Data.String.ByteString
                    Sound.SC3.Data.String.String
                    Sound.SC3.Data.Timestamp

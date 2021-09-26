@@ -103,7 +103,7 @@ preset_store mm = with_common_sysex_prefix [0x06,mm,0xF7]
 preset_recall :: Num n => n -> M.Sysex n
 preset_recall mm = with_common_sysex_prefix [0x05,mm,0xF7]
 
--- * ENC = encoder, cm = CC-mode
+-- * ENC = encoder, cc = CC-mode
 
 data Encoder_Mode = Absolute | Relative_X40 | Relative_X00 | Relative_X10 deriving (Eq,Enum,Show)
 
