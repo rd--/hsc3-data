@@ -29,6 +29,7 @@ lxvst-stat: lxvst-stat.cpp
 	g++ -Wall -I$(VST_SDK) -ldl -lpthread -o lxvst-stat lxvst-stat.cpp
 
 mk-r-common:
+	git submodule update r-common
 	(cd r-common/c ; make)
 
 mk-d50:
