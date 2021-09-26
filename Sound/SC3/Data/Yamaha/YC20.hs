@@ -1,14 +1,10 @@
 -- | FOO-YC20 <https://github.com/sampov2/foo-yc20>
 module Sound.SC3.Data.Yamaha.YC20 where
 
-import Data.Word {- base -}
-
-type U8 = Word8
-
 -- | FOO-YC20 controls, left-to-right sequence.
 --
 -- > length foo_yc20_cc_control_table == 23
-foo_yc20_cc_control_table :: [(U8,String)]
+foo_yc20_cc_control_table :: Num n => [(n,String)]
 foo_yc20_cc_control_table =
   [(50,"PITCH")
   ,(07,"VOLUME")
@@ -50,7 +46,7 @@ foo_yc20_realism_modes =
   ,"PERCUSSION MANUAL BLEED"
   ,"DRAWBAR BLEED"]
 
-foo_yc20_cc16 :: [[U8]]
+foo_yc20_cc16 :: Num n => [[n]]
 foo_yc20_cc16 =
   [[14,15, 2,3,4,5,6,8,9, 16, 17,18,19,20,21, 22]]
 

@@ -104,7 +104,7 @@ sfz_tokenize =
 --   Returned as midi-note numbers (ie. 0 - 127)
 --
 -- > map sfz_parse_pitch ["B3","60","C#4"] == [59,60,61]
-sfz_parse_pitch :: String -> Word8
+sfz_parse_pitch :: String -> T.Midi
 sfz_parse_pitch s =
   case T.read_maybe s of
     Just n -> n
@@ -254,7 +254,7 @@ sfz_region_key_validate r =
 
 -- | If opcode @key@ exists it defines the triple (pitch_keycenter,lokey,hikey).
 --   Else read these opcodes individually, with defaults.
-sfz_region_key :: SFZ_Region -> (Word8,Word8,Word8)
+sfz_region_key :: SFZ_Region -> (T.Midi,T.Midi,T.Midi)
 sfz_region_key r =
   case sfz_region_lookup r "key" of
     Just x -> let n = sfz_parse_pitch x in (n,n,n)
@@ -301,7 +301,7 @@ sfz_data_get_nc :: FilePath -> SFZ_Data -> IO [Int]
 sfz_data_get_nc sfz_fn (ctl,_,rgn) = mapM (sfz_region_get_nc sfz_fn ctl) rgn
 
 -- | SFZ note range (lo,hi), inclusive
-sfz_data_rng :: SFZ_Data -> (Word8,Word8)
+sfz_data_rng :: SFZ_Data -> (T.Midi,T.Midi)
 sfz_data_rng (_,_,rgn) =
   let (_,l,r) = unzip3 (map sfz_region_key rgn)
   in (minimum l,maximum r)

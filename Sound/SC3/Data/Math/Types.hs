@@ -1,3 +1,4 @@
+-- | Type aliases
 module Sound.SC3.Data.Math.Types where
 
 import Data.Int {- base -}
@@ -38,8 +39,11 @@ type I12 = Int16
 -- | 16-bit signed integer (-32,768 - 32,767).
 type I16 = Int16
 
+-- | 32-bit floating point
 type F32 = Float
-type F64 = Float
+
+-- | 64-bit floating point
+type F64 = Double
 
 -- | Type-specialised 'fromIntegral'.
 u4_to_u12 :: U4 -> U12

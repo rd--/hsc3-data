@@ -11,12 +11,14 @@ import Text.Printf {- base -}
 
 import qualified Music.Theory.Directory as T {- hmt-base -}
 
+import qualified Music.Theory.Pitch as T {- hmt -}
+
 import Sound.SC3.Data.SFZ {- hsc3-data -}
 
--- | (SFZ-DIR,SND-FILE,VOLUME,KEY-CENTER,LOOP-MODE-SYM,LOOP-START,LOOP-END,EG-ATTACK,EG-RELEASE)
+-- | (Sfz-Dir,Snd-File,Volume,Key-Center,Loop-Mode-Sym,Loop-Start,Loop-End,Eg-Attack,Eg-Release)
 --
--- For CMI in all cases VOLUME=-3 ; KEYCENTER=C4
-type CMI_SFZ = (FilePath,FilePath,Double,Word8,Char,(Word32,Word32),(Double,Double))
+-- For CMI in all cases Volume=-3 ; Keycenter=C4
+type CMI_SFZ = (FilePath,FilePath,Double,T.Midi,Char,(Word32,Word32),(Double,Double))
 
 -- | Parse SFZ <region>.
 cmi_sfz_rgn_parse :: FilePath -> SFZ_Region -> CMI_SFZ
