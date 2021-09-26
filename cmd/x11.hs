@@ -13,7 +13,7 @@ import Sound.OSC.FD {- hosc -}
 import Sound.SC3.Data.X11.Ptr {- hsc3-data -}
 
 import qualified Sound.Midi.Type as M {- midi-osc -}
-import qualified Sound.Midi.OSC as M {- midi-osc -}
+import qualified Sound.Midi.Osc as M {- midi-osc -}
 
 type R = Double
 

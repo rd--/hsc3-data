@@ -4,7 +4,7 @@ import Text.Printf {- base -}
 
 import Sound.OSC {- hosc -}
 
-import qualified Sound.Midi.PM as PM {- midi-osc -}
+import qualified Sound.Midi.Pm as Pm {- midi-osc -}
 
 import Sound.SC3.Data.Math.Types {- hsc3-data -}
 import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
@@ -24,19 +24,19 @@ sleep_ms = pauseThread . ms_to_sec
 
 -- > send_sysex_def [D50.d50_ack_gen 0]
 send_sysex_def :: [[U8]] -> IO ()
-send_sysex_def x = void (PM.pm_with_default_output (\fd -> PM.pm_sysex_write_seq 10 fd x))
+send_sysex_def x = void (Pm.pm_with_default_output (\fd -> Pm.pm_sysex_write_seq 10 fd x))
 
-pm_run_proc :: Int -> PM.PM_FD -> PM.PROC_F -> IO ()
+pm_run_proc :: Int -> Pm.Pm_Fd -> Pm.Proc_F -> IO ()
 pm_run_proc dt fd proc_f =
     let recur = do
-          r <- PM.pm_process_events proc_f fd
+          r <- Pm.pm_process_events proc_f fd
           when (not r) (sleep_ms dt)
           recur
     in recur
 
 -- * LOAD ON PROGRAM CHANGE (LPC)
 
-lpc_recv_midi :: ([D50.D50_Patch], PM.PM_FD) -> PM.PROC_F
+lpc_recv_midi :: ([D50.D50_Patch], Pm.Pm_Fd) -> Pm.Proc_F
 lpc_recv_midi (p,fd) m =
   let pp = putStrLn. unlines . D50.d50_patch_group_pp
   in case m of
@@ -48,8 +48,8 @@ lpc_recv_midi (p,fd) m =
 lpc_run :: FilePath -> IO ()
 lpc_run fn = do
   (p,_) <- D50.d50_load_sysex fn
-  in_fd <- PM.pm_open_input_def
-  out_fd <- PM.pm_open_output_def
+  in_fd <- Pm.pm_open_input_def
+  out_fd <- Pm.pm_open_output_def
   pm_run_proc 10 in_fd (lpc_recv_midi (p,out_fd))
 
 -- * PRINT
@@ -180,7 +180,7 @@ main = do
     "hex":"print":ix:ty:fn_seq -> hex_print (parse_d50_ix "all" ix) ty fn_seq
     ["hex","send",ix,fn] -> hex_send (read ix) fn
     ["set","wg-pitch-kf",r] -> set_wg_pitch_kf (read r :: Double)
-    ["sysex","load-on-program-change",fn] -> PM.pm_with_midi (lpc_run fn)
+    ["sysex","load-on-program-change",fn] -> Pm.pm_with_midi (lpc_run fn)
     "sysex":"print":ix:ty:fn_seq -> sysex_print (parse_d50_ix "all" ix) ty fn_seq
     ["sysex","send",d50_ix,sysex_ix,fn] -> send_patch (parse_d50_ix "tmp" d50_ix) (read sysex_ix) fn
     "sysex-db":"search":"hash":dir:h -> sysex_db_search_hash dir h
