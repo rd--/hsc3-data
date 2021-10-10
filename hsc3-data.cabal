@@ -124,8 +124,8 @@ Library
                    Sound.SC3.Data.Roland.D50.PM
                    Sound.SC3.Data.Roland.D50.PP
                    Sound.SC3.Data.Roland.D50.Reverb
-                   Sound.SC3.Data.Speech
                    Sound.SC3.Data.Speech.CS
+                   Sound.SC3.Data.Speech.Homophones
                    Sound.SC3.Data.Speech.PB
                    Sound.SC3.Data.Speech.Stk
                    Sound.SC3.Data.Sfz

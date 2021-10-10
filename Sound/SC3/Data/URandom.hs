@@ -1,3 +1,6 @@
+{- | /dev/urandom
+     "The random number generator gathers environmental noise from device drivers and other sources into an entropy pool."
+-}
 module Sound.SC3.Data.URandom where
 
 import Control.Monad {- base -}

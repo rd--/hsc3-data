@@ -3,17 +3,17 @@ module Sound.SC3.Data.Speech.Stk where
 
 import Data.List.Split {- split -}
 
--- | REAL
+-- | Real
 type R = Double
 
--- | FORMANT-{FREQ,RADIUS,GAIN}
-type PARAM = (R,R,R)
+-- | Formant-{Freq,Radius,Gain}
+type Param = (R,R,R)
 
--- | (NAME,{VOICE,NOISE}-GAIN,FORMANT-PARAM × 4)
-type PH = (String,(R,R),(PARAM,PARAM,PARAM,PARAM))
+-- | (Name,{Voice,Noise}-Gain,Formant-Param × 4)
+type Ph = (String,(R,R),(Param,Param,Param,Param))
 
 -- | Parse PH.
-ph_parse :: [String] -> PH
+ph_parse :: [String] -> Ph
 ph_parse w =
   let r2 a b = (read a,read b)
       r3 a b c = (read a,read b,read c)
@@ -21,13 +21,12 @@ ph_parse w =
        [x,y,z,a,b,c,d,e,f,g,h,i,j,k,l] -> (x,r2 y z,(r3 a b c,r3 d e f,r3 g h i,r3 j k l))
        _ -> error "ph_parse"
 
-{- | Load PH from CSV file.
+{- | Load Ph from Csv file.
 
-> fn = "/home/rohan/sw/hsc3-data/data/speech/stk.csv"
-> r <- ph_load fn
+> r <- ph_load "/home/rohan/sw/hsc3-data/data/speech/stk.csv"
 > length r == 32
 -}
-ph_load :: FilePath -> IO [PH]
+ph_load :: FilePath -> IO [Ph]
 ph_load fn = do
   s <- readFile fn
   return (map (ph_parse . splitOn ",") (lines s))

@@ -1,4 +1,4 @@
-{- | FAIRLIGHT CMI IIX DISKS
+{- | Fairlight CMI IIx Disks
      <http://www.nattvard.com/iix/database.php>
 -}
 module Sound.SC3.Data.Fairlight.Cmi where

@@ -1,12 +1,14 @@
+-- | Traces are sequences of (key,value) pairs where key is in Ord and the sequence is ascending.
 module Sound.SC3.Data.Trace where
 
 import Control.Monad {- base -}
 import Data.Bifunctor {- base -}
 import Data.List {- base -}
-import Data.List.Split {- split -}
 import Data.Maybe {- base -}
-import Safe {- safe -}
-import System.FilePath.Glob {- glob -}
+
+import qualified Data.List.Split as Split {- split -}
+import qualified Safe {- safe -}
+import qualified System.FilePath.Glob as Glob {- glob -}
 
 import Data.CG.Minus.Core {- hcg-minus -}
 import Data.CG.Minus.Types {- hcg-minus -}
@@ -48,11 +50,11 @@ type Trace t a = [(t,a)]
 
 -- | Start time of trace, or zero for null trace.
 trace_start_time :: Num t => Trace t a -> t
-trace_start_time = maybe 0 fst . headMay
+trace_start_time = maybe 0 fst . Safe.headMay
 
 -- | End time of trace, or zero for null trace.
 trace_end_time :: Num t => Trace t a -> t
-trace_end_time = maybe 0 fst . lastMay
+trace_end_time = maybe 0 fst . Safe.lastMay
 
 -- | A trace window is a pait (t0,t1) indicating the begin and end
 -- time points.
@@ -97,12 +99,12 @@ trace_load_sf2 = fmap trace_to_t2 . trace_load_sf (Just 2)
 -- | Variant for set of traces given by 'glob' pattern'.
 trace_load_sf_dir :: Maybe Int -> String -> IO [Trace Time [Double]]
 trace_load_sf_dir n p = do
-  nm <- glob p
+  nm <- Glob.glob p
   mapM (trace_load_sf n) nm
 
 trace_load_sf2_dir :: String -> IO [Trace Time (Double,Double)]
 trace_load_sf2_dir p = do
-  nm <- glob p
+  nm <- Glob.glob p
   mapM trace_load_sf2 nm
 
 trace_load_csv :: Maybe Int -> FilePath -> IO (Trace Time [Double])
@@ -315,7 +317,7 @@ interleave2 = concat . transpose . T.t2_to_list
 -- > interleave2 ("abcd","ABCD") == "aAbBcCdD"
 -- > deinterleave2 "aAbBcCdD" == ("abcd","ABCD")
 deinterleave2 :: [a] -> ([a],[a])
-deinterleave2 = T.t2_from_list . transpose . chunksOf 2
+deinterleave2 = T.t2_from_list . transpose . Split.chunksOf 2
 
 -- * Plotting
 
