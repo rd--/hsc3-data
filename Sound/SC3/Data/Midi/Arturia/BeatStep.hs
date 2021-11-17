@@ -491,11 +491,11 @@ sysex_library_store dir = do
 
 {-
 
-import qualified Sound.Midi.PM as PM
+import qualified Sound.Midi.Pm as Pm
 
-k <- PM.pm_output_by_name "Arturia BeatStep MIDI 1"
-run = PM.pm_with_output_device k
-msg x = run (\fd -> PM.pm_sysex_write_seq 5 fd x)
+k <- Pm.pm_output_by_name "Arturia BeatStep MIDI 1"
+run = Pm.pm_with_output_device k
+msg x = run (\fd -> Pm.pm_sysex_write_seq 5 fd x)
 
 msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 LED_Red)) led_ix_set)
 msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 LED_Blue)) led_ix_set)
@@ -529,8 +529,8 @@ msg [global_pad_velocity_curve_set Exponential]
 msg (pad_cc_set_16 (Pad_Pressure,0,[0 .. 16],(0x00,0x7F)))
 msg (pad_cc_set_16 (Pad_Pressure,0,[0 .. 16],(0x30,0x57)))
 
-PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x3C,0x7F))
-PM.pm_with_output_device k (\fd -> PM.pm_cvm3_write fd (0x90,0x00,0x00))
+Pm.pm_with_output_device k (\fd -> Pm.pm_cvm3_write fd (0x90,0x3C,0x7F))
+Pm.pm_with_output_device k (\fd -> Pm.pm_cvm3_write fd (0x90,0x00,0x00))
 
 msg [request_sysex 0x01 ctl_enc_ix0]
 

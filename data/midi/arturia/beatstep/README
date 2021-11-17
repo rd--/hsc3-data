@@ -2,7 +2,7 @@ This directory contains SYSEX files to edit an Arturia BeatStep USB/MIDI control
 
 The SYSEX files may contain multiple SYSEX messages.
 
-To send usinf `amidi` (debian) use (editing the ADDR variable, see `amidi -l`):
+To send using `amidi` (editing the PORT variable, see `amidi -l`):
 
 ~~~~
 $ export PORT=hw:1,0,0
@@ -36,7 +36,7 @@ The ENC and PAD files follow the global channel setting (set using CHAN+PAD on d
 
 Encoder modes are: ABS = absolute values, REL = relative values (centre 0x40)
 
-Pad CC modes are: SW1 = ON/OFF (consecutive presses), SW2 = ON/OFF (on release), PRS = pressure
+Pad CC modes are: SW1 = ON/OFF (maintained switch), SW2 = ON/OFF (momentary switch), PRS = pressure
 
 Pad MN modes are: CS = ON/OFF (consecutive presses), RL = ON/OFF (on release)
 

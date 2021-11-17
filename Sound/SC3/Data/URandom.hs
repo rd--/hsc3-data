@@ -1,5 +1,6 @@
 {- | /dev/urandom
      "The random number generator gathers environmental noise from device drivers and other sources into an entropy pool."
+     This is an appropriate source of a seed for a psuedo random number generator, c.f. "Sound.SC3.Common.Random".
 -}
 module Sound.SC3.Data.URandom where
 
