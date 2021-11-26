@@ -21,21 +21,23 @@ import qualified Music.Theory.Tuple as T {- hmt-base -}
 
 -- * OBJ
 
+-- | See OBJ
 type OBJ_ t = ([t],[(Char,[Int])])
 
+-- | Apply f at vertices of Obj.
 obj_vertex_map :: (t -> u) -> OBJ_ t -> OBJ_ u
 obj_vertex_map f (v,c) = (map f v,c)
 
--- | R = REAL
+-- | R = Real
 type R = Double
 
-{- | ([VERTEX],[(CMD,[VERTEX-INDEX])])
+{- | ([Vertex],[(Cmd,[Vertex-Index])])
 
-OBJ files store data one-indexed, the OBJ type is zero-indexed.
+Obj files store data one-indexed, the Obj type is zero-indexed.
 -}
 type OBJ = OBJ_ (V3 R)
 
--- | Parse OBJ entry, recognised types are v=vertex, p=point, l=line, f=face
+-- | Parse Obj entry, recognised types are v=vertex, p=point, l=line, f=face
 obj_parse_entry :: String -> Either (V3 R) (Char,[Int])
 obj_parse_entry s =
   let read_ix = subtract 1 . read
