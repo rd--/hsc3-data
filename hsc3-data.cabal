@@ -5,7 +5,7 @@ Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SC3.
 License:           GPL-3.0-only
 Category:          Sound
-Copyright:         (c) Rohan Drape, 2013-2021
+Copyright:         (c) Rohan Drape, 2013-2022
 Author:            Rohan Drape
 Maintainer:        rd@rohandrape.net
 Stability:         Experimental
