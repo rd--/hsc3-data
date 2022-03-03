@@ -50,7 +50,7 @@ dx7_sh_char_count = [2,2,2,2, 2,2,2,2, 2,1,3, 2,2,2,2,3,2, 1,3]
 -- * CONCISE
 
 -- | Concise OP and SH TABLEs for voice data.
-dx7_voice_concise_tbl :: DX7_Voice -> (String,T.TABLE,T.TABLE)
+dx7_voice_concise_tbl :: DX7_Voice -> (String,T.Text_Table,T.Text_Table)
 dx7_voice_concise_tbl v =
   let [o6,o5,o4,o3,o2,o1,sh,nm] = dx7_voice_grp v
       w_fn k l = zipWith (flip (T.pad_left ' ')) l k

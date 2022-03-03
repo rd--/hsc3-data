@@ -400,7 +400,7 @@ d50_patch_area_pp p =
   let (hdr_sq,dat_sq) = unzip (concat (d50_patch_area_gen p))
   in intercalate [""] (zipWith (:) hdr_sq dat_sq)
 
--- * CONCISE-TABLE
+-- * CONCISE-Text_Table
 
 -- | USR-NAME for (PART,COMMON,PATCH)
 d50_param_usr_name_typ :: ([String], [String], [String])
@@ -412,7 +412,7 @@ d50_param_usr = zipWith (zipWith (d50_parameter_value_usr_def "?")) d50_paramete
 d50_patch_param_usr :: D50_Patch -> [[String]]
 d50_patch_param_usr = d50_param_usr . d50_patch_param
 
-d50_patch_tbl_usr :: D50_Patch -> (T.TABLE,T.TABLE,T.TABLE)
+d50_patch_tbl_usr :: D50_Patch -> (T.Text_Table,T.Text_Table,T.Text_Table)
 d50_patch_tbl_usr p =
   let (h1,h2,h3) = d50_param_usr_name_typ
       h_f = map d50_param_usr_name_abbrev
