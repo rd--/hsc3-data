@@ -2,15 +2,17 @@
 module Sound.SC3.Data.Array.CSV where
 
 import Sound.OSC.Datum {- hosc -}
+import Sound.OSC.Datum.Parse {- hosc -}
+import Sound.OSC.Datum.Pp {- hosc -}
 
 import qualified Music.Theory.Array.CSV as Csv {- hmt-base -}
 
 -- | /ty/ gives the type tag for each /column/ of the table.
-array_to_datum :: [Datum_Type] -> [[String]] -> [[Datum]]
+array_to_datum :: [DatumType] -> [[String]] -> [[Datum]]
 array_to_datum ty tbl = map (\row -> zipWith parse_datum_err ty row) tbl
 
 -- | 'array_to_datum' of 'Csv.csv_table_read_def'.
-csv_read_datum :: [Datum_Type] -> FilePath -> IO [[Datum]]
+csv_read_datum :: [DatumType] -> FilePath -> IO [[Datum]]
 csv_read_datum ty fn = do
   tbl <- Csv.csv_table_read_def id fn
   return (array_to_datum ty tbl)
