@@ -3,7 +3,7 @@ module Sound.SC3.Data.Yamaha.DX7.SC3 where
 
 import Data.Word {- base -}
 
-import Sound.OSC {- hosc -}
+import Sound.Osc.Core {- hosc -}
 import Sound.SC3 {- hsc3 -}
 
 import qualified Sound.SC3.Server.Command.Plain as SC3 {- hsc3 -}

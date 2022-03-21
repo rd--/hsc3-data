@@ -304,7 +304,7 @@ dexed_init_voice =
 
 http://rd.slavepianos.org/sw/rju/cmd/jack-lxvst.cpp
 
-import Sound.OSC.FD {- hosc -}
+import Sound.Osc.Fd {- hosc -}
 fd <- openUDP "127.0.0.1" 57210
 let p_set ix val = sendMessage fd (Message "/param" [int32 ix,Float val])
 p_set 3 0.5 -- MASTER TUNE ADJ

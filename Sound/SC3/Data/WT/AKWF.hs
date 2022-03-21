@@ -7,7 +7,7 @@ import Data.Maybe {- base -}
 import System.FilePath {- filepath -}
 import Text.Printf {- base -}
 
-import qualified Sound.OSC.Core as O {- hosc -}
+import qualified Sound.Osc.Core as O {- hosc -}
 
 import qualified Sound.SC3.Common.Buffer as SC3 {- hsc3 -}
 import qualified Sound.SC3.Server.Command.Plain as SC3 {- hsc3 -}

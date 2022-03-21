@@ -10,7 +10,7 @@ import Data.List {- base -}
 import Data.List.Split {- split -}
 
 import qualified Sound.File.NeXT as AU {- hsc3-sf -}
-import qualified Sound.OSC.Coding.Byte as OSC {- hosc -}
+import qualified Sound.Osc.Coding.Byte as Osc {- hosc -}
 import qualified Sound.SC3 as SC3 {- hsc3 -}
 
 -- | ATS analysis frame data.
@@ -74,7 +74,7 @@ bs_sep i n d =
 -- | The first eight bytes of the file determine endianess, and hence the decoder.
 ats_get_decoder :: B.ByteString -> B.ByteString -> Double
 ats_get_decoder v =
-    let f_be = OSC.decode_f64
+    let f_be = Osc.decode_f64
         f_le = f_be . B.reverse
         err = error "ats_get_decoder: not ATS file?"
     in if f_be v == 123.0 then f_be else if f_le v == 123.0 then f_le else err

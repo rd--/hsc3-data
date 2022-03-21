@@ -13,7 +13,7 @@ import Text.Printf {- base -}
 
 import qualified Data.Numbers.FloatingHex as H {- FloatingHex -}
 
-import qualified Sound.OSC.Coding.Byte as O {- hosc -}
+import qualified Sound.Osc.Coding.Byte as O {- hosc -}
 
 -- * Types
 

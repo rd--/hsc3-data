@@ -1,9 +1,9 @@
 -- | Csv Array as Osc Datum
 module Sound.SC3.Data.Array.CSV where
 
-import Sound.OSC.Datum {- hosc -}
-import Sound.OSC.Datum.Parse {- hosc -}
-import Sound.OSC.Datum.Pp {- hosc -}
+import Sound.Osc.Datum {- hosc -}
+import Sound.Osc.Datum.Parse {- hosc -}
+import Sound.Osc.Datum.Pp {- hosc -}
 
 import qualified Music.Theory.Array.CSV as Csv {- hmt-base -}
 
@@ -21,5 +21,5 @@ csv_read_datum ty fn = do
 -- /fp_prec/ is the precision to write floating point values at.
 csv_write_datum :: Int -> FilePath -> [[Datum]] -> IO ()
 csv_write_datum fp_prec fn tbl =
-  let tbl' = map (map (datumPP (Just fp_prec))) tbl
+  let tbl' = map (map (datumPp (Just fp_prec))) tbl
   in Csv.csv_table_write_def id fn tbl'

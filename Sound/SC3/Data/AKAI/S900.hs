@@ -18,7 +18,7 @@ import qualified Music.Theory.Tuple as T {- hmt-base -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 
-import qualified Sound.OSC.Coding.Convert as O {- hosc -}
+import qualified Sound.Osc.Coding.Convert as O {- hosc -}
 
 import qualified Sound.File.Header as SF {- hsc3-sf -}
 import qualified Sound.File.WAVE as SF {- hsc3-sf -}

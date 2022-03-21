@@ -6,8 +6,8 @@ import Data.Word {- base -}
 import qualified Data.ByteString.Lazy as L {- bytestring -}
 import qualified Data.Vector.Unboxed as V {- vector -}
 
-import qualified Sound.OSC.Coding.Byte as O {- hosc -}
-import qualified Sound.OSC.Coding.Convert as O {- hosc -}
+import qualified Sound.Osc.Coding.Byte as O {- hosc -}
+import qualified Sound.Osc.Coding.Convert as O {- hosc -}
 
 import qualified Sound.File.RIFF as RIFF {- hsc3-sf -}
 import qualified Sound.File.WAVE as WAVE {- hsc3-sf -}

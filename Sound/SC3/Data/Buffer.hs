@@ -4,7 +4,7 @@ module Sound.SC3.Data.Buffer where
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import Sound.OSC {- hosc -}
+import Sound.Osc {- hosc -}
 import Sound.SC3 {- hsc3 -}
 
 import qualified Sound.File.NeXT as SF {- hsc3-sf -}
