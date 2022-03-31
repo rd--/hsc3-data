@@ -5,7 +5,7 @@ import UI.HSCurses.Curses {- hscurses -}
 
 import Music.Theory.Opt {- hmt-base -}
 
-import Sound.OSC.FD {- hosc -}
+import Sound.Osc.Fd {- hosc -}
 
 set_ln :: Window -> Int -> String -> IO ()
 set_ln w n s = move n 0 >> wClrToEol w >> wAddStr w s >> addLn >> refresh
@@ -16,9 +16,9 @@ set_str w (x,y) s = move x y >> wAddStr w s >> refresh
 proc_msg :: Window -> Message -> IO ()
 proc_msg w m =
     case m of
-      Message "/set_ln" [Int32 n,ASCII_String str] ->
+      Message "/set_ln" [Int32 n,AsciiString str] ->
           set_ln w (fromIntegral n) (ascii_to_string str)
-      Message "/set_str" [Int32 x,Int32 y,ASCII_String str] ->
+      Message "/set_str" [Int32 x,Int32 y,AsciiString str] ->
           set_str w (fromIntegral x,fromIntegral y) (ascii_to_string str)
       _ -> return ()
 

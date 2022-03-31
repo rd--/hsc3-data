@@ -2,7 +2,7 @@ import Control.Monad {- base -}
 import System.Environment {- base -}
 import Text.Printf {- base -}
 
-import Sound.OSC {- hosc -}
+import Sound.Osc.Core {- hosc -}
 
 import qualified Sound.Midi.Pm as Pm {- midi-osc -}
 

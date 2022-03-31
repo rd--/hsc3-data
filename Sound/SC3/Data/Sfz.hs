@@ -22,10 +22,8 @@ ampeg_release : float : seconds : 0 : 0 100
 -}
 module Sound.SC3.Data.Sfz where
 
-import Data.Int {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
-import Data.Word {- base -}
 import System.FilePath {- filepath -}
 
 import qualified Data.List.Split as Split {- split -}
@@ -38,6 +36,8 @@ import qualified Music.Theory.Pitch as T {- hmt -}
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 
 import Sound.Midi.Type {- midi-osc -}
+
+import Sound.SC3.Data.Math.Types {- hsc3-data -}
 
 -- * TYPES
 
@@ -196,7 +196,7 @@ sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 sfz_region_sample :: Sfz_Region -> FilePath
 sfz_region_sample r = sfz_region_lookup_err r "sample"
 
-sfz_region_tune :: Sfz_Region -> Int8
+sfz_region_tune :: Sfz_Region -> I8
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
 
 sfz_region_lochan :: Sfz_Region -> Channel
@@ -223,10 +223,10 @@ sfz_loop_mode_sym = flip T.lookup_err sfz_loop_mode_sym_tbl
 sfz_region_loop_mode_sym :: Sfz_Region -> Maybe Char
 sfz_region_loop_mode_sym = fmap sfz_loop_mode_sym . sfz_region_loop_mode
 
-sfz_region_loop_start :: Sfz_Region -> Word32
+sfz_region_loop_start :: Sfz_Region -> U32
 sfz_region_loop_start r = sfz_region_lookup_read 0 r "loop_start"
 
-sfz_region_loop_end :: Sfz_Region -> Word32
+sfz_region_loop_end :: Sfz_Region -> U32
 sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
 sfz_region_ampeg_attack :: Sfz_Region -> Double
@@ -269,7 +269,7 @@ sfz_region_key r =
      else return Nothing and mode (defaulting to no_loop).
      Does not read loop data from sample file.
 -}
-sfz_region_loop_data :: Sfz_Region -> (String,Maybe (Word32,Word32))
+sfz_region_loop_data :: Sfz_Region -> (String,Maybe (U32,U32))
 sfz_region_loop_data r =
   case (sfz_region_lookup r "loop_start",sfz_region_lookup r "loop_end") of
     (Just st,Just en) -> (sfz_region_lookup_f "loop_continuous" id r "loop_mode"

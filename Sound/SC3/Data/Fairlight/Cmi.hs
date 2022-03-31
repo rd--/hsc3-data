@@ -5,7 +5,6 @@ module Sound.SC3.Data.Fairlight.Cmi where
 
 import Data.List {- base -}
 import Data.Maybe {- base -}
-import Data.Word {- base -}
 import System.FilePath {- filepath -}
 import Text.Printf {- base -}
 
@@ -13,12 +12,13 @@ import qualified Music.Theory.Directory as T {- hmt-base -}
 
 import qualified Music.Theory.Pitch as T {- hmt -}
 
+import Sound.SC3.Data.Math.Types {- hsc3-data -}
 import Sound.SC3.Data.Sfz {- hsc3-data -}
 
 -- | (Sfz-Dir,Snd-File,Volume,Key-Center,Loop-Mode-Sym,Loop-Start,Loop-End,Eg-Attack,Eg-Release)
 --
 -- For Cmi in all cases Volume=-3 ; Keycenter=C4
-type Cmi_Sfz = (FilePath,FilePath,Double,T.Midi,Char,(Word32,Word32),(Double,Double))
+type Cmi_Sfz = (FilePath,FilePath,Double,T.Midi,Char,(U32,U32),(Double,Double))
 
 -- | Parse Sfz <region>.
 cmi_sfz_rgn_parse :: FilePath -> Sfz_Region -> Cmi_Sfz

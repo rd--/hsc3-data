@@ -79,11 +79,8 @@ u8_to_u32 = id
 u8_to_f32 :: U8 -> F32
 u8_to_f32 = fromIntegral
 
-int_to_u8_def :: U8 -> Int -> U8
-int_to_u8_def d x = if x < 0 || x > 255 then d else x
-
-int_to_u8_err :: Int -> U8
-int_to_u8_err x = int_to_u8_def (error ("int_to_u8: " ++ show x)) x
+u8_to_f64 :: U8 -> F64
+u8_to_f64 = fromIntegral
 
 u12_to_i12_def :: I12 -> U12 -> I12
 u12_to_i12_def d x = if x > 4095 then d else x
@@ -109,23 +106,23 @@ u16_to_u24 = id
 u16_to_f64 :: U16 -> F64
 u16_to_f64 = fromIntegral
 
-int_to_u24_def :: U24 -> Int -> U24
-int_to_u24_def d x = if x < 0 || x > u24_max then d else id x
-
-int_to_u24_err :: Int -> U24
-int_to_u24_err x = int_to_u24_def (error ("int_to_u24: " ++ show x)) x
-
 i8_to_u8_def :: U8 -> I8 -> U8
 i8_to_u8_def d x = if x < 0 then d else x
 
 i8_to_u8_err :: I8 -> U8
 i8_to_u8_err x = i8_to_u8_def (error ("i8_to_u8: " ++ show x)) x
 
+i8_to_f64 :: I8 -> F64
+i8_to_f64 = fromIntegral
+
 i12_to_int :: I12 -> Int
 i12_to_int = id
 
 u32_to_u8 :: U32 -> U8
 u32_to_u8 = id
+
+u32_to_f64 :: U32 -> F64
+u32_to_f64 = fromIntegral
 
 f32_to_u7_def :: U7 -> F32 -> U7
 f32_to_u7_def d x = if x < 0 || x > 127 then d else floor x
@@ -156,6 +153,22 @@ f32_to_i16_def d x = if x < (-32768) || x > 32767 then d else floor x
 
 f32_to_i16_err :: F32 -> I16
 f32_to_i16_err x = f32_to_i16_def (error ("f32_to_i16: " ++ show x)) x
+
+
+int_to_u8_def :: U8 -> Int -> U8
+int_to_u8_def d x = if x < 0 || x > 255 then d else x
+
+int_to_u8_err :: Int -> U8
+int_to_u8_err x = int_to_u8_def (error ("int_to_u8: " ++ show x)) x
+
+int_to_u24_def :: U24 -> Int -> U24
+int_to_u24_def d x = if x < 0 || x > u24_max then d else id x
+
+int_to_u24_err :: Int -> U24
+int_to_u24_err x = int_to_u24_def (error ("int_to_u24: " ++ show x)) x
+
+int_to_f64 :: Int -> F64
+int_to_f64 = fromIntegral
 
 -- * List
 

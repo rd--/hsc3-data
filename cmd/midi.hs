@@ -3,7 +3,6 @@ import System.Environment {- base -}
 import qualified Codec.Midi as C {- HCodecs -}
 
 import qualified Music.Theory.Array.CSV as T {- hmt-base -}
-import qualified Music.Theory.Math.Convert as T {- hmt-base -}
 
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
@@ -12,9 +11,8 @@ import qualified Sound.SC3.Data.Midi.Plain as Plain {- hsc3-data -}
 
 node_to_text :: Int -> (Int,C.Message) -> [String]
 node_to_text n (t,m) =
-  let to_w8 = T.int_to_word8
-      l_f = (["T","","",""] ++)
-      r_f = ("M" :) . map show . (\(p,q,r) -> [p,to_w8 q,to_w8 r]) . M.cvm_to_cvm3
+  let l_f = (["T","","",""] ++)
+      r_f = ("M" :) . map show . (\(p,q,r) -> [fromIntegral p,q,r]) . M.cvm_to_cvm3
     in show n : show t : either l_f r_f (File.C.c_parse_message m)
 
 track_to_text :: (Int, [(Int, C.Message)]) -> [[String]]
