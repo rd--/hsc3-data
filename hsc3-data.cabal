@@ -91,8 +91,8 @@ Library
                    Sound.SC3.Data.Fairlight.Cmi
                    Sound.SC3.Data.Geography.Core
                    Sound.SC3.Data.Geography.G
-                   Sound.SC3.Data.Geometry.OBJ
-                   Sound.SC3.Data.Geometry.PLY
+                   Sound.SC3.Data.Geometry.Obj
+                   Sound.SC3.Data.Geometry.Ply
                    Sound.SC3.Data.Geometry.Tutte
                    Sound.SC3.Data.Gnus
                    Sound.SC3.Data.Graph.Dot

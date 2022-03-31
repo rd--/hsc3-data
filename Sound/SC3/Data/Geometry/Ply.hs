@@ -1,15 +1,15 @@
-{- | PLY functions.
+{- | Ply functions.
 
 This module is used instead of 'Sound.SC3.Data.Geometry.OBJ' when faces are coloured.
 
 There is no reader.
 
-Greg Turk "The PLY Polygon File Format" (1994)
+Greg Turk "The Ply Polygon File Format" (1994)
 
-SEE "PLY_FILES.txt" in <https://www.cc.gatech.edu/projects/large_models/files/ply.tar.gz>
+SEE "Ply_FILES.txt" in <https://www.cc.gatech.edu/projects/large_models/files/ply.tar.gz>
 
 -}
-module Sound.SC3.Data.Geometry.PLY where
+module Sound.SC3.Data.Geometry.Ply where
 
 import Data.List {- base -}
 
@@ -17,7 +17,7 @@ import qualified Music.Theory.Graph.Type as T {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}
 import qualified Music.Theory.Show as T {- hmt-base -}
 
-{- | ASCII PLY-1.0 header for object of (n-vertices,n-faces,n-edges).
+{- | ASCII Ply-1.0 header for object of (n-vertices,n-faces,n-edges).
      Faces and edges are (r,g,b) coloured.
 
 > putStrLn $ unlines $ ply_header (8,6,0)
@@ -51,9 +51,9 @@ ply_header (n_v,n_f,n_e) =
 {- | Requires (but does not check) that graph vertices be indexed [0 .. #v - 1]
      Edges are coloured as U8 (red,green,blue) triples.
      It is an error (not checked) for there to be no edges.
-     PLY files are zero-indexed.
+     Ply files are zero-indexed.
 -}
-v3_graph_to_ply_clr :: Int -> T.LBL (Double,Double,Double) (Int,Int,Int) -> [String]
+v3_graph_to_ply_clr :: Int -> T.Lbl (Double,Double,Double) (Int,Int,Int) -> [String]
 v3_graph_to_ply_clr k (v,e) =
   let v_pp (_,(x,y,z)) = unwords (map (T.double_pp k) [x,y,z])
       e_pp ((i,j),(r,g,b)) = unwords (map show [i,j,r,g,b])
@@ -73,9 +73,9 @@ ply_face_set_dat t =
       f = map (map (`T.reverse_lookup_err` v) . fst) t
   in (v,zip f c)
 
--- | Format a set of coloured faces as an PLY file.
+-- | Format a set of coloured faces as an Ply file.
 --    (CCW triples of (x,y,z) coordinates, (r,g,b) colour)
---   PLY files are one-indexed.
+--   Ply files are one-indexed.
 ply_face_set_fmt :: (Show n,Ord n,Show i) => [([(n,n,n)],(i,i,i))] -> [String]
 ply_face_set_fmt t =
   let v_f (_,(x,y,z)) = unwords [show x,show y,show z]

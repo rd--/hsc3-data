@@ -13,7 +13,7 @@ import qualified Data.CG.Minus.Geometry.OFF as OFF {- hcg-minus -}
 import qualified Music.Theory.Graph.Type as T {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}
 
-import qualified Sound.SC3.Data.Geometry.OBJ as OBJ {- hsc3-data -}
+import qualified Sound.SC3.Data.Geometry.Obj as Obj {- hsc3-data -}
 
 -- | R = real
 type R = Double
@@ -27,29 +27,29 @@ v_on_unit_circle k =
   in map (\ph -> polar_to_rectangular (1,ph)) (take k [0,i ..])
 
 -- | [(VERTEX,COORDINATE)]
-type V_LOC = [(Int,V2 R)]
+type V_Loc = [(Int,V2 R)]
 
 -- | k = n-vertices
 --
 -- > v_init_loc 8 [0,1,2,3]
-v_init_loc :: Int -> [Int] -> V_LOC
+v_init_loc :: Int -> [Int] -> V_Loc
 v_init_loc k fc =
   let fc_v = zip fc (v_on_unit_circle (length fc))
       sel i = case lookup i fc_v of {Just j -> (i,j);_ -> (i,(0,0))}
   in map sel [0 .. k - 1]
 
--- | 'v2_centroid' of indexed 'V_LOC'
-v_loc_centre :: V_LOC -> [Int] -> V2 R
+-- | 'v2_centroid' of indexed 'V_Loc'
+v_loc_centre :: V_Loc -> [Int] -> V2 R
 v_loc_centre v e = v2_centroid (map (`T.lookup_err` v) e)
 
 -- | a = adj-mtx, fc = face, v = vertices-loc
-tutte_step :: T.ADJ_MTX Int -> [Int] -> V_LOC -> V_LOC
+tutte_step :: T.Adj_Mtx Int -> [Int] -> V_Loc -> V_Loc
 tutte_step adj fc v =
   let f (i,j) = if i `elem` fc then (i,j) else (i,v_loc_centre v (T.adj_mtx_con (0,1) adj i))
   in map f v
 
 -- | Generate sequence of Tuttes given graph, face list and outer face index.
-tutte_gen :: T.G -> [[Int]] -> Int -> [V_LOC]
+tutte_gen :: T.G -> [[Int]] -> Int -> [V_Loc]
 tutte_gen (v,e) fc i =
   let k = length v
       adj = T.edg_to_adj_mtx_undir (0,1) (T.g_to_edg (v,e))
@@ -58,21 +58,21 @@ tutte_gen (v,e) fc i =
   in iterate (tutte_step adj fc_i) v0
 
 -- | 'tutte_gen' of OFF3
-tutte_gen_off3 :: OFF.OFF3 R -> Int -> ([V_LOC],[V2 Int])
+tutte_gen_off3 :: OFF.OFF3 R -> Int -> ([V_Loc],[V2 Int])
 tutte_gen_off3 o i =
   let (v,e) = T.lbl_to_g (OFF.off_graph o)
       ((_,_),(_,fc)) = o
   in (tutte_gen (v,e) (map snd fc) i,e)
 
--- | Store tutte to OBJ file.
-tutte_obj :: FilePath -> V_LOC -> [V2 Int] -> IO ()
+-- | Store tutte to Obj file.
+tutte_obj :: FilePath -> V_Loc -> [V2 Int] -> IO ()
 tutte_obj fn v e = do
   let e' = map (\(p,q) -> ('l',[p,q])) e
       add_z (x,y) = (x,y,0)
-  OBJ.obj_store 4 fn (map (add_z . snd) v,e')
+  Obj.obj_store 4 fn (map (add_z . snd) v,e')
 
 -- | Store tutte to SVG file.
-tutte_svg :: (V2 R,R,Int) -> FilePath -> V_LOC -> [V2 Int] -> IO ()
+tutte_svg :: (V2 R,R,Int) -> FilePath -> V_Loc -> [V2 Int] -> IO ()
 tutte_svg opt fn v e = do
   let ix k = T.lookup_err k v
       ln = map (bimap ix ix) e

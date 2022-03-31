@@ -21,7 +21,8 @@ import qualified Sound.SC3.Data.Chemistry.MOL as MOL {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.PDB.Types as PDB {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.POSCAR as POSCAR {- hsc3-data -}
 import qualified Sound.SC3.Data.Chemistry.XYZ as XYZ {- hsc3-data -}
-import qualified Sound.SC3.Data.Geometry.OBJ as OBJ {- hmt -}
+
+import qualified Sound.SC3.Data.Geometry.Obj as Obj {- hmt -}
 
 -- * TYPES
 
@@ -265,22 +266,22 @@ load_poscar_structs_ty ty = fmap (map (poscar_to_struct ty)) . POSCAR.poscar_loa
 
 -- * GRAPH
 
--- | 'STRUCT' to 'T.LBL' with 'ATOM' labels at vertices.
-struct_to_lbl :: STRUCT -> T.LBL_ ATOM
+-- | 'STRUCT' to 'T.Lbl' with 'ATOM' labels at vertices.
+struct_to_lbl :: STRUCT -> T.Lbl_ ATOM
 struct_to_lbl (_,_,_,a,b) = (zip [0..] a,zip b (repeat ()))
 
 -- | 'T.v3_graph_to_obj' of 'struct_to_lbl', element names are discarded.
-struct_to_obj :: STRUCT -> OBJ.OBJ
+struct_to_obj :: STRUCT -> Obj.Obj
 struct_to_obj =
   let f (v,e) = (map (fmap snd) v,e)
-  in OBJ.lbl_to_obj . f . struct_to_lbl
+  in Obj.lbl_to_obj . f . struct_to_lbl
 
 -- * CONVERT
 
 ext_to_obj :: Int -> Maybe TOLERANCE -> FilePath -> FilePath -> IO ()
 ext_to_obj k tol xyz_fn obj_fn = do
   s <- fmap (maybe id struct_calculate_bonds tol) (struct_load_ext xyz_fn)
-  OBJ.obj_store k obj_fn (struct_to_obj s)
+  Obj.obj_store k obj_fn (struct_to_obj s)
 
 ext_to_obj_dir :: String -> Int -> Maybe TOLERANCE -> FilePath -> FilePath -> IO ()
 ext_to_obj_dir ext k tol ext_dir obj_dir = do
@@ -289,7 +290,7 @@ ext_to_obj_dir ext k tol ext_dir obj_dir = do
       cv x = ext_to_obj k tol x (rw x)
   mapM_ cv fn
 
--- | Load XYZ file, calculate bonds, write OBJ file.
+-- | Load XYZ file, calculate bonds, write Obj file.
 xyz_to_obj :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
 xyz_to_obj k t = ext_to_obj k (Just t)
 
@@ -297,7 +298,7 @@ xyz_to_obj k t = ext_to_obj k (Just t)
 xyz_to_obj_dir :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
 xyz_to_obj_dir k t = ext_to_obj_dir ".xyz" k (Just t)
 
--- | Load POSCAR file, calculate bonds, write OBJ file.
+-- | Load POSCAR file, calculate bonds, write Obj file.
 poscar_to_obj :: Int -> TOLERANCE -> FilePath -> FilePath -> IO ()
 poscar_to_obj k t = ext_to_obj k (Just t)
 
