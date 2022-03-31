@@ -5,8 +5,6 @@ module Sound.SC3.Data.Midi.Plain where
 
 import Data.Maybe {- base -}
 
-import qualified Music.Theory.Math.Convert as T {- hmt-base -}
-
 import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
@@ -32,9 +30,8 @@ type SEQ = [Note]
 
 -- | Translate 'Note' to on & off messages or time-signature message.
 note_to_midi :: Note -> [(C.Time,C.Message)]
-note_to_midi ((st,dur),(msg,d1,d2_u8,_)) =
-    let d2 = T.word8_to_int d2_u8
-        n_on = (st,C.NoteOn d2 msg d1)
+note_to_midi ((st,dur),(msg,d1,d2,_)) =
+    let n_on = (st,C.NoteOn d2 msg d1)
         n_off = (st + dur, C.NoteOff d2 msg 0)
         ts = (st,File.C.mk_time_signature (d1,d2))
     in case msg of
@@ -82,9 +79,9 @@ track_to_wseq =
     let f (tm,msg) = case msg of
                        C.NoteOn ch mnn vel ->
                            let ty = if vel == 0 then T.End else T.Begin
-                           in Just (tm,ty (mnn,vel,T.int_to_word8 ch,[]))
+                           in Just (tm,ty (mnn,vel,ch,[]))
                        C.NoteOff ch mnn vel ->
-                           Just (tm,T.End (mnn,vel,T.int_to_word8 ch,[]))
+                           Just (tm,T.End (mnn,vel,ch,[]))
                        _ -> Nothing
     in T.tseq_begin_end_to_wseq T.event_eq_ol . mapMaybe f
 
