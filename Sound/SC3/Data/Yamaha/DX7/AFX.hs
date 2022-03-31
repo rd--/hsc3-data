@@ -6,9 +6,9 @@ Data is written as two-digit decimal numbers (00-99).
 -}
 module Sound.SC3.Data.Yamaha.DX7.AFX where
 
-import qualified Data.ByteString.Char8 as B {- bytestring -}
+import Data.Char {- base -}
 
-import qualified Music.Theory.Byte as Byte {- hmt -}
+import qualified Data.ByteString.Char8 as B {- bytestring -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}
 import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7 {- hsc3-data -}
@@ -19,13 +19,13 @@ import qualified Sound.SC3.Data.Yamaha.DX7.PX7 as PX7 {- hsc3-data -}
 --
 -- > afx_parse_u8 ('3','2') == 32
 afx_parse_u8 :: (Char,Char) -> U8
-afx_parse_u8 (c1,c2) = Byte.digit_to_word8 c1 * 10 + Byte.digit_to_word8 c2
+afx_parse_u8 (c1,c2) = digitToInt c1 * 10 + digitToInt c2
 
 -- | Inverse of 'afx_parse_u8'.
 --
 -- > map (afx_parse_u8 . afx_encode_u8) [0 .. 99] == [0 .. 99]
 afx_encode_u8 :: U8 -> (Char, Char)
-afx_encode_u8 n = let (p,q) = n `divMod` 10 in (Byte.word8_to_digit p,Byte.word8_to_digit q)
+afx_encode_u8 n = let (p,q) = n `divMod` 10 in (intToDigit p,intToDigit q)
 
 -- * AFX
 

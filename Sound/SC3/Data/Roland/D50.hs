@@ -19,7 +19,6 @@ import Data.Function {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
-import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.Byte as T {- hmt-base -}
@@ -293,13 +292,13 @@ type D50_Reverb = [U8]
 -- | Reverb data is 8-bit, but is stored in only the least significant 4-bits of each U8.
 d50_reverb_join :: U8 -> U8 -> U8
 d50_reverb_join d1 d2 =
-  case (M.u8_sep d1,M.u8_sep d2) of
-    ((0x0,d3),(0x0,d4)) -> M.u4_join (d3,d4)
+  case (M.bits8_sep d1,M.bits8_sep d2) of
+    ((0x0,d3),(0x0,d4)) -> M.bits4_join (d3,d4)
     _ -> error "d50_reverb_join?"
 
 -- | Inverse of 'd50_reverb_join'.
 d50_reverb_sep :: U8 -> (U8,U8)
-d50_reverb_sep = M.u8_sep
+d50_reverb_sep = M.bits8_sep
 
 -- | Decode 376-element reverb block to 188-element reverb data.
 d50_reverb_decode :: [U8] -> [U8]
@@ -1205,11 +1204,11 @@ d50_store_hex = T.store_hex_byte_seq
 
 -- | Load binary 'U8' sequence from file.
 d50_load_binary_u8 :: FilePath -> IO [U8]
-d50_load_binary_u8 = fmap B.unpack . B.readFile
+d50_load_binary_u8 = M.bytes_load
 
 -- | Write binary 'U8' sequence to file.
 d50_store_binary_u8 :: FilePath -> [U8] -> IO ()
-d50_store_binary_u8 fn = B.writeFile fn . B.pack
+d50_store_binary_u8 = M.bytes_store
 
 {-| Load DT1|DAT sequence from 36048-byte D-50 SYSEX file.
 

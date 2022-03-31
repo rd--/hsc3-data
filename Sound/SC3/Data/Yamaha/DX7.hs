@@ -9,29 +9,25 @@ module Sound.SC3.Data.Yamaha.DX7 where
 
 import Control.Monad {- base -}
 import Data.Bits {- base -}
-import Data.Int {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
-import Data.Word {- base -}
 
-import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
 
 import qualified Music.Theory.Byte as Byte {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}
-import qualified Music.Theory.Math.Convert as T {- hmt-base -}
 import qualified Music.Theory.Show as Show {- hmt-base -}
 import qualified Music.Theory.String as T {- hmt-base -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
 
 -- | Unsigned 8-bit word.
-type U8 = Word8
+type U8 = Int
 
 -- | Signed 8-bit integer.
-type I8 = Int8
+type I8 = Int
 
 -- | Number of per-operator parameters.  The DX7 has six operators.
 dx7_op_nparam :: Num n => n
@@ -41,10 +37,11 @@ dx7_op_nparam = 21
 dx7_sh_nparam :: Num n => n
 dx7_sh_nparam = 19
 
--- | Number of voice parameters, ie. (6 * 21) + 19
---
--- > dx7_nparam == 145
--- > dx7_nparam + dx7_name_nchar == 155
+{- | Number of voice parameters, ie. (6 * 21) + 19
+
+> dx7_nparam == 145
+> dx7_nparam + dx7_name_nchar == 155
+-}
 dx7_nparam :: Num n => n
 dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam
 
@@ -59,39 +56,42 @@ dx7_param_eq_ignoring = T.list_eq_ignoring_indices
 dx7_param_set :: [(U8,U8)] -> DX7_Param -> DX7_Param
 dx7_param_set = T.list_set_indices
 
--- | Type-specialised 'Byte.word8_at'.
+-- | Type-specialised !!.
 dx7_param_at :: DX7_Param -> U8 -> U8
-dx7_param_at = Byte.word8_at
+dx7_param_at = (!!)
 
 -- | Number of bytes for voice name.
 dx7_name_nchar :: Num n => n
 dx7_name_nchar = 10
 
--- | Number of voice parameters.
---
--- > dx7_nvoice == 155
--- > dx7_nvoice - dx7_name_nchar == 145
--- > dx7_nvoice * 32 == 4960
+{- | Number of voice parameters.
+
+> dx7_nvoice == 155
+> dx7_nvoice - dx7_name_nchar == 145
+> dx7_nvoice * 32 == 4960
+-}
 dx7_nvoice :: Num n => n
 dx7_nvoice = dx7_nparam + dx7_name_nchar
 
--- | Is /x/ in (32,126)?
---
--- > map fromEnum "\t\n " == [9,10,32]
+{- | Is /x/ in (32,126)?
+
+> map fromEnum "\t\n " == [9,10,32]
+-}
 dx7_ascii_verify :: U8 -> U8
 dx7_ascii_verify x = if x < 32 || x > 126 then error "ASCII?" else x
 
--- | Replace out-of-range ASCII U8 with the ASCII code for /c/.
---
--- > map (dx7_ascii_correct '?') [9,10,32] == [63,63,32]
+{- | Replace out-of-range ASCII U8 with the ASCII code for /c/.
+
+> map (dx7_ascii_correct '?') [9,10,32] == [63,63,32]
+-}
 dx7_ascii_correct :: Char -> U8 -> U8
-dx7_ascii_correct c x = if x < 32 || x > 126 then dx7_ascii_verify (Byte.char_to_word8 c) else x
+dx7_ascii_correct c x = if x < 32 || x > 126 then dx7_ascii_verify (fromEnum c) else x
 
 -- | Map ASCII U8 to 'Char'.
 --
 -- > map (dx7_ascii_char '?') [32 .. 126]
 dx7_ascii_char :: Char -> U8 -> Char
-dx7_ascii_char c = Byte.word8_to_char . dx7_ascii_correct c
+dx7_ascii_char c = toEnum . dx7_ascii_correct c
 
 -- | Voice data (VCED #=155)
 type DX7_Voice = [U8]
@@ -101,7 +101,7 @@ dx7_param_to_dx7_voice :: String -> DX7_Param -> DX7_Voice
 dx7_param_to_dx7_voice nm =
   if length nm /= 10
   then error "dx7_param_to_dx7_voice"
-  else flip (++) (map Byte.char_to_word8 nm)
+  else flip (++) (map fromEnum nm)
 
 -- | Select the 145 parameter bytes from a 155-byte 'DX7_Voice'.
 --   ie. delete the 10 ASCII character voice-name.
@@ -270,7 +270,7 @@ dx7_parameter_range :: DX7_Parameter -> (U8,U8)
 dx7_parameter_range (ix,_,n,_,_) = if ix < 145 then (0,n - 1) else (32,126)
 
 dx7_parameter_range_usr :: DX7_Parameter -> (I8,I8)
-dx7_parameter_range_usr (ix,_,n,d,_) = if ix < 125 then (d,d + T.word8_to_int8 n - 1) else (32,126)
+dx7_parameter_range_usr (ix,_,n,d,_) = if ix < 125 then (d,d + n - 1) else (32,126)
 
 -- | Normalise parameter value to be in (0,1).
 -- Parameter values are at most in 0-99, excepting characters in voice name data.
@@ -278,7 +278,7 @@ dx7_parameter_range_usr (ix,_,n,d,_) = if ix < 125 then (d,d + T.word8_to_int8 n
 -- > let p = dx7_op_parameter_tbl !! 20
 -- > map (dx7_parameter_value_normalise p) [0 .. 14]
 dx7_parameter_value_normalise :: DX7_Parameter -> U8 -> Float
-dx7_parameter_value_normalise (_,_,n,_,_) x = T.word8_to_float x / T.word8_to_float (n - 1)
+dx7_parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
 
 -- | USR 2-character strings naming the 12 pitch-classes.
 dx7_pitch_class_seq :: [String]
@@ -459,14 +459,14 @@ dx7_voice_grp = Split.splitPlaces dx7_voice_grp_places
 
 -- | Extract 10 character voice name from 'DX7_Voice'.
 dx7_voice_name :: Char -> DX7_Voice -> String
-dx7_voice_name c v = map (dx7_ascii_char c . Byte.word8_at v) [145 .. 154]
+dx7_voice_name c v = map (dx7_ascii_char c . dx7_param_at v) [145 .. 154]
 
 dx7_voice_name_dtw :: DX7_Voice -> String
 dx7_voice_name_dtw = T.delete_trailing_whitespace . dx7_voice_name '?'
 
 -- | Encode ASCII name to U8 sequence.
 dx7_name_encode :: Char -> String -> [U8]
-dx7_name_encode c = map (dx7_ascii_correct c . Byte.char_to_word8)
+dx7_name_encode c = map (dx7_ascii_correct c . fromEnum)
 
 -- * DX7 VOICE DATA LIST
 
@@ -505,9 +505,9 @@ dx7_voice_data_list =
 dx7_substatus :: U8 -> U8
 dx7_substatus = flip shiftR 4
 
--- | 'M.u8_load'.
+-- | 'M.bytes_load'.
 dx7_read_u8 :: FilePath -> IO [U8]
-dx7_read_u8 = M.u8_load
+dx7_read_u8 = M.bytes_load
 
 -- * SYSEX Message: FORMAT=0: Voice Data (163-BYTES)
 
@@ -625,7 +625,7 @@ dx7_read_fmt9_sysex_err fn =
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_write_fmt9_sysex :: FilePath -> DX7_SYSEX -> IO ()
-dx7_write_fmt9_sysex fn = M.u8_store fn . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
+dx7_write_fmt9_sysex fn = M.bytes_store fn . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
 
 -- | Unpack bit-packed 'U8' sequence to sequence of 'DX7_Voice' (see cmd/dx7-unpack.c).
 --   Input size must be a multiple of 128, output size will be a multiple of 155.
@@ -713,7 +713,7 @@ dx7_load_sysex_try fn = do
 dx7_store_fmt9_sysex :: FilePath -> U8 -> DX7_Bank -> IO ()
 dx7_store_fmt9_sysex fn ch bnk = do
   syx <- dx7_fmt9_sysex_encode ch bnk
-  B.writeFile fn (B.pack syx)
+  M.bytes_store fn syx
 
 -- * C: SYSEX MESSAGE: Parameter Change
 

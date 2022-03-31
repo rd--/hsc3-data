@@ -24,7 +24,7 @@ d50_hash_pp = printf "%08X"
 
 -- | Hash D50_Param parameter sequence to a 32-bit word.
 d50_param_hash :: D50_Param -> D50_Hash
-d50_param_hash = Hash.asWord32 . Hash.hash32 . B.pack . concat
+d50_param_hash = Hash.asWord32 . Hash.hash32 . B.pack . map fromIntegral . concat
 
 -- | 'd50_param_hash' of 'd50_patch_param'.
 d50_patch_hash :: D50_Patch -> D50_Hash

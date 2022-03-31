@@ -9,9 +9,7 @@ import qualified Data.ByteString.Lazy as L {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.Array.Text as T {- hmt -}
-import qualified Music.Theory.Byte as Byte {- hmt -}
 import qualified Music.Theory.List as T {- hmt -}
-import qualified Music.Theory.Math.Convert as T {- hmt -}
 
 import qualified Sound.File.NeXT as SF {- hsc3-sf -}
 
@@ -28,7 +26,7 @@ dx7_parameter_enum_usr (_,_,stp,d,u) =
   if u == "ASCII"
   then map (return . toEnum) [32 .. 126]
   else case Split.splitOn ";" u of
-         [_] -> map (\x -> show (T.word8_to_int8 x + d)) [0 .. stp - 1]
+         [_] -> map (\x -> show (x + d)) [0 .. stp - 1]
          e -> e
 
 -- * CHAR COUNTING
@@ -89,8 +87,8 @@ dx7_parameter_value_pp p x =
       r = if u == "ASCII"
           then ['\'',dx7_ascii_char '?' x_clip,'\'']
           else case Split.splitOn ";" u of
-                 [_] -> printf "%2d" (T.word8_to_int8 x_clip + d)
-                 e -> Byte.word8_at e x_clip
+                 [_] -> printf "%2d" (x_clip + d)
+                 e -> e !! x_clip
   in r ++ err
 
 dx7_parameter_pp :: Bool -> DX7_Parameter -> U8 -> String
@@ -115,7 +113,7 @@ dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 dx7_voice_pp :: DX7_Voice -> [String]
 dx7_voice_pp p =
   let p_grp = dx7_voice_grp p
-  in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (Byte.word8_at p_grp 6)
+  in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (p_grp !! 6)
             ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
 
 -- * VOICE-DATA LIST
@@ -125,7 +123,7 @@ dx7_voice_pp p =
 -- > putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
 dx7_voice_data_list_pp :: DX7_Voice -> [String]
 dx7_voice_data_list_pp d =
-  let u8_at = Byte.word8_at
+  let u8_at = (!!)
       op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
       op_ix_pp n = map
                    (dx7_parameter_value_pp (u8_at dx7_op_parameter_tbl n) . u8_at d)
@@ -194,7 +192,7 @@ dx7_load_csv fn = do
 -}
 dx7_store_au :: FilePath -> [DX7_Voice] -> IO ()
 dx7_store_au fn vc = do
-  let dat = L.pack (concat vc)
+  let dat = L.pack (map fromIntegral (concat vc))
       hdr = SF.SF_Header (length vc * 155) SF.Linear8 155 1
   SF.au_write_b fn hdr dat
 
@@ -208,14 +206,14 @@ dx7_load_au :: FilePath -> IO [DX7_Voice]
 dx7_load_au fn = do
   (SF.SF_Header nf enc _sr nc,dat) <- SF.au_read_b fn
   when (nf `mod` 155 /= 0 || enc /= SF.Linear8 || nc /= 1) (error "dx7_load_au?")
-  return (Split.chunksOf 155 (L.unpack dat))
+  return (Split.chunksOf 155 (map fromIntegral (L.unpack dat)))
 
 -- * DX7-II
 
 -- | PCED summary: P-IX P-NAME PLMD A-IX A-NAME B-IX B-NAME
 dx7ii_pced_summary :: [DX7_Voice] -> (Int,DX7II_PCED) -> String
 dx7ii_pced_summary vc (n,pf) =
-  let vc_nm k = dx7_voice_name '?' (Byte.word8_at vc k)
+  let vc_nm k = dx7_voice_name '?' (vc !! k)
       (ix_a,ix_b) = (pf !! 1,pf !! 2)
   in printf
      "P-%02d  %s  %-6s  A-%03d  %s  B-%03d  %s"

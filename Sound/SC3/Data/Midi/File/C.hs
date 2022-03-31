@@ -7,7 +7,6 @@ import Data.Maybe {- base -}
 import qualified Codec.Midi as C {- HCodecs -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
-import qualified Music.Theory.Math.Convert as T {- hmt-base -}
 
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
@@ -117,15 +116,15 @@ c_time_div td =
 c_parse_channel_message :: C.Message -> Maybe (M.Channel_Voice_Message Int)
 c_parse_channel_message c =
   case c of
-    C.NoteOff ch mnn vel -> Just (M.Note_Off (T.int_to_word8 ch) mnn vel)
-    C.NoteOn ch mnn vel -> Just (M.Note_On (T.int_to_word8 ch) mnn vel)
-    C.KeyPressure ch d1 d2 -> Just (M.Polyphonic_Key_Pressure (T.int_to_word8 ch) d1 d2)
-    C.ControlChange ch i j -> Just (M.Control_Change (T.int_to_word8 ch) i j)
-    C.ProgramChange ch pc -> Just (M.Program_Change (T.int_to_word8 ch) pc)
-    C.ChannelPressure ch d1 -> Just (M.Channel_Aftertouch (T.int_to_word8 ch) d1)
+    C.NoteOff ch mnn vel -> Just (M.Note_Off ch mnn vel)
+    C.NoteOn ch mnn vel -> Just (M.Note_On ch mnn vel)
+    C.KeyPressure ch d1 d2 -> Just (M.Polyphonic_Key_Pressure ch d1 d2)
+    C.ControlChange ch i j -> Just (M.Control_Change ch i j)
+    C.ProgramChange ch pc -> Just (M.Program_Change ch pc)
+    C.ChannelPressure ch d1 -> Just (M.Channel_Aftertouch ch d1)
     C.PitchWheel ch d ->
-      let (d1,d2) = M.bits_14_sep_le (T.int_to_word16 d)
-      in Just (M.Pitch_Bend (T.int_to_word8 ch) (T.word8_to_int d1) (T.word8_to_int d2))
+      let (d1,d2) = M.bits_14_sep_le d
+      in Just (M.Pitch_Bend ch d1 d2)
     _ -> Nothing
 
 -- | Meta Messages

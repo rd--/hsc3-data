@@ -5,30 +5,26 @@
 module Sound.SC3.Data.Midi.Arturia.BeatStep where
 
 import Data.Char {- base -}
-import Data.Word {- base -}
 import System.FilePath {- filepath -}
 import Text.Printf {- base -}
 
-import qualified Sound.Midi.Common as M {- midi-osc -}
-import qualified Sound.Midi.Type as M {- midi-osc -}
-
--- | Unsigned 8-bit integer (ie. Word8).
-type U8 = Word8
+import Sound.Midi.Common {- midi-osc -}
+import Sound.Midi.Type {- midi-osc -}
 
 -- | Type-generalised 'fromEnum'.
 enum_to_num :: (Enum e, Num n) => e -> n
 enum_to_num = fromIntegral . fromEnum
 
 -- | Type-specialised 'fromEnum'.
-enum_to_u8 :: Enum e => e -> U8
+enum_to_u8 :: Enum e => e -> Byte
 enum_to_u8 = enum_to_num
 
 -- | Sysex prefix common to all packets.
-common_sysex_prefix :: Num n => M.Sysex n
+common_sysex_prefix :: Num n => Sysex n
 common_sysex_prefix = [0xF0,0x00,0x20,0x6B,0x7F,0x42]
 
--- | Add common_sysex_prefix to U8 sequence.
-with_common_sysex_prefix :: Num n => [n] -> M.Sysex n
+-- | Add common_sysex_prefix to byte sequence.
+with_common_sysex_prefix :: Num n => [n] -> Sysex n
 with_common_sysex_prefix = (++) common_sysex_prefix
 
 -- | General form of SET messages.
@@ -38,11 +34,11 @@ with_common_sysex_prefix = (++) common_sysex_prefix
 -- vv = value
 --
 -- > set_sysex 0x00 0x21 0x40 == with_common_sysex_prefix [0x02,0x00,0x00,0x21,0x40,0xF7]
-set_sysex :: Num n => n -> n -> n -> M.Sysex n
+set_sysex :: Num n => n -> n -> n -> Sysex n
 set_sysex pp cc vv = with_common_sysex_prefix [0x02,0x00,pp,cc,vv,0xF7]
 
 -- | Identifier for control, ie. an encoder or a pad (0-15)
-type Ctl_Id = U8
+type Ctl_Id = Nibble
 
 -- | 0x20-0x2F address the sixteen encoders
 ctl_enc_ix0 :: Num n => n
@@ -60,7 +56,7 @@ cc = control ID
 > request_sysex 0x01 ctl_enc_ix0 == with_common_sysex_prefix [0x01,0x00,0x01,0x20,0xF7]
 
 -}
-request_sysex :: Num n => n -> n -> M.Sysex n
+request_sysex :: Num n => n -> n -> Sysex n
 request_sysex pp cc = with_common_sysex_prefix [0x01,0x00,pp,cc,0xF7]
 
 -- * Global
@@ -68,11 +64,11 @@ request_sysex pp cc = with_common_sysex_prefix [0x01,0x00,pp,cc,0xF7]
 -- | Global midi channel (0-15) [untested] (pressing CHAN and PAD-N sets the global channel to N)
 --
 -- > global_midi_channel_set 0x0F == [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,0x40,0x06,0x0F,0xF7]
-global_midi_channel_set :: Num n => n -> M.Sysex n
+global_midi_channel_set :: Num n => n -> Sysex n
 global_midi_channel_set = set_sysex 0x40 0x06 -- corrected from 0x50 0x06 & also 0x50 0x0B, see comments
 
 -- | Global CV/Gate interface receive channel (0-15) [untested]
-global_cv_gate_interface_receive_channel_set :: Num n => n -> M.Sysex n
+global_cv_gate_interface_receive_channel_set :: Num n => n -> Sysex n
 global_cv_gate_interface_receive_channel_set = set_sysex 0x50 0x0C
 
 -- | Enumeration of encoder acceleration modes.
@@ -81,7 +77,7 @@ global_cv_gate_interface_receive_channel_set = set_sysex 0x50 0x0C
 data Acceleration = Slow | Medium | Fast deriving (Eq,Enum,Show)
 
 -- | Global encoder acceleration (0-2)
-global_encoder_acceleration_set :: Num n => Acceleration -> M.Sysex n
+global_encoder_acceleration_set :: Num n => Acceleration -> Sysex n
 global_encoder_acceleration_set = set_sysex 0x41 0x04 . enum_to_num
 
 -- | Enumeration of pad velocity curves.
@@ -90,17 +86,17 @@ global_encoder_acceleration_set = set_sysex 0x41 0x04 . enum_to_num
 data Curve = Linear | Logarithmic | Exponential | Full deriving (Eq,Enum,Show)
 
 -- | Set global pad velocity curve
-global_pad_velocity_curve_set :: Num n => Curve -> M.Sysex n
+global_pad_velocity_curve_set :: Num n => Curve -> Sysex n
 global_pad_velocity_curve_set = set_sysex 0x41 0x03 . enum_to_num
 
 -- * Preset
 
 -- | Store current settings to memory location (0-15)
-preset_store :: Num n => n -> M.Sysex n
+preset_store :: Num n => n -> Sysex n
 preset_store mm = with_common_sysex_prefix [0x06,mm,0xF7]
 
 -- | Recall settings from memory location (0-15)
-preset_recall :: Num n => n -> M.Sysex n
+preset_recall :: Num n => n -> Sysex n
 preset_recall mm = with_common_sysex_prefix [0x05,mm,0xF7]
 
 -- * ENC = encoder, cc = CC-mode
@@ -117,7 +113,7 @@ ch = channel, cc = control-change-number,
 l = left, r = right,
 md = mode
 -}
-enc_cc_set :: Ctl_Id -> (U8,U8,(U8,U8),Encoder_Mode) -> [M.Sysex U8]
+enc_cc_set :: Ctl_Id -> (Byte,Byte,(Byte,Byte),Encoder_Mode) -> [Sysex Byte]
 enc_cc_set j (ch,cc,(l,r),md) =
   let k = ctl_enc_ix0 + j
   in [set_sysex 0x01 k 0x01 -- control-change-mode
@@ -129,22 +125,22 @@ enc_cc_set j (ch,cc,(l,r),md) =
      ]
 
 -- | Set 16 encoders, only CC value differs per encoder.
-enc_cc_set_16 :: (U8,[U8],(U8,U8),Encoder_Mode) -> [M.Sysex U8]
+enc_cc_set_16 :: (Byte,[Byte],(Byte,Byte),Encoder_Mode) -> [Sysex Byte]
 enc_cc_set_16 (ch,cc_seq,rng,md) =
   let f j cc = enc_cc_set j (ch,cc,rng,md)
   in concat (zipWith f [0 .. 15] cc_seq)
 
 -- | Set only CC value (not channel or range or mode)
-enc_cc_set_cc :: Ctl_Id -> U8 -> M.Sysex U8
+enc_cc_set_cc :: Ctl_Id -> Byte -> Sysex Byte
 enc_cc_set_cc j = set_sysex 0x03 (ctl_enc_ix0 + j)
 
-enc_cc_set_cc_16 :: [U8] -> [M.Sysex U8]
+enc_cc_set_cc_16 :: [Byte] -> [Sysex Byte]
 enc_cc_set_cc_16 = let f j cc = enc_cc_set_cc j cc in zipWith f [0 .. 15]
 
-enc_cc_set_ch :: Ctl_Id -> U8 -> M.Sysex U8
+enc_cc_set_ch :: Ctl_Id -> Byte -> Sysex Byte
 enc_cc_set_ch j = set_sysex 0x02 (ctl_enc_ix0 + j)
 
-enc_cc_set_value :: Ctl_Id -> U8 -> M.Sysex U8
+enc_cc_set_value :: Ctl_Id -> Byte -> Sysex Byte
 enc_cc_set_value j = set_sysex 0x00 (ctl_enc_ix0 + j)
 
 -- * ENC PN MODE
@@ -168,7 +164,7 @@ md = mode
 
 The device only sends either the LSB or the MSB value, ie. this does not send 14-bit encoder data.
 -}
-enc_pn_set :: Ctl_Id -> (U8,PN_Type,(U8,U8),PN_Mode) -> [M.Sysex U8]
+enc_pn_set :: Ctl_Id -> (Byte,PN_Type,(Byte,Byte),PN_Mode) -> [Sysex Byte]
 enc_pn_set j (ch,ty,(msb,lsb),md) =
   let k = ctl_enc_ix0 + j
   in [set_sysex 0x01 k 0x04 -- nrpn/rpn-mode
@@ -189,7 +185,7 @@ switch_mode_str :: Switch_Mode -> String
 switch_mode_str x = case x of {Toggle -> "CS" ; Gate -> "RL"}
 
 -- | Set pad to midi-note mode (mn).
-pad_mn_set :: Ctl_Id -> (U8, U8, Switch_Mode) -> [M.Sysex U8]
+pad_mn_set :: Ctl_Id -> (Byte, Byte, Switch_Mode) -> [Sysex Byte]
 pad_mn_set j (ch,mnn,md) =
   let k = ctl_pad_ix0 + j
   in [set_sysex 0x01 k 0x09 -- midi-note-number mode
@@ -199,13 +195,13 @@ pad_mn_set j (ch,mnn,md) =
      ]
 
 -- | 'pad_mn_set' for all pads.
-pad_mn_set_16 :: (U8, [U8], Switch_Mode) -> [M.Sysex U8]
+pad_mn_set_16 :: (Byte, [Byte], Switch_Mode) -> [Sysex Byte]
 pad_mn_set_16 (ch,mnn_seq,md) =
   let f j mnn = pad_mn_set j (ch,mnn,md)
   in concat (zipWith f [0 .. 15] mnn_seq)
 
 -- | Set 16 encoders, only CC value differs per encoder.
-pad_mn_set_16_mpe :: ([U8],Switch_Mode) -> [M.Sysex U8]
+pad_mn_set_16_mpe :: ([Byte],Switch_Mode) -> [Sysex Byte]
 pad_mn_set_16_mpe (mnn_seq,md) =
   let f j mnn = pad_mn_set j (j,mnn,md)
   in concat (zipWith f [0 .. 15] mnn_seq)
@@ -236,7 +232,7 @@ pad_cc_mode_str :: Pad_CC_Mode -> String
 pad_cc_mode_str x = case x of {Pad_Switch Toggle -> "SW1" ; Pad_Switch Gate -> "SW2" ; Pad_Pressure -> "PRS"}
 
 -- | Set pad to control-change mode (ccm).
-pad_cc_set :: Ctl_Id -> (Pad_CC_Mode, U8, U8, (U8, U8)) -> [M.Sysex U8]
+pad_cc_set :: Ctl_Id -> (Pad_CC_Mode, Byte, Byte, (Byte, Byte)) -> [Sysex Byte]
 pad_cc_set j (md,ch,cc,(off,on)) =
   let k = ctl_pad_ix0 + j
   in [set_sysex 0x01 k (pad_cc_mode_ty md) -- control-change sub-type
@@ -247,7 +243,7 @@ pad_cc_set j (md,ch,cc,(off,on)) =
      ,set_sysex 0x06 k (pad_cc_mode_sw md) -- 0=toggle,1=gate
      ]
 
-pad_cc_set_16 :: (Pad_CC_Mode, U8, [U8], (U8, U8)) -> [M.Sysex U8]
+pad_cc_set_16 :: (Pad_CC_Mode, Byte, [Byte], (Byte, Byte)) -> [Sysex Byte]
 pad_cc_set_16 (md,ch,cc_seq,off_on) =
   let f j cc = pad_cc_set j (md,ch,cc,off_on)
   in concat (zipWith f [0 .. 15] cc_seq)
@@ -255,7 +251,7 @@ pad_cc_set_16 (md,ch,cc_seq,off_on) =
 -- * PAD-PC (program-change)
 
 -- | Set pad /j/ to send a program (/prg/) & bank select (/lsb/,/msb/) message on channel /ch/
-pad_pc_set :: Ctl_Id -> (U8, U8, (U8, U8)) -> [M.Sysex U8]
+pad_pc_set :: Ctl_Id -> (Byte, Byte, (Byte, Byte)) -> [Sysex Byte]
 pad_pc_set j (ch,prg,(lsb,msb)) =
   let k = ctl_pad_ix0 + j
   in [set_sysex 0x01 k 0x0B -- program-change
@@ -266,7 +262,7 @@ pad_pc_set j (ch,prg,(lsb,msb)) =
      ]
 
 -- | Set pads to select program-change within indicated bank.
-pad_pc_set_16 :: (U8, [U8], (U8, U8)) -> [M.Sysex U8]
+pad_pc_set_16 :: (Byte, [Byte], (Byte, Byte)) -> [Sysex Byte]
 pad_pc_set_16 (ch,pc_seq,bank) =
   let f j pc = pad_pc_set j (ch,pc,bank)
   in concat (zipWith f [0 .. 15] pc_seq)
@@ -281,23 +277,23 @@ led_status_str :: LED_Status -> String
 led_status_str = map toUpper . drop 4 . show
 
 -- | LED_Status to control byte.
-led_status_to_u8 :: LED_Status -> U8
+led_status_to_u8 :: LED_Status -> Byte
 led_status_to_u8 x = case x of {LED_Off -> 0x00 ; LED_Red -> 0x01 ; LED_Blue -> 0x10 ; LED_Magenta -> 0x11}
 
 -- | Sequence of all control indices that have LEDs, the LHS controls (except STOP) and the pads.
-led_ix_set :: [U8]
+led_ix_set :: [Byte]
 led_ix_set = [0x59 .. 0x5F] ++ [0x70 .. 0x7F]
 
 -- | Set status of LED at index /k/ (either a PAD index or a LHS control index)
-led_set :: U8 -> LED_Status -> M.Sysex U8
+led_set :: Byte -> LED_Status -> Sysex Byte
 led_set k x = set_sysex 0x10 k (led_status_to_u8 x)
 
 -- | Set status of LED at pad /j/ (0-15).
-led_pad_set :: Ctl_Id -> LED_Status -> M.Sysex U8
+led_pad_set :: Ctl_Id -> LED_Status -> Sysex Byte
 led_pad_set j = led_set (ctl_pad_ix0 + j)
 
 -- | The Cntrl-Seq light is ordinarily on, turn it off.
-led_cntrl_seq_off :: M.Sysex U8
+led_cntrl_seq_off :: Sysex Byte
 led_cntrl_seq_off = led_set 0x5A LED_Off
 
 -- * DSC = description
@@ -393,7 +389,7 @@ lhs_control_id_dsc =
 
 -- * LIBRARY
 
-type Sysex_LIB = [(String, [M.Sysex U8])]
+type Sysex_LIB = [(String, [Sysex Byte])]
 
 sysex_lib_accel :: Sysex_LIB
 sysex_lib_accel =
@@ -474,7 +470,7 @@ sysex_lib_pad_mn =
 -- | Library of named Sysex message sequences.
 --
 -- > map fst sysex_library
-sysex_library :: [(String, [M.Sysex U8])]
+sysex_library :: [(String, [Sysex Byte])]
 sysex_library =
   concat [sysex_lib_accel,sysex_lib_curve
          ,sysex_lib_enc
@@ -486,7 +482,7 @@ sysex_library =
 -- > sysex_library_store "/home/rohan/sw/hsc3-data/data/midi/arturia/beatstep/"
 sysex_library_store :: FilePath -> IO ()
 sysex_library_store dir = do
-  let wr (nm,syx) = M.u8_store (dir </> nm <.> "syx") (concat syx)
+  let wr (nm,syx) = bytes_store (dir </> nm <.> "syx") (concat syx)
   mapM_ wr sysex_library
 
 {-

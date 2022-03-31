@@ -10,15 +10,12 @@ import Control.Monad {- base -}
 import Data.Maybe {- base -}
 import System.FilePath {- filepath -}
 
-import qualified Data.ByteString as B {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
 import qualified Music.Theory.Tuple as T {- hmt-base -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
-
-import qualified Sound.Osc.Coding.Convert as O {- hosc -}
 
 import qualified Sound.File.Header as SF {- hsc3-sf -}
 import qualified Sound.File.WAVE as SF {- hsc3-sf -}
@@ -39,13 +36,13 @@ Length   Format      Description
 
 -}
 
--- | (FILE-NAME,FILE-TYPE,FILE-LENGTH,STARTING-BLOCK)
+-- | (File-Name,File-Type,File-Length,Starting-Block)
 type S900_DISK_ENT = (String,Char,U24,U16)
 
 s900_disk_ent_type :: S900_DISK_ENT -> Char
 s900_disk_ent_type (_,ty,_,_) = ty
 
--- | NIL entry, ie. all zeroes.
+-- | Nil entry, ie. all zeroes.
 s900_disk_ent_nil :: S900_DISK_ENT
 s900_disk_ent_nil = (replicate 10 '\NUL','\NUL',0,0)
 
@@ -63,7 +60,7 @@ s900_high_density_n = s900_low_density_n * 2
 
 -- | Load U8 IMG data.
 s900_load_img :: FilePath -> IO [U8]
-s900_load_img = fmap B.unpack . B.readFile
+s900_load_img = M.bytes_load
 
 -- | Predicate to test if data is a nil entry.
 s900_disk_ent_is_nil :: [U8] -> Bool
@@ -81,7 +78,7 @@ s900_disk_ent_parse d =
   else let [nm,unused,ty,[len1,len2,len3],[blk1,blk2],s900_id] = s900_segment [10,6,1,3,2,2] d
        in if unused /= [0,0,0,0,0,0] || s900_id /= [0,0]
           then error "s900_disk_ent_parse?"
-          else Just (map M.u8_to_char nm,M.u8_to_char (ty !! 0)
+          else Just (map toEnum nm,toEnum (ty !! 0)
                     ,u24_pack_le (len1,len2,len3)
                     ,u16_pack_le (blk1,blk2))
 
@@ -170,7 +167,7 @@ s900_read_img fn = do
 --
 -- > map s900_tuning_to_fmidi [960,968,976] == [60,60.5,61]
 s900_tuning_to_fmidi :: U16 -> Double
-s900_tuning_to_fmidi x = M.u16_to_double x / 16.0
+s900_tuning_to_fmidi x = u16_to_f64 x / 16.0
 
 -- | (FILE-NAME,SAMPLE-LENGTH,SAMPLE-RATE,TUNING,LOOP-MODE,END-MARK,START-MARK,LOOP-LENGTH)
 type S900_SF_HDR = (String,U32,U16,U16,Char,U32,U32,U32)
@@ -184,9 +181,9 @@ s900_sf_hdr d =
       [em1,em2,em3,em4] = em
       [sm1,sm2,sm3,sm4] = sm
       [ll1,ll2,ll3,ll4] = ll
-  in (map M.u8_to_char fn
+  in (map toEnum fn
      ,u32_pack_le (ns1,ns2,ns3,ns4),u16_pack_le (sr1,sr2),u16_pack_le (tn1,tn2)
-     ,M.u8_to_char (lp !! 0)
+     ,toEnum (lp !! 0)
      ,u32_pack_le (em1,em2,em3,em4),u32_pack_le (sm1,sm2,sm3,sm4)
      ,u32_pack_le (ll1,ll2,ll3,ll4))
 
@@ -202,7 +199,7 @@ Then there are N/2 bytes containing the upper 8-bits of the last N/2 words.
 s900_sf_data_unpack :: U32 -> [U8] -> [I12]
 s900_sf_data_unpack n d =
   let (p,q) = unzip (T.adj2 2 (u32_take n d))
-      (p0,p1) = (map M.u8_hi p,map M.u8_lo p)
+      (p0,p1) = (map M.bits8_hi p,map M.bits8_lo p)
       r = u32_drop n d
       f = curry u12_pack_le
   in map u12_as_i12 (zipWith f p0 q ++ zipWith f p1 r)
@@ -212,8 +209,8 @@ s900_sf_write_wav dir d = do
   let hdr = s900_sf_hdr (take 60 d)
       (nm,nf,sr,_,_,_,_,_) = hdr
       dat = s900_sf_data_unpack nf (drop 60 d)
-      sf_hdr = SF.SF_Header (O.word32_to_int nf) SF.Linear16 (O.word16_to_int sr) 1
-  SF.wave_store_i16 (dir </> nm <.> "wav") sf_hdr [dat]
+      sf_hdr = SF.SF_Header nf SF.Linear16 sr 1
+  SF.wave_store_i16 (dir </> nm <.> "wav") sf_hdr [map fromIntegral dat]
 
 s900_sf_export :: FilePath -> FilePath -> IO ()
 s900_sf_export dir fn = do

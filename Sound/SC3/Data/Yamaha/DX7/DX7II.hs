@@ -92,7 +92,7 @@ dx7ii_microtune_full = 0x7E
 -- > map dx7ii_tuning_units_to_cents [0x00,0x10,0x20,0x30,0x40] == [0,25,50,75,100]
 -- > map dx7ii_tuning_units_to_cents [0..8] == [0,1.5625,3.125,4.6875,6.25,7.8125,9.375,10.9375,12.5]
 dx7ii_tuning_units_to_cents :: U8 -> Double
-dx7ii_tuning_units_to_cents x = Math.word8_to_double x * (100 / 64)
+dx7ii_tuning_units_to_cents x = fromIntegral x * (100 / 64)
 
 {- | Microtune parameter change sysex
 
@@ -220,7 +220,7 @@ dx7ii_pced_usr_str_tbl =
 
 -- | Synonym for 'genericIndex'
 dx7ii_pced_get :: DX7II_PCED -> U8 -> U8
-dx7ii_pced_get = Byte.word8_at
+dx7ii_pced_get = (!!)
 
 -- | Get parameter value by name.
 dx7ii_pced_get_by_nm :: DX7II_PCED -> String -> U8
@@ -259,7 +259,7 @@ EOX            11110111  F7
 -}
 dx7ii_ubd_request_sysex :: U8-> String -> String -> [U8]
 dx7ii_ubd_request_sysex ch s1 s2 =
-  let f = map Byte.char_to_word8
+  let f = map fromEnum
   in if length s1 /= 4 || length s1 /= 6
      then error "dx7_ubp_request_sysex?"
      else concat [[0xF0,0x43,0x20 + ch,0x7E],f s1,f s2,[0xF7]]

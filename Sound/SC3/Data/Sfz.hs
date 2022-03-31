@@ -37,7 +37,7 @@ import qualified Music.Theory.Pitch as T {- hmt -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 
-import Sound.Midi.Common {- midi-osc -}
+import Sound.Midi.Type {- midi-osc -}
 
 -- * TYPES
 
@@ -199,16 +199,16 @@ sfz_region_sample r = sfz_region_lookup_err r "sample"
 sfz_region_tune :: Sfz_Region -> Int8
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
 
-sfz_region_lochan :: Sfz_Region -> Chan
+sfz_region_lochan :: Sfz_Region -> Channel
 sfz_region_lochan r = sfz_region_lookup_read 1 r "lochan"
 
-sfz_region_hichan :: Sfz_Region -> Chan
+sfz_region_hichan :: Sfz_Region -> Channel
 sfz_region_hichan r = sfz_region_lookup_read 16 r "hichan"
 
-sfz_region_lovel :: Sfz_Region -> Vel
+sfz_region_lovel :: Sfz_Region -> Velocity
 sfz_region_lovel r = sfz_region_lookup_read 0 r "lovel"
 
-sfz_region_hivel :: Sfz_Region -> Vel
+sfz_region_hivel :: Sfz_Region -> Velocity
 sfz_region_hivel r = sfz_region_lookup_read 127 r "hivel"
 
 sfz_region_loop_mode :: Sfz_Region -> Maybe String

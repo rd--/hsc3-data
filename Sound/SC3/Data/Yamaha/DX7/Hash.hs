@@ -24,7 +24,7 @@ dx7_hash_pp = printf "%08X"
 
 -- | Hash 145-element parameter sequence to a 32-bit word.
 dx7_param_hash :: DX7_Param -> DX7_Hash
-dx7_param_hash = Hash.asWord32 . Hash.hash32 . B.pack
+dx7_param_hash = Hash.asWord32 . Hash.hash32 . B.pack . map fromIntegral
 
 -- | 'dx7_param_hash' of 'dx7_voice_param'.
 dx7_voice_hash :: DX7_Voice -> DX7_Hash
