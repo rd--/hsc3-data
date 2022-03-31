@@ -1,10 +1,8 @@
 module Sound.SC3.Data.Colour where
 
-import Data.Word {- base -}
-
 import qualified Music.Theory.Array.CSV as T {- hmt-base -}
 
-type U8 = Word8
+type U8 = Int
 type RGB24 = (U8,U8,U8)
 
 -- | Read (name,red,green,blue) CSV table.

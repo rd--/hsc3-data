@@ -28,12 +28,11 @@ import qualified Music.Theory.Maybe as T {- hmt-base -}
 import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Constant as M {- midi-osc -}
 
-import Sound.SC3.Data.Byte {- hsc3-data -}
 import Sound.SC3.Data.Math.Types {- hsc3-data -}
 
 import Sound.SC3.Data.Roland.D50.PCM {- hsc3-data -}
 
--- * ROLAND
+-- * Roland
 
 -- | The checksum is a derived from the address (three bytes)
 -- and the data bytes.
@@ -49,7 +48,7 @@ roland_checksum =
               x:w' -> let n' = n + x in f (if n' > 0x80 then n' - 0x80 else n') w'
     in f 0
 
--- * PARAMETER TYPE
+-- * Parameter Type
 
 -- | A patch has two tones, 'Upper' and 'Lower'.
 data Tone = Upper | Lower deriving (Eq,Show)
@@ -61,7 +60,7 @@ data Partial_Ix = One | Two deriving (Eq,Show)
 --   Four 'Partial's (U1,U2,L1,L2), two 'Common' (U,L), or 'Patch'.
 data D50_Parameter_Type = Partial Tone Partial_Ix | Common Tone | Patch deriving (Eq,Show)
 
--- * PARAMETER
+-- * Parameter
 
 -- | Either a numeric range or a semi-colon delimited sequence of strings.
 type D50_USR_STR = String
@@ -109,7 +108,7 @@ d50_bank_to_ix (p,q) = ((p - 1) * 8) + (q - 1)
 d50_ix_to_bank :: Integral i => i -> (i,i)
 d50_ix_to_bank n = let (p,q) = n `divMod` 8 in (p + 1,q + 1)
 
--- * ADDRESS
+-- * Address
 
 -- | Parameter address.
 type D50_ADDRESS = U24
@@ -128,6 +127,9 @@ d50_addr_parse_t3 str =
 -- > d50_addr_encode (0x02,0x00,0x00) == 0x8000
 d50_addr_encode :: (U8,U8,U8) -> D50_ADDRESS
 d50_addr_encode = M.bits_21_join_be
+
+d50_addr_decode :: D50_ADDRESS -> (U8,U8,U8)
+d50_addr_decode = M.bits_21_sep_be
 
 -- | 'd50_addr_encode' of 'd50_addr_parse_t3'
 d50_addr_read :: String -> D50_ADDRESS
@@ -280,7 +282,7 @@ d50_work_area_base_address = 0x8000
 d50_patch_memory_base :: U8 -> D50_ADDRESS
 d50_patch_memory_base n = d50_work_area_base_address + (d50_parameter_n * u8_to_u24 n)
 
--- * REVERB
+-- * Reverb
 
 -- | Size of stored (encoded) reverb data segment (376-bytes).
 d50_reverb_data_segment_n :: Num n => n
@@ -327,7 +329,7 @@ d50_reverb_encode =
 d50_reverb_memory_base :: U8 -> D50_ADDRESS
 d50_reverb_memory_base n = 61440 + (376 * u8_to_u24 n)
 
--- * CHAR
+-- * Char
 
 -- | Table mapping the (NON-ASCII) D-50 character encoding to it's ASCII character.
 --
@@ -358,7 +360,7 @@ d50_char_to_byte c = T.reverse_lookup c d50_char_table
 d50_char_to_byte_err :: Char -> U8
 d50_char_to_byte_err = fromMaybe (error "d50_char_to_byte?") . d50_char_to_byte
 
--- * USR/STR
+-- * Usr/Str
 
 -- | Centering string spacer, bias SPACE to right if /rhs/ is True.
 --
@@ -483,14 +485,14 @@ d50_key_mode_tbl = zip [0..] (Split.splitOn ";" d50_key_mode_usr)
 d50_is_lower_tone_unused :: U8 -> Bool
 d50_is_lower_tone_unused x = x == 0 || x == 4
 
--- * STRUCTURE
+-- * Structure
 
 -- | Tone structure indicates synthesis type for each partial.
 --   Written as 3-character string (S=SYNTHESIS, P=PCM, R=RING-MOD).
 d50_structure_usr :: D50_USR_STR
 d50_structure_usr = "SS-;SSR;PS-;PSR;SPR;PP-;PPR"
 
--- * PARTIAL
+-- * Partial
 
 -- | The number of PARTIAL parameters.
 d50_partial_parameters_n :: Num n => n
@@ -579,7 +581,7 @@ d50_partial_init_squ =
   ,100,60,27,12 ,0,50,50,50,0 ,100,100,100,100,0 ,0,0 ,4,0,7 -- TVA
   ]
 
--- * COMMON (TONE)
+-- * Common (Tone)
 
 -- | USR string for partial-mute value. (2 CHAR)
 d50_partial_mute_usr :: D50_USR_STR
@@ -647,7 +649,7 @@ d50_common_init_squ =
    ,1,50 -- MUT + BAL
    ])
 
--- * PATCH
+-- * Patch
 
 -- | The number of PATCH parameters, excluding 18-character PATCH NAME.
 d50_patch_factors_n :: Num n => n
@@ -683,7 +685,7 @@ d50_patch_factors =
     ,(39,"Midi Transmit Prog. Change",101,0,"OFF | 1 - 100")
     ]
 
--- * PARAMETER
+-- * Parameter
 
 -- | Complete set of /used/ 'D50_Parameter's.
 --   Excludes NAME data.
@@ -799,7 +801,7 @@ d50_parameters_by_type ty =
       Common _ -> d50_common_factors
       Patch -> d50_patch_factors
 
--- * PARAMETER
+-- * Parameter
 
 -- | Parameter range as stored.
 d50_parameter_range :: D50_Parameter -> (U8,U8)
@@ -835,7 +837,7 @@ d50_parameter_value_usr_err p x =
   (error (show ("parameter_value_usr",p,x)))
   (d50_parameter_value_usr p x)
 
--- * PATCH
+-- * Patch
 
 -- | Patch name, 18-byte ASCII string.
 d50_patch_name :: D50_Patch -> String
@@ -889,7 +891,7 @@ d50_patch_name_match cs (u1,l1,p1) (u2,l2,p2) =
       m x y = c x `isInfixOf` c y
   in m u1 u2 && m l1 l2 && m p1 p2
 
--- * SYSEX
+-- * Sysex
 
 -- | SYSEX as sequence of U8.
 type D50_Sysex = [U8]
@@ -899,7 +901,7 @@ type D50_Sysex = [U8]
 d50_sysex_segment :: [U8] -> [D50_Sysex]
 d50_sysex_segment = tail . T.split_before 0xF0
 
--- * D-50 SYSEX CMD
+-- * D-50 Sysex Cmd
 
 -- | D50 SYSEX command ID.
 data D50_SYSEX_CMD = RQ1_CMD -- ^ REQUEST DATA - ONE WAY (0x11)
@@ -959,13 +961,13 @@ d50_cmd_hdr ch cmd = [M.k_Sysex_Status,M.k_Roland_ID,ch,d50_id,d50_sysex_cmd_enc
 d50_cmd_data_chk :: [U8] -> [U8]
 d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.k_Sysex_End]
 
--- | Generate ADDR/SIZE category of D-50 SYSEX messages.
+-- | Generate Addr/Size category of D-50 Sysex messages.
 d50_addr_sz_cmd_gen :: D50_SYSEX_CMD -> U8 -> D50_ADDRESS -> U24 -> D50_Sysex
 d50_addr_sz_cmd_gen cmd ch addr sz =
-    let ((d1,d2,d3),(d4,d5,d6)) = (u21_unpack_be addr,u21_unpack_be sz)
+    let ((d1,d2,d3),(d4,d5,d6)) = (d50_addr_decode addr,d50_addr_decode sz)
     in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk [d1,d2,d3,d4,d5,d6]]
 
--- | Generate WSD command SYSEX.
+-- | Generate Wsd command Sysex.
 --
 -- > let pp = T.byte_seq_hex_pp True
 -- > let syx = T.read_hex_byte_seq_ws "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
@@ -1058,17 +1060,17 @@ d50_data_chk (dat_chk,dat_chk_n) =
 d50_data_addr :: ([U8],U24) -> Maybe (U24,[U8],U24)
 d50_data_addr (dat,dat_n) =
     case dat of
-      a0:a1:a2:dat' -> Just (u21_pack_be (a0,a1,a2),dat',dat_n - 3)
+      a0:a1:a2:dat' -> Just (d50_addr_encode (a0,a1,a2),dat',dat_n - 3)
       _ -> Nothing
 
 -- | Parse addr/size command from SYSEX.
 d50_addr_sz_cmd_parse :: D50_Sysex -> Maybe (U8,D50_SYSEX_CMD,D50_ADDRESS,U24)
 d50_addr_sz_cmd_parse syx =
   case d50_cmd_parse syx of
-    Just (ch,cmd,[a1,a2,a3,s1,s2,s3],6) -> Just (ch,cmd,u21_pack_be (a1,a2,a3),u21_pack_be (s1,s2,s3))
+    Just (ch,cmd,[a1,a2,a3,s1,s2,s3],6) -> Just (ch,cmd,d50_addr_encode (a1,a2,a3),d50_addr_encode (s1,s2,s3))
     _ -> Nothing
 
--- * D50 DSC SYSEX (DT1|DAT)
+-- * D50 Dsc Sysex (Dt1|Dat)
 
 -- | DSC = DATA-SET COMMAND (DT1|DAT), (CMD,DEVICE-ID,ADDRESS,DATA)
 type D50_DSC = (D50_SYSEX_CMD,U8,D50_ADDRESS,[U8])
@@ -1101,14 +1103,13 @@ d50_dsc_parse syx =
 d50_dsc_parse_err :: D50_Sysex -> D50_DSC
 d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
--- | Generate DSC (DT1|DAT) SYSEX message.
+-- | Generate Dsc (Dt1|Dat) Sysex Message.
 --
--- > hexstr = T.read_hex_byte_seq
--- > d50_dsc_gen (DT1_CMD,0,1,[50]) == hexstr "F041001412000001324DF7"
--- > d50_dsc_gen (DT1_CMD,0,1,[50]) == hexstr "F041001412000001324DF7"
+-- > d50_dsc_gen (DT1_CMD,0,1,[50]) == T.read_hex_byte_seq "F041001412000001324DF7"
+-- > d50_dsc_gen (DT1_CMD,0,1,[50]) == T.read_hex_byte_seq "F041001412000001324DF7"
 d50_dsc_gen :: D50_DSC -> D50_Sysex
 d50_dsc_gen (cmd,ch,a,d) =
-    let (d1,d2,d3) = u21_unpack_be a
+    let (d1,d2,d3) = d50_addr_decode a
     in if length d > 256
        then error "d50_dsc_gen: #DATA > 256"
        else concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk (d1 : d2 : d3 : d)]
@@ -1140,14 +1141,14 @@ j 0eee eeee    Checksum
 k 1111 0111 F7 End of System Exclusive
 
 > let nm = (Patch,"Lower Tone Fine Tune")
-> d50_gen_dt1_nm 0 nm [0x10] == Just (hexstr "F0410014120003191054F7")
+> d50_gen_dt1_nm 0 nm [0x10] == Just (T.read_hex_byte_seq "F0410014120003191054F7")
 -}
 d50_gen_dt1_nm :: U8 -> (D50_Parameter_Type,String) -> [U8] -> Maybe D50_Sysex
 d50_gen_dt1_nm ch nm d =
     let f a = d50_dsc_gen (DT1_CMD,ch,a,d)
     in fmap f (d50_named_parameter_to_address nm)
 
--- * D50 DSC SEQ
+-- * D50 Dsc Seq
 
 -- | Join a contiguous sequence of 'D50_DSC' into one data segment, ie. (address,size,data).
 d50_dsc_seq_join :: [D50_DSC] -> (D50_ADDRESS,U24,[U8])
@@ -1173,7 +1174,7 @@ d50_bulk_data_transfer_parse (addr,sz,dat) =
 
 -- * Tuning
 
--- | Generate DSC/DT1 sequence to set the @WG PITCH KF@ parameters of all
+-- | Generate Dsc/Dt1 sequence to set the @Wg Pitch Kf@ parameters of all
 -- four partials to indicated ratio.
 --
 -- > map d50_dsc_gen (d50_wg_pitch_kf_dt1 (1/4))
@@ -1184,7 +1185,7 @@ d50_wg_pitch_kf_dt1 r =
         f a = (DT1_CMD,0,a,[e])
     in map f a_seq
 
--- * HEX I/O
+-- * Hex I/O
 
 {- | Load text file where each line is a sequence of 448 (0x1C0)
    two-character hexadecimal byte values, ie. a D50 patch.
@@ -1200,7 +1201,7 @@ d50_load_hex fn = do
 d50_store_hex :: FilePath -> [D50_Patch] -> IO ()
 d50_store_hex = T.store_hex_byte_seq
 
--- * BINARY I/O
+-- * Binary I/O
 
 -- | Load binary 'U8' sequence from file.
 d50_load_binary_u8 :: FilePath -> IO [U8]
@@ -1210,13 +1211,13 @@ d50_load_binary_u8 = M.bytes_load
 d50_store_binary_u8 :: FilePath -> [U8] -> IO ()
 d50_store_binary_u8 = M.bytes_store
 
-{-| Load DT1|DAT sequence from 36048-byte D-50 SYSEX file.
+{-| Load Dt1|Dat sequence from 36048-byte D-50 Sysex file.
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > b <- d50_load_binary_u8 sysex_fn
 > let s = d50_sysex_segment b
 > d <- d50_load_sysex_dsc sysex_fn
-> let s' = d50_dsc_gen_seq (DT1_CMD,0,d50_patch_memory_base 0,concatMap dsc_data d)
+> let s' = d50_dsc_gen_seq (DT1_CMD,0,d50_patch_memory_base 0,concatMap d50_dsc_data d)
 > s == s'
 
 -}
@@ -1233,7 +1234,7 @@ d50_load_sysex_dsc fn = do
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > (p,r) <- d50_load_sysex sysex_fn
-> putStrLn$unlines$map d50_patch_name p
+> putStrLn $ unlines $ map d50_patch_name p
 
 -}
 d50_load_sysex :: FilePath -> IO ([D50_Patch],[D50_Reverb])
@@ -1244,6 +1245,7 @@ d50_load_sysex fn = do
     Nothing -> error "d50_load_sysex?"
 
 {-
+
 let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 (p,_) <- d50_load_sysex sysex_fn
 p0 = p !! 0
