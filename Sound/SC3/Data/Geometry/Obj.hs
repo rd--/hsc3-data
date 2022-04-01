@@ -1,7 +1,7 @@
-{- | OBJ file format functions
+{- | Obj file format functions
 
-PDF=<http://www.cs.utah.edu/~boulos/cs3505/obj_spec.pdf>
-TXT=<http://www.martinreddy.net/gfx/3d/OBJ.spec>
+Pdf=<http://www.cs.utah.edu/~boulos/cs3505/obj_spec.pdf>
+Txt=<http://www.martinreddy.net/gfx/3d/OBJ.spec>
 -}
 module Sound.SC3.Data.Geometry.Obj where
 
@@ -73,25 +73,25 @@ obj_store k fn =
   let f (i,j) = map Left i ++ map Right j
   in writeFile fn . unlines . map (obj_format_entry k) . f
 
--- * LN
+-- * Ln
 
 -- | l=line entries
-type LN_DAT = ([V3 R],[[Int]])
+type Ln_Dat = ([V3 R],[[Int]])
 
 -- | Select only l=line entries from 'Obj'.
-obj_to_ln :: Obj -> LN_DAT
+obj_to_ln :: Obj -> Ln_Dat
 obj_to_ln =
   let f (ty,ix) = if ty == 'l' then Just ix else Nothing
   in second (mapMaybe f)
 
-ln_to_obj :: LN_DAT -> Obj
+ln_to_obj :: Ln_Dat -> Obj
 ln_to_obj (v,l) = (v,map ((,) 'l') l)
 
 -- | 'obj_to_ln' of 'obj_load'
-obj_load_ln :: FilePath -> IO LN_DAT
+obj_load_ln :: FilePath -> IO Ln_Dat
 obj_load_ln = fmap obj_to_ln . obj_load
 
-ln_dat_from_vertex_seq :: [[V3 R]] -> LN_DAT
+ln_dat_from_vertex_seq :: [[V3 R]] -> Ln_Dat
 ln_dat_from_vertex_seq t =
   let reverse_lookup k = fmap fst . find ((== k) . snd)
       reverse_lookup_err k = fromMaybe (error "reverse_lookup") . reverse_lookup k
@@ -99,13 +99,13 @@ ln_dat_from_vertex_seq t =
       v = zip [0..] p
   in (p,map (map (`reverse_lookup_err` v)) t)
 
-obj_store_ln_dat :: Int -> FilePath -> LN_DAT -> IO ()
+obj_store_ln_dat :: Int -> FilePath -> Ln_Dat -> IO ()
 obj_store_ln_dat k fn = obj_store k fn . ln_to_obj
 
 obj_store_ln :: Int -> FilePath -> [[V3 R]] -> IO ()
 obj_store_ln k fn = obj_store_ln_dat k fn . ln_dat_from_vertex_seq
 
--- * GRAPH
+-- * Graph
 
 obj_to_lbl_ :: Obj -> T.Lbl_ (V3 R)
 obj_to_lbl_ =
@@ -127,7 +127,7 @@ lbl_to_obj (v,e) = let f ((i,j),()) = ('l',[i,j]) in (map snd v,map f e)
 obj_store_lbl_ :: Int -> FilePath -> T.Lbl_ (V3 R) -> IO ()
 obj_store_lbl_ k fn = obj_store k fn . lbl_to_obj
 
--- * FACES
+-- * Faces
 
 -- | (vertices,[[v-indices]])
 type Face_Dat = ([V3 R],[[Int]])
