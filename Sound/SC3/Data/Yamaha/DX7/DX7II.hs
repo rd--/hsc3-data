@@ -5,8 +5,6 @@ import Data.List {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.Byte as Byte {- hmt -}
-import qualified Music.Theory.Math.Convert as Math {- hmt -}
 import qualified Music.Theory.Show as Show {- hmt -}
 
 import Sound.SC3.Data.Yamaha.DX7 {- hsc3-data -}

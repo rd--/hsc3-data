@@ -42,6 +42,6 @@ main = do
 {-
 
 let csv_fn = "/home/rohan/cvs/uc/uc-26/daily-practice/2016-07-06/pt-2-20.csv"
-mk_real csv_fn (1001,1001) (0,1) "/tmp/pt-2-20.pbm"
+mk_pt_real_pbm csv_fn (1001,1001) (0,1) "/tmp/pt-2-20.pbm"
 
 -}
