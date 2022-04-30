@@ -6,7 +6,7 @@ import Data.Maybe {- base -}
 import Data.Ratio {- base -}
 import Data.Word {- base -}
 
-import qualified Music.Theory.Duration.RQ as T {- hmt -}
+import qualified Music.Theory.Duration.Rq as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
 import qualified Sound.Midi.Common as M {- midi-osc -}
@@ -32,15 +32,15 @@ z_delta_time_to_word64 = fromIntegral
 z_word14_to_int :: Z.Word14 -> Int
 z_word14_to_int = fromIntegral . toInteger
 
--- | Calculate 'T.RQ' for /t/ given 'Z.MidiTimeDivision'.
-z_to_rq :: Integral t => Z.MidiTimeDivision -> t -> T.RQ
+-- | Calculate 'T.Rq' for /t/ given 'Z.MidiTimeDivision'.
+z_to_rq :: Integral t => Z.MidiTimeDivision -> t -> T.Rq
 z_to_rq t_div t =
   case t_div of
     Z.TPB n -> fromIntegral t % fromIntegral n
     _ -> error "non-TPB division"
 
 -- | Type-specialised 'z_to_rq'.
-z_delta_time_to_rq :: Z.MidiTimeDivision -> Z.DeltaTime -> T.RQ
+z_delta_time_to_rq :: Z.MidiTimeDivision -> Z.DeltaTime -> T.Rq
 z_delta_time_to_rq = z_to_rq
 
 -- * Voice
