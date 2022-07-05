@@ -2,7 +2,7 @@ import Data.List {- base -}
 import System.Environment {- base -}
 import Text.Printf {- base -}
 
-import Sound.SC3.Data.XML.KML {- hsc3-data -}
+import Sound.Sc3.Data.XML.KML {- hsc3-data -}
 
 minmax :: Ord x => [x] -> (x,x)
 minmax x = (minimum x,maximum x)

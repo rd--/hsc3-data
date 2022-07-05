@@ -1,6 +1,6 @@
 import System.Environment {- base -}
 
-import qualified Sound.SC3.Data.Image.Plain as Plain {- hsc3-data -}
+import qualified Sound.Sc3.Data.Image.Plain as Plain {- hsc3-data -}
 
 img_uniq :: Char -> FilePath -> IO ()
 img_uniq md fn = do

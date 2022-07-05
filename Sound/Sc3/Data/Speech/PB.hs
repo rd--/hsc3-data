@@ -1,7 +1,7 @@
 -- | Peterson/Barney (1952) data set giving formant locations.
 module Sound.Sc3.Data.Speech.PB where
 
-import qualified Music.Theory.Array.CSV as Csv {- hmt-base -}
+import qualified Music.Theory.Array.Csv as Csv {- hmt-base -}
 
 -- | Voice table
 pb_vc_tbl :: [(Int,String)]

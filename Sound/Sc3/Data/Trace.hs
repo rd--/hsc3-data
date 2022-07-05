@@ -13,7 +13,7 @@ import qualified System.FilePath.Glob as Glob {- glob -}
 import Data.CG.Minus.Core {- hcg-minus -}
 import Data.CG.Minus.Types {- hcg-minus -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Array.Csv as T {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}
 import qualified Music.Theory.Tuple as T {- hmt-base -}
 
@@ -109,7 +109,7 @@ trace_load_sf2_dir p = do
 
 trace_load_csv :: Maybe Int -> FilePath -> IO (Trace Time [Double])
 trace_load_csv nc fn = do
-  (_,tbl) <- T.csv_table_read (True,',',False,T.CSV_No_Align) read fn
+  (_,tbl) <- T.csv_table_read (True,',',False,T.Csv_No_Align) read fn
   when (null tbl) (error "trace_load_csv: empty tbl")
   let t:d = transpose tbl
   trace_assert_nc nc (length (head tbl) - 1)
@@ -340,7 +340,7 @@ trace2_plot_tbl =
     let f t = [trace_map fst t,trace_map snd t]
     in P.plot_p2_ln . concatMap f
 
--- * CSV
+-- * Csv
 
 trace_write_csv :: (n -> String,a -> [String]) -> FilePath -> [(n,a)] -> IO ()
 trace_write_csv (n_pp,a_pp) fn =

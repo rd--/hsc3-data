@@ -2,16 +2,16 @@ import Data.Function {- base -}
 import Data.List {- base -}
 import System.Environment {- base -}
 
-import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
+import qualified Music.Theory.Array.Csv.Midi.Mnd as T {- hmt -}
 import qualified Music.Theory.List as T {- hmt-base -}
 import qualified Music.Theory.Show as T {- hmt-base -}
 
-import Sound.SC3.Common.Buffer {- hsc3 -}
+import Sound.Sc3.Common.Buffer {- hsc3 -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
 
-import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
-import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.PBM as P {- hsc3-data -}
 
 type R = Double
 type OPT = ((R,R,Maybe FilePath,Bool,Bool) -- midi note number

@@ -3,7 +3,7 @@ import Data.List {- base -}
 import System.Environment {- base -}
 import Numeric {- base -}
 
-import qualified Sound.SC3.Data.LPC as LPC {- hsc3-data -}
+import qualified Sound.Sc3.Data.LPC as LPC {- hsc3-data -}
 
 help :: [String]
 help =

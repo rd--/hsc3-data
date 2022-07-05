@@ -1,6 +1,6 @@
 import System.Environment {- base -}
 
-import Sound.SC3.Data.Chemistry.STRUCT {- hsc3-data -}
+import Sound.Sc3.Data.Chemistry.STRUCT {- hsc3-data -}
 
 usage :: [String]
 usage =

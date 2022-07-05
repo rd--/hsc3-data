@@ -1,15 +1,15 @@
 import System.Environment {- base -}
 
-import qualified Sound.File.NeXT as AU {- hsc3-sf -}
+import qualified Sound.File.Next as Au {- hsc3-sf -}
 
-import Sound.SC3.Data.Image.PGM {- hsc3-data -}
+import Sound.Sc3.Data.Image.PGM {- hsc3-data -}
 
 -- > let fn = "/home/rohan/sw/hsc3-sf/au/mc-4-16.au"
 -- > au_to_pgm 8 fn (fn ++ ".pgm")
 au_to_pgm :: Int -> FilePath -> FilePath -> IO ()
 au_to_pgm depth au_fn pgm_fn = do
-  (hdr,vec) <- AU.au_read_f32_vec au_fn
-  let dm = (AU.channelCount hdr,AU.frameCount hdr)
+  (hdr,vec) <- Au.au_read_f32_vec au_fn
+  let dm = (Au.channelCount hdr,Au.frameCount hdr)
       img = pgmf_from_vec_co dm vec
   pgm5_save_0 pgm_fn (pgmf_to_pgm depth img)
 

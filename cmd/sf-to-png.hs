@@ -2,7 +2,7 @@ import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
 import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
-import qualified Sound.SC3.Data.Image.Plain as I {- hsc3-data -}
+import qualified Sound.Sc3.Data.Image.Plain as I {- hsc3-data -}
 
 sf_to_png :: (Double -> Double) -> FilePath -> FilePath -> IO ()
 sf_to_png op sf_fn png_fn = do

@@ -1,7 +1,7 @@
--- | Yamaha TX816
-module Sound.Sc3.Data.Yamaha.DX7.TX816 where
+-- | Yamaha Tx816
+module Sound.Sc3.Data.Yamaha.Dx7.Tx816 where
 
--- | The DX7 does not have patch request SYSEX messages, the TX816 does.
+-- | The Dx7 does not have patch request SYSEX messages, the Tx816 does.
 tx816_request_data :: Num t => t -> t -> [t]
 tx816_request_data ch cmd = [0xF0,0x43,0x2 + ch,cmd,0xF7]
 

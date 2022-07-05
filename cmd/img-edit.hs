@@ -1,8 +1,8 @@
 import System.Environment {- base -}
 import System.FilePath {- filepath -}
 
-import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
-import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.PBM as P {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
 
 edit_pbm_le :: B.DIRECTION -> FilePath -> FilePath -> IO ()
 edit_pbm_le dir in_fn out_fn = do

@@ -1,6 +1,6 @@
 import System.Environment {- base -}
 
-import qualified Sound.SC3.Data.Midi.Plain as M {- hsc3-data -}
+import qualified Sound.Sc3.Data.Midi.Plain as M {- hsc3-data -}
 
 usage :: [String]
 usage =

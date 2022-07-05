@@ -1,17 +1,17 @@
--- | DX7 / Algorithm
-module Sound.Sc3.Data.Yamaha.DX7.Algorithm where
+-- | Dx7 / Algorithm
+module Sound.Sc3.Data.Yamaha.Dx7.Algorithm where
 
 import Data.Maybe {- base -}
 import Data.List {- base -}
 import Text.Printf {- base -}
 
-import Sound.Sc3.Data.Yamaha.DX7 {- hsc3-data -}
+import Sound.Sc3.Data.Yamaha.Dx7 {- hsc3-data -}
 
-{- | DX7 Algorithm.
+{- | Dx7 Algorithm.
      List of (dst,src) operator edges and a list of output (carrier) operators.
      Operators are zero-indexed.
 -}
-type DX7_Algorithm = ([(U8,U8)],[U8])
+type Dx7_Algorithm = ([(U8,U8)],[U8])
 
 {- | Feedback is indicated by a (dst,src) pair where dst >= src.
      Feedback edges have an amplitude multiplier, ordinary edges are at unit gain.
@@ -22,14 +22,14 @@ Each algorithm has exactly one feedback edge.
 
 > all (== 1) (map (length . filter (\(dst,src) -> dst >= src) . fst) dx7_algorithms)
 -}
-dx7_algorithm_feedback_edge :: DX7_Algorithm -> (U8,U8)
+dx7_algorithm_feedback_edge :: Dx7_Algorithm -> (U8,U8)
 dx7_algorithm_feedback_edge =
   fromMaybe (error "dx7_algorithm_feedback_edge") .
   find (uncurry (>=)) .
   fst
 
--- | The 32 DX7 algorithms in sequence.
-dx7_algorithms :: [DX7_Algorithm]
+-- | The 32 Dx7 algorithms in sequence.
+dx7_algorithms :: [Dx7_Algorithm]
 dx7_algorithms =
   [([(0,1),(2,3),(3,4),(4,5),(5,5)],[0,2]) -- 1
   ,([(0,1),(1,1),(2,3),(3,4),(4,5)],[0,2])
@@ -64,7 +64,7 @@ dx7_algorithms =
   ,([(4,5),(5,5)],[0,1,2,3,4])
   ,([(5,5)],[0,1,2,3,4,5])]
 
--- | The group structure of the DX7 algorithms, as drawn on the case.
+-- | The group structure of the Dx7 algorithms, as drawn on the case.
 --   Four lines, the first divided into two parts, algorithms grouped by spacing.
 --
 -- > sum (concat (concat dx7_algorithm_group_structure)) == 32
@@ -83,7 +83,7 @@ dx7_algorithm_group_structure =
 > mapM_ wr [0 .. 31]
 
 -}
-dx7_algorithm_dot :: DX7_Algorithm -> [String]
+dx7_algorithm_dot :: Dx7_Algorithm -> [String]
 dx7_algorithm_dot (e,o) =
   let n_f k = printf "%d [shape=square,label=%d];" k (k + 1)
       e_f (dst,src) = printf

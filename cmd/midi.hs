@@ -2,12 +2,12 @@ import System.Environment {- base -}
 
 import qualified Codec.Midi as C {- HCodecs -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Array.Csv as T {- hmt-base -}
 
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
-import qualified Sound.SC3.Data.Midi.File.C as File.C {- hsc3-data -}
-import qualified Sound.SC3.Data.Midi.Plain as Plain {- hsc3-data -}
+import qualified Sound.Sc3.Data.Midi.File.C as File.C {- hsc3-data -}
+import qualified Sound.Sc3.Data.Midi.Plain as Plain {- hsc3-data -}
 
 node_to_text :: Int -> (Int,C.Message) -> [String]
 node_to_text n (t,m) =
@@ -25,7 +25,7 @@ gen_csv :: [[String]] -> String
 gen_csv tbl =
   let w = maximum (map length tbl)
       tbl' = map (pad_right "" w) tbl
-  in T.csv_table_pp id (False,',',False,T.CSV_Align_Right) (Nothing,tbl')
+  in T.csv_table_pp id (False,',',False,T.Csv_Align_Right) (Nothing,tbl')
 
 midi_to_csv_text :: FilePath -> IO ()
 midi_to_csv_text m_fn = do

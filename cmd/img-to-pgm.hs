@@ -1,5 +1,5 @@
 import System.Environment {- base -}
-import Sound.SC3.Data.Image.Plain {- hsc3-data -}
+import Sound.Sc3.Data.Image.Plain {- hsc3-data -}
 
 img_to_pgm :: Int -> (RGB24 -> GREY) -> FilePath -> FilePath -> IO ()
 img_to_pgm d to_grey img_fn pgm_fn = do

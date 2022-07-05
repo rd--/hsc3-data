@@ -1,5 +1,5 @@
--- | Yamaha TX7
-module Sound.Sc3.Data.Yamaha.DX7.TX7 where
+-- | Yamaha Tx7
+module Sound.Sc3.Data.Yamaha.Dx7.Tx7 where
 
 -- * 4-6. 1 Performance Bulk Data (f = 1)
 

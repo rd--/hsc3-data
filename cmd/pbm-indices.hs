@@ -1,8 +1,8 @@
 import Data.List {- base -}
 import System.Environment {- base -}
 
-import qualified Sound.SC3.Data.Bitmap.PBM as I {- hsc3-data -}
-import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.PBM as I {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
 
 pbm_load_indices :: FilePath -> IO B.Indices
 pbm_load_indices pbm_fn = do

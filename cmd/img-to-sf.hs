@@ -1,7 +1,7 @@
 import System.Environment {- base -}
 import System.FilePath {- filepath -}
 
-import Sound.SC3.Data.Image.Plain {- hsc3-data -}
+import Sound.Sc3.Data.Image.Plain {- hsc3-data -}
 
 img_to_sf :: (RGB24 -> Float) -> FilePath -> IO ()
 img_to_sf to_gs fn = do

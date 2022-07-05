@@ -6,14 +6,14 @@ import Sound.Osc.Core {- hosc -}
 
 import qualified Sound.Midi.Pm as Pm {- midi-osc -}
 
-import Sound.SC3.Data.Math.Types {- hsc3-data -}
-import qualified Sound.SC3.Data.Roland.D50 as D50 {- hsc3-data -}
-import qualified Sound.SC3.Data.Roland.D50.DB as D50 {- hsc3-data -}
-import qualified Sound.SC3.Data.Roland.D50.Hash as D50 {- hsc3-data -}
-import qualified Sound.SC3.Data.Roland.D50.PM as D50 {- hsc3-data -}
-import qualified Sound.SC3.Data.Roland.D50.PP as D50 {- hsc3-data -}
+import Sound.Sc3.Data.Math.Types {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50 as D50 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50.DB as D50 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50.Hash as D50 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50.PM as D50 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50.PP as D50 {- hsc3-data -}
 
--- * COMMON
+-- * Common
 
 -- > map ms_to_sec [1,10,50,100,1000] == [0.001,0.01,0.05,0.1,1]
 ms_to_sec :: Int -> Double
@@ -34,7 +34,7 @@ pm_run_proc dt fd proc_f =
           recur
     in recur
 
--- * LOAD ON PROGRAM CHANGE (LPC)
+-- * Load on program change (lpc)
 
 lpc_recv_midi :: ([D50.D50_Patch], Pm.Pm_Fd) -> Pm.Proc_F
 lpc_recv_midi (p,fd) m =
@@ -52,7 +52,7 @@ lpc_run fn = do
   out_fd <- Pm.pm_open_output_def
   pm_run_proc 10 in_fd (lpc_recv_midi (p,out_fd))
 
--- * PRINT
+-- * Print
 
 d50_print_dat :: Maybe Int -> ((Int,[U8]) -> [String]) -> [D50.D50_Patch] -> IO ()
 d50_print_dat m_ix pp v =
@@ -86,7 +86,7 @@ sysex_print m_ix ty fn = mapM D50.d50_load_sysex fn >>= mapM_ (dat_print True m_
 hex_print :: Maybe Int -> String -> [FilePath] -> IO ()
 hex_print m_ix ty fn = mapM D50.d50_load_hex fn >>= mapM_ (dat_print False m_ix ty)
 
--- * SEND
+-- * Send
 
 parse_d50_ix :: (Integral t, Read t) => String -> String -> Maybe t
 parse_d50_ix nil s = if s == nil then Nothing else Just (read s)
@@ -104,13 +104,13 @@ send_patch d50_ix sysex_ix fn = do
 hex_send :: Int -> FilePath -> IO ()
 hex_send k fn = D50.d50_load_hex fn >>= D50.d50_send_patch_tmp_def . (!! k)
 
--- * SET
+-- * Set
 
 -- > set_wg_pitch_kf (1/8)
 set_wg_pitch_kf :: (Eq n, Fractional n) => n -> IO ()
 set_wg_pitch_kf r = send_sysex_def (map D50.d50_dsc_gen (D50.d50_wg_pitch_kf_dt1 r))
 
--- * DATA TRANSFER
+-- * Data transfer
 
 -- > transfer_recv_bulk_hex "/tmp/d50.hex.text" "/tmp/rvb.hex.text"
 transfer_recv_bulk_hex :: FilePath -> FilePath -> IO ()
@@ -151,7 +151,7 @@ sysex_db_search_hash dir h = do
   let vc = concatMap (D50.d50_syx_db_get db) (map D50.d50_hash_parse h)
   putStrLn (unlines (map syx_vc_pp vc))
 
--- * MAIN
+-- * Main
 
 usage :: [String]
 usage =

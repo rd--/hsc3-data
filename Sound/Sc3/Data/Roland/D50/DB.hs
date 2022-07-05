@@ -4,7 +4,7 @@ module Sound.Sc3.Data.Roland.D50.DB where
 import Data.List {- base -}
 import System.FilePath {- filepath -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Array.Csv as T {- hmt-base -}
 import qualified Music.Theory.Byte as T {- hmt-base -}
 import qualified Music.Theory.Directory.Find as T {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}

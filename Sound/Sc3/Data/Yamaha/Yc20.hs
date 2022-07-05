@@ -1,5 +1,5 @@
--- | FOO-YC20 <https://github.com/sampov2/foo-yc20>
-module Sound.Sc3.Data.Yamaha.YC20 where
+-- | Foo-Yc20 <https://github.com/sampov2/foo-yc20>
+module Sound.Sc3.Data.Yamaha.Yc20 where
 
 -- | FOO-YC20 controls, left-to-right sequence.
 --
@@ -49,4 +49,3 @@ foo_yc20_realism_modes =
 foo_yc20_cc16 :: Num n => [[n]]
 foo_yc20_cc16 =
   [[14,15, 2,3,4,5,6,8,9, 16, 17,18,19,20,21, 22]]
-

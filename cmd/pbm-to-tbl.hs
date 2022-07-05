@@ -2,11 +2,12 @@ import System.Environment {- base -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
 
-import Sound.SC3.Common.Buffer {- hsc3 -}
+import Sound.Sc3.Common.Buffer {- hsc3 -}
 
-import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
-import qualified Sound.SC3.Data.Bitmap.PBM as P {- hsc3-data -}
-import qualified Sound.SC3.Lang.Math.Statistics as L {- hsc3-lang -}
+import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
+
+import qualified Sound.Sc3.Data.Bitmap.PBM as P {- hsc3-data -}
+import qualified Sound.Sc3.Lang.Math.Statistics as L {- hsc3-lang -}
 
 -- > pbm_to_tbl L.mean True "/home/rohan/uc/sp-id/eof/pbm/gs/02.pbm" "/tmp/t.au"
 pbm_to_tbl :: Num n => ([n] -> Double) -> Bool -> FilePath -> FilePath -> IO ()
@@ -22,7 +23,7 @@ pbm_to_tbl avg_f nrm pbm_fn au_fn = do
             T.collate_on snd fst .
             snd .
             P.pbm_to_bitindices $ i
-  SF.write au_fn (SF.SF_Header 1 nc 1 SF.fmt_au_f32_be) [tbl]
+  Sf.write au_fn (Sf.Sf_Header 1 nc 1 Sf.fmt_au_f32_be) [tbl]
   return ()
 
 help :: String

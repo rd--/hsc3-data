@@ -6,13 +6,13 @@ import Text.Printf {- base -}
 
 import Data.List.Split {- split -}
 
-import qualified Music.Theory.Array.CSV as T {- hmt-base -}
+import qualified Music.Theory.Array.Csv as T {- hmt-base -}
 import qualified Music.Theory.Byte as T {- hmt-base -}
 
-import qualified Sound.SC3.Data.Yamaha.DX7 as DX7 {- hsc3-data -}
-import qualified Sound.SC3.Data.Yamaha.DX7.DB as DX7 {- hsc3-data -}
-import qualified Sound.SC3.Data.Yamaha.DX7.Hash as DX7 {- hsc3-data -}
-import qualified Sound.SC3.Data.Yamaha.DX7.PP as DX7 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Yamaha.Dx7 as Dx7 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Yamaha.Dx7.Db as Dx7 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Yamaha.Dx7.Hash as Dx7 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Yamaha.Dx7.Pp as Dx7 {- hsc3-data -}
 
 usage_str :: [String]
 usage_str =
@@ -29,11 +29,11 @@ usage_str =
 usage :: IO ()
 usage = putStrLn (unlines usage_str)
 
-type LD_F = FilePath -> IO (Maybe [DX7.DX7_Voice])
+type LD_F = FilePath -> IO (Maybe [Dx7.Dx7_Voice])
 
 type SEL = Maybe [Int]
 
-dx7_print_f :: SEL -> LD_F -> ((Int,DX7.DX7_Voice) -> String) -> [FilePath] -> IO ()
+dx7_print_f :: SEL -> LD_F -> ((Int,Dx7.Dx7_Voice) -> String) -> [FilePath] -> IO ()
 dx7_print_f sel ld_f op =
   let sel_f x = maybe x (\r -> filter (\(k,_) -> k `elem` r) x) sel
       wr_f fn x = case x of
@@ -47,19 +47,19 @@ dx7_print_f sel ld_f op =
 -- > dx7_sysex_print (Just [2,31]) "hash-names" [fn]
 dx7_print :: SEL -> LD_F -> String -> [FilePath] -> IO ()
 dx7_print sel ld cmd fn =
-  let print_concise = unlines . DX7.dx7_voice_concise_str . snd
-      print_csv = DX7.dx7_voice_to_csv . snd
+  let print_concise = unlines . Dx7.dx7_voice_concise_str . snd
+      print_csv = Dx7.dx7_voice_to_csv . snd
       print_hex pr_h (_,v) =
         if pr_h
-        then intercalate "," (DX7.dx7_hash_vc_param_csv (DX7.dx7_hash_vc v))
+        then intercalate "," (Dx7.dx7_hash_vc_param_csv (Dx7.dx7_hash_vc v))
         else T.byte_seq_hex_pp False v
-      print_parameters = unlines . DX7.dx7_parameter_seq_pp . snd
-      print_voice_data_list = unlines . DX7.dx7_voice_data_list_pp . snd
+      print_parameters = unlines . Dx7.dx7_parameter_seq_pp . snd
+      print_voice_data_list = unlines . Dx7.dx7_voice_data_list_pp . snd
       print_voice_name pr_h (k,v) =
-        let nm = DX7.dx7_voice_name '?' v
+        let nm = Dx7.dx7_voice_name '?' v
         in if pr_h
-           then let h = DX7.dx7_voice_hash v
-                in printf "%s,%s" (DX7.dx7_hash_pp h) (T.csv_quote_if_req nm)
+           then let h = Dx7.dx7_voice_hash v
+                in printf "%s,%s" (Dx7.dx7_hash_pp h) (T.csv_quote_if_req nm)
            else printf "%2d %s" k nm
       print_f f = dx7_print_f sel ld f fn
   in case cmd of
@@ -74,16 +74,16 @@ dx7_print sel ld cmd fn =
     _ -> usage
 
 dx7_hex_print :: SEL -> String -> [FilePath] -> IO ()
-dx7_hex_print sel = dx7_print sel (fmap Just . DX7.dx7_load_hex)
+dx7_hex_print sel = dx7_print sel (fmap Just . Dx7.dx7_load_hex)
 
 dx7_sysex_print :: SEL -> String -> [FilePath] -> IO ()
-dx7_sysex_print sel = dx7_print sel DX7.dx7_load_sysex_try
+dx7_sysex_print sel = dx7_print sel Dx7.dx7_load_sysex_try
 
 dx7_sysex_verify_1 :: FilePath -> IO ()
 dx7_sysex_verify_1 fn = do
-  dat <- DX7.dx7_read_fmt9_sysex_err fn
-  bnk <- DX7.dx7_load_fmt9_sysex_err fn
-  let r = DX7.dx7_fmt9_sysex_verify 0 dat == (True,True,True,True) && DX7.dx7_bank_verify True bnk
+  dat <- Dx7.dx7_read_fmt9_sysex_err fn
+  bnk <- Dx7.dx7_load_fmt9_sysex_err fn
+  let r = Dx7.dx7_fmt9_sysex_verify 0 dat == (True,True,True,True) && Dx7.dx7_bank_verify True bnk
   putStrLn (if r then "TRUE" else "FALSE: " ++ show (dat,bnk))
 
 dx7_sysex_verify :: [FilePath] -> IO ()
@@ -91,16 +91,16 @@ dx7_sysex_verify = mapM_ dx7_sysex_verify_1
 
 dx7_sysex_add :: FilePath -> FilePath -> IO ()
 dx7_sysex_add fn1 fn2 = do
-  dat <- DX7.dx7_read_u8 fn1
+  dat <- Dx7.dx7_read_u8 fn1
   when (length dat /= 4096) (error "dx7_sysex_add: NOT 4096")
-  DX7.dx7_write_fmt9_sysex fn2 (DX7.dx7_fmt9_sysex_gen 0 dat)
+  Dx7.dx7_write_fmt9_sysex fn2 (Dx7.dx7_fmt9_sysex_gen 0 dat)
 
 dx7_sysex_rewrite :: FilePath -> FilePath -> IO ()
 dx7_sysex_rewrite fn1 fn2 = do
-  src <- DX7.dx7_read_u8 fn1 -- ie. do not verify
-  let dat = DX7.dx7_fmt9_sysex_dat src
+  src <- Dx7.dx7_read_u8 fn1 -- ie. do not verify
+  let dat = Dx7.dx7_fmt9_sysex_dat src
   when (length dat /= 4096) (error "dx7_sysex_rewrite?")
-  DX7.dx7_write_fmt9_sysex fn2 (DX7.dx7_fmt9_sysex_gen 0 dat)
+  Dx7.dx7_write_fmt9_sysex fn2 (Dx7.dx7_fmt9_sysex_gen 0 dat)
 
 main :: IO ()
 main = do

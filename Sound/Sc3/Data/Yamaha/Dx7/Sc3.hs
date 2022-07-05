@@ -1,5 +1,5 @@
--- | Yamaha DX7 & SuperCollider
-module Sound.Sc3.Data.Yamaha.DX7.Sc3 where
+-- | Yamaha Dx7 & SuperCollider
+module Sound.Sc3.Data.Yamaha.Dx7.Sc3 where
 
 import Data.Word {- base -}
 
@@ -8,13 +8,13 @@ import Sound.Sc3 {- hsc3 -}
 
 import qualified Sound.Sc3.Server.Command.Plain as Sc3 {- hsc3 -}
 
--- | Convert DX7 patch (ie. sequence of 'Word8') sequence data to a
+-- | Convert Dx7 patch (ie. sequence of 'Word8') sequence data to a
 --   sequence of 'OSC' messages.  The OSC messages will load the patch
 --   data into the indicated buffer.
 dx7_sc3_data_msg_seq :: Sc3.Buffer_Id -> [[Word8]] -> [Message]
 dx7_sc3_data_msg_seq buf = Sc3.b_setn1_segmented 256 buf 0 . map fromIntegral . concat
 
--- | Allocate buffer and load in DX7 patch data.
+-- | Allocate buffer and load in Dx7 patch data.
 dx7_sc3_data_load :: Buffer_Id -> [[Word8]] -> IO ()
 dx7_sc3_data_load buf dat = do
   let alloc_msg = Sc3.b_alloc buf (sum (map length dat)) 1

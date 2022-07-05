@@ -5,7 +5,7 @@ module Sound.Sc3.Data.Midi.Plain where
 
 import Data.Maybe {- base -}
 
-import qualified Music.Theory.Array.CSV.Midi.MND as T {- hmt -}
+import qualified Music.Theory.Array.Csv.Midi.Mnd as T {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
 import qualified Codec.Midi as C {- HCodecs -}
@@ -24,7 +24,7 @@ import qualified Sound.Sc3.Data.Midi.File.C as File.C {- hsc3-data -}
 type Note = ((C.Time,C.Time),T.Event Int)
 
 -- | 'T.Wseq' of 'Event'.
-type SEQ = [Note]
+type Seq = [Note]
 
 -- * Write
 
@@ -42,11 +42,11 @@ note_to_midi ((st,dur),(msg,d1,d2,_)) =
 add_track_end :: T.Tseq t C.Message -> T.Tseq t C.Message
 add_track_end tr = tr ++ [(fst (last tr),C.TrackEnd)]
 
-write_midi0_opt :: Maybe Int -> Maybe (Int,Int) -> FilePath -> [SEQ] -> IO ()
+write_midi0_opt :: Maybe Int -> Maybe (Int,Int) -> FilePath -> [Seq] -> IO ()
 write_midi0_opt m_tc m_ts fn = File.C.c_write_midi0_opt m_tc m_ts fn . map (concatMap note_to_midi)
 
 -- | Write Type-0 midi file, tempo is 60, time signature is 4/4.
-write_midi0 :: FilePath -> [SEQ] -> IO ()
+write_midi0 :: FilePath -> [Seq] -> IO ()
 write_midi0 = write_midi0_opt (Just 60) (Just (4,4))
 
 -- * TRANSLATE
@@ -59,7 +59,7 @@ mnd_to_note = id -- ((st,du),(mnn,vel,ch,param)) = ((st,du),(mnn,vel,T.word8_to_
 event_fmidi_to_midi :: Integral t => (Double -> t) -> T.Event Double -> T.Event t
 event_fmidi_to_midi = T.event_cast
 
--- | Read either MND or MNDD CSV file and write FORMAT-0 midi file.
+-- | Read either Mnd or Mndd Csv file and write Format-0 midi file.
 --
 -- > let csv_fn = "/home/rohan/sw/hmt/data/csv/mnd/1080-C01.csv"
 -- > cvs_mnd_to_midi0 False 60 (4,4) csv_fn "/tmp/1080-C01.midi"
@@ -74,7 +74,7 @@ cvs_mnd_to_midi0 rw tc ts fn1 fn2 = do
 
 -- * Read
 
-track_to_wseq :: [(C.Time,C.Message)] -> SEQ
+track_to_wseq :: [(C.Time,C.Message)] -> Seq
 track_to_wseq =
     let f (tm,msg) = case msg of
                        C.NoteOn ch mnn vel ->
@@ -85,20 +85,20 @@ track_to_wseq =
                        _ -> Nothing
     in T.tseq_begin_end_to_wseq T.event_eq_ol . mapMaybe f
 
--- | Load Type-0 or Type-1 MIDI file as 'SEQ' data.  Ignores
+-- | Load Type-0 or Type-1 MIDI file as 'Seq' data.  Ignores
 -- everything except note on and off messages.
-read_midi :: FilePath -> IO [SEQ]
+read_midi :: FilePath -> IO [Seq]
 read_midi fn = do
   m <- File.C.c_read_midi fn
   return (filter (not . null) (map track_to_wseq m))
 
 -- * CSV
 
-seq_merge :: [SEQ] -> SEQ
+seq_merge :: [Seq] -> Seq
 seq_merge = foldr T.wseq_merge []
 
 -- | Write MND type CSV file.
-write_csv_mnd :: FilePath -> [SEQ] -> IO ()
+write_csv_mnd :: FilePath -> [Seq] -> IO ()
 write_csv_mnd fn =
     T.csv_mnd_write_tseq 4 fn .
     T.midi_wseq_to_midi_tseq .

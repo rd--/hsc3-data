@@ -1,10 +1,10 @@
-{- | DEXED OP EG
+{- | Dexed Op Eg
      <https://github.com/asb2m10/dexed/blob/master/Source/DXComponents.cpp>
 
-     Lookup tables and calculator for OP EG rate timing.
+     Lookup tables and calculator for Op Eg rate timing.
 
 -}
-module Sound.Sc3.Data.Yamaha.DX7.Dexed.EG where
+module Sound.Sc3.Data.Yamaha.Dx7.Dexed.Eg where
 
 import Data.List {- base -}
 

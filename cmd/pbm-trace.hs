@@ -8,9 +8,9 @@ import Text.Printf {- base -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
 
-import qualified Sound.SC3.Data.Bitmap.PBM as I {- hsc3-data -}
-import qualified Sound.SC3.Data.Bitmap.Type as B {- hsc3-data -}
-import qualified Sound.SC3.Data.Trace as TR {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.PBM as I {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
+import qualified Sound.Sc3.Data.Trace as TR {- hsc3-data -}
 
 type TRACE = [B.Ix]
 

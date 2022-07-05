@@ -62,7 +62,7 @@ Library
   GHC-Options:     -Wall -fwarn-tabs
   Exposed-modules: Sound.Sc3.Data.AKAI.AKP
                    Sound.Sc3.Data.AKAI.S900
-                   Sound.Sc3.Data.Array.CSV
+                   Sound.Sc3.Data.Array.Csv
                    Sound.Sc3.Data.ATS
                    Sound.Sc3.Data.Bitmap.Font.BDF
                    Sound.Sc3.Data.Bitmap.Font.CP437
@@ -90,7 +90,7 @@ Library
                    Sound.Sc3.Data.Colour
                    Sound.Sc3.Data.Fairlight.Cmi
                    Sound.Sc3.Data.Geography.Core
-                   Sound.Sc3.Data.Geography.G
+                   Sound.Sc3.Data.Geography.Loc
                    Sound.Sc3.Data.Geometry.Obj
                    Sound.Sc3.Data.Geometry.Ply
                    Sound.Sc3.Data.Geometry.Tutte
@@ -144,21 +144,21 @@ Library
                    Sound.Sc3.Data.XML.KML
                    Sound.Sc3.Data.XML.SVG
                    Sound.Sc3.Data.XML.SVL
-                   Sound.Sc3.Data.Yamaha.DX7
-                   Sound.Sc3.Data.Yamaha.DX7.AFX
-                   Sound.Sc3.Data.Yamaha.DX7.Algorithm
-                   Sound.Sc3.Data.Yamaha.DX7.CART
-                   Sound.Sc3.Data.Yamaha.DX7.DB
-                   Sound.Sc3.Data.Yamaha.DX7.Dexed
-                   Sound.Sc3.Data.Yamaha.DX7.Dexed.EG
-                   Sound.Sc3.Data.Yamaha.DX7.DX7II
-                   Sound.Sc3.Data.Yamaha.DX7.Hash
-                   Sound.Sc3.Data.Yamaha.DX7.PP
-                   Sound.Sc3.Data.Yamaha.DX7.PX7
-                   Sound.Sc3.Data.Yamaha.DX7.Sc3
-                   Sound.Sc3.Data.Yamaha.DX7.TX7
-                   Sound.Sc3.Data.Yamaha.DX7.TX816
-                   Sound.Sc3.Data.Yamaha.DX7.UI
+                   Sound.Sc3.Data.Yamaha.Dx7
+                   Sound.Sc3.Data.Yamaha.Dx7.Afx
+                   Sound.Sc3.Data.Yamaha.Dx7.Algorithm
+                   Sound.Sc3.Data.Yamaha.Dx7.Cart
+                   Sound.Sc3.Data.Yamaha.Dx7.Db
+                   Sound.Sc3.Data.Yamaha.Dx7.Dexed
+                   Sound.Sc3.Data.Yamaha.Dx7.Dexed.Eg
+                   Sound.Sc3.Data.Yamaha.Dx7.Dx7ii
+                   Sound.Sc3.Data.Yamaha.Dx7.Hash
+                   Sound.Sc3.Data.Yamaha.Dx7.Pp
+                   Sound.Sc3.Data.Yamaha.Dx7.Px7
+                   Sound.Sc3.Data.Yamaha.Dx7.Sc3
+                   Sound.Sc3.Data.Yamaha.Dx7.Tx7
+                   Sound.Sc3.Data.Yamaha.Dx7.Tx816
+                   Sound.Sc3.Data.Yamaha.Dx7.Ui
 
 Source-Repository  head
   Type:            git

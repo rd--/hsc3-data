@@ -1,5 +1,5 @@
--- | Yamaha DX7II
-module Sound.Sc3.Data.Yamaha.DX7.DX7II where
+-- | Yamaha Dx7ii
+module Sound.Sc3.Data.Yamaha.Dx7.Dx7ii where
 
 import Data.List {- base -}
 
@@ -7,18 +7,18 @@ import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.Show as Show {- hmt -}
 
-import Sound.Sc3.Data.Yamaha.DX7 {- hsc3-data -}
+import Sound.Sc3.Data.Yamaha.Dx7 {- hsc3-data -}
 
--- * UTIL
+-- * Util
 
 -- | Error if /e/ is false else /r/.
 dx7ii_assert :: Bool -> t -> t
 dx7ii_assert e r = if e then r else error "dx7ii_assert?"
 
--- * VCED
+-- * Vced
 
--- | DX7 OP param names (short,long).
---   The naming in the DX7II manual is niced than the DX7 manual.
+-- | Dx7 OP param names (short,long).
+--   The naming in the Dx7II manual is nicer than the Dx7 manual.
 --
 -- > length dx7ii_op_parameter_names == dx7_op_nparam
 dx7ii_op_parameter_names :: [(String,String)]
@@ -45,7 +45,7 @@ dx7ii_op_parameter_names =
   ,("PF","FREQUENCY FINE")
   ,("PD","DETUNE")]
 
--- | DX7 SH param names (short,long).
+-- | Dx7 SH param names (short,long).
 --
 -- > length dx7ii_sh_parameter_names == dx7_sh_nparam
 dx7ii_sh_parameter_names :: [(String,String)]
@@ -70,7 +70,7 @@ dx7ii_sh_parameter_names =
   ,("LPMS","LFO PITCH MODULATION SENSITIVITY")
   ,("TRNP","TRANSPOSE")]
 
--- * Microtune Parameter Change Message (DX7s DX7II)
+-- * Microtune Parameter Change Message (Dx7s Dx7ii)
 
 -- | Constant for per-octave mode (ie. tune all pitch-classes equally).
 --
@@ -85,7 +85,7 @@ dx7ii_microtune_octave = 0x7D
 dx7ii_microtune_full :: U8
 dx7ii_microtune_full = 0x7E
 
--- | DX7 tuning units are 64 steps per semi-tone (100 cents).
+-- | Dx7 tuning units are 64 steps per semi-tone (100 cents).
 --
 -- > map dx7ii_tuning_units_to_cents [0x00,0x10,0x20,0x30,0x40] == [0,25,50,75,100]
 -- > map dx7ii_tuning_units_to_cents [0..8] == [0,1.5625,3.125,4.6875,6.25,7.8125,9.375,10.9375,12.5]
@@ -135,7 +135,7 @@ dx7ii_aced_param_nm =
           ,"UDTN", "FCCS1"]]
 
 -- | ACED USR strings for named parameters.
-dx7ii_aced_usr_str :: [(String,DX7_USR)]
+dx7ii_aced_usr_str :: [(String,Dx7_USR)]
 dx7ii_aced_usr_str =
   [("PEGR","8VA;4VA;1VA;1/2VA")
   ,("LTRG","SINGLE;MULTI")
@@ -150,7 +150,7 @@ dx7ii_aced_usr_str =
 -- * 5-3. PERFORMANCE PARAMETERS (PCED / PMEM - 51-BYTES)
 
 -- | PCED (51-BYTES)
-type DX7II_PCED = [U8]
+type Dx7ii_Pced = [U8]
 
 -- | GROUP structure of PCED, without NAME.
 --
@@ -159,7 +159,7 @@ dx7ii_pced_grp_n :: [Int]
 dx7ii_pced_grp_n = [3,3,2,1,1,2,1,2,2,3,3,4,4]
 
 -- | Separate into GROUP structure.
-dx7ii_pced_grp :: DX7II_PCED -> [[U8]]
+dx7ii_pced_grp :: Dx7ii_Pced -> [[U8]]
 dx7ii_pced_grp = Split.splitPlaces dx7ii_pced_grp_n
 
 -- | PCED short parameter names, in GROUP structure.
@@ -196,13 +196,13 @@ dx7ii_pced_param_ix nm =
   (lookup nm dx7ii_pced_param_tbl)
 
 -- | PEFORMANCE NAME is 20-CHAR (31 - 51)
-dx7ii_pced_name :: DX7II_PCED -> String
+dx7ii_pced_name :: Dx7ii_Pced -> String
 dx7ii_pced_name = map (dx7_ascii_char '?') . drop 31
 
 -- | Table giving USR strings for named PARAM.
 --
 -- > map (dx7ii_pced_param_ix . fst) dx7ii_pced_usr_str_tbl == [0,5,9,10,11,15,19,20,22]
-dx7ii_pced_usr_str_tbl :: [(U8,DX7_USR)]
+dx7ii_pced_usr_str_tbl :: [(U8,Dx7_USR)]
 dx7ii_pced_usr_str_tbl =
   [( 0 {-PLMD-}  ,"SINGLE;DUAL;SPLIT")
   ,( 5 {-MCSW-}  ,"00;01;10;11")
@@ -217,15 +217,15 @@ dx7ii_pced_usr_str_tbl =
   ,(22 {-PNASN-} ,"LFO;VEL;KEY")] -- VELOCITY
 
 -- | Synonym for 'genericIndex'
-dx7ii_pced_get :: DX7II_PCED -> U8 -> U8
+dx7ii_pced_get :: Dx7ii_Pced -> U8 -> U8
 dx7ii_pced_get = (!!)
 
 -- | Get parameter value by name.
-dx7ii_pced_get_by_nm :: DX7II_PCED -> String -> U8
+dx7ii_pced_get_by_nm :: Dx7ii_Pced -> String -> U8
 dx7ii_pced_get_by_nm pf nm = dx7ii_pced_get pf (dx7ii_pced_param_ix nm)
 
 -- | Get USR string for indexed parameter at PCED.
-dx7ii_pced_get_usr :: DX7II_PCED -> U8 -> String
+dx7ii_pced_get_usr :: Dx7ii_Pced -> U8 -> String
 dx7ii_pced_get_usr pf ix =
   let k = dx7ii_pced_get pf ix
   in case lookup ix dx7ii_pced_usr_str_tbl of
@@ -233,7 +233,7 @@ dx7ii_pced_get_usr pf ix =
        _ -> show k
 
 -- | Get USR by NAME from PCED.
-dx7ii_pced_get_usr_by_nm :: DX7II_PCED -> String -> String
+dx7ii_pced_get_usr_by_nm :: Dx7ii_Pced -> String -> String
 dx7ii_pced_get_usr_by_nm pf nm = dx7ii_pced_get_usr pf (dx7ii_pced_param_ix nm)
 
 -- | DDTN shifts A up and B down by /x/ 1/32's of a semitone.  x is in (0 - 7).
@@ -262,7 +262,7 @@ dx7ii_ubd_request_sysex ch s1 s2 =
      then error "dx7_ubp_request_sysex?"
      else concat [[0xF0,0x43,0x20 + ch,0x7E],f s1,f s2,[0xF7]]
 
--- * SYSEX - 8973PM - DX7II PACKED 32 PERFORMANCE - 1642 BYTES
+-- * SYSEX - 8973PM - Dx7II PACKED 32 PERFORMANCE - 1642 BYTES
 
 -- | Group structure (byte-counts) for 8973PM sysex.
 dx7ii_8973PM_grp :: [Int]
@@ -284,12 +284,12 @@ dx7ii_8973PM_hdr_verify :: U8 -> [U8] -> Bool
 dx7ii_8973PM_hdr_verify ch h = h == concat (dx7ii_8973PM_hdr ch)
 
 -- | Parse 8973PM sysex to list of PCED.
-dx7ii_8973PM_parse :: [U8] -> [DX7II_PCED]
+dx7ii_8973PM_parse :: [U8] -> [Dx7ii_Pced]
 dx7ii_8973PM_parse syx =
   case Split.splitPlaces dx7ii_8973PM_grp syx of
     [hdr,dat,_,[0xF7]] -> dx7ii_assert (dx7ii_8973PM_hdr_verify 0 hdr) (Split.chunksOf 51 dat)
     _ -> error "dx7ii_8973PM_parse?"
 
 -- | Load 8973PM sysex file.
-dx7ii_8973PM_load :: FilePath -> IO [DX7II_PCED]
+dx7ii_8973PM_load :: FilePath -> IO [Dx7ii_Pced]
 dx7ii_8973PM_load = fmap dx7ii_8973PM_parse . dx7_read_u8

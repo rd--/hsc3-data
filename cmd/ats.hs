@@ -1,6 +1,6 @@
 import System.Environment {- base -}
 
-import Sound.SC3.Data.ATS {- hsc3-data -}
+import Sound.Sc3.Data.ATS {- hsc3-data -}
 
 header :: FilePath -> IO ()
 header fn = ats_read fn >>= putStrLn . ats_header_pp . ats_header

@@ -1,10 +1,10 @@
 -- | Csv Array as Osc Datum
-module Sound.Sc3.Data.Array.CSV where
+module Sound.Sc3.Data.Array.Csv where
 
 import Sound.Osc.Datum {- hosc -}
 import Sound.Osc.Text {- hosc -}
 
-import qualified Music.Theory.Array.CSV as Csv {- hmt-base -}
+import qualified Music.Theory.Array.Csv as Csv {- hmt-base -}
 
 -- | /ty/ gives the type tag for each /column/ of the table.
 array_to_datum :: [DatumType] -> [[String]] -> [[Datum]]

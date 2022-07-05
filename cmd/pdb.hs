@@ -1,10 +1,10 @@
 import Data.Maybe {- base -}
 import System.Environment {- base -}
 
-import Sound.SC3.Data.Chemistry.PDB {- hsc3-data -}
-import Sound.SC3.Data.Chemistry.PDB.Parse {- hsc3-data -}
-import Sound.SC3.Data.Chemistry.PDB.Query {- hsc3-data -}
-import Sound.SC3.Data.Chemistry.PDB.Types {- hsc3-data -}
+import Sound.Sc3.Data.Chemistry.PDB {- hsc3-data -}
+import Sound.Sc3.Data.Chemistry.PDB.Parse {- hsc3-data -}
+import Sound.Sc3.Data.Chemistry.PDB.Query {- hsc3-data -}
+import Sound.Sc3.Data.Chemistry.PDB.Types {- hsc3-data -}
 
 cli_txt :: (DAT -> [String]) -> FilePath -> IO ()
 cli_txt f pdb_fn = pdb_load_dat pdb_fn >>= putStr . unlines . f

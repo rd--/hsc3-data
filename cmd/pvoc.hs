@@ -2,9 +2,9 @@ import System.Environment {- base -}
 
 import qualified Data.Vector.Unboxed as V {- vector -}
 
-import qualified Sound.File.WAVE as W {- hsc3-sf -}
-import qualified Sound.SC3.Data.PVOC as P {- hsc3-data -}
-import qualified Sound.SC3.Plot as Plot {- hsc3-plot -}
+import qualified Sound.File.Wave as W {- hsc3-sf -}
+import qualified Sound.Sc3.Data.PVOC as P {- hsc3-data -}
+import qualified Sound.Sc3.Plot as Plot {- hsc3-plot -}
 
 pvoc_header :: FilePath -> IO ()
 pvoc_header fn = do

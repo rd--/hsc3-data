@@ -9,7 +9,7 @@ import qualified Graphics.X11.Xlib as X {- xlib -}
 
 import Sound.Osc.Fd {- hosc -}
 
-import Sound.SC3.Data.X11.Ptr {- hsc3-data -}
+import Sound.Sc3.Data.X11.Ptr {- hsc3-data -}
 
 import qualified Sound.Midi.Type as M {- midi-osc -}
 import qualified Sound.Midi.Osc as M {- midi-osc -}

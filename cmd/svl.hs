@@ -1,6 +1,6 @@
 import System.Environment {- base -}
 
-import qualified Sound.SC3.Data.XML.SVL as SVL {- hsc3-data -}
+import qualified Sound.Sc3.Data.XML.SVL as SVL {- hsc3-data -}
 
 print_text :: Int -> FilePath -> IO ()
 print_text q fn =
