@@ -1,13 +1,13 @@
 import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
-import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
+import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 import qualified Sound.Sc3.Data.Image.Plain as I {- hsc3-data -}
 
 sf_to_png :: (Double -> Double) -> FilePath -> FilePath -> IO ()
 sf_to_png op sf_fn png_fn = do
-  (hdr,Just vec) <- SF.read_vec sf_fn
-  let png = I.img_from_vec_co (SF.frameCount hdr,SF.channelCount hdr) (V.map op vec)
+  (hdr,Just vec) <- Sf.read_vec sf_fn
+  let png = I.img_from_vec_co (Sf.frameCount hdr,Sf.channelCount hdr) (V.map op vec)
   I.img_write_png png_fn png
 
 help :: IO ()
@@ -31,7 +31,7 @@ main = do
 
 :set -XScopedTypeVariables
 let fn = "/home/rohan/desert/01.bw.extract.png.au"
-(hdr,Just (vec :: V.Vector Float)) <- SF.read_vec fn
+(hdr,Just (vec :: V.Vector Float)) <- Sf.read_vec fn
 ERROR: out of memory (requested 17783848960 bytes)
 
 -}

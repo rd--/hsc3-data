@@ -16,9 +16,9 @@ import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 
 import qualified Data.CG.Minus.Colour.Grey as C {- hcg-minus -}
 
-import qualified Sound.Sc3.Data.Bitmap.PBM as PBM {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as BM {- hsc3-data -}
-import qualified Sound.Sc3.Data.Image.PGM as PGM {- hsc3-data -}
+import qualified Sound.Sc3.Data.Image.Pgm as Pgm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Image.Type as T {- hsc3-data -}
 
 -- * IMAGE
@@ -205,8 +205,8 @@ img_gs_read_au fn = do
   let Au.Sf_Header nf _ _ nc = hdr
   return (img_from_gs (nf,nc) ro)
 
--- | Write 8-bit or 16-bit PGM5 file.
-img_write_pgm5 :: PGM.Depth -> (RGB24 -> GREY) -> FilePath -> IMAGE -> IO ()
+-- | Write 8-bit or 16-bit Pgm5 file.
+img_write_pgm5 :: Pgm.Depth -> (RGB24 -> GREY) -> FilePath -> IMAGE -> IO ()
 img_write_pgm5 d to_gs fn i =
     let (w,h) = img_dimensions i
         z = case d of
@@ -216,7 +216,7 @@ img_write_pgm5 d to_gs fn i =
         f = round . (* z) . to_gs
         l = [((r,c),f (I.pixelAt i c r)) | r <- [0 .. h - 1], c <- [0 .. w - 1]]
         a = A.array ((0,0),(h - 1,w - 1)) l
-    in PGM.pgm5_save_0 fn (d,a)
+    in Pgm.pgm5_save_0 fn (d,a)
 
 -- * Black & white
 
@@ -270,12 +270,12 @@ img_bw_to_bitarray :: IMAGE -> BM.Bitarray
 img_bw_to_bitarray = img_bw_to_bitarray' rgb24_to_bw_eq'
 
 img_bw_write_pbm1 :: FilePath -> IMAGE -> IO ()
-img_bw_write_pbm1 fn = writeFile fn . PBM.bitarray_pbm1 . img_bw_to_bitarray
+img_bw_write_pbm1 fn = writeFile fn . Pbm.bitarray_pbm1 . img_bw_to_bitarray
 
 img_bw_write_pbm4 :: (RGB24 -> BW) -> FilePath -> IMAGE -> IO ()
 img_bw_write_pbm4 f pbm_fn =
-    PBM.pbm4_write pbm_fn .
-    PBM.bitindices_to_pbm .
+    Pbm.pbm4_write pbm_fn .
+    Pbm.bitindices_to_pbm .
     img_bw_to_bitindices' f
 
 rgb24_bw_inverse :: RGB24 -> RGB24

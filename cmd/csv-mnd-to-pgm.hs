@@ -5,14 +5,14 @@ import qualified Music.Theory.List as T {- hmt-base -}
 import qualified Music.Theory.Array.Csv.Midi.Mnd as C {- hmt -}
 import qualified Music.Theory.Time.Seq as T {- hmt -}
 
-import qualified Sound.Sc3.Data.Image.PGM as I {- hmt-diagrams -}
+import qualified Sound.Sc3.Data.Image.Pgm as I {- hmt-diagrams -}
 
 import qualified Sound.Sc3 as S {- hsc3 -}
 
 load_csv :: FilePath -> IO (T.Wseq Double (C.Event Double))
 load_csv = fmap C.midi_tseq_to_midi_wseq . C.csv_mnd_read_tseq
 
-wseq_to_pgm :: (Int,Int) -> T.Wseq Double (C.Event Double) -> I.PGM
+wseq_to_pgm :: (Int,Int) -> T.Wseq Double (C.Event Double) -> I.Pgm
 wseq_to_pgm (w,h) sq =
   let (_,et) = T.wseq_tspan sq
       tm_incr = et / fromIntegral w

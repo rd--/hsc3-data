@@ -6,7 +6,7 @@ import Sound.Sc3.Common.Buffer {- hsc3 -}
 
 import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 
-import qualified Sound.Sc3.Data.Bitmap.PBM as P {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as P {- hsc3-data -}
 import qualified Sound.Sc3.Lang.Math.Statistics as L {- hsc3-lang -}
 
 -- > pbm_to_tbl L.mean True "/home/rohan/uc/sp-id/eof/pbm/gs/02.pbm" "/tmp/t.au"

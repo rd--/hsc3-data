@@ -2,10 +2,10 @@ import Control.Monad {- base -}
 import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
-import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
+import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 import qualified Sound.Sc3.Common.Math as M {- hsc3 -}
 import qualified Sound.Sc3.Common.Buffer.Vector as B {- hsc3 -}
-import qualified Sound.Sc3.Data.Bitmap.PBM as P {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as P {- hsc3-data -}
 
 vec_normalise_1 :: (Fractional b, Ord b, V.Storable b) => V.Vector b -> V.Vector b
 vec_normalise_1 v =
@@ -30,13 +30,13 @@ vec_ix sym h ch nc vec i =
 
 sf_draw_plain :: (Bool,Bool,Bool,Bool,Bool) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
-  (hdr,vec') <- SF.read_vec_f64 sf_fn
+  (hdr,vec') <- Sf.read_vec_f64 sf_fn
   let vec = ((if sym then V.map abs else id) .
              (if inv then id else V.map negate) .
              (if nrm then vec_normalise_h hlf else id) .
              (if sc3_wt then B.from_wavetable else id)) vec'
-      nc = SF.channelCount hdr
-      nf = V.length vec -- not (SF.frameCount hdr) due to B.from_wavetable
+      nc = Sf.channelCount hdr
+      nf = V.length vec -- not (Sf.frameCount hdr) due to B.from_wavetable
       ix = vec_ix sym (fromIntegral h) ch nc vec
   when (ch >= nc) (error "ch >= nc")
   let b = ((h,nf),concatMap ix [0 .. nf - 1])
@@ -44,10 +44,10 @@ sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
 
 sf_draw_table :: (Double,Double) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_table (l,r) h ch sf_fn pbm_fn = do
-  (hdr,vec') <- SF.read_vec_f64 sf_fn
+  (hdr,vec') <- Sf.read_vec_f64 sf_fn
   let vec = V.map (M.linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
-      nc = SF.channelCount hdr
-      nf = SF.frameCount hdr
+      nc = Sf.channelCount hdr
+      nf = Sf.frameCount hdr
   when (ch >= nc) (error "ch >= nc")
   let b = ((h,nf),zip (map (max 0 . min (h - 1) . floor) (V.toList vec)) [0..])
   P.pbm4_write pbm_fn (P.bitindices_to_pbm b)

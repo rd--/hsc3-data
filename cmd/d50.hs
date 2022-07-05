@@ -8,10 +8,10 @@ import qualified Sound.Midi.Pm as Pm {- midi-osc -}
 
 import Sound.Sc3.Data.Math.Types {- hsc3-data -}
 import qualified Sound.Sc3.Data.Roland.D50 as D50 {- hsc3-data -}
-import qualified Sound.Sc3.Data.Roland.D50.DB as D50 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50.Db as D50 {- hsc3-data -}
 import qualified Sound.Sc3.Data.Roland.D50.Hash as D50 {- hsc3-data -}
-import qualified Sound.Sc3.Data.Roland.D50.PM as D50 {- hsc3-data -}
-import qualified Sound.Sc3.Data.Roland.D50.PP as D50 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50.Pm as D50 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Roland.D50.Pp as D50 {- hsc3-data -}
 
 -- * Common
 
@@ -131,7 +131,7 @@ transfer_send_bulk_sysex fn = do
   dsc <- D50.d50_load_sysex_dsc fn
   D50.d50_send_bulk_data_def 0 dsc
 
-syx_vc_pp :: D50.D50_SYX_VC -> String
+syx_vc_pp :: D50.D50_Syx_Vc -> String
 syx_vc_pp (syx_nm,_,ix,p,_,hsh,_) =
   printf "%-20s - %02d - %s - %08X" syx_nm ix (D50.d50_patch_summary p) hsh
 

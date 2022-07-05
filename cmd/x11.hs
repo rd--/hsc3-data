@@ -14,7 +14,7 @@ import Sound.Sc3.Data.X11.Ptr {- hsc3-data -}
 import qualified Sound.Midi.Type as M {- midi-osc -}
 import qualified Sound.Midi.Osc as M {- midi-osc -}
 
--- * PTR MIDI-OSC
+-- * Ptr Midi-osc
 
 to_cc_msg :: Int -> Int -> Double -> Message
 to_cc_msg ch cc r = M.cvm_to_osc 0xFF (M.Control_Change ch cc (floor (r * 127)))
@@ -56,7 +56,7 @@ ptr_trace u dt = do
         recur (rx,ry)
   finally (recur (0,0)) (x11_close x11)
 
--- * MAIN
+-- * Main
 
 help :: [String]
 help =

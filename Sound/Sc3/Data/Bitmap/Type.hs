@@ -275,42 +275,43 @@ bitindices_to_bitmap (dm,ix) = (dm,Map.fromList (zip ix (repeat True)))
 
 -- * Leading edge
 
-data DIRECTION = RIGHT | LEFT | DOWN | UP deriving (Eq,Show)
+-- | Prefixed because Either defines Left and Right
+data Direction = Dir_Right | Dir_Left | Dir_Down | Dir_Up deriving (Eq, Show)
 
-direction_pp :: DIRECTION -> String
+direction_pp :: Direction -> String
 direction_pp = map toLower . show
 
--- > map direction_char [RIGHT,LEFT,DOWN,UP] == "rldu"
-direction_char :: DIRECTION -> Char
+-- > map direction_char [Right,Left,Down,Up] == "rldu"
+direction_char :: Direction -> Char
 direction_char = head . direction_pp
 
 -- > mapMaybe parse_dir_char "rldu"
-parse_dir_char :: Char -> Maybe DIRECTION
-parse_dir_char c = lookup c (zip "rldu" [RIGHT,LEFT,DOWN,UP])
+parse_dir_char :: Char -> Maybe Direction
+parse_dir_char c = lookup c (zip "rldu" [Dir_Right,Dir_Left,Dir_Down,Dir_Up])
 
-parse_dir_char' :: Char -> DIRECTION
+parse_dir_char' :: Char -> Direction
 parse_dir_char' =
     fromMaybe (error "parse_dir_char: not 'r','l','d' or 'u'") .
     parse_dir_char
 
-leading_edge_f :: DIRECTION -> Dimensions -> (Ix -> Bool) -> Ix -> Bool
+leading_edge_f :: Direction -> Dimensions -> (Ix -> Bool) -> Ix -> Bool
 leading_edge_f dir (h,w) not_elem_f =
     let f_right (r,c) = c == 0 || not_elem_f (r,c - 1)
         f_left (r,c) = c == w - 1 || not_elem_f (r,c + 1)
         f_down (r,c) = r == 0 || not_elem_f (r - 1,c)
         f_up (r,c) = r == h - 1 || not_elem_f (r + 1,c)
     in case dir of
-         UP -> f_up
-         DOWN -> f_down
-         LEFT -> f_left
-         RIGHT -> f_right
+         Dir_Up -> f_up
+         Dir_Down -> f_down
+         Dir_Left -> f_left
+         Dir_Right -> f_right
 
-bitindices_leading_edges :: DIRECTION -> Bitindices -> Bitindices
+bitindices_leading_edges :: Direction -> Bitindices -> Bitindices
 bitindices_leading_edges dir (dm,ix) =
     let le_f = leading_edge_f dir dm (`notElem` ix)
     in (dm,filter le_f ix)
 
-bitmap_leading_edges :: DIRECTION -> BitMap -> BitMap
+bitmap_leading_edges :: Direction -> BitMap -> BitMap
 bitmap_leading_edges dir (d,m) =
     let le_f ix' _ = leading_edge_f dir d (\ix -> not (Map.findWithDefault False ix m)) ix'
     in (d,Map.filterWithKey le_f m)

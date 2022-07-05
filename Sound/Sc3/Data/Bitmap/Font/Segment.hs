@@ -6,7 +6,7 @@ module Sound.Sc3.Data.Bitmap.Font.Segment where
 import Data.List {- base -}
 import Data.Word {- base -}
 
-import qualified Sound.Sc3.Data.Bitmap.PBM as PBM {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import Sound.Sc3.Data.Bitmap.Type {- hsc3-data -}
 
 {- | Sequence of hex codes for each glyph for each character.
@@ -107,8 +107,8 @@ seg_bitarray bit_set =
 seg_char_bitarray :: Char -> Bitarray
 seg_char_bitarray = seg_bitarray . (bitseq_elem :: Bitseq -> [Int]) . seq_bitmask_char
 
-seg_char_pbm1 :: Char -> PBM.PBM1
-seg_char_pbm1 = PBM.bitarray_pbm1 . seg_char_bitarray
+seg_char_pbm1 :: Char -> Pbm.Pbm1
+seg_char_pbm1 = Pbm.bitarray_pbm1 . seg_char_bitarray
 
 seg_preferred_case :: [Char]
 seg_preferred_case = "AbCdEfGhiJkLMnopqrStuvWXyZ"

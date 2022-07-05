@@ -2,7 +2,7 @@ import System.Environment {- base -}
 import qualified Text.CSV.Lazy.String as C {- lazy-csv -}
 
 import Sound.Sc3.Data.Bitmap.Type {- hsc3-data -}
-import Sound.Sc3.Data.Bitmap.PBM {- hsc3-data -}
+import Sound.Sc3.Data.Bitmap.Pbm {- hsc3-data -}
 
 csv_load :: (String -> n) -> FilePath -> IO [[n]]
 csv_load f fn = do

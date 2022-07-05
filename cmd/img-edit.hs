@@ -1,10 +1,10 @@
 import System.Environment {- base -}
 import System.FilePath {- filepath -}
 
-import qualified Sound.Sc3.Data.Bitmap.PBM as P {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as P {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
 
-edit_pbm_le :: B.DIRECTION -> FilePath -> FilePath -> IO ()
+edit_pbm_le :: B.Direction -> FilePath -> FilePath -> IO ()
 edit_pbm_le dir in_fn out_fn = do
   i <- P.read_pbm in_fn
   print ("(w/nc,h/nr)",P.pbm_dimensions i)
@@ -17,7 +17,7 @@ edit_pbm_le_all :: FilePath -> IO ()
 edit_pbm_le_all pbm_fn = do
   let gen_nm dir = replaceExtension (concat [".le.",[B.direction_char dir],".pbm"]) pbm_fn
       mk dir = edit_pbm_le dir pbm_fn (gen_nm dir)
-  mapM_ mk [B.RIGHT,B.LEFT,B.DOWN,B.UP]
+  mapM_ mk [B.Dir_Right,B.Dir_Left,B.Dir_Down,B.Dir_Up]
 
 help :: String
 help =

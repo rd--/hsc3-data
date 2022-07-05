@@ -2,7 +2,7 @@ import System.Environment {- base -}
 
 import qualified Sound.File.Next as Au {- hsc3-sf -}
 
-import Sound.Sc3.Data.Image.PGM {- hsc3-data -}
+import Sound.Sc3.Data.Image.Pgm {- hsc3-data -}
 
 -- > let fn = "/home/rohan/sw/hsc3-sf/au/mc-4-16.au"
 -- > au_to_pgm 8 fn (fn ++ ".pgm")

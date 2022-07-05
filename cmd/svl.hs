@@ -1,11 +1,11 @@
 import System.Environment {- base -}
 
-import qualified Sound.Sc3.Data.XML.SVL as SVL {- hsc3-data -}
+import qualified Sound.Sc3.Data.Xml.Svl as Svl {- hsc3-data -}
 
 print_text :: Int -> FilePath -> IO ()
 print_text q fn =
-  SVL.svl_node_p_csec_seq_wr =<<
-  SVL.svl_load_node_p (SVL.svl_frame_to_csec q) id fn
+  Svl.svl_node_p_csec_seq_wr =<<
+  Svl.svl_load_node_p (Svl.svl_frame_to_csec q) id fn
 
 main :: IO ()
 main = do

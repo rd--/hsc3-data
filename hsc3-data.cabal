@@ -60,33 +60,33 @@ Library
                    zmidi-core
   default-language:Haskell2010
   GHC-Options:     -Wall -fwarn-tabs
-  Exposed-modules: Sound.Sc3.Data.AKAI.AKP
-                   Sound.Sc3.Data.AKAI.S900
+  Exposed-modules: Sound.Sc3.Data.Akai.Akp
+                   Sound.Sc3.Data.Akai.S900
                    Sound.Sc3.Data.Array.Csv
-                   Sound.Sc3.Data.ATS
-                   Sound.Sc3.Data.Bitmap.Font.BDF
-                   Sound.Sc3.Data.Bitmap.Font.CP437
+                   Sound.Sc3.Data.Ats
+                   Sound.Sc3.Data.Bitmap.Font.Bdf
+                   Sound.Sc3.Data.Bitmap.Font.Cp437
                    Sound.Sc3.Data.Bitmap.Font.Segment
-                   Sound.Sc3.Data.Bitmap.PBM
+                   Sound.Sc3.Data.Bitmap.Pbm
                    Sound.Sc3.Data.Bitmap.Type
                    Sound.Sc3.Data.Buffer
                    Sound.Sc3.Data.Byte
-                   Sound.Sc3.Data.Chemistry.AFLOW
-                   Sound.Sc3.Data.Chemistry.CLS
+                   Sound.Sc3.Data.Chemistry.Aflow
+                   Sound.Sc3.Data.Chemistry.Cls
                    Sound.Sc3.Data.Chemistry.Elements
-                   Sound.Sc3.Data.Chemistry.FASTA
-                   Sound.Sc3.Data.Chemistry.IUPAC
-                   Sound.Sc3.Data.Chemistry.MOL
-                   Sound.Sc3.Data.Chemistry.MP
-                   Sound.Sc3.Data.Chemistry.PDB
-                   Sound.Sc3.Data.Chemistry.PDB.Parse
-                   Sound.Sc3.Data.Chemistry.PDB.Query
-                   Sound.Sc3.Data.Chemistry.PDB.Remark
-                   Sound.Sc3.Data.Chemistry.PDB.Types
-                   Sound.Sc3.Data.Chemistry.POSCAR
-                   Sound.Sc3.Data.Chemistry.STRUCT
-                   Sound.Sc3.Data.Chemistry.XYZ
-                   Sound.Sc3.Data.CMUdict
+                   Sound.Sc3.Data.Chemistry.Fasta
+                   Sound.Sc3.Data.Chemistry.Iupac
+                   Sound.Sc3.Data.Chemistry.Mol
+                   Sound.Sc3.Data.Chemistry.Mp
+                   Sound.Sc3.Data.Chemistry.Pdb
+                   Sound.Sc3.Data.Chemistry.Pdb.Parse
+                   Sound.Sc3.Data.Chemistry.Pdb.Query
+                   Sound.Sc3.Data.Chemistry.Pdb.Remark
+                   Sound.Sc3.Data.Chemistry.Pdb.Types
+                   Sound.Sc3.Data.Chemistry.Poscar
+                   Sound.Sc3.Data.Chemistry.Struct
+                   Sound.Sc3.Data.Chemistry.Xyz
+                   Sound.Sc3.Data.CmuDict
                    Sound.Sc3.Data.Colour
                    Sound.Sc3.Data.Fairlight.Cmi
                    Sound.Sc3.Data.Geography.Core
@@ -96,11 +96,11 @@ Library
                    Sound.Sc3.Data.Geometry.Tutte
                    Sound.Sc3.Data.Gnus
                    Sound.Sc3.Data.Graph.Dot
-                   Sound.Sc3.Data.Image.PGM
+                   Sound.Sc3.Data.Image.Pgm
                    Sound.Sc3.Data.Image.Plain
                    Sound.Sc3.Data.Image.Type
                    Sound.Sc3.Data.Korg.Minilogue
-                   Sound.Sc3.Data.LPC
+                   Sound.Sc3.Data.Lpc
                    Sound.Sc3.Data.Math.Bourke
                    Sound.Sc3.Data.Math.Bouwkamp
                    Sound.Sc3.Data.Math.Easing
@@ -115,35 +115,35 @@ Library
                    Sound.Sc3.Data.Midi.File.Z
                    Sound.Sc3.Data.Midi.Plain
                    Sound.Sc3.Data.Modal
-                   Sound.Sc3.Data.PVOC
+                   Sound.Sc3.Data.Pvoc
                    Sound.Sc3.Data.Reverb
                    Sound.Sc3.Data.Roland.D50
-                   Sound.Sc3.Data.Roland.D50.DB
+                   Sound.Sc3.Data.Roland.D50.Db
                    Sound.Sc3.Data.Roland.D50.Hash
-                   Sound.Sc3.Data.Roland.D50.PCM
-                   Sound.Sc3.Data.Roland.D50.PM
-                   Sound.Sc3.Data.Roland.D50.PP
+                   Sound.Sc3.Data.Roland.D50.Pcm
+                   Sound.Sc3.Data.Roland.D50.Pm
+                   Sound.Sc3.Data.Roland.D50.Pp
                    Sound.Sc3.Data.Roland.D50.Reverb
-                   Sound.Sc3.Data.Speech.CS
+                   Sound.Sc3.Data.Speech.Cs
                    Sound.Sc3.Data.Speech.Homophones
-                   Sound.Sc3.Data.Speech.PB
+                   Sound.Sc3.Data.Speech.Pb
                    Sound.Sc3.Data.Speech.Stk
                    Sound.Sc3.Data.Sfz
                    Sound.Sc3.Data.String.ByteString
                    Sound.Sc3.Data.String.String
                    Sound.Sc3.Data.Timestamp
                    Sound.Sc3.Data.Trace
-                   Sound.Sc3.Data.URandom
-                   Sound.Sc3.Data.VST
-                   Sound.Sc3.Data.VST.Obxd
-                   Sound.Sc3.Data.WT.AKWF
+                   Sound.Sc3.Data.Urandom
+                   Sound.Sc3.Data.Vst
+                   Sound.Sc3.Data.Vst.Obxd
+                   Sound.Sc3.Data.Wt.Akwf
                    Sound.Sc3.Data.X11.Ptr
-                   Sound.Sc3.Data.XML
-                   Sound.Sc3.Data.XML.CCCBR
-                   Sound.Sc3.Data.XML.JVX
-                   Sound.Sc3.Data.XML.KML
-                   Sound.Sc3.Data.XML.SVG
-                   Sound.Sc3.Data.XML.SVL
+                   Sound.Sc3.Data.Xml
+                   Sound.Sc3.Data.Xml.Cccbr
+                   Sound.Sc3.Data.Xml.Jvx
+                   Sound.Sc3.Data.Xml.Kml
+                   Sound.Sc3.Data.Xml.Svg
+                   Sound.Sc3.Data.Xml.Svl
                    Sound.Sc3.Data.Yamaha.Dx7
                    Sound.Sc3.Data.Yamaha.Dx7.Afx
                    Sound.Sc3.Data.Yamaha.Dx7.Algorithm

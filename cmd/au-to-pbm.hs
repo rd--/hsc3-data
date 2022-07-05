@@ -3,7 +3,7 @@ import System.Environment {- base -}
 
 import qualified Sound.File.Next as Au {- hsc3-sf -}
 
-import Sound.Sc3.Data.Bitmap.PBM {- hsc3-data -}
+import Sound.Sc3.Data.Bitmap.Pbm {- hsc3-data -}
 import Sound.Sc3.Data.Bitmap.Type {- hsc3-data -}
 
 -- > let fn = "/home/rohan/sw/hsc3-sf/au/mc-4-16.au"

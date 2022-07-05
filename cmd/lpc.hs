@@ -3,7 +3,7 @@ import Data.List {- base -}
 import System.Environment {- base -}
 import Numeric {- base -}
 
-import qualified Sound.Sc3.Data.LPC as LPC {- hsc3-data -}
+import qualified Sound.Sc3.Data.Lpc as Lpc {- hsc3-data -}
 
 help :: [String]
 help =
@@ -22,40 +22,40 @@ record_pp =
 float_pp :: RealFloat a => Int -> a -> String
 float_pp k n = showFFloat (Just k) n ""
 
-type READER = FilePath -> IO LPC.LPC
+type READER = FilePath -> IO Lpc.Lpc
 
 
 lpc_print_header :: READER -> FilePath -> IO ()
 lpc_print_header reader fn = do
   lpc <- reader fn
-  let hdr = LPC.lpcHeader lpc
+  let hdr = Lpc.lpcHeader lpc
   putStrLn (record_pp hdr)
 
 lpc_print_frame_csv :: READER -> Int -> FilePath -> Int -> IO ()
 lpc_print_frame_csv reader k fn n = do
   lpc <- reader fn
-  let hdr = LPC.lpcHeader lpc
-  when (n >= LPC.lpcNFrames hdr) (error "lpc: n > nframes")
-  let frm = LPC.lpcFrames lpc !! n
-  when (length frm /= LPC.lpcFrameSize hdr) (error "lpc: framesize?")
+  let hdr = Lpc.lpcHeader lpc
+  when (n >= Lpc.lpcNFrames hdr) (error "lpc: n > nframes")
+  let frm = Lpc.lpcFrames lpc !! n
+  when (length frm /= Lpc.lpcFrameSize hdr) (error "lpc: framesize?")
   putStrLn (intercalate "," (map (float_pp k) frm))
 
 lpc_print_column_csv :: READER -> Int -> FilePath -> Int -> IO ()
 lpc_print_column_csv reader k fn n = do
   lpc <- reader fn
-  let hdr = LPC.lpcHeader lpc
-      frm = LPC.lpcFrames lpc
-  when (n >= LPC.lpcFrameSize hdr) (error "lpc: n > frame_size")
+  let hdr = Lpc.lpcHeader lpc
+      frm = Lpc.lpcFrames lpc
+  when (n >= Lpc.lpcFrameSize hdr) (error "lpc: n > frame_size")
   let col = transpose frm !! n
-  when (length col /= LPC.lpcNFrames hdr) (error "lpc: n_frames?")
+  when (length col /= Lpc.lpcNFrames hdr) (error "lpc: n_frames?")
   putStrLn (intercalate "," (map (float_pp k) col))
 
 typ_to_reader :: String -> READER
 typ_to_reader typ =
   case typ of
-    "txt" -> LPC.lpc_read_text
-    "le" -> LPC.lpc_read_binary LPC.LittleEndian
-    "be" -> LPC.lpc_read_binary LPC.BigEndian
+    "txt" -> Lpc.lpc_read_text
+    "le" -> Lpc.lpc_read_binary Lpc.LittleEndian
+    "be" -> Lpc.lpc_read_binary Lpc.BigEndian
     _ -> error "unknown typ?"
 
 main :: IO ()

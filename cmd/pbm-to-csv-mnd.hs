@@ -8,25 +8,26 @@ import qualified Music.Theory.Show as T {- hmt-base -}
 
 import Sound.Sc3.Common.Buffer {- hsc3 -}
 
-import qualified Sound.File.HSndFile as SF {- hsc3-sf-hsndfile -}
+import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 
 import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
-import qualified Sound.Sc3.Data.Bitmap.PBM as P {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as P {- hsc3-data -}
 
 type R = Double
-type OPT = ((R,R,Maybe FilePath,Bool,Bool) -- midi note number
-           ,(R,Maybe FilePath) -- time
-           ,(R,Maybe FilePath) -- duration
-           ,(R,Maybe FilePath)) -- velocity
+type Opt =
+  ((R,R,Maybe FilePath,Bool,Bool) -- midi note number
+  ,(R,Maybe FilePath) -- time
+  ,(R,Maybe FilePath) -- duration
+  ,(R,Maybe FilePath)) -- velocity
 
 tbl_rd :: Maybe FilePath -> IO [Double]
 tbl_rd fn =
     case fn of
       Nothing -> return [1]
-      Just fn' -> fmap (head . snd) (SF.read fn')
+      Just fn' -> fmap (head . snd) (Sf.read fn')
 
 -- nc = number of columns (width), nr = number of rows (height)
-pbm_to_csv_mnd :: OPT -> FilePath -> FilePath -> IO ()
+pbm_to_csv_mnd :: Opt -> FilePath -> FilePath -> IO ()
 pbm_to_csv_mnd opt pbm_fn csv_fn = do
   let ((mnn,mnn_incr,mnn_tbl,inv,le),(tm_incr,tm_tbl),(du,du_tbl),(vel,vel_tbl)) = opt
   i <- P.read_pbm pbm_fn
@@ -36,7 +37,7 @@ pbm_to_csv_mnd opt pbm_fn csv_fn = do
   mnn_mod <- tbl_rd mnn_tbl
   let ((nr,nc),bi') = let z = P.pbm_to_bitindices i
                       in if le
-                         then B.bitindices_leading_edges B.RIGHT z
+                         then B.bitindices_leading_edges B.Dir_Right z
                          else z
       bi = sortBy (compare `on` snd) bi'
       mnn_sq = let sq = zipWith (*) [mnn,mnn + mnn_incr .. ] (resamp1 nr mnn_mod)

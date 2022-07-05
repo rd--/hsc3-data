@@ -8,11 +8,11 @@ import Text.Printf {- base -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
 
-import qualified Sound.Sc3.Data.Bitmap.PBM as I {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as I {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
-import qualified Sound.Sc3.Data.Trace as TR {- hsc3-data -}
+import qualified Sound.Sc3.Data.Trace as Trace {- hsc3-data -}
 
-type TRACE = [B.Ix]
+type Trace = [B.Ix]
 
 gen_neighbour_seq :: (Eq n,Num n) => (n,n) -> [(n,n)]
 gen_neighbour_seq e =
@@ -27,27 +27,27 @@ trace_step (d,m) ix =
       Just (ix',True) -> Just ((d,M.delete ix' m),ix')
       Just (_,False) -> error "trace_step: False element in map"
 
-trace_rec :: TRACE -> B.BitMap -> B.Ix -> (B.BitMap,TRACE)
+trace_rec :: Trace -> B.BitMap -> B.Ix -> (B.BitMap,Trace)
 trace_rec r bm ix =
     case trace_step bm ix of
       Nothing -> (bm,reverse (ix : r))
       Just (bm',ix') -> trace_rec (ix : r) bm' ix'
 
-trace_gen :: B.BitMap -> Maybe (B.BitMap,TRACE)
+trace_gen :: B.BitMap -> Maybe (B.BitMap,Trace)
 trace_gen (d,m) =
     case M.minViewWithKey m of
       Just ((ix,True),m') -> Just (trace_rec [] (d,m') ix)
       Just ((_,False),_) -> error "trace_gen: False element in map"
       Nothing -> Nothing
 
-bm_trace :: B.BitMap -> [TRACE]
+bm_trace :: B.BitMap -> [Trace]
 bm_trace bm =
     case trace_gen bm of
       Just (bm',tr) -> tr : bm_trace bm'
       Nothing -> []
 
--- | If 'TRACE's adjoin, in either direction, connect them.
-trace_join :: TRACE -> TRACE -> Maybe TRACE
+-- | If 'Trace's adjoin, in either direction, connect them.
+trace_join :: Trace -> Trace -> Maybe Trace
 trace_join p q =
     case (p,q) of
       ([],_) -> error "trace_join: []"
@@ -58,7 +58,7 @@ trace_join p q =
                 then Just (q ++ p)
                 else Nothing
 
-trace_join_set :: TRACE -> [TRACE] -> Maybe (TRACE,[TRACE])
+trace_join_set :: Trace -> [Trace] -> Maybe (Trace,[Trace])
 trace_join_set c =
     let f lhs rhs =
             case rhs of
@@ -68,7 +68,7 @@ trace_join_set c =
                            Just c' -> Just (c',reverse lhs ++ rhs')
     in f []
 
-trace_join_all :: [TRACE] -> [TRACE]
+trace_join_all :: [Trace] -> [Trace]
 trace_join_all tr =
     case tr of
       [] -> []
@@ -82,13 +82,13 @@ trace2_set_to_trace = let f (n,l) = zip (repeat n) l in concatMap f . zip [0..]
 trace2_set_write_csv :: Show n => FilePath -> [[(n,n)]] -> IO ()
 trace2_set_write_csv fn =
     let f (p,q) = [show p,show q]
-    in TR.trace_write_csv (show,f) fn . trace2_set_to_trace
+    in Trace.trace_write_csv (show,f) fn . trace2_set_to_trace
 
 {-
 import qualified Music.Theory.Read as T {- hmt-base -}
 trace_set_read_csv :: Read n => FilePath -> IO [[[n]]]
 trace_set_read_csv fn = do
-  tr <- TR.trace_read_csv (T.read_int,map read) fn
+  tr <- Trace.trace_read_csv (T.read_int,map read) fn
   return (map (map snd) (T.group_on fst tr))
 -}
 
