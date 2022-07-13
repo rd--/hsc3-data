@@ -1,7 +1,7 @@
 -- | IFSKit file format <http://larryriddle.agnesscott.org/ifskit/IFShelp/ifsfileformat.html>
-module Sound.Sc3.Data.Math.IFS where
+module Sound.Sc3.Data.Math.Ifs where
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 -- | Is line NIL or a comment.
 ifs_nil_line :: String -> Bool

@@ -11,7 +11,7 @@ import Data.Char {- base -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 -- | Parse three-element real-valued vector.
 poscar_parse_r3 :: String -> V3 Double

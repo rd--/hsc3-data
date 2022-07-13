@@ -19,7 +19,7 @@ import Safe {- safe -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 -- * Types
 

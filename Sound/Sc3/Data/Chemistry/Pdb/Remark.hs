@@ -5,7 +5,7 @@ import Data.List {- base -}
 import Data.List.Split {- split -}
 import Data.Maybe {- base -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
 

@@ -1,10 +1,10 @@
--- | Pdb TYPES.  <https://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html>
+-- | Pdb types.  <https://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html>
 module Sound.Sc3.Data.Chemistry.Pdb.Types where
 
 import Data.Function {- base -}
 import Data.List {- base -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 import qualified Music.Theory.List as T {- hmt -}
 

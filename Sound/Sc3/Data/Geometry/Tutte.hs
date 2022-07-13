@@ -4,11 +4,11 @@ module Sound.Sc3.Data.Geometry.Tutte where
 
 import Data.Bifunctor {- base -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
-import Data.CG.Minus.Geometry {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Geometry {- hcg-minus -}
 
-import qualified Data.CG.Minus.Plain.SVG as SVG {- hcg-minus -}
-import qualified Data.CG.Minus.Geometry.OFF as OFF {- hcg-minus -}
+import qualified Data.Cg.Minus.Plain.Svg as Svg {- hcg-minus -}
+import qualified Data.Cg.Minus.Geometry.Off as Off {- hcg-minus -}
 
 import qualified Music.Theory.Graph.Type as T {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}
@@ -57,10 +57,10 @@ tutte_gen (v,e) fc i =
       v0 = v_init_loc k fc_i
   in iterate (tutte_step adj fc_i) v0
 
--- | 'tutte_gen' of OFF3
-tutte_gen_off3 :: OFF.OFF3 R -> Int -> ([V_Loc],[V2 Int])
+-- | 'tutte_gen' of Off3
+tutte_gen_off3 :: Off.Off3 R -> Int -> ([V_Loc],[V2 Int])
 tutte_gen_off3 o i =
-  let (v,e) = T.lbl_to_g (OFF.off_graph o)
+  let (v,e) = T.lbl_to_g (Off.off_graph o)
       ((_,_),(_,fc)) = o
   in (tutte_gen (v,e) (map snd fc) i,e)
 
@@ -71,9 +71,9 @@ tutte_obj fn v e = do
       add_z (x,y) = (x,y,0)
   Obj.obj_store 4 fn (map (add_z . snd) v,e')
 
--- | Store tutte to SVG file.
+-- | Store tutte to Svg file.
 tutte_svg :: (V2 R,R,Int) -> FilePath -> V_Loc -> [V2 Int] -> IO ()
 tutte_svg opt fn v e = do
   let ix k = T.lookup_err k v
       ln = map (bimap ix ix) e
-  SVG.svg_store_line_unif ((0,0,0),1) fn opt ln
+  Svg.svg_store_line_unif ((0,0,0),1) fn opt ln

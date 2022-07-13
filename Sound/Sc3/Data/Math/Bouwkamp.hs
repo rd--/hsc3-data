@@ -15,9 +15,9 @@ import Text.Printf {- base -}
 import qualified Language.Dot as D {- language-dot -}
 import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
-import qualified Data.CG.Minus as CG {- hcg-minus -}
-import qualified Data.CG.Minus.Colour.RYB as RYB {- hcg-minus -}
-import qualified Data.CG.Minus.Picture as CG {- hcg-minus -}
+import qualified Data.Cg.Minus as Cg {- hcg-minus -}
+import qualified Data.Cg.Minus.Colour.Ryb as Ryb {- hcg-minus -}
+import qualified Data.Cg.Minus.Picture as Cg {- hcg-minus -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
 
@@ -36,11 +36,11 @@ sq_lower_right ((x,y),sz) = (x + sz,y + sz)
 sq_corners_cw :: Sq -> [Pt]
 sq_corners_cw ((x,y),sz) = [(x,y),(x + sz,y),(x + sz,y + sz),(x,y + sz)]
 
-sq_ln :: Sq -> [CG.Ln Int]
+sq_ln :: Sq -> [Cg.Ln Int]
 sq_ln sq =
-    let f (x,y) = CG.Pt (fromIntegral x) (fromIntegral y)
+    let f (x,y) = Cg.Pt (fromIntegral x) (fromIntegral y)
         [p0,p1,p2,p3] = map f (sq_corners_cw sq)
-    in zipWith CG.Ln [p0,p1,p2,p3] [p1,p2,p3,p0]
+    in zipWith Cg.Ln [p0,p1,p2,p3] [p1,p2,p3,p0]
 
 sq_ul_lr :: Sq -> (Pt,Pt)
 sq_ul_lr sq =
@@ -94,7 +94,7 @@ place_square_f pl pt sq =
 place_square :: [[Sz]] -> [Sq]
 place_square = place_square_f [] (0,0)
 
--- * ASCII
+-- * Ascii
 
 sq_ascii :: (Int,Int) -> [Sq] -> [String]
 sq_ascii (w,h) sq =
@@ -102,30 +102,30 @@ sq_ascii (w,h) sq =
         g r = map (f r) [0 .. w]
     in map g [0 .. h]
 
--- * PICTURE
+-- * Picture
 
-to_pt :: Int -> Pt -> CG.Pt Double
-to_pt h (x,y) = CG.Pt (fromIntegral x) (fromIntegral (h - y))
+to_pt :: Int -> Pt -> Cg.Pt Double
+to_pt h (x,y) = Cg.Pt (fromIntegral x) (fromIntegral (h - y))
 
-gen_poly :: Int -> [Sq] -> [[CG.Pt Double]]
+gen_poly :: Int -> [Sq] -> [[Cg.Pt Double]]
 gen_poly h = let f = map (to_pt h) . sq_corners_cw in map f
 
-gen_clr :: Int -> [CG.Ca]
-gen_clr = map (\(r,g,b) -> CG.rgba_to_ca (r,g,b,1)) . drop 2 . RYB.rgb_colour_gen . (+ 2)
+gen_clr :: Int -> [Cg.Ca]
+gen_clr = map (\(r,g,b) -> Cg.rgba_to_ca (r,g,b,1)) . drop 2 . Ryb.rgb_colour_gen . (+ 2)
 
-gen_pic :: Maybe [CG.Ca] -> Int -> [Sq] -> CG.Picture Double
+gen_pic :: Maybe [Cg.Ca] -> Int -> [Sq] -> Cg.Picture Double
 gen_pic m_clr sz sq = do
   let p = gen_poly sz sq
-      black_pen = CG.Pen 0.1 (CG.rgba_to_ca (0,0,0,1)) CG.no_dash
+      black_pen = Cg.Pen 0.1 (Cg.rgba_to_ca (0,0,0,1)) Cg.no_dash
     in case m_clr of
-         Just clr_seq -> zipWith CG.polygon_f clr_seq p
-         Nothing -> map (CG.polygon_l black_pen) p
+         Just clr_seq -> zipWith Cg.polygon_f clr_seq p
+         Nothing -> map (Cg.polygon_l black_pen) p
 
--- * CSV
+-- * Csv
 
-ln_entry :: Show a => CG.Ln a -> String
+ln_entry :: Show a => Cg.Ln a -> String
 ln_entry ln =
-    let ((x0,y0),(x1,y1)) = CG.ln_elem ln
+    let ((x0,y0),(x1,y1)) = Cg.ln_elem ln
     in intercalate "," (map show [x0,y0,x1,y1])
 
 gen_csv :: FilePath -> [Sq] -> IO ()
@@ -204,7 +204,7 @@ bc_connection_graph sq =
 -- * Dot
 
 gen_hex_clr :: Int -> [String]
-gen_hex_clr = map sRGB24show . drop 2 . RYB.colour_gen . (+ 2)
+gen_hex_clr = map sRGB24show . drop 2 . Ryb.colour_gen . (+ 2)
 
 dot_attr_str :: String -> String -> D.Attribute
 dot_attr_str k v = D.AttributeSetValue (D.NameId k) (D.StringId v)

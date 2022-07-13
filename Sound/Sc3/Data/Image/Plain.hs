@@ -14,7 +14,7 @@ import qualified Codec.Picture.Types as I {- JuicyPixels -}
 import qualified Sound.File.Next as Au {- hsc3-sf -}
 import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 
-import qualified Data.CG.Minus.Colour.Grey as C {- hcg-minus -}
+import qualified Data.Cg.Minus.Colour.Grey as C {- hcg-minus -}
 
 import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as BM {- hsc3-data -}

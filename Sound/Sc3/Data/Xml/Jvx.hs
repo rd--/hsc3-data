@@ -3,7 +3,7 @@ module Sound.Sc3.Data.Xml.Jvx where
 
 import qualified Text.XML.Light as X {- xml -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 import qualified Sound.Sc3.Data.Xml as Xml {- hsc3-data -}
 

@@ -9,7 +9,7 @@ import Data.Maybe {- base -}
 
 import qualified Music.Theory.List as T {- hmt-base -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 {- | The angstrom or ångström is a metric unit of length equal to 1×10−10 m,
 or one ten-billionth of a metre, 0.1 nanometre, or 100 picometres.

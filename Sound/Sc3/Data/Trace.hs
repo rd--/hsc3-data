@@ -10,8 +10,8 @@ import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.FilePath.Glob as Glob {- glob -}
 
-import Data.CG.Minus.Core {- hcg-minus -}
-import Data.CG.Minus.Types {- hcg-minus -}
+import Data.Cg.Minus.Core {- hcg-minus -}
+import Data.Cg.Minus.Types {- hcg-minus -}
 
 import qualified Music.Theory.Array.Csv as T {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}

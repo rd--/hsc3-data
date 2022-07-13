@@ -1,9 +1,9 @@
 -- | <http://paulbourke.net/>
 module Sound.Sc3.Data.Math.Bourke where
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
--- * FRACTALS <http://paulbourke.net/fractals>
+-- * Fractals <http://paulbourke.net/fractals>
 
 -- | 2-element /h/ transform.
 h_transform_2 :: Num t => t -> (V2 t -> V2 t) -> V2 t -> V2 t
@@ -95,7 +95,7 @@ clifford a b c d (x,y) =
     (sin (a * y) + c * cos (a * x)
     ,sin (b * x) + d * cos (b * y))
 
--- * INTERPOLATION
+-- * Interpolation
 
 -- | <http://paulbourke.net/miscellaneous/interpolation/>
 interpolate_linear :: Num a => V2 a -> a -> a

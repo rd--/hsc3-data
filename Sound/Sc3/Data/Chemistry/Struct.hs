@@ -10,7 +10,7 @@ import Data.Maybe {- base -}
 import Data.List {- base -}
 import System.FilePath {- filepath -}
 
-import Data.CG.Minus.Plain {- hcg-minus -}
+import Data.Cg.Minus.Plain {- hcg-minus -}
 
 import qualified Music.Theory.Directory as T {- hmt-base -}
 import qualified Music.Theory.Graph.Type as T {- hmt-base -}
