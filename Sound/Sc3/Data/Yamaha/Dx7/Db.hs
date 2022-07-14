@@ -20,7 +20,7 @@ import Sound.Sc3.Data.Yamaha.Dx7.Hash {- hsc3-data -}
 type Dx7_Syx_Dat = (String, FilePath, [(Int, Dx7_Voice)])
 
 -- | Set of Dx7_Syx_Dat
-type Dx7_Syx_Db_TREE = [Dx7_Syx_Dat]
+type Dx7_Syx_Db_Tree = [Dx7_Syx_Dat]
 
 -- | Scan /dir/ for ".syx" files and make DB tree.
 --   Ignore files that are not 4104-BYTES.
@@ -29,15 +29,15 @@ type Dx7_Syx_Db_TREE = [Dx7_Syx_Dat]
 -- > db <- dx7_syx_db_tree dir
 -- > length db == 213
 -- > map (\(nm,_,_) -> nm) db
-dx7_syx_db_tree :: FilePath -> IO Dx7_Syx_Db_TREE
+dx7_syx_db_tree :: FilePath -> IO Dx7_Syx_Db_Tree
 dx7_syx_db_tree dir = do
   fn <- fmap sort . filterM (fmap (== 4104) . getFileSize) =<< T.dir_find_ext ".syx" dir
   let nm = map takeBaseName fn
   p <- mapM dx7_load_fmt9_sysex_err fn
   return (zip3 nm fn (map (zip [1..]) p))
 
--- | Given SYX-NAME lookup voice data.
-dx7_syx_db_tree_get :: Dx7_Syx_Db_TREE -> String -> [(Int,Dx7_Voice)]
+-- | Given Syx-Name lookup voice data.
+dx7_syx_db_tree_get :: Dx7_Syx_Db_Tree -> String -> [(Int,Dx7_Voice)]
 dx7_syx_db_tree_get t nm =
   let f (x,_,l) = if x == nm then l else []
   in concatMap f t
@@ -67,7 +67,7 @@ vc_hash_param_csv (_,_,_,_,_,h,r) = [dx7_hash_pp h,T.byte_seq_hex_pp False r]
 vc_hash_name_csv :: Dx7_Syx_Vc -> [String]
 vc_hash_name_csv (_,_,_,_,n,h,_) = [dx7_hash_pp h,n]
 
--- | SYX DB.
+-- | Syx Db.
 type Dx7_Syx_Db = [Dx7_Syx_Vc]
 
 -- | Flatten Dx7_Syx_Dat.

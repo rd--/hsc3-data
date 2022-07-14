@@ -161,14 +161,14 @@ struct_stat s =
       e = sort (map atom_sym a)
       u = nub e
       f (i,j) = concat [i,": ",j]
-      q = [("NAME",nm)
-          ,("DESCRIPTION",dsc)
-          ,("N-AtomS",show n_a)
-          ,("N-BONDS",show n_b)
-          ,("N-ELEMENTS",show (length u))
-          ,("ELEMENTS",unwords u)
-          ,("FORMULA",E.hill_formula e)
-          ,("VALID",show (struct_validate s))]
+      q = [("Name",nm)
+          ,("Description",dsc)
+          ,("N-Atoms",show n_a)
+          ,("N-Bonds",show n_b)
+          ,("N-Elements",show (length u))
+          ,("Elements",unwords u)
+          ,("Formula",E.hill_formula e)
+          ,("Valid",show (struct_validate s))]
   in map f q
 
 -- | 'putStrLn' of 'unlines' of 'stuct_stat'
