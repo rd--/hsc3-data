@@ -1,4 +1,4 @@
--- | Dx7 / Pp (PRETTY-PRINTERS)
+-- | Dx7 / Pp (Pretty-Printers)
 module Sound.Sc3.Data.Yamaha.Dx7.Pp where
 
 import Control.Monad {- base -}
@@ -16,11 +16,12 @@ import qualified Sound.File.Next as Sf {- hsc3-sf -}
 import Sound.Sc3.Data.Yamaha.Dx7
 import Sound.Sc3.Data.Yamaha.Dx7.Dx7ii
 
--- * ENUM
+-- * Enum
 
--- | Generate list of possible parameter USR values, in sequence.
---
--- > map dx7_parameter_enum_usr dx7_op_parameter_tbl
+{- | Generate list of possible parameter Usr values, in sequence.
+
+> map dx7_parameter_enum_usr dx7_op_parameter_tbl
+-}
 dx7_parameter_enum_usr :: Dx7_Parameter -> [String]
 dx7_parameter_enum_usr (_,_,stp,d,u) =
   if u == "ASCII"
@@ -29,25 +30,27 @@ dx7_parameter_enum_usr (_,_,stp,d,u) =
          [_] -> map (\x -> show (x + d)) [0 .. stp - 1]
          e -> e
 
--- * CHAR COUNTING
+-- * Char Counting
 
--- | Maximum CHAR widths for USR representation of OP param.
---
--- > length dx7_op_char_count == 21
--- > sum dx7_op_char_count == 48
+{- | Maximum Char widths for Usr representation of Op param.
+
+> length dx7_op_char_count == 21
+> sum dx7_op_char_count == 48
+-}
 dx7_op_char_count :: [Int]
 dx7_op_char_count = [2,2,2,2, 2,2,2,2, 4,2,2,4,4,1, 1,1,2, 5,2,2,2]
 
--- | Maximum CHAR widths for USR representation of SH param.
---
--- > length dx7_sh_char_count == 19
--- > sum dx7_sh_char_count == 39
+{- | Maximum Char widths for Usr representation of Sh param.
+
+> length dx7_sh_char_count == 19
+> sum dx7_sh_char_count == 39
+-}
 dx7_sh_char_count :: [Int]
 dx7_sh_char_count = [2,2,2,2, 2,2,2,2, 2,1,3, 2,2,2,2,3,2, 1,3]
 
--- * CONCISE
+-- * Concise
 
--- | Concise OP and SH TABLEs for voice data.
+-- | Concise Op and Sh tables for voice data.
 dx7_voice_concise_tbl :: Dx7_Voice -> (String,T.Text_Table,T.Text_Table)
 dx7_voice_concise_tbl v =
   let [o6,o5,o4,o3,o2,o1,sh,nm] = dx7_voice_grp v
@@ -61,9 +64,10 @@ dx7_voice_concise_tbl v =
       sh_tbl = [w_fn (2 : dx7_sh_char_count) sh_hdr,sh_fn sh]
   in (map (dx7_ascii_char '?') nm,o_tbl,sh_tbl)
 
--- | Concise Pp using parameter names from Dx7ii manual.
---
--- > putStrLn $ unlines $ "" : dx7_voice_concise_str dx7_init_voice
+{- | Concise Pp using parameter names from Dx7ii manual.
+
+> putStrLn $ unlines $ "" : dx7_voice_concise_str dx7_init_voice
+-}
 dx7_voice_concise_str :: Dx7_Voice -> [String]
 dx7_voice_concise_str v =
   let (nm,op,sh) = dx7_voice_concise_tbl v
@@ -75,14 +79,14 @@ dx7_voice_concise_str v =
 dx7_voice_concise_seq :: [Dx7_Voice] -> String
 dx7_voice_concise_seq = unlines . intercalate [""] . map dx7_voice_concise_str
 
--- * PLAIN
+-- * Plain
 
 -- | Pretty print value give 'Dx7_Parameter'.
 dx7_parameter_value_pp :: Dx7_Parameter -> U8 -> String
 dx7_parameter_value_pp p x =
   let (_,_,stp,d,u) = p
       (x_clip,err) = if x >= stp
-                     then (stp - 1,printf "(ERROR BYTE=0x%02X)" x)
+                     then (stp - 1,printf "(Error Byte=0x%02X)" x)
                      else (x,"")
       r = if u == "ASCII"
           then ['\'',dx7_ascii_char '?' x_clip,'\'']
@@ -107,20 +111,22 @@ dx7_parameter_set_pp p x =
 dx7_parameter_seq_pp :: Dx7_Voice -> [String]
 dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 
--- | Dx7_Voice pretty-printer.
---
--- > putStrLn$unlines$ dx7_voice_pp dx7_init_voice
+{- | Dx7_Voice pretty-printer.
+
+> putStrLn$unlines$ dx7_voice_pp dx7_init_voice
+-}
 dx7_voice_pp :: Dx7_Voice -> [String]
 dx7_voice_pp p =
   let p_grp = dx7_voice_grp p
   in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (p_grp !! 6)
             ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
 
--- * VOICE-DATA LIST
+-- * Voice-Data List
 
--- | Plain text voice data list.
---
--- > putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
+{- | Plain text voice data list.
+
+> putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
+-}
 dx7_voice_data_list_pp :: Dx7_Voice -> [String]
 dx7_voice_data_list_pp d =
   let u8_at = (!!)
@@ -141,38 +147,37 @@ dx7_voice_data_list_pp d =
       vc_nm = "NAME=" ++ dx7_voice_name '?' d
   in vc_nm : concatMap f dx7_voice_data_list
 
--- * CSV
+-- * Csv
 
--- | Encode 'Dx7_Voice' as CSV entry.
---   The first column is the voice name as an ASCII string, followed by the parameters in sequence.
+-- | Encode 'Dx7_Voice' as Csv entry.
+--   The first column is the voice name as an Ascii string, followed by the parameters in sequence.
 --   Parameters are written as decimal integers.
 dx7_voice_to_csv :: Dx7_Voice -> String
 dx7_voice_to_csv v =
   let nm = map (\c -> if c == ',' then '_' else c) . dx7_voice_name '?'
   in intercalate "," (nm v : map show (dx7_voice_param v))
 
--- | Decode 'Dx7_Voice' from CSV entry.
+-- | Decode 'Dx7_Voice' from Csv entry.
 dx7_voice_from_csv :: String -> Dx7_Voice
 dx7_voice_from_csv str =
   case Split.splitOn "," str of
     nm:p -> dx7_param_to_dx7_voice nm (map read p)
     _ -> error "dx7_voice_from_csv?"
 
-{- | Write sequence of 'Dx7_Voice' to CSV file.
+{- | Write sequence of 'Dx7_Voice' to Csv file.
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/Dx7-ROM1A.syx"
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
 > d <- dx7_load_fmt9_sysex_err fn
 > dx7_store_csv True "/tmp/dx7.csv" d
 > r <- dx7_load_csv "/tmp/dx7.csv"
 > r == d
-
 -}
 dx7_store_csv :: Bool -> FilePath -> [Dx7_Voice] -> IO ()
 dx7_store_csv chk_rng fn v = do
   dx7_voice_set_verify chk_rng v
   writeFile fn (unlines (map dx7_voice_to_csv v))
 
--- | Read sequence of 'Dx7_Voice' from CSV file.
+-- | Read sequence of 'Dx7_Voice' from Csv file.
 dx7_load_csv :: FilePath -> IO [Dx7_Voice]
 dx7_load_csv fn = do
   s <- readFile fn
@@ -181,12 +186,12 @@ dx7_load_csv fn = do
   dx7_voice_set_verify chk_rng v
   return v
 
--- * NeXT/AU
+-- * Next/Au
 
-{- | Write VCED data to NeXT/AU audio file.
-     Data is encoded as signed 8-bit linear PCM.
+{- | Write Vced data to Next/Au audio file.
+     Data is encoded as signed 8-bit linear Pcm.
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/Dx7-ROM1A.syx"
+> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
 > d <- dx7_load_fmt9_sysex_err fn
 > dx7_store_au "/tmp/dx7.snd" d
 -}
@@ -196,8 +201,8 @@ dx7_store_au fn vc = do
       hdr = Sf.Sf_Header (length vc * 155) Sf.Linear8 155 1
   Sf.au_write_b fn hdr dat
 
-{- | Read VCED data from NeXT/AU audio file.
-     Data must be encoded as signed 8-bit linear PCM.
+{- | Read Vced data from Next/Au audio file.
+     Data must be encoded as signed 8-bit linear Pcm.
 
 > vc <- dx7_load_au "/tmp/dx7.snd"
 > dx7_voice_set_verify True vc
@@ -210,7 +215,7 @@ dx7_load_au fn = do
 
 -- * Dx7-II
 
--- | Pced summary: P-IX P-NAME PLMD A-IX A-NAME B-IX B-NAME
+-- | Pced summary: P-Ix P-Name Plmd A-Ix A-Name B-Ix B-Name
 dx7ii_pced_summary :: [Dx7_Voice] -> (Int,Dx7ii_Pced) -> String
 dx7ii_pced_summary vc (n,pf) =
   let vc_nm k = dx7_voice_name '?' (vc !! k)
@@ -229,21 +234,21 @@ dx7ii_pced_summary_hdr =
   ["P-IX  P-NAME                PLMD    A-IX   A-NAME      B-IX   B-NAME   "
   ,"----  --------------------  ------  -----  ----------  -----  ---------"]
 
-{- | Load VCED voice sysex files and Pced performance sysex files and print summary
+{- | Load Vced voice sysex files and Pced performance sysex files and print summary
 
 > let dir = "/home/rohan/sw/hsc3-data/data/yamaha/dx7ii/rom/"
-> let vc_fn = map (dir ++) (words "Dx7ii-32A.syx Dx7ii-64A.syx Dx7ii-32B.syx Dx7ii-64B.syx")
-> let pf_fn = map (dir ++) (words "Dx7ii-PFA.syx Dx7ii-PFB.syx")
+> let vc_fn = map (dir ++) (words "DX7II-32A.syx DX7II-64A.syx DX7II-32B.syx DX7II-64B.syx")
+> let pf_fn = map (dir ++) (words "DX7II-PFA.syx DX7II-PFB.syx")
 > dx7ii_pced_summary_syx vc_fn pf_fn
 -}
 dx7ii_pced_summary_syx :: [FilePath] -> [FilePath] -> IO ()
 dx7ii_pced_summary_syx vc_fn pf_fn = do
   vc <- mapM dx7_load_fmt9_sysex_err vc_fn
-  pf <- mapM dx7ii_8973PM_load pf_fn
+  pf <- mapM dx7ii_8973pm_load pf_fn
   putStrLn $ unlines $ dx7ii_pced_summary_hdr ++ dx7ii_pced_summary_seq (concat vc,concat pf)
 
--- | Table of Pced data in USR format.
---   Prefixed with P-IX, therefore 32 fields.
+-- | Table of Pced data in Usr format.
+--   Prefixed with P-Ix, therefore 32 fields.
 dx7ii_pced_pp_tbl :: [Dx7ii_Pced] -> [[String]]
 dx7ii_pced_pp_tbl pf_seq =
   let hdr = "#" : dx7ii_pced_param_abbrev
@@ -253,7 +258,7 @@ dx7ii_pced_pp_tbl pf_seq =
 
 {- | Print Pced data as text table.  Split into parts if /pt/ is True.
 
-> pf <- Music.Theory.Monad.concatMapM dx7ii_8973PM_load pf_fn
+> pf <- Music.Theory.Monad.concatMapM dx7ii_8973pm_load pf_fn
 > dx7ii_pced_pp (Just [18,14]) pf
 -}
 dx7ii_pced_pp :: Maybe [Int] -> [Dx7ii_Pced] -> IO ()

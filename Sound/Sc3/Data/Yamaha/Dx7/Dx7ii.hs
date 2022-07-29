@@ -265,14 +265,14 @@ dx7ii_ubd_request_sysex ch s1 s2 =
 -- * SYSEX - 8973PM - Dx7II PACKED 32 PERFORMANCE - 1642 BYTES
 
 -- | Group structure (byte-counts) for 8973PM sysex.
-dx7ii_8973PM_grp :: [Int]
-dx7ii_8973PM_grp = [4+2+4+6,1632,1,1]
+dx7ii_8973pm_grp :: [Int]
+dx7ii_8973pm_grp = [4+2+4+6,1632,1,1]
 
 -- | 8973PM header (SYSEX-HDR=4,BYTE-COUNT=2,CLASSIFICATION=4,FORMAT=6)
 --
 -- > Sound.Midi.Common.bits_7_join_le (0x6A,0x0C) == 1642
-dx7ii_8973PM_hdr :: U8 -> [[U8]]
-dx7ii_8973PM_hdr ch =
+dx7ii_8973pm_hdr :: U8 -> [[U8]]
+dx7ii_8973pm_hdr ch =
   [[0xF0,0x43,0x00 + ch,0x7E]
   ,[0x0C,0x6A] -- 1642
   ,[0x4C,0x4D,0x20,0x20] -- "LM  "
@@ -280,16 +280,16 @@ dx7ii_8973PM_hdr ch =
   ]
 
 -- | Verify that byte-data is a 8973PM header at indicated channel.
-dx7ii_8973PM_hdr_verify :: U8 -> [U8] -> Bool
-dx7ii_8973PM_hdr_verify ch h = h == concat (dx7ii_8973PM_hdr ch)
+dx7ii_8973pm_hdr_verify :: U8 -> [U8] -> Bool
+dx7ii_8973pm_hdr_verify ch h = h == concat (dx7ii_8973pm_hdr ch)
 
 -- | Parse 8973PM sysex to list of PCED.
-dx7ii_8973PM_parse :: [U8] -> [Dx7ii_Pced]
-dx7ii_8973PM_parse syx =
-  case Split.splitPlaces dx7ii_8973PM_grp syx of
-    [hdr,dat,_,[0xF7]] -> dx7ii_assert (dx7ii_8973PM_hdr_verify 0 hdr) (Split.chunksOf 51 dat)
-    _ -> error "dx7ii_8973PM_parse?"
+dx7ii_8973pm_parse :: [U8] -> [Dx7ii_Pced]
+dx7ii_8973pm_parse syx =
+  case Split.splitPlaces dx7ii_8973pm_grp syx of
+    [hdr,dat,_,[0xF7]] -> dx7ii_assert (dx7ii_8973pm_hdr_verify 0 hdr) (Split.chunksOf 51 dat)
+    _ -> error "dx7ii_8973pm_parse?"
 
 -- | Load 8973PM sysex file.
-dx7ii_8973PM_load :: FilePath -> IO [Dx7ii_Pced]
-dx7ii_8973PM_load = fmap dx7ii_8973PM_parse . dx7_read_u8
+dx7ii_8973pm_load :: FilePath -> IO [Dx7ii_Pced]
+dx7ii_8973pm_load = fmap dx7ii_8973pm_parse . dx7_read_u8

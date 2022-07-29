@@ -51,9 +51,9 @@ dat_stat = pdb_stat . dat_parse
 -- * Alpha Carbon
 
 {- | Generate Cα chains of single model Pdb.
-     Atoms where ALTLOC is not ' ' or 'A' are deleted.
-     Atoms that are located past a TER record are deleted.
-     Nucleotide chains are NOT given as NULL entries.
+     Atoms where Altloc is not ' ' or 'A' are deleted.
+     Atoms that are located past a Ter record are deleted.
+     Nucleotide chains are not given as null entries.
 -}
 dat_to_alpha_carbon_chains :: Bool -> Dat -> Maybe [(Char,[V3 Double])]
 dat_to_alpha_carbon_chains uniq dat =
@@ -67,25 +67,28 @@ dat_to_alpha_carbon_chains uniq dat =
            p = map (map atom_coord . filter ((==) "CA" . atom_name) . snd) c
        in Just (filter (not . null . snd) (zip (map fst c) p))
 
+dat_to_alpha_carbon_chains_err :: Bool -> Dat -> [(Char,[V3 Double])]
+dat_to_alpha_carbon_chains_err uniq = fromMaybe (error "dat_to_alpha_carbon_chains") . dat_to_alpha_carbon_chains uniq
+
 -- * Residues
 
--- | Set of all residue names at ATOM records.
+-- | Set of all residue names at Atom records.
 atom_residue_set :: Dat -> [String]
 atom_residue_set = nub . sort . map (residue_id_name . atom_residue_id) . dat_atom__
 
--- | Set of all residue names at HETATM records.
+-- | Set of all residue names at Hetatm records.
 hetatm_residue_set :: Dat -> [String]
 hetatm_residue_set = nub . sort . map (residue_id_name . atom_residue_id) . dat_hetatm
 
--- | Set of all residue names at SEQRES records.
+-- | Set of all residue names at Seqres records.
 seqres_residue_set :: Dat -> [String]
 seqres_residue_set = nub . sort . concatMap seqres_residue_names . dat_seqres
 
--- | Set of all residue names at MODRES records.
+-- | Set of all residue names at Modres records.
 modres_residue_set :: Dat -> [String]
 modres_residue_set = nub . sort . concatMap ((\(i,j) -> [i,j]) . modres_names) . dat_modres
 
--- | Residue sets (ATOM,HETATM,SEQRES,MODRES).
+-- | Residue sets (Atom,Hetatm,Seqres,Modres).
 residue_sets :: Dat -> ([String], [String], [String], [String])
 residue_sets x = (atom_residue_set x,hetatm_residue_set x,seqres_residue_set x,modres_residue_set x)
 
