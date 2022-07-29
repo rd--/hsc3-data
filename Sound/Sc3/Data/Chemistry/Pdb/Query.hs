@@ -21,7 +21,7 @@ pdb_stat ((h1,h2,h3),t,m,_,(a,h),c,sq,hlx,sht,lnk,ssb) =
       hoh = filter (\(nm,_,_,_) -> nm == "HOH") res
   in [("ID",h3)
      ,("CLASSIFICATION",h1)
-     ,("DEPOSITION-DatE",h2)
+     ,("DEPOSITION-DATE",h2)
      ,("TITLE",t)
      ,("NUMMDL",show (fromMaybe 1 m))] ++
      if isNothing m

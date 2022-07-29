@@ -1,6 +1,6 @@
 {- | Struct, minimal structure data type.
 
-Files in Xyz, Mol/SDF and Poscar file formats can be loaded into the Struct data-type.
+Files in Xyz, Mol/Sdf and Poscar file formats can be loaded into the Struct data-type.
 
 There is also a simle plain text format for storing Struct data.
 -}
@@ -33,10 +33,10 @@ atom_sym :: Atom -> String
 atom_sym (e,_) = e
 
 -- | (i,j), indicies into Atom sequence (ZERO indexed)
-type BOND = (Int,Int)
+type Bond = (Int,Int)
 
 -- | (name,degree=(n-atoms,n-bonds),description,atoms,bonds)
-type Struct = (String,(Int,Int),String,[Atom],[BOND])
+type Struct = (String,(Int,Int),String,[Atom],[Bond])
 
 struct_name :: Struct -> String
 struct_name (nm,_,_,_,_) = nm
@@ -59,7 +59,7 @@ struct_atoms (_,_,_,atm,_) = atm
 struct_description_edit :: (String -> String) -> Struct -> Struct
 struct_description_edit f (nm,k,dsc,a,b) = (nm,k,f dsc,a,b)
 
-struct_bonds :: Struct -> [BOND]
+struct_bonds :: Struct -> [Bond]
 struct_bonds (_nm,_k,_dsc,_a,b) = b
 
 struct_bonds_atoms :: Struct -> [(Atom,Atom)]
@@ -91,7 +91,7 @@ sym_radius sym =
 -- | (-0.8,+0.4)
 type Tolerance = (Double,Double)
 
--- | Replaces existing BONDS, if any, with calculated bonds.
+-- | Replaces existing bonds, if any, with calculated bonds.
 struct_calculate_bonds :: Tolerance -> Struct -> Struct
 struct_calculate_bonds tol (nm,(n_a,_),dsc,a,_b) =
   let b = map fst (E.calculate_bonds sym_radius tol a)
@@ -238,7 +238,7 @@ struct_load_ext fn =
        ".xyz" -> fmap (xyz_to_struct . f) (Xyz.xyz_load fn)
        ext -> error (show ("load_struct",fn,ext))
 
-{- | List of all Struct, Mol/SDF, Poscar and Xyz files at /dir/.
+{- | List of all Struct, Mol/Sdf, Poscar and Xyz files at /dir/.
      Names are relative.
 
 > struct_dir_entries "/home/rohan/rd/j/2018-09-26/xyz/"
@@ -307,7 +307,7 @@ poscar_to_obj_dir :: Int -> Tolerance -> FilePath -> FilePath -> IO ()
 poscar_to_obj_dir k t = ext_to_obj_dir ".poscar" k (Just t)
 
 {-
--- * Io - DIR
+-- * Io - Dir
 
 -- | 'mol_to_struct' of 'Mol.mol_load_dir', extension is either ".mol" or ".sdf"
 load_mol_structs :: String -> FilePath -> IO [Struct]

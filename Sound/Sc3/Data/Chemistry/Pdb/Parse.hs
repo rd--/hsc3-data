@@ -16,9 +16,9 @@ import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}
 
 {- | Atom/Hetatm
 
-COLUMNS        DatA  TYPE    FIELD        DEFINITION
+COLUMNS        DATA  TYPE    FIELD        DEFINITION
 -------------------------------------------------------------------------------------
- 1 -  6        Record name   "Atom  "
+ 1 -  6        Record name   "ATOM  "
  7 - 11        Integer       serial       Atom  serial number.
 13 - 16        Atom          name         Atom name.
 17             Character     altLoc       Alternate location indicator.
@@ -491,26 +491,26 @@ txt = T.pack
 
 -- * Rec
 
--- | (RecORD-TYPE,RecORD-FIELDS)
+-- | (Record-Type,Record-Fields)
 type Rec = (Txt,[Txt])
 
--- | Record names are the initial six-characters, ie. "HET   " and "Atom  " and "HETATM"
+-- | Record names are the initial six-characters, ie. "HET   " and "ATOM  " and "HETATM"
 txt_rec_name :: Txt -> Txt
 txt_rec_name = T.take 6
 
 txt_rec_match :: Txt -> Txt -> Bool
 txt_rec_match x = (==) x . txt_rec_name
 
--- * RecORD TABLE
+-- * Record Table
 
--- | ONE-INDEXED (START,END) to ZERO-INDEXED (START,LENGTH)
+-- | One-Indexed (Start,End) to Zero-Indexed (Start,Length)
 se_to_ix :: Num i => ([i],[i]) -> [(i,i)]
 se_to_ix (i,j) = zip (map (subtract 1) i) (map (+ 1) (zipWith (-) j i))
 
--- | Table of (RecORD-TYPE:STRING,INDICES:START-END).
+-- | Table of (Record-Type:String,Indices:Start-End).
 pdb_rec_str_se :: [(String,([Int],[Int]))]
 pdb_rec_str_se =
-  [("Atom  ",atom_se)
+  [("ATOM  ",atom_se)
   ,("CISPEP",cispep_se)
   ,("CONECT",conect_se)
   ,("CRYST1",cryst1_se)
@@ -645,19 +645,19 @@ pdb_dat_rec_set ty_set = mapMaybe (pdb_rec_parse_set ty_set)
 
 -- * Records
 
--- | Atom and HETATM records
+-- | Atom and Hetatm records
 dat_atom_all :: Dat -> [Atom]
-dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["Atom  ","HETATM"])
+dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
 
--- | (Atom,HETATM)
+-- | (Atom,Hetatm)
 dat_atom :: Dat -> ([Atom],[Atom])
 dat_atom = partition (not . atom_het) . dat_atom_all
 
 -- | Atom
 dat_atom__ :: Dat -> [Atom]
-dat_atom__ = map atom_unpack . pdb_dat_rec (txt "Atom  ")
+dat_atom__ = map atom_unpack . pdb_dat_rec (txt "ATOM  ")
 
--- | HETATM
+-- | Hetatm
 dat_hetatm :: Dat -> [Atom]
 dat_hetatm = map atom_unpack . pdb_dat_rec (txt "HETATM")
 
@@ -722,7 +722,7 @@ dat_parse x =
   ,dat_link x
   ,dat_ssbond x)
 
--- * IO
+-- * Io
 
 pdb_load_dat :: FilePath -> IO Dat
 pdb_load_dat = fmap T.lines . T.readFile
