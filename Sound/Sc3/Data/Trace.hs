@@ -111,7 +111,7 @@ trace_load_csv :: Maybe Int -> FilePath -> IO (Trace Time [Double])
 trace_load_csv nc fn = do
   (_,tbl) <- T.csv_table_read (True,',',False,T.Csv_No_Align) read fn
   when (null tbl) (error "trace_load_csv: empty tbl")
-  let t:d = transpose tbl
+  let (t, d) = T.headTail (transpose tbl)
   trace_assert_nc nc (length (head tbl) - 1)
   return (zip t (transpose d))
 
