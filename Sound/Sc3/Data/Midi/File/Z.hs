@@ -1,4 +1,4 @@
--- | Midi file IO, courtesy zmidi-core.
+-- | Midi file Io, courtesy zmidi-core.
 module Sound.Sc3.Data.Midi.File.Z where
 
 import Control.Monad {- base -}

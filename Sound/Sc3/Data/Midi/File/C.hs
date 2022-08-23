@@ -1,4 +1,4 @@
--- | Midi file IO, courtesy HCodecs.
+-- | Midi file Io, courtesy HCodecs.
 module Sound.Sc3.Data.Midi.File.C where
 
 import Data.List {- base -}
@@ -13,7 +13,7 @@ import qualified Music.Theory.Time.Seq as T {- hmt -}
 import qualified Sound.Midi.Common as M {- midi-osc -}
 import qualified Sound.Midi.Type as M {- midi-osc -}
 
--- * MIDI arcana
+-- * Midi arcana
 
 -- | Translate pulses per minute to micro seconds per quarter note.
 --
@@ -23,7 +23,7 @@ ppm_to_mspqn ppm =
     let microseconds_per_minute = 60000000
     in microseconds_per_minute `div` ppm
 
--- | Table mapping time signature denominator to MIDI notation.
+-- | Table mapping time signature denominator to Midi notation.
 ts_denominator_tbl :: Num t => [(t,t)]
 ts_denominator_tbl = [(1,0),(2,1),(4,2),(8,3),(16,4),(32,5),(64,6)]
 
@@ -46,13 +46,13 @@ mk_time_signature (nn,d) =
         bb = 8 -- 1/32 per 1/4
     in C.TimeSignature nn dd cc bb
 
--- * WRITE
+-- * Write
 
 -- | Add 'C.TrackEnd' message.
 add_track_end :: T.Tseq t C.Message -> T.Tseq t C.Message
 add_track_end tr = tr ++ [(fst (last tr),C.TrackEnd)]
 
--- | Write FMT-0 midi file.  The time-division is 1024.  Initial
+-- | Write Fmt-0 midi file.  The time-division is 1024.  Initial
 -- tempo-change and time-signature meta data can be written.
 c_write_midi0_opt :: Maybe Int -> Maybe (Int,Int) -> FilePath -> [T.Tseq C.Time C.Message] -> IO ()
 c_write_midi0_opt m_tc m_ts fn sq =
@@ -61,7 +61,7 @@ c_write_midi0_opt m_tc m_ts fn sq =
         pre = catMaybes [fmap mk_tempo_change m_tc
                         ,fmap mk_time_signature m_ts]
         m = map (\x -> (0,x)) pre ++ concat sq
-        mk_t = C.fromRealTime tf . C.fromAbsTime . add_track_end . sortOn fst
+        mk_t = C.fromAbsTime . C.fromRealTime tf . add_track_end . sortOn fst
     in C.exportFile fn (C.Midi ft tf [mk_t m])
 
 -- | Erroring variant of 'C.importFile'.
@@ -73,7 +73,7 @@ c_load_midi fn = do
   r <- C.importFile fn
   return (either (\err -> error ("c_load_midi: read failed: " ++ show err)) id r)
 
--- | Load Type-0 or Type-1 MIDI file as 'SEQ' data.  Ignores
+-- | Load Type-0 or Type-1 Midi file as 'TSeq' data.  Ignores
 -- everything except note on and off messages.
 --
 -- > sq <- c_read_midi fn
@@ -88,16 +88,16 @@ c_read_midi fn = do
     then return sq
     else error (show ("read_midi: not type-0 or type-1",ty))
 
--- * HEADER
+-- * Header
 
--- | MIDI header, (file-type, time-div, track-count).
+-- | Midi header, (file-type, time-div, track-count).
 c_midi_header :: C.Midi -> (Int,Int,Int)
 c_midi_header m =
   (c_file_type (C.fileType m)
   ,c_time_div (C.timeDiv m)
   ,length (C.tracks m))
 
--- * INTEROP
+-- * Interop
 
 c_file_type :: C.FileType -> Int
 c_file_type ty =
