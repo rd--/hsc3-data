@@ -101,6 +101,7 @@ Library
                    Sound.Sc3.Data.Image.Type
                    Sound.Sc3.Data.Korg.Minilogue
                    Sound.Sc3.Data.Lpc
+                   Sound.Sc3.Data.Math.ActivationFunction
                    Sound.Sc3.Data.Math.Bourke
                    Sound.Sc3.Data.Math.Bouwkamp
                    Sound.Sc3.Data.Math.Easing
