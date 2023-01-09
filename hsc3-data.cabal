@@ -1,16 +1,16 @@
 Cabal-Version:     2.4
 Name:              hsc3-data
-Version:           0.20
+Version:           0.21
 Synopsis:          haskell supercollider data
-Description:       Data related functions useful when working with SC3.
+Description:       Data related functions useful when working with SuperCollider.
 License:           GPL-3.0-only
 Category:          Sound
-Copyright:         (c) Rohan Drape, 2013-2022
+Copyright:         (c) Rohan Drape, 2013-2023
 Author:            Rohan Drape
 Maintainer:        rd@rohandrape.net
 Stability:         Experimental
 Homepage:          http://rohandrape.net/t/hsc3-data
-Tested-With:       GHC == 9.2.4
+Tested-With:       GHC == 9.4.3
 Build-Type:        Simple
 
 Data-files:        README.md
@@ -30,19 +30,19 @@ Library
                    Glob,
                    graphviz,
                    HCodecs,
-                   hcg-minus == 0.20.*,
-                   hmt-base == 0.20.*,
-                   hmt == 0.20.*,
-                   hosc == 0.20.*,
-                   hsc3 == 0.20.*,
-                   hsc3-lang == 0.20.*,
-                   hsc3-plot == 0.20.*,
-                   hsc3-sf == 0.20.*,
-                   hsc3-sf-hsndfile == 0.20.*,
-                   hsc3-ui == 0.20.*,
+                   hcg-minus == 0.21.*,
+                   hmt-base == 0.21.*,
+                   hmt == 0.21.*,
+                   hosc == 0.21.*,
+                   hsc3 == 0.21.*,
+                   hsc3-lang == 0.21.*,
+                   hsc3-plot == 0.21.*,
+                   hsc3-sf == 0.21.*,
+                   hsc3-sf-hsndfile == 0.21.*,
+                   hsc3-ui == 0.21.*,
                    JuicyPixels,
                    language-dot,
-                   midi-osc == 0.20.*,
+                   midi-osc == 0.21.*,
                    murmur-hash,
                    parsec,
                    pgm,
