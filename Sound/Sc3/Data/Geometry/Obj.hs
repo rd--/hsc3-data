@@ -60,14 +60,14 @@ obj_is_nil_line s = null s || head s == '#'
 obj_load :: FilePath -> IO Obj
 obj_load = fmap (obj_parse . filter (not . obj_is_nil_line) . lines) . Strict.readFile
 
--- | Given precision for printing, format Obj entry.
+-- | Given k=precision for printing, format Obj entry.
 obj_format_entry :: Int -> Either (V3 R) (Char,[Int]) -> String
 obj_format_entry k =
   let f_pp = unwords . (:) "v" . map (T.realfloat_pp k) . T.t3_to_list
       i_pp (c,x) = unwords ([c] : map (show . (+) 1) x)
   in either f_pp i_pp
 
--- | 'writeFile' of 'obj_format_entry'
+-- | 'writeFile' of 'obj_format_entry' given k=precision
 obj_store :: Int -> FilePath -> Obj -> IO ()
 obj_store k fn =
   let f (i,j) = map Left i ++ map Right j
@@ -93,15 +93,17 @@ obj_load_ln = fmap obj_to_ln . obj_load
 
 ln_dat_from_vertex_seq :: [[V3 R]] -> Ln_Dat
 ln_dat_from_vertex_seq t =
-  let reverse_lookup k = fmap fst . find ((== k) . snd)
-      reverse_lookup_err k = fromMaybe (error "reverse_lookup") . reverse_lookup k
+  let reverse_lookup key = fmap fst . find ((== key) . snd)
+      reverse_lookup_err key = fromMaybe (error "reverse_lookup") . reverse_lookup key
       p = nub (sort (concat t))
       v = zip [0..] p
   in (p,map (map (`reverse_lookup_err` v)) t)
 
+-- | k=precision, fn=file-name
 obj_store_ln_dat :: Int -> FilePath -> Ln_Dat -> IO ()
 obj_store_ln_dat k fn = obj_store k fn . ln_to_obj
 
+-- | k=precision, fn=file-name
 obj_store_ln :: Int -> FilePath -> [[V3 R]] -> IO ()
 obj_store_ln k fn = obj_store_ln_dat k fn . ln_dat_from_vertex_seq
 
@@ -123,7 +125,7 @@ obj_load_lbl_ = fmap obj_to_lbl_ . obj_load
 lbl_to_obj :: T.Lbl_ (V3 R) -> Obj
 lbl_to_obj (v,e) = let f ((i,j),()) = ('l',[i,j]) in (map snd v,map f e)
 
--- | 'obj_store' of 'lbl_to_obj'.
+-- | 'obj_store' of 'lbl_to_obj', k=precision
 obj_store_lbl_ :: Int -> FilePath -> T.Lbl_ (V3 R) -> IO ()
 obj_store_lbl_ k fn = obj_store k fn . lbl_to_obj
 
@@ -148,6 +150,7 @@ face_dat_to_vertex_seq (v,f) = map (map (`T.lookup_err` zip [0..] v)) f
 face_dat_to_obj :: Face_Dat -> Obj
 face_dat_to_obj (v,f) = (v,map ((,) 'f') f)
 
+-- | k=precision, fn=file-name
 obj_store_face_dat :: Int -> FilePath -> Face_Dat -> IO ()
 obj_store_face_dat k fn = obj_store k fn . face_dat_to_obj
 
