@@ -1,46 +1,46 @@
-This directory contains SYSEX files to edit an Arturia BeatStep USB/MIDI controller.
+This directory contains Sysex files to edit an Arturia BeatStep Usb/Midi controller.
 
-The SYSEX files may contain multiple SYSEX messages.
+The Sysex files may contain multiple Sysex messages.
 
-To send using `amidi` (editing the PORT variable, see `amidi -l`):
+To send using `amidi` (editing the port variable, see `amidi -l`):
 
 ~~~~
-$ export PORT=hw:1,0,0
-$ amidi -p $PORT -i 1 -s enc-seq-I00-REL.syx
-$ amidi -p $PORT -i 1 -s led-all-red.syx
-$ amidi -p $PORT -i 1 -s led-all-blue.syx
-$ amidi -p $PORT -i 1 -s led-all-off.syx
+$ export port=hw:1,0,0
+$ amidi -p $port -i 1 -s enc-seq-i00-rel.syx
+$ amidi -p $port -i 1 -s led-all-red.syx
+$ amidi -p $port -i 1 -s led-all-blue.syx
+$ amidi -p $port -i 1 -s led-all-off.syx
 $
 ~~~~
 
-To send using `midi-osc-pm` (editing the PORT variable, see `midi-osc-pm stat`):
+To send using `midi-osc-pm` (editing the port variable, see `midi-osc-pm stat`):
 
 ~~~~
-$ export PORT=1
-$ midi-osc-pm sysex send 1 $PORT < enc-seq-C00-I00-ABS.syx
-$ midi-osc-pm sysex send 1 $PORT < led-all-blue.syx
-$ midi-osc-pm sysex send 1 $PORT < led-all-off.syx
+$ export port=1
+$ midi-osc-pm sysex send 1 $port < enc-seq-c00-i00-abs.syx
+$ midi-osc-pm sysex send 1 $port < led-all-blue.syx
+$ midi-osc-pm sysex send 1 $port < led-all-off.syx
 $
 ~~~~
 
-The SYSEX files are:
+The Sysex files are:
 
-- enc-seq-INDEX-MODE: set all encoders to send CC messages at consecutive indices starting at INDEX
-- led-all-STATE: set all LED to STATE (RED, BLUE, MAGENTA, OFF)
-- led-cntrl-seq-off: turn off CNTRL/SEQ LED
-- led-pad-INDEX-STATE: set LED at pad INDEX to STATE
-- pad-seq-cc-INDEX-MODE: set all pads to send CC messages at consecutive indices starting at INDEX
-- pad-seq-mn-INDEX-MODE: set all pads to send MNN messages at consecutive indices starting at INDEX
+- enc-seq-index-mode: set all encoders to send Cc messages at consecutive indices starting at _index_
+- led-all-state: set all led to state (red, blue, magenta, off)
+- led-cntrl-seq-off: turn off cntrl/seq led
+- led-pad-index-state: set led at pad index to state
+- pad-seq-cc-index-mode: set all pads to send Cc messages at consecutive indices starting at index
+- pad-seq-mn-index-mode: set all pads to send mnn messages at consecutive indices starting at index
 
-The ENC and PAD files follow the global channel setting (set using CHAN+PAD on device).
+The enc and pad files follow the global channel setting (set using chan+pad on device).
 
-Encoder modes are: ABS = absolute values, REL = relative values (centre 0x40)
+Encoder modes are: abs = absolute values, rel = relative values (centre 0x40)
 
-Pad CC modes are: SW1 = ON/OFF (maintained switch), SW2 = ON/OFF (momentary switch), PRS = pressure
+Pad Cc modes are: sw1 = on/off (maintained switch), sw2 = on/off (momentary switch), prs = pressure
 
-Pad MN modes are: CS = ON/OFF (consecutive presses), RL = ON/OFF (on release)
+Pad Mn modes are: cs = on/off (consecutive presses), rl = on/off (on release)
 
 The module has code for the following variants (not stored):
 
-- enc-seq-CHANNEL-INDEX-MODE: variant setting fixed output channel
-- pad-seq-CHANNEL-INDEX-MODE: variant setting fixed output channel
+- enc-seq-channel-index-mode: variant setting fixed output channel
+- pad-seq-channel-index-mode: variant setting fixed output channel

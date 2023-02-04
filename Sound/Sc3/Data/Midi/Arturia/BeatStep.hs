@@ -27,7 +27,7 @@ common_sysex_prefix = [0xF0,0x00,0x20,0x6B,0x7F,0x42]
 with_common_sysex_prefix :: Num n => [n] -> Sysex n
 with_common_sysex_prefix = (++) common_sysex_prefix
 
--- | General form of SET messages.
+-- | General form of set messages.
 --
 -- pp = parameter number,
 -- cc = control ID (see 'control_id_dsc'),
@@ -48,10 +48,10 @@ ctl_enc_ix0 = 0x20
 ctl_pad_ix0 :: Num n => n
 ctl_pad_ix0 = 0x70
 
-{- | General form of GET (REQUEST) messages.
+{- | General form of Get (Request) messages.
 
 pp = parameter number,
-cc = control ID
+cc = control id
 
 > request_sysex 0x01 ctl_enc_ix0 == with_common_sysex_prefix [0x01,0x00,0x01,0x20,0xF7]
 
@@ -67,7 +67,7 @@ request_sysex pp cc = with_common_sysex_prefix [0x01,0x00,pp,cc,0xF7]
 global_midi_channel_set :: Num n => n -> Sysex n
 global_midi_channel_set = set_sysex 0x40 0x06 -- corrected from 0x50 0x06 & also 0x50 0x0B, see comments
 
--- | Global CV/Gate interface receive channel (0-15) [untested]
+-- | Global Cv/Gate interface receive channel (0-15) [untested]
 global_cv_gate_interface_receive_channel_set :: Num n => n -> Sysex n
 global_cv_gate_interface_receive_channel_set = set_sysex 0x50 0x0C
 
@@ -99,12 +99,12 @@ preset_store mm = with_common_sysex_prefix [0x06,mm,0xF7]
 preset_recall :: Num n => n -> Sysex n
 preset_recall mm = with_common_sysex_prefix [0x05,mm,0xF7]
 
--- * ENC = encoder, cc = CC-mode
+-- * Enc = encoder, cc = Cc-mode
 
 data Encoder_Mode = Absolute | Relative_X40 | Relative_X00 | Relative_X10 deriving (Eq,Enum,Show)
 
 encoder_mode_str :: Encoder_Mode -> String
-encoder_mode_str x = ["ABS","REL","REL_00","REL_10"] !! fromEnum x
+encoder_mode_str x = ["abs","rel","rel_00","rel_10"] !! fromEnum x
 
 {- | Encoder control-change mode.
 
@@ -124,13 +124,13 @@ enc_cc_set j (ch,cc,(l,r),md) =
      ,set_sysex 0x06 k (enum_to_u8 md) -- 0=absolute-value 1-3=relative
      ]
 
--- | Set 16 encoders, only CC value differs per encoder.
+-- | Set 16 encoders, only Cc value differs per encoder.
 enc_cc_set_16 :: (Byte,[Byte],(Byte,Byte),Encoder_Mode) -> [Sysex Byte]
 enc_cc_set_16 (ch,cc_seq,rng,md) =
   let f j cc = enc_cc_set j (ch,cc,rng,md)
   in concat (zipWith f [0 .. 15] cc_seq)
 
--- | Set only CC value (not channel or range or mode)
+-- | Set only Cc value (not channel or range or mode)
 enc_cc_set_cc :: Ctl_Id -> Byte -> Sysex Byte
 enc_cc_set_cc j = set_sysex 0x03 (ctl_enc_ix0 + j)
 
@@ -143,46 +143,46 @@ enc_cc_set_ch j = set_sysex 0x02 (ctl_enc_ix0 + j)
 enc_cc_set_value :: Ctl_Id -> Byte -> Sysex Byte
 enc_cc_set_value j = set_sysex 0x00 (ctl_enc_ix0 + j)
 
--- * ENC PN MODE
+-- * Enc Pn Mode
 
--- | (N/R)PN Mode
-data PN_Mode = NRPN | RPN deriving (Eq,Enum,Show)
+-- | (N/R)Pn Mode
+data Pn_Mode = Nrpn | Rpn deriving (Eq,Enum,Show)
 
--- | (N/R)PN Type
-data PN_Type = Coarse | Fine deriving (Eq,Show)
+-- | (N/R)Pn Type
+data Pn_Type = Coarse | Fine deriving (Eq,Show)
 
--- | 'PN_Type' to byte code.
-pn_type_to_u8 :: Num n => PN_Type -> n
+-- | 'Pn_Type' to byte code.
+pn_type_to_u8 :: Num n => Pn_Type -> n
 pn_type_to_u8 x = case x of {Coarse -> 0x06 ; Fine -> 0x26}
 
-{- | Encoder (N/R)PN mode.
+{- | Encoder (N/R)Pn mode.
 
 k = control-id (0-15) (translated to 0x20-0x2F),
 ch = channel, ty = coarse/fine,
 msb = most-significant-byte-index, lsb = least-significant-byte-index,
 md = mode
 
-The device only sends either the LSB or the MSB value, ie. this does not send 14-bit encoder data.
+The device only sends either the Lsb or the Msb value, ie. this does not send 14-bit encoder data.
 -}
-enc_pn_set :: Ctl_Id -> (Byte,PN_Type,(Byte,Byte),PN_Mode) -> [Sysex Byte]
+enc_pn_set :: Ctl_Id -> (Byte,Pn_Type,(Byte,Byte),Pn_Mode) -> [Sysex Byte]
 enc_pn_set j (ch,ty,(msb,lsb),md) =
   let k = ctl_enc_ix0 + j
   in [set_sysex 0x01 k 0x04 -- nrpn/rpn-mode
      ,set_sysex 0x02 k ch -- channel
      ,set_sysex 0x03 k (pn_type_to_u8 ty) -- coarse/fine 0x06=coarse 0x26=fine
-     ,set_sysex 0x04 k msb -- MSB index
-     ,set_sysex 0x05 k lsb -- LSB index
-     ,set_sysex 0x06 k (enum_to_u8 md) -- 0=NRPN 1=RPN
+     ,set_sysex 0x04 k msb -- msb index
+     ,set_sysex 0x05 k lsb -- lsb index
+     ,set_sysex 0x06 k (enum_to_u8 md) -- 0=Nrpn 1=Rpn
      ]
 
--- * PAD-NM (note-mode)
+-- * Pad-Nm (note-mode)
 
 -- | Enumeration of pad switch modes.
 data Switch_Mode = Toggle | Gate deriving (Eq,Enum,Show)
 
 -- | cs=consecutive, rl=release
 switch_mode_str :: Switch_Mode -> String
-switch_mode_str x = case x of {Toggle -> "CS" ; Gate -> "RL"}
+switch_mode_str x = case x of {Toggle -> "cs" ; Gate -> "rl"}
 
 -- | Set pad to midi-note mode (mn).
 pad_mn_set :: Ctl_Id -> (Byte, Byte, Switch_Mode) -> [Sysex Byte]
@@ -200,39 +200,39 @@ pad_mn_set_16 (ch,mnn_seq,md) =
   let f j mnn = pad_mn_set j (ch,mnn,md)
   in concat (zipWith f [0 .. 15] mnn_seq)
 
--- | Set 16 encoders, only CC value differs per encoder.
+-- | Variant that places each pad on a separate channel.
 pad_mn_set_16_mpe :: ([Byte],Switch_Mode) -> [Sysex Byte]
 pad_mn_set_16_mpe (mnn_seq,md) =
   let f j mnn = pad_mn_set j (j,mnn,md)
   in concat (zipWith f [0 .. 15] mnn_seq)
 
--- * PAD-CC (control-change)
+-- * Pad-Cc (control-change)
 
-{- | The three CC behaviors for pads are:
+{- | The three Cc behaviors for pads are:
 
-1. SWITCH-TOGGLE (0x01=0x08 + 0x06=0x00)
-2. SWITCH-GATE (0x01=0x08 + 0x06=0x01)
-3. PRESSURE(-GATE) (0x01=0x01)
+1. Switch-Toggle (0x01=0x08 + 0x06=0x00)
+2. Switch-Gate (0x01=0x08 + 0x06=0x01)
+3. Pressure(-Gate) (0x01=0x01)
 
-The first two send the MINIMA value for off and the MAXIMA value for ON
+The first two send the minima value for off and the maxima value for ON
 (respectively at consecutive presses, and at press/release).
 
-The third sends continuous pressure data in the range (MINIMA,MAXIMA) while pressed.
+The third sends continuous pressure data in the range (minima, maxima) while pressed.
 
 -}
-data Pad_CC_Mode = Pad_Switch Switch_Mode | Pad_Pressure deriving (Eq,Show)
+data Pad_Cc_Mode = Pad_Switch Switch_Mode | Pad_Pressure deriving (Eq,Show)
 
-pad_cc_mode_ty :: Num n => Pad_CC_Mode -> n
+pad_cc_mode_ty :: Num n => Pad_Cc_Mode -> n
 pad_cc_mode_ty x = case x of {Pad_Switch _ -> 0x08;Pad_Pressure -> 0x01}
 
-pad_cc_mode_sw :: Num n => Pad_CC_Mode -> n
+pad_cc_mode_sw :: Num n => Pad_Cc_Mode -> n
 pad_cc_mode_sw x = case x of {Pad_Switch md -> enum_to_num md;Pad_Pressure -> 0x00}
 
-pad_cc_mode_str :: Pad_CC_Mode -> String
-pad_cc_mode_str x = case x of {Pad_Switch Toggle -> "SW1" ; Pad_Switch Gate -> "SW2" ; Pad_Pressure -> "PRS"}
+pad_cc_mode_str :: Pad_Cc_Mode -> String
+pad_cc_mode_str x = case x of {Pad_Switch Toggle -> "sw1" ; Pad_Switch Gate -> "sw2" ; Pad_Pressure -> "prs"}
 
 -- | Set pad to control-change mode (ccm).
-pad_cc_set :: Ctl_Id -> (Pad_CC_Mode, Byte, Byte, (Byte, Byte)) -> [Sysex Byte]
+pad_cc_set :: Ctl_Id -> (Pad_Cc_Mode, Byte, Byte, (Byte, Byte)) -> [Sysex Byte]
 pad_cc_set j (md,ch,cc,(off,on)) =
   let k = ctl_pad_ix0 + j
   in [set_sysex 0x01 k (pad_cc_mode_ty md) -- control-change sub-type
@@ -243,12 +243,12 @@ pad_cc_set j (md,ch,cc,(off,on)) =
      ,set_sysex 0x06 k (pad_cc_mode_sw md) -- 0=toggle,1=gate
      ]
 
-pad_cc_set_16 :: (Pad_CC_Mode, Byte, [Byte], (Byte, Byte)) -> [Sysex Byte]
+pad_cc_set_16 :: (Pad_Cc_Mode, Byte, [Byte], (Byte, Byte)) -> [Sysex Byte]
 pad_cc_set_16 (md,ch,cc_seq,off_on) =
   let f j cc = pad_cc_set j (md,ch,cc,off_on)
   in concat (zipWith f [0 .. 15] cc_seq)
 
--- * PAD-PC (program-change)
+-- * Pad-Pc (program-change)
 
 -- | Set pad /j/ to send a program (/prg/) & bank select (/lsb/,/msb/) message on channel /ch/
 pad_pc_set :: Ctl_Id -> (Byte, Byte, (Byte, Byte)) -> [Sysex Byte]
@@ -267,57 +267,57 @@ pad_pc_set_16 (ch,pc_seq,bank) =
   let f j pc = pad_pc_set j (ch,pc,bank)
   in concat (zipWith f [0 .. 15] pc_seq)
 
--- * LED
+-- * Led
 
--- | There are two LEDs, on red and one blue, and each can be on or off.
-data LED_Status = LED_Off | LED_Red | LED_Blue | LED_Magenta deriving (Eq,Show)
+-- | There are two Leds, on red and one blue, and each can be on or off.
+data Led_Status = Led_Off | Led_Red | Led_Blue | Led_Magenta deriving (Eq,Show)
 
--- | PP LED_Status
-led_status_str :: LED_Status -> String
+-- | Pp Led_Status
+led_status_str :: Led_Status -> String
 led_status_str = map toUpper . drop 4 . show
 
--- | LED_Status to control byte.
-led_status_to_u8 :: LED_Status -> Byte
-led_status_to_u8 x = case x of {LED_Off -> 0x00 ; LED_Red -> 0x01 ; LED_Blue -> 0x10 ; LED_Magenta -> 0x11}
+-- | Led_Status to control byte.
+led_status_to_u8 :: Led_Status -> Byte
+led_status_to_u8 x = case x of {Led_Off -> 0x00 ; Led_Red -> 0x01 ; Led_Blue -> 0x10 ; Led_Magenta -> 0x11}
 
--- | Sequence of all control indices that have LEDs, the LHS controls (except STOP) and the pads.
+-- | Sequence of all control indices that have Leds, the LHS controls (except STOP) and the pads.
 led_ix_set :: [Byte]
 led_ix_set = [0x59 .. 0x5F] ++ [0x70 .. 0x7F]
 
--- | Set status of LED at index /k/ (either a PAD index or a LHS control index)
-led_set :: Byte -> LED_Status -> Sysex Byte
+-- | Set status of Led at index /k/ (either a pad index or a LHS control index)
+led_set :: Byte -> Led_Status -> Sysex Byte
 led_set k x = set_sysex 0x10 k (led_status_to_u8 x)
 
--- | Set status of LED at pad /j/ (0-15).
-led_pad_set :: Ctl_Id -> LED_Status -> Sysex Byte
+-- | Set status of Led at pad /j/ (0-15).
+led_pad_set :: Ctl_Id -> Led_Status -> Sysex Byte
 led_pad_set j = led_set (ctl_pad_ix0 + j)
 
 -- | The Cntrl-Seq light is ordinarily on, turn it off.
 led_cntrl_seq_off :: Sysex Byte
-led_cntrl_seq_off = led_set 0x5A LED_Off
+led_cntrl_seq_off = led_set 0x5A Led_Off
 
--- * DSC = description
+-- * Dsc = description
 
--- | Descriptions of pad colour arguments.  There are two LEDS, red and blue.
+-- | Descriptions of pad colour arguments.  There are two Leds, red and blue.
 pad_clr_dsc :: Num n => [(n, String)]
-pad_clr_dsc = [(0x00,"OFF"),(0x01,"RED"),(0x10,"BLUE"),(0x11,"MAGENTA")]
+pad_clr_dsc = [(0x00,"Off"),(0x01,"Red"),(0x10,"Blue"),(0x11,"Magenta")]
 
 pad_mode_dsc :: Num n => [(n, String)]
 pad_mode_dsc =
-  [(0x00,"OFF")
-  ,(0x01,"CC_PRESSURE") -- cc = control-change
-  ,(0x02,"UNKNOWN")
-  ,(0x03,"UNKNOWN")
-  ,(0x04,"UNKNOWN")
-  ,(0x05,"UNKNOWN")
-  ,(0x06,"UNKNOWN")
-  ,(0x07,"MMC")
-  ,(0x08,"CC_SWITCH")
-  ,(0x09,"MNN") -- mnn = midi-note-number (ie. NOTE MODE)
-  ,(0x0A,"UNKNOWN")
-  ,(0x0B,"PROGRAM_CHANGE")]
+  [(0x00,"Off")
+  ,(0x01,"Cc_Pressure") -- cc = control-change
+  ,(0x02,"Unknown")
+  ,(0x03,"Unknown")
+  ,(0x04,"Unknown")
+  ,(0x05,"Unknown")
+  ,(0x06,"Unknown")
+  ,(0x07,"Mmc")
+  ,(0x08,"Cc_Switch")
+  ,(0x09,"Mnn") -- mnn = midi-note-number (ie. note mode)
+  ,(0x0A,"Unknown")
+  ,(0x0B,"Program_Change")]
 
--- | MMC command descriptions, <https://en.wikipedia.org/wiki/MIDI_Machine_Control>
+-- | Mmc command descriptions, <https://en.wikipedia.org/wiki/MIDI_Machine_Control>
 pad_mmc_dsc :: Num n => [(n, String)]
 pad_mmc_dsc =
   [(0x01,"Stop")
@@ -331,50 +331,50 @@ pad_mmc_dsc =
   ,(0x09,"Pause")
   ,(0x0A,"Eject")
   ,(0x0B,"Chase")
-  ,(0x0D,"MMC Reset")
-  ,(0x40,"Write") -- PARAM
-  ,(0x44,"Goto") -- PARAM
-  ,(0x47,"Shuttle") -- PARAM
+  ,(0x0D,"Mmc Reset")
+  ,(0x40,"Write") -- param
+  ,(0x44,"Goto") -- param
+  ,(0x47,"Shuttle") -- param
   ]
 
--- | mnm = MIDI-NOTE MODE
+-- | mnm = midi-note mode
 pad_mn_param_dsc :: Num n => [(n, String)]
 pad_mn_param_dsc =
-  [(0x02,"MIDI_CHANNEL")
-  ,(0x03,"MNN")
-  ,(0x06,"BEHAVIOUR")]
+  [(0x02,"Midi_Channel")
+  ,(0x03,"Mnn")
+  ,(0x06,"Behaviour")]
 
 pad_behaviour_dsc :: Num n => [(n, String)]
 pad_behaviour_dsc =
-  [(0x00,"TOGGLE")
-  ,(0x01,"GATE")]
+  [(0x00,"Toggle")
+  ,(0x01,"Gate")]
 
 enc_mode_dsc :: Num n => [(n, String)]
 enc_mode_dsc =
-  [(0x00,"OFF")
-  ,(0x01,"CC") -- CC = CONTROL-CHANGE
-  ,(0x02,"UNKNOWN")
-  ,(0x03,"UNKNOWN")
-  ,(0x04,"RPN/NRPN")]
+  [(0x00,"Off")
+  ,(0x01,"Cc") -- cc = control-change
+  ,(0x02,"Unknown")
+  ,(0x03,"Unknown")
+  ,(0x04,"Rpn/Nrpn")]
 
--- cc = CONTROL-CHANGE MODE
+-- | cc = control-change mode
 enc_cc_param_dsc :: Num n => [(n, String)]
 enc_cc_param_dsc =
-  [(0x01,"MODE")
-  ,(0x02,"MIDI_CHANNEL")
-  ,(0x03,"CC_NUMBER")
-  ,(0x04,"MINIMA")
-  ,(0x05,"MAXIMA")
-  ,(0x06,"BEHAVIOUR")]
+  [(0x01,"Mode")
+  ,(0x02,"Midi_Channel")
+  ,(0x03,"Cc_Number")
+  ,(0x04,"Minima")
+  ,(0x05,"Maxima")
+  ,(0x06,"Behaviour")]
 
 enc_behaviour_dsc :: Num n => [(n, String)]
 enc_behaviour_dsc =
-  [(0x00,"ABSOLUTE")
-  ,(0x01,"RELATIVE_1")
-  ,(0x02,"RELATIVE_2")
-  ,(0x03,"RELATIVE_3")]
+  [(0x00,"Absolute")
+  ,(0x01,"Relative_1")
+  ,(0x02,"Relative_2")
+  ,(0x03,"Relative_3")]
 
--- | The LHS controls are refered to by unique identifiers.
+-- | The lhs controls are refered to by unique identifiers.
 lhs_control_id_dsc :: Num n => [(n, String)]
 lhs_control_id_dsc =
   [(0x30,"Level/Rate")
@@ -387,82 +387,82 @@ lhs_control_id_dsc =
   ,(0x5E,"Shift")
   ,(0x5F,"Chan")]
 
--- * LIBRARY
+-- * Library
 
-type Sysex_LIB = [(String, [Sysex Byte])]
+type Sysex_Lib = [(String, [Sysex Byte])]
 
-sysex_lib_accel :: Sysex_LIB
+sysex_lib_accel :: Sysex_Lib
 sysex_lib_accel =
-  [("enc-acceleration-SLOW",[global_encoder_acceleration_set Slow])
-  ,("enc-acceleration-MEDIUM",[global_encoder_acceleration_set Medium])
-  ,("enc-acceleration-FAST",[global_encoder_acceleration_set Fast])]
+  [("enc-acceleration-slow",[global_encoder_acceleration_set Slow])
+  ,("enc-acceleration-medium",[global_encoder_acceleration_set Medium])
+  ,("enc-acceleration-fast",[global_encoder_acceleration_set Fast])]
 
-sysex_lib_curve :: Sysex_LIB
+sysex_lib_curve :: Sysex_Lib
 sysex_lib_curve =
-  [("pad-velocity-curve-LINEAR",[global_pad_velocity_curve_set Linear])
-  ,("pad-velocity-curve-LOGARITHMIC",[global_pad_velocity_curve_set Logarithmic])
-  ,("pad-velocity-curve-EXPONENTIAL",[global_pad_velocity_curve_set Exponential])
-  ,("pad-velocity-curve-FULL",[global_pad_velocity_curve_set Full])]
+  [("pad-velocity-curve-linear",[global_pad_velocity_curve_set Linear])
+  ,("pad-velocity-curve-logarithmic",[global_pad_velocity_curve_set Logarithmic])
+  ,("pad-velocity-curve-exponential",[global_pad_velocity_curve_set Exponential])
+  ,("pad-velocity-curve-full",[global_pad_velocity_curve_set Full])]
 
-sysex_lib_channel :: Sysex_LIB
+sysex_lib_channel :: Sysex_Lib
 sysex_lib_channel =
-  [("midi-channel-C00",[global_midi_channel_set 0])
-  ,("cv-midi-channel-C00",[global_cv_gate_interface_receive_channel_set 0])]
+  [("midi-channel-c00",[global_midi_channel_set 0])
+  ,("cv-midi-channel-c00",[global_cv_gate_interface_receive_channel_set 0])]
 
-sysex_lib_enc_ch :: Sysex_LIB
+sysex_lib_enc_ch :: Sysex_Lib
 sysex_lib_enc_ch =
   let mk_enc_cc_ch ch ix md =
-        (printf "enc-cc-seq-C%02X-I%02X-%s" ch ix (encoder_mode_str md)
+        (printf "enc-cc-seq-c%02x-i%02x-%s" ch ix (encoder_mode_str md)
         ,enc_cc_set_16 (ch,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F),md))
   in [mk_enc_cc_ch ch ix md | ch <- [0..1]
                             , ix <- [0x00,0x10 .. 0x70]
                             , md <- [Absolute,Relative_X40]]
 
-sysex_lib_enc :: Sysex_LIB
+sysex_lib_enc :: Sysex_Lib
 sysex_lib_enc =
   let mk_enc_cc ix md =
-        (printf "enc-cc-seq-I%02X-%s" ix (encoder_mode_str md)
+        (printf "enc-cc-seq-i%02x-%s" ix (encoder_mode_str md)
         ,enc_cc_set_16 (0x41,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F),md))
   in [mk_enc_cc ix md | ix <- [0x00,0x10 .. 0x70]
                       , md <- [Absolute,Relative_X40]]
 
-sysex_lib_led :: Sysex_LIB
+sysex_lib_led :: Sysex_Lib
 sysex_lib_led =
   let mk_led_all x = map (\k -> set_sysex 0x10 k (led_status_to_u8 x)) led_ix_set
-  in [("led-all-OFF",mk_led_all LED_Off)
-     ,("led-all-BLUE",mk_led_all LED_Blue)
-     ,("led-all-MAGENTA",mk_led_all LED_Magenta)
-     ,("led-all-RED",mk_led_all LED_Red)
-     ,("led-cntrl-seq-OFF",[led_cntrl_seq_off])]
+  in [("led-all-off",mk_led_all Led_Off)
+     ,("led-all-blue",mk_led_all Led_Blue)
+     ,("led-all-magenta",mk_led_all Led_Magenta)
+     ,("led-all-red",mk_led_all Led_Red)
+     ,("led-cntrl-seq-off",[led_cntrl_seq_off])]
 
-sysex_lib_led_pad :: Sysex_LIB
+sysex_lib_led_pad :: Sysex_Lib
 sysex_lib_led_pad =
   let mk_led_pad x =
-        map (\j -> (printf "led-pad-%02X-%s" j (led_status_str x)
+        map (\j -> (printf "led-pad-%02x-%s" j (led_status_str x)
                    ,[led_pad_set j x])) [0 .. 15]
-  in concatMap mk_led_pad [LED_Off,LED_Red,LED_Blue,LED_Magenta]
+  in concatMap mk_led_pad [Led_Off,Led_Red,Led_Blue,Led_Magenta]
 
-sysex_lib_pad_cc_ch :: Sysex_LIB
+sysex_lib_pad_cc_ch :: Sysex_Lib
 sysex_lib_pad_cc_ch =
   let mk_pad_cc ch ix md =
-        (printf "pad-cc-seq-C%02X-I%02X-%s" ch ix (pad_cc_mode_str md)
+        (printf "pad-cc-seq-c%02x-i%02x-%s" ch ix (pad_cc_mode_str md)
         ,pad_cc_set_16 (md,ch,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F)))
   in [mk_pad_cc ch ix md | ch <- [0..3]
                          , ix <- [0, 0x10 .. 0x70]
                          , md <- [Pad_Switch Toggle,Pad_Switch Gate,Pad_Pressure]]
 
-sysex_lib_pad_cc :: Sysex_LIB
+sysex_lib_pad_cc :: Sysex_Lib
 sysex_lib_pad_cc =
   let mk_pad_cc ix md =
-        (printf "pad-cc-seq-I%02X-%s" ix (pad_cc_mode_str md)
+        (printf "pad-cc-seq-i%02x-%s" ix (pad_cc_mode_str md)
         ,pad_cc_set_16 (md,0x41,map (+ ix) [0x00 .. 0x0F],(0x00,0x7F)))
   in [mk_pad_cc ix md | ix <- [0, 0x10 .. 0x70]
                       , md <- [Pad_Switch Toggle,Pad_Switch Gate,Pad_Pressure]]
 
-sysex_lib_pad_mn :: Sysex_LIB
+sysex_lib_pad_mn :: Sysex_Lib
 sysex_lib_pad_mn =
   let mk_pad_mn ix md =
-        (printf "pad-mn-seq-I%02X-%s" ix (switch_mode_str md)
+        (printf "pad-mn-seq-i%02x-%s" ix (switch_mode_str md)
         ,pad_mn_set_16 (0x41,map (+ ix) [0x00 .. 0x0F],md))
   in [mk_pad_mn ix md | ix <- [0x30,0x3C,0x48]
                       , md <- [Toggle,Gate]]
@@ -493,21 +493,21 @@ k <- Pm.pm_output_by_name "Arturia BeatStep MIDI 1"
 run = Pm.pm_with_output_device k
 msg x = run (\fd -> Pm.pm_sysex_write_seq 5 fd x)
 
-msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 LED_Red)) led_ix_set)
-msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 LED_Blue)) led_ix_set)
-msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 LED_Magenta)) led_ix_set)
-msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 LED_Off)) led_ix_set)
+msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Red)) led_ix_set)
+msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Blue)) led_ix_set)
+msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Magenta)) led_ix_set)
+msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Off)) led_ix_set)
 
 msg [led_cntrl_seq_off]
 
-msg [global_midi_channel_set 0x0A] -- ?
+msg [global_midi_channel_set 0x00]
 msg [global_encoder_acceleration_set Slow]
 
 msg (enc_cc_set_16 (0x41,[0x00 .. 0x0F],(0x00,0x7F),Absolute))
 msg (enc_cc_set_16 (0x41,[0x00 .. 0x0F],(0x00,0x7F),Relative_X40))
 
-msg (enc_pn_set 0x00 (0x00,Coarse,(0x20,0x40),NRPN))
-msg (enc_pn_set 0x00 (0x00,Fine,(0x20,0x40),NRPN))
+msg (enc_pn_set 0x00 (0x00,Coarse,(0x20,0x40),Nrpn))
+msg (enc_pn_set 0x00 (0x00,Fine,(0x20,0x40),Nrpn))
 
 msg (pad_mn_set_16 (0x00,[0x3C .. ],Toggle))
 msg (pad_mn_set_16 (0x00,[0x3C .. ],Gate))
@@ -516,14 +516,14 @@ msg (pad_mn_set_16_mpe ([0x3C ..],Gate))
 msg (pad_cc_set_16 (Pad_Switch Toggle,0,[0 .. 16],(0x00,0x7F)))
 msg (pad_cc_set_16 (Pad_Switch Gate,0,[0 .. 16],(0x00,0x7F)))
 
-msg (pad_pc_set_16 (0x00,[0x10 ..],(0x10,0x01)))
+msg (pad_pc_set_16 (0x00,[0x00 ..],(0x10,0x01)))
 
 msg [global_pad_velocity_curve_set Linear]
 msg [global_pad_velocity_curve_set Logarithmic]
 msg [global_pad_velocity_curve_set Exponential]
 
-msg (pad_cc_set_16 (Pad_Pressure,0,[0 .. 16],(0x00,0x7F)))
-msg (pad_cc_set_16 (Pad_Pressure,0,[0 .. 16],(0x30,0x57)))
+msg (pad_cc_set_16 (Pad_Pressure,0,[0 .. 16],(0x00,0x7F))) -- full range (0, 127)
+msg (pad_cc_set_16 (Pad_Pressure,0,[0 .. 16],(0x30,0x57))) -- limit range (48, 87)
 
 Pm.pm_with_output_device k (\fd -> Pm.pm_cvm3_write fd (0x90,0x3C,0x7F))
 Pm.pm_with_output_device k (\fd -> Pm.pm_cvm3_write fd (0x90,0x00,0x00))

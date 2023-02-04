@@ -49,7 +49,7 @@ write_midi0_opt m_tc m_ts fn = File.C.c_write_midi0_opt m_tc m_ts fn . map (conc
 write_midi0 :: FilePath -> [Seq] -> IO ()
 write_midi0 = write_midi0_opt (Just 60) (Just (4,4))
 
--- * TRANSLATE
+-- * Translate
 
 -- | 'T.Event' 'T.Wseq' node to 'Note'.
 mnd_to_note :: ((Double,Double),T.Event Int) -> Note
@@ -92,12 +92,12 @@ read_midi fn = do
   m <- File.C.c_read_midi fn
   return (filter (not . null) (map track_to_wseq m))
 
--- * CSV
+-- * Csv
 
 seq_merge :: [Seq] -> Seq
 seq_merge = foldr T.wseq_merge []
 
--- | Write MND type CSV file.
+-- | Write Mnd type Csv file.
 write_csv_mnd :: FilePath -> [Seq] -> IO ()
 write_csv_mnd fn =
     T.csv_mnd_write_tseq 4 fn .
