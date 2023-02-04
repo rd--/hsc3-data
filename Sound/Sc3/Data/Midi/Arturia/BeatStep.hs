@@ -30,7 +30,7 @@ with_common_sysex_prefix = (++) common_sysex_prefix
 -- | General form of set messages.
 --
 -- pp = parameter number,
--- cc = control ID (see 'control_id_dsc'),
+-- cc = control id (see 'control_id_dsc'),
 -- vv = value
 --
 -- > set_sysex 0x00 0x21 0x40 == with_common_sysex_prefix [0x02,0x00,0x00,0x21,0x40,0xF7]
@@ -61,7 +61,7 @@ request_sysex pp cc = with_common_sysex_prefix [0x01,0x00,pp,cc,0xF7]
 
 -- * Global
 
--- | Global midi channel (0-15) [untested] (pressing CHAN and PAD-N sets the global channel to N)
+-- | Global midi channel (0-15) [untested] (pressing chan and pad-n sets the global channel to n)
 --
 -- > global_midi_channel_set 0x0F == [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,0x40,0x06,0x0F,0xF7]
 global_midi_channel_set :: Num n => n -> Sysex n
@@ -214,7 +214,7 @@ pad_mn_set_16_mpe (mnn_seq,md) =
 2. Switch-Gate (0x01=0x08 + 0x06=0x01)
 3. Pressure(-Gate) (0x01=0x01)
 
-The first two send the minima value for off and the maxima value for ON
+The first two send the minima value for off and the maxima value for on
 (respectively at consecutive presses, and at press/release).
 
 The third sends continuous pressure data in the range (minima, maxima) while pressed.
@@ -280,11 +280,11 @@ led_status_str = map toUpper . drop 4 . show
 led_status_to_u8 :: Led_Status -> Byte
 led_status_to_u8 x = case x of {Led_Off -> 0x00 ; Led_Red -> 0x01 ; Led_Blue -> 0x10 ; Led_Magenta -> 0x11}
 
--- | Sequence of all control indices that have Leds, the LHS controls (except STOP) and the pads.
+-- | Sequence of all control indices that have Leds, the Lhs controls (except Stop) and the pads.
 led_ix_set :: [Byte]
 led_ix_set = [0x59 .. 0x5F] ++ [0x70 .. 0x7F]
 
--- | Set status of Led at index /k/ (either a pad index or a LHS control index)
+-- | Set status of Led at index /k/ (either a pad index or a Lhs control index)
 led_set :: Byte -> Led_Status -> Sysex Byte
 led_set k x = set_sysex 0x10 k (led_status_to_u8 x)
 
