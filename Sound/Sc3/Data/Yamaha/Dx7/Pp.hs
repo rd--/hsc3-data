@@ -8,8 +8,9 @@ import Text.Printf {- base -}
 import qualified Data.ByteString.Lazy as L {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.Array.Text as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Array.Text as T {- hmt-base -}
+import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Tuple as T {- hmt-base -}
 
 import qualified Sound.File.Next as Sf {- hsc3-sf -}
 
@@ -53,7 +54,7 @@ dx7_sh_char_count = [2,2,2,2, 2,2,2,2, 2,1,3, 2,2,2,2,3,2, 1,3]
 -- | Concise Op and Sh tables for voice data.
 dx7_voice_concise_tbl :: Dx7_Voice -> (String,T.Text_Table,T.Text_Table)
 dx7_voice_concise_tbl v =
-  let [o6,o5,o4,o3,o2,o1,sh,nm] = dx7_voice_grp v
+  let (o6,o5,o4,o3,o2,o1,sh,nm) = T.t8_from_list (dx7_voice_grp v)
       w_fn k l = zipWith (flip (T.pad_left ' ')) l k
       o_hdr = "OP" : map fst dx7ii_op_parameter_names
       o_fn i = (show i :) . zipWith (dx7_parameter_value_pp . dx7_parameter_get) [0..]

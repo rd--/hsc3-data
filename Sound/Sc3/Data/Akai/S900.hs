@@ -75,7 +75,9 @@ s900_disk_ent_parse :: [U8] -> Maybe S900_DISK_ENT
 s900_disk_ent_parse d =
   if s900_disk_ent_is_nil d
   then Nothing
-  else let [nm,unused,ty,[len1,len2,len3],[blk1,blk2],s900_id] = s900_segment [10,6,1,3,2,2] d
+  else let (nm,unused,ty,len,blk,s900_id) = T.t6_from_list (s900_segment [10,6,1,3,2,2] d)
+           (len1,len2,len3) = T.t3_from_list len
+           (blk1,blk2)= T.t2_from_list blk
        in if unused /= [0,0,0,0,0,0] || s900_id /= [0,0]
           then error "s900_disk_ent_parse?"
           else Just (map toEnum nm,toEnum (ty !! 0)
@@ -176,11 +178,13 @@ type S900_Sf_HDR = (String,U32,U16,U16,Char,U32,U32,U32)
 s900_sf_hdr :: [U8] -> S900_Sf_HDR
 s900_sf_hdr d =
   let pl = [10,6,4,2,2,2,1,1,4,4,4,20]
-      [fn,_u1,ns,[sr1,sr2],[tn1,tn2],_u2,lp,_u3,em,sm,ll,_u4] = s900_segment pl d
-      [ns1,ns2,ns3,ns4] = ns
-      [em1,em2,em3,em4] = em
-      [sm1,sm2,sm3,sm4] = sm
-      [ll1,ll2,ll3,ll4] = ll
+      (fn,_u1,ns,sr,tn,_u2,lp,_u3,em,sm,ll,_u4) = T.t12_from_list (s900_segment pl d)
+      (sr1,sr2) = T.t2_from_list sr
+      (tn1,tn2) = T.t2_from_list tn
+      (ns1,ns2,ns3,ns4) = T.t4_from_list ns
+      (em1,em2,em3,em4) = T.t4_from_list em
+      (sm1,sm2,sm3,sm4) = T.t4_from_list sm
+      (ll1,ll2,ll3,ll4) = T.t4_from_list ll
   in (map toEnum fn
      ,u32_pack_le (ns1,ns2,ns3,ns4),u16_pack_le (sr1,sr2),u16_pack_le (tn1,tn2)
      ,toEnum (lp !! 0)
