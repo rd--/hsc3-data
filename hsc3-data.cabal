@@ -115,6 +115,7 @@ Library
                    Sound.Sc3.Data.Midi.File.C
                    Sound.Sc3.Data.Midi.File.Z
                    Sound.Sc3.Data.Midi.Plain
+                   Sound.Sc3.Data.MimeType
                    Sound.Sc3.Data.Modal
                    Sound.Sc3.Data.Pvoc
                    Sound.Sc3.Data.Reverb
