@@ -1,7 +1,7 @@
 -- | <http://paulbourke.net/>
 module Sound.Sc3.Data.Math.Bourke where
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
 -- * Fractals <http://paulbourke.net/fractals>
 

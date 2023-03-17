@@ -10,7 +10,7 @@ import Data.Maybe {- base -}
 import Data.List {- base -}
 import System.FilePath {- filepath -}
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
 import qualified Music.Theory.Directory as T {- hmt-base -}
 import qualified Music.Theory.Graph.Type as T {- hmt-base -}
@@ -32,7 +32,7 @@ type Atom = (String,V3 Double)
 atom_sym :: Atom -> String
 atom_sym (e,_) = e
 
--- | (i,j), indicies into Atom sequence (ZERO indexed)
+-- | (i,j), indicies into Atom sequence (zero indexed)
 type Bond = (Int,Int)
 
 -- | (name,degree=(n-atoms,n-bonds),description,atoms,bonds)

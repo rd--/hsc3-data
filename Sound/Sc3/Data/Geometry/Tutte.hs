@@ -4,11 +4,11 @@ module Sound.Sc3.Data.Geometry.Tutte where
 
 import Data.Bifunctor {- base -}
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
-import Data.Cg.Minus.Geometry {- hcg-minus -}
+import Music.Theory.Geometry.Functions {- hmt-base -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
 import qualified Data.Cg.Minus.Plain.Svg as Svg {- hcg-minus -}
-import qualified Data.Cg.Minus.Geometry.Off as Off {- hcg-minus -}
+import qualified Music.Theory.Geometry.Off as Off {- hmt-base -}
 
 import qualified Music.Theory.Graph.Type as T {- hmt-base -}
 import qualified Music.Theory.List as T {- hmt-base -}

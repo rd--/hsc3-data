@@ -1,7 +1,7 @@
 -- | Hermite bases and functions.
 module Sound.Sc3.Data.Math.Hermite where
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
 -- | Hermite data set in form ((p0,p1),(m0,m1)).
 type Hermite n = V2 (V2 n)

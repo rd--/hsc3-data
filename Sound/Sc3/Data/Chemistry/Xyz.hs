@@ -11,7 +11,7 @@ import System.FilePath {- filepath -}
 import qualified Music.Theory.Directory as T {- hmt-base -}
 import qualified Music.Theory.Show as T {- hmt-base -}
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
 -- | Allow elided 0 before decimal place.
 --

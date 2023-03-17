@@ -4,7 +4,8 @@ module Sound.Sc3.Data.Chemistry.Pdb.Types where
 import Data.Function {- base -}
 import Data.List {- base -}
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
+import Music.Theory.Geometry.Matrix {- hmt-base -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
 import qualified Music.Theory.List as T {- hmt -}
 

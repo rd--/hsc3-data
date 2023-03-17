@@ -8,7 +8,8 @@ import qualified Text.XML.Light as X {- xml -}
 
 import qualified Graphics.SVG.ReadPath as P {- SvgPath -}
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
+
 import Data.Cg.Minus.Types {- hcg-minus -}
 import Data.Cg.Minus.Core {- hcg-minus -}
 

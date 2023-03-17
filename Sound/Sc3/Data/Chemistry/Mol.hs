@@ -19,7 +19,7 @@ import Safe {- safe -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import Data.Cg.Minus.Plain {- hcg-minus -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
 -- * Types
 
