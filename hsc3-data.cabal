@@ -100,7 +100,6 @@ Library
                    Sound.Sc3.Data.Image.Pgm
                    Sound.Sc3.Data.Image.Plain
                    Sound.Sc3.Data.Image.Type
-                   Sound.Sc3.Data.Json
                    Sound.Sc3.Data.Korg.Minilogue
                    Sound.Sc3.Data.Lpc
                    Sound.Sc3.Data.Math.ActivationFunction

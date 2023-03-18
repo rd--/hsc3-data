@@ -14,9 +14,9 @@ import Music.Theory.Geometry.Vector {- hmt-base -}
 
 import qualified Music.Theory.Directory as T {- hmt-base -}
 import qualified Music.Theory.Graph.Type as T {- hmt-base -}
+import qualified Music.Theory.Json as Json {- hmt-base -}
 import qualified Music.Theory.Show as T {- hmt-base -}
 
-import qualified Sound.Sc3.Data.Json as Json {- hsc3-data -}
 
 import qualified Sound.Sc3.Data.Chemistry.Elements as E {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Mol as Mol {- hsc3-data -}
