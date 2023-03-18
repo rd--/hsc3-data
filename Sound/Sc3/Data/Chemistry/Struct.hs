@@ -9,6 +9,7 @@ module Sound.Sc3.Data.Chemistry.Struct where
 import Data.Maybe {- base -}
 import Data.List {- base -}
 import System.FilePath {- filepath -}
+import Text.Printf {- filepath -}
 
 import Music.Theory.Geometry.Vector {- hmt-base -}
 
@@ -37,6 +38,21 @@ type Bond = (Int,Int)
 
 -- | (name,degree=(n-atoms,n-bonds),description,atoms,bonds)
 type Struct = (String,(Int,Int),String,[Atom],[Bond])
+
+struct_json :: Struct -> String
+struct_json (nm, _, dsc, atm, bnd) =
+  let q s = concat ["\"", s, "\""]
+      e k v = printf "%s: %s" (q k) v
+      a l = concat ["[", intercalate ", " l, "]"]
+      d l = concat ["{", intercalate ", " l, "]"]
+      v2 (x, y) = a (map show [x, y])
+      v3 (x, y, z) = a (map show [x, y, z])
+  in d
+     [e "name" (q nm)
+     ,e "description" (q dsc)
+     ,e "vertexCoordinates" (a (map (v3 . snd) atm))
+     ,e "vertexLabels" (a (map (q . fst) atm))
+     ,e "edges" (a (map v2 bnd))]
 
 struct_name :: Struct -> String
 struct_name (nm,_,_,_,_) = nm
