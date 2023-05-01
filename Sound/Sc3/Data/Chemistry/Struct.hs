@@ -13,6 +13,7 @@ import System.FilePath {- filepath -}
 import Music.Theory.Geometry.Vector {- hmt-base -}
 
 import qualified Music.Theory.Directory as T {- hmt-base -}
+import qualified Music.Theory.Geometry.Obj as Obj {- hmt -}
 import qualified Music.Theory.Graph.Type as T {- hmt-base -}
 import qualified Music.Theory.Json as Json {- hmt-base -}
 import qualified Music.Theory.Show as T {- hmt-base -}
@@ -23,8 +24,6 @@ import qualified Sound.Sc3.Data.Chemistry.Mol as Mol {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Poscar as Poscar {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
-
-import qualified Sound.Sc3.Data.Geometry.Obj as Obj {- hmt -}
 
 -- * Types
 
