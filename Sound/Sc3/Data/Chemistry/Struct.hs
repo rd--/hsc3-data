@@ -18,7 +18,6 @@ import qualified Music.Theory.Graph.Type as T {- hmt-base -}
 import qualified Music.Theory.Json as Json {- hmt-base -}
 import qualified Music.Theory.Show as T {- hmt-base -}
 
-
 import qualified Sound.Sc3.Data.Chemistry.Elements as E {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Mol as Mol {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
