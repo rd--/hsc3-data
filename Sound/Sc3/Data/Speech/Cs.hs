@@ -6,17 +6,19 @@ import Data.Maybe {- base -}
 
 -- * Lookup functions
 
--- | Extract 'Fn'th formant triple of an 'Fdata'.
---
--- > formant F1 (fdata Bass I) == (1750,-30,90)
+{- | Extract 'Fn'th formant triple of an 'Fdata'.
+
+>>> formant F2 (fdata Bass I)
+(1750,-30,90)
+-}
 formant :: Fn -> Fdata n -> (n,n,n)
 formant n v = formants v !! fromEnum n
 
--- | Lookup formant 'Fdata' given 'Voice' and 'Vowel'.
---
--- > fdata Bass I == (Bass,I,[250,1750,2600,3050,3340]
--- >                        ,[0,-30,-16,-22,-28]
--- >                        ,[60,90,100,120,120])
+{- | Lookup formant 'Fdata' given 'Voice' and 'Vowel'.
+
+>>> fdata Bass I
+(Bass,I,[250,1750,2600,3050,3340],[0,-30,-16,-22,-28],[60,90,100,120,120])
+-}
 fdata :: Num n => Voice -> Vowel -> Fdata n
 fdata v i =
     let f (p,q,_,_,_) = p == v && q == i
@@ -24,11 +26,8 @@ fdata v i =
 
 {- | Formant triples of an 'Fdata'.
 
-> formants (fdata Bass I) == [(250,0,60)
->                            ,(1750,-30,90)
->                            ,(2600,-16,100)
->                            ,(3050,-22,120)
->                            ,(3340,-28,120)]
+>>> formants (fdata Bass I)
+[(250,0,60),(1750,-30,90),(2600,-16,100),(3050,-22,120),(3340,-28,120)]
 
 -}
 formants :: Fdata n -> [(n,n,n)]
@@ -47,9 +46,11 @@ data Vowel = A | E | I | O | U
 -- | Vowel tuple of form ('Voice','Vowel',/freq:hz/,/gain:db/,/bw:hz/).
 type Fdata n = (Voice,Vowel,[n],[n],[n])
 
--- | Flatten 'Fdata' to numeric sequence.
---
--- > map (fdata_to_csv id) fdata_table
+{- | Flatten 'Fdata' to numeric sequence.
+
+>>> head (map (fdata_to_csv id) fdata_table)
+[0,0,800,1150,2900,3900,4950,0,-6,-32,-20,-50,80,90,120,130,140]
+-}
 fdata_to_csv :: (Int -> n) -> Fdata n -> [n]
 fdata_to_csv f (vc,vw,fr,gn,bw) = f (fromEnum vc) : f (fromEnum vw) : concat [fr,gn,bw]
 
@@ -190,7 +191,11 @@ fdata_table =
      ,[0,-20,-32,-28,-36]
      ,[40,80,100,120,120])]
 
--- > fdata_table_sz == 25
+{- | Size
+
+>>> fdata_table_sz
+25
+-}
 fdata_table_sz :: Int
 fdata_table_sz = length (fdata_table :: [Fdata Int])
 

@@ -33,3 +33,11 @@ related work in
 © [rohan drape](http://rohandrape.net/),
   2013-2023,
   [gpl](http://gnu.org/copyleft/)
+
+* * *
+
+```
+$ doctest Sound/Sc3/Data
+Examples: 5  Tried: 5  Errors: 0  Failures: 0
+$
+```
