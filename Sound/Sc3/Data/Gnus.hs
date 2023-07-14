@@ -4,7 +4,6 @@ import Data.Function {- base -}
 import Data.List.Split {- split -}
 import qualified Data.Time as T {- time -}
 import System.FilePath {- file-path -}
-import System.IO {- base -}
 
 import qualified Data.ByteString.Char8 as B {- bytestring -}
 
@@ -16,12 +15,6 @@ parse_time s =
     case Timestamp.parse_timestamp s of
       Just t -> t
       Nothing -> Timestamp.parse_time_fmt Timestamp.rfc822_fmt_lenient (take 31 s)
-
--- | File size, in bytes.
---
--- > file_size "/home/rohan/sw/hsc3-data/Sound/Sc3/Data/Gnus.hs"
-file_size :: FilePath -> IO Integer
-file_size fn = withFile fn ReadMode hFileSize
 
 -- | Xref = (folder,message-id)
 type Xref = (String,Int)
@@ -54,9 +47,12 @@ hdr_year = fromIntegral . (\(y,_,_) -> y) . T.toGregorian . T.localDay . hdr_dat
 hdr_compare :: Mail_Header -> Mail_Header -> Ordering
 hdr_compare = compare `on` hdr_date
 
--- | Names for overview file fields.
---
--- > intercalate "," (map snd overview_col)
+{- | Names for overview file fields.
+
+>>> import Data.List
+>>> intercalate "," (map snd overview_col)
+"ID,Subject,From,Date,Lines,Xref,To"
+-}
 overview_col :: [(Int,String)]
 overview_col = [(0,"ID"),(1,"Subject"),(2,"From"),(3,"Date"),(7,"Lines"),(8,"Xref"),(9,"To")]
 

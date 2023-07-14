@@ -1,3 +1,4 @@
+-- | Reverb
 module Sound.Sc3.Data.Reverb where
 
 -- * Moorer, James "About This Reverberation Business" Computer Music Journal 3/2 pp.13-28 (1979)
@@ -9,15 +10,18 @@ type R = Double
 jm_sr :: R
 jm_sr = 44100
 
--- | rt = reverb time (seconds), sq = delay-times (seconds)
---
--- > let (_,_,dt) = jm_boston_hall in jm_comb_gains 1 dt
+{- | rt = reverb time (seconds), sq = delay-times (seconds)
+
+>>> let (_,_,dt) = jm_boston_hall
+>>> jm_comb_gains 1 dt
+([0.7079457843841379,0.6791610781908861,0.6561555441406047,0.6251531078671844,0.6081540530409288,0.5834268265736551],0.634)
+-}
 jm_comb_gains :: R -> [R] -> ([R], R)
 jm_comb_gains rt sq =
   let f dt = 10 ** (-3 * dt * rt)
   in (map f sq,1 - 0.366 / rt)
 
--- | (DELAY-TIMES:SEC,DELAY-GAINS:LIN,COMB-DELAYS:SEC)
+-- | (Delay-Times:sec,Delay-Gains:lin,Comb-Delays:sec)
 jm_boston_hall :: ([R],[R],[R])
 jm_boston_hall =
   (map (/ jm_sr) [190,948,992,1182,1191,1314,2020,2139,2523,2589,2624,2699,3118,3122,3202,3268,3321,3515]

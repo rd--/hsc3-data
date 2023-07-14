@@ -1,7 +1,11 @@
--- | Arpabet phoneme definitions and CMU dictionary functions.
---
--- <http://www.speech.cs.cmu.edu/cgi-bin/cmudict>
--- <http://en.wikipedia.org/wiki/Arpabet>
+{- | Arpabet phoneme definitions and CMU dictionary functions.
+
+- <http://www.speech.cs.cmu.edu/cgi-bin/cmudict>
+- <http://en.wikipedia.org/wiki/Arpabet>
+- <https://github.com/cmusphinx/cmudict>
+- <http://webdocs.cs.ualberta.ca/~kondrak/cmudict.html>
+
+-}
 module Sound.Sc3.Data.CmuDict where
 
 import Data.Char {- base -}
@@ -11,14 +15,22 @@ import Data.List {- base -}
 import qualified Data.List.Split as S {- split -}
 import qualified Data.Map as M {- containers -}
 
+-- $setup
+-- >>> d_cmu <- cmudict_load "/home/rohan/data/cmudict/cmudict-0.7b"
+-- >>> d_syl <- cmudict_syl_load "/home/rohan/data/cmudict/cmudict.0.6d.syl"
+
 -- | Stress indicators, placed at the stressed syllabic vowel.
 data Stress = No_stress | Primary_stress | Secondary_stress
             deriving (Eq,Ord,Enum,Bounded,Read,Show)
 
--- | Arpabet phonemes as used at CMU dictionary.
---
--- > [AO .. NX] == [minBound .. maxBound]
--- > length [AO .. NX] == 48
+{- | Arpabet phonemes as used at CMU dictionary.
+
+>>> [AO .. NX] == [minBound .. maxBound]
+True
+
+>>> length [AO .. NX]
+48
+-}
 data Phoneme
     -- Vowels (Monophthongs)
     = AO | AA | IY | UW | EH | IH | UH | AH | AX | AE
@@ -64,10 +76,14 @@ type Cmu_Dict = Cmu_Dict_ty Arpabet
 -- | The syllabic Cmu dictionary.
 type Cmu_Dict_syl = Cmu_Dict_ty Arpabet_syl
 
--- | Parse 'Phoneme_str'
---
--- > parse_phoneme_str "EY1" == (EY,Just Primary_stress)
--- > parse_phoneme_str "R" == (R,Nothing)
+{- | Parse 'Phoneme_str'
+
+>>> parse_phoneme_str "EY1"
+(EY,Just Primary_stress)
+
+>>> parse_phoneme_str "R"
+(R,Nothing)
+-}
 parse_phoneme_str :: String -> Phoneme_str
 parse_phoneme_str w =
     case reverse w of
@@ -111,10 +127,15 @@ arpabet_classification_table =
     ,(Nasal,[M,EM,N,EN,NG,ENG])
     ,(Liquid,[L,EL,R,DX,NX])]
 
--- | Consult 'arpabet_classification_table'.
---
--- > arpabet_classification HH == Aspirate
--- > map arpabet_classification [minBound .. maxBound]
+{- | Consult 'arpabet_classification_table'.
+
+>>> arpabet_classification HH
+Aspirate
+
+>>> import Music.Theory.List
+>>> histogram (map arpabet_classification [minBound .. maxBound])
+[(Monophthong,10),(Diphthong,5),(R_Coloured,2),(Semivowel,3),(Stop,6),(Affricate,2),(Fricative,8),(Aspirate,1),(Nasal,6),(Liquid,5)]
+-}
 arpabet_classification :: Phoneme -> Phoneme_Class
 arpabet_classification p =
     let f (_,l) = p `elem` l
@@ -131,27 +152,32 @@ cmudict_load_ty pf fn = do
       l = filter (not . is_comment) (lines s)
   return (M.fromList (map pf l))
 
--- | Load Cmu dictionary from file, ie. 'parse_arpabet'
---
--- > d <- cmudict_load "/home/rohan/data/cmudict/cmudict-0.7b"
--- > M.size d == 133852
+{- | Load Cmu dictionary from file, ie. 'parse_arpabet'
+
+>>> M.size d_cmu
+134371
+
+-}
 cmudict_load :: FilePath -> IO Cmu_Dict
 cmudict_load = cmudict_load_ty parse_arpabet
 
--- | Load syllable Cmu dictionary from file, ie. 'parse_arpabet_syl'
---
--- > d_syl <- cmudict_syl_load "/home/rohan/data/cmudict/cmudict.0.6d.syl"
--- > M.size d_syl == 129463
+{- | Load syllable Cmu dictionary from file, ie. 'parse_arpabet_syl'
+
+>>> M.size d_syl
+129463
+-}
 cmudict_syl_load :: FilePath -> IO Cmu_Dict_syl
 cmudict_syl_load = cmudict_load_ty parse_arpabet_syl
 
--- | Dictionary lookup.
---
--- > let r_syl = [[(R,Nothing),(EY,Just Primary_stress)],[(N,Nothing),(ER,Just No_stress),(D,Nothing)]]
--- > d_lookup d_syl "reynard" == Just r_syl
---
--- > let r = concat r_syl
--- > d_lookup d "reynard" == Just r
+{- | Dictionary lookup.
+
+>>> d_lookup d_syl "reynard"
+Just [[(R,Nothing),(EY,Just Primary_stress)],[(N,Nothing),(ER,Just No_stress),(D,Nothing)]]
+
+>>> d_lookup d_cmu "reynard"
+Just [(R,Nothing),(EY,Just Primary_stress),(N,Nothing),(ER,Just No_stress),(D,Nothing)]
+
+-}
 d_lookup :: Cmu_Dict_ty a -> String -> Maybe a
 d_lookup d w = M.lookup (map toUpper w) d
 
@@ -161,9 +187,11 @@ d_lookup' d w = maybe (Left w) Right (d_lookup d w)
 
 -- * IPA
 
--- | Table mapping /Arpabet/ phonemes to /IPA/ strings.
---
--- > length arpabet_ipa_table == 48
+{- | Table mapping /Arpabet/ phonemes to /IPA/ strings.
+
+>>> length arpabet_ipa_table
+48
+-}
 arpabet_ipa_table :: [(Phoneme,Either String [(Stress,String)])]
 arpabet_ipa_table =
     -- Vowels (Monophthongs)
@@ -226,9 +254,13 @@ arpabet_ipa_table =
     ,(NX,Left "ɾ̃")
     ]
 
--- | Consult 'arpabet_ipa_table'.
---
--- > map (phoneme_ipa (Just Primary_stress)) [minBound .. maxBound]
+{- | Consult 'arpabet_ipa_table'.
+
+>>> let s = "ɔ ɑ i u ɛ ɪ ʊ ʌ ə æ eɪ aɪ oʊ aʊ ɔɪ ɝ ɚ j w ʔ p b t d k ɡ tʃ dʒ f v θ ð s z ʃ ʒ h m m̩ n n̩ ŋ ŋ̍ ɫ ɫ̩ ɹ ɾ ɾ̃"
+>>> unwords (map (phoneme_ipa (Just Primary_stress)) [minBound .. maxBound]) == s
+True
+
+-}
 phoneme_ipa :: Maybe Stress -> Phoneme -> String
 phoneme_ipa s =
     either id (fromMaybe (error (show ("phoneme_ipa: no stressed phoneme",s))) .
@@ -236,9 +268,11 @@ phoneme_ipa s =
     fromMaybe (error "phoneme_ipa: no phoneme") .
     flip lookup arpabet_ipa_table
 
--- | Consult 'arpabet_ipa_table'.
---
--- > let r = map parse_phoneme_str (words "R EY1 N ER0 D")
--- > arpabet_ipa r == "ɹeɪnɝd"
+{- | Consult 'arpabet_ipa_table'.
+
+>>> let r = map parse_phoneme_str (words "R EY1 N ER0 D")
+>>> arpabet_ipa r == "ɹeɪnɝd"
+True
+-}
 arpabet_ipa :: Arpabet -> String
 arpabet_ipa = concatMap (\(p,s) -> phoneme_ipa s p)

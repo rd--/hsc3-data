@@ -38,6 +38,6 @@ related work in
 
 ```
 $ doctest Sound/Sc3/Data
-Examples: 5  Tried: 5  Errors: 0  Failures: 0
+Examples: 63  Tried: 63  Errors: 0  Failures: 0
 $
 ```

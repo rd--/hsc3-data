@@ -17,7 +17,12 @@ import qualified Sound.File.Wave as Wave {- hsc3-sf -}
 pvx_guid_text :: String
 pvx_guid_text = "8312B9C2-2E6E-11D4-A824-DE5B96C3AB21"
 
--- > map (show_hex_uc 2) pvx_guid_u8
+{- | Guid
+
+>>> import Sound.File.Riff {- hsc3-sf -}
+>>> map (show_hex_uc 2) pvx_guid_u8
+["C2","B9","12","83","6E","2E","D4","11","A8","24","DE","5B","96","C3","AB","21"]
+-}
 pvx_guid_u8 :: [Word8]
 pvx_guid_u8 = [194,185,18,131,110,46,212,17,168,36,222,91,150,195,171,33]
 

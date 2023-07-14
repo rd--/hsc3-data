@@ -2,36 +2,46 @@
 
 Read mime.types:
 
-> db <- loadMimeTypes "/etc/mime.types"
-> length db == 2250
+>>> db <- loadMimeTypes "/etc/mime.types"
+>>> length db
+2250
 
 Get list of extensions:
 
-> ext = mimeTypesExtensions db
-> length ext == 1533
+>>> ext = mimeTypesExtensions db
+>>> length ext
+1533
 
 Find extensions that have multiple mime types:
 
-> filter ((> 1) . length . snd) (zip ext (map (lookupMimeTypes db) ext))
+>>> let mm = filter ((> 1) . length . snd) (zip ext (map (lookupMimeTypes db) ext))
+>>> length mm
+19
 
 Find types that don't have extensions:
 
-> noExt = filter ((== 0) . length . snd) db
-> length noExt == 1050
+>>> noExt = filter ((== 0) . length . snd) db
+>>> length noExt
+1050
 
 Lookup mime type for extension:
 
-> lookupMimeTypes db "csv" == ["text/csv"]
+>>> lookupMimeTypes db "csv"
+["text/csv"]
 
 Lookup extensions for mime-type:
 
-> lookupExtensions db "audio/midi"
+>>> lookupExtensions db "audio/midi"
+[]
 
 Read local mime.types:
 
-> db <- loadMimeTypes "/home/rohan/sw/hsc3-data/data/types/mime.types"
-> length db == 36
-> lookupMimeType db "midi" == "audio/midi"
+>>> localDb <- loadMimeTypes "/home/rohan/sw/hsc3-data/data/types/mime.types"
+>>> length localDb
+36
+
+>>> lookupMimeType localDb "midi"
+"audio/midi"
 
 -}
 module Sound.Sc3.Data.MimeType where
