@@ -38,7 +38,8 @@ quadrant_f q =
 
 {- | Translate from 'Qdms' to 'R' degree.
 
-> qdms_to_degree ('S',37,48,50) == -37.81388888888889
+>>> qdms_to_degree ('S',37,48,50)
+-37.81388888888889
 -}
 qdms_to_degree :: Qdms -> Double
 qdms_to_degree (q,d,m,s) = quadrant_f q (dms_to_degree (d,m,s))
@@ -55,7 +56,8 @@ degree_to_dms dgr =
 
 {- | Given target quadrants, the inverse of 'qdms_to_degree'.
 
-> degree_to_qdms ('S','N') (-37.814) == ('S',37,48,50)
+>>> degree_to_qdms ('S','N') (-37.814)
+('S',37,48,50)
 -}
 degree_to_qdms :: (Char, Char) -> Double -> Qdms
 degree_to_qdms (l,r) dgr =
@@ -130,15 +132,19 @@ p_coord = p_coord_by p_qdms_ws
 
 {- | Run 'p_qdms_unicode'.
 
-> parse_qdms_unicode "34°16′32″N" == Right ('N',34,16,32)
-> parse_qdms_unicode "132°18′28″E" == Right ('E',132,18,28)
+>>> parse_qdms_unicode "34°16′32″N"
+Right ('N',34,16,32)
+
+>>> parse_qdms_unicode "132°18′28″E"
+Right ('E',132,18,28)
 -}
 parse_qdms_unicode :: String -> Either C.ParseError Qdms
 parse_qdms_unicode = C.parse p_qdms_unicode "parse_qdms_unicode"
 
 {- | Run 'p_qdms_ws'.
 
-> parse_qdms_ws "N 34 16 32" == Right ('N',34,16,32)
+>>> parse_qdms_ws "N 34 16 32"
+Right ('N',34,16,32)
 -}
 parse_qdms_ws :: String -> Either C.ParseError Qdms
 parse_qdms_ws s =
@@ -154,7 +160,8 @@ parse_qdms_ws_err s =
 
 {- | Run 'p_coord'
 
-> parse_coord "N 34 16 32 E 132 18 28" == Right (34.275555555555556,132.30777777777777)
+>>> parse_coord "N 34 16 32 E 132 18 28"
+Right (34.275555555555556,132.30777777777777)
 -}
 parse_coord :: String -> Either C.ParseError Coord
 parse_coord = C.parse p_coord "parse_coord"
@@ -167,7 +174,8 @@ parse_coord_err s =
 
 {- | Run 'p_coord_by' of 'p_qdms_unicode'.
 
-> parse_coord_unicode "34°16′32″N 132°18′28″E" == Right (34.275555555555556,132.30777777777777)
+>>> parse_coord_unicode "34°16′32″N 132°18′28″E"
+Right (34.275555555555556,132.30777777777777)
 -}
 parse_coord_unicode :: String -> Either C.ParseError Coord
 parse_coord_unicode = C.parse (p_coord_by p_qdms_unicode) "parse_coord_unicode"

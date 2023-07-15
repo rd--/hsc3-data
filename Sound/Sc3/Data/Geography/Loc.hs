@@ -33,7 +33,11 @@ p_geographies = do
 g_pp :: Geo_Loc -> String
 g_pp (coord,name) = intercalate ", " name ++ coord_pp coord
 
--- > parse_geography "_" "Melbourne, Victoria, AU: S 37 48 50 E 144 57 47"
+{- | Parse geography
+
+>>> parse_geography "_" "Melbourne, Victoria, AU: S 37 48 50 E 144 57 47"
+Right ((-37.81388888888889,144.96305555555554),["Melbourne","Victoria","AU"])
+-}
 parse_geography :: C.SourceName -> String -> Either C.ParseError Geo_Loc
 parse_geography = C.parse p_geography
 
@@ -51,7 +55,9 @@ g_match q (_,l) =
 
 {- | Read set of 'G' from named @UTF-8@ encoded file.
 
-> load_geographies "/home/rohan/rf/pp/geography.text"
+>>> g <- load_geographies "/home/rohan/rf/pp/geography.text"
+>>> length g
+833
 -}
 load_geographies :: String -> IO [Geo_Loc]
 load_geographies fn = do

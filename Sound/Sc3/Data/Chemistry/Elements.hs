@@ -41,10 +41,12 @@ type Dalton = Double
 
 {- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
 
-> let f (_,sym,_,_) = if length sym == 1 then Just (head sym) else Nothing
-> Data.List.sort (mapMaybe f periodic_table) == "BCFHIKNOPSUVWY"
+>>> let f (_,sym,_,_) = if length sym == 1 then Just (head sym) else Nothing
+>>> Data.List.sort (mapMaybe f periodic_table)
+"BCFHIKNOPSUVWY"
 
-> Data.List.nub (map (\(_,sym,_,_) -> length sym) periodic_table)
+>>> Data.List.nub (map (\(_,sym,_,_) -> length sym) periodic_table)
+[1,2]
 
 Commission on Isotopic Abundances and Atomic Weights,
 The International Union of Pure and Applied Chemistry,
@@ -174,20 +176,28 @@ periodic_table =
   ,(118,"Og","Oganesson",294)
   ]
 
--- | Lookup atomic symbol in 'periodic_table' and return atomic number.
---   If /cs/ is False then match case-insensitively.
---
--- > map (atomic_number True) (map return ['A' .. 'Z'])
+{- | Lookup atomic symbol in 'periodic_table' and return atomic number.
+If /cs/ is False then match case-insensitively.
+
+>>> mapMaybe (atomic_number True) (map return ['A' .. 'Z'])
+[5,6,9,1,53,19,7,8,15,16,92,23,74,39]
+-}
 atomic_number :: Bool -> Atomic_Symbol -> Maybe Atomic_Number
 atomic_number cs x =
   let u = if cs then id else map toUpper
   in lookup (u x) (map (\(k,sym,_,_) -> (u sym,k)) periodic_table)
 
--- | Erroring variant.
---
--- > map (atomic_number_err True) (words "C Sc Ag") == [6,21,47]
--- > map (atomic_number_err True) (map return "BCFHIKNOPSUVWY")
--- > atomic_number_err False "FE" == 26
+{- | Erroring variant.
+
+>>> map (atomic_number_err True) (words "C Sc Ag")
+[6,21,47]
+
+>>> map (atomic_number_err True) (map return "BCFHIKNOPSUVWY")
+[5,6,9,1,53,19,7,8,15,16,92,23,74,39]
+
+>>> atomic_number_err False "FE"
+26
+-}
 atomic_number_err :: Bool -> Atomic_Symbol -> Atomic_Number
 atomic_number_err cs sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number cs sym)
 
@@ -203,9 +213,9 @@ atomic_weight_err x = fromMaybe (error ("atomic_weight: " ++ show x)) (atomic_we
 
 Cordero et al. (2008), and Pyykkö and Atsumi (2009)
 
-> let average x = sum x / fromIntegral (length x)
-> let r = map snd covalent_radii_table
-> (minimum r,average r,maximum r) == (28,152,260)
+>>> let r = map snd covalent_radii_table
+>>> (minimum r,Music.Theory.Math.arithmetic_mean_of_list r,maximum r)
+(28,152.0,260)
 
 -}
 covalent_radii_table :: Num n => [(Atomic_Number,n)]
@@ -319,9 +329,10 @@ covalent_radius_err = fromMaybe (error "covalent_radii") . covalent_radius
 
 <https://www.ccdc.cam.ac.uk/support-and-resources/ccdcresources/Elemental_Radii.xlsx>
 
-> let round_f = fromIntegral . round
-> let r = map (round_f . angstroms_to_picometres. snd) covalent_radii_csd_table
-> (minimum r,round (average r),maximum r) == (23,155,260)
+>>> let round_f = fromIntegral . round
+>>> let r = map (round_f . angstroms_to_picometres. snd) covalent_radii_csd_table
+>>> (minimum r,round (Music.Theory.Math.arithmetic_mean_of_list r),maximum r)
+(23,155,260)
 
 -}
 covalent_radii_csd_table :: Fractional n => [(Atomic_Number,n)]
@@ -445,11 +456,11 @@ covalent_radius_csd k = lookup k covalent_radii_csd_table
 covalent_radius_csd_err :: Fractional n => Atomic_Number -> n
 covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radius_csd
 
-type DIST_MSR t = (((Int,Int),(V3 t,V3 t)),t,t,t,Bool,Bool)
+type Dist_Msr t = (((Int,Int),(V3 t,V3 t)),t,t,t,Bool,Bool)
 
 -- | /rad_f/ is the atomic symbol to covalent radius function.
 -- /(t_min,t_max)/ are the tolerance values, /t_min/ is ordinarily negative.
-calculate_distance_set :: (Ord t,Floating t) => (Atomic_Symbol -> t) -> (t,t) -> [(Atomic_Symbol, V3 t)] -> [DIST_MSR t]
+calculate_distance_set :: (Ord t,Floating t) => (Atomic_Symbol -> t) -> (t,t) -> [(Atomic_Symbol, V3 t)] -> [Dist_Msr t]
 calculate_distance_set rad_f (t_min,t_max) e =
   let f (k0,(a0,p0)) (k1,(a1,p1)) =
         if k0 < k1
@@ -718,11 +729,13 @@ atomic_ion_vdw_radii_table =
   ,(117,-1,-1,-1)
   ,(118,-1,-1,-1)]
 
--- * FORMULA
+-- * Formula
 
--- | Given real signum, ie. -1, 0 or +1, given character of sign.
---
--- > map (signum_to_char . signum) [-10,0,10] == [Just '-',Nothing,Just '+']
+{- | Given real signum, ie. -1, 0 or +1, given character of sign.
+
+>>> map (signum_to_char . signum) [-10,0,10]
+[Just '-',Nothing,Just '+']
+-}
 signum_to_char :: (Eq a, Num a) => a -> Maybe Char
 signum_to_char x =
   case x of
@@ -731,30 +744,33 @@ signum_to_char x =
     1 -> Just '+'
     _ -> error "signum_to_char?"
 
--- | [(ELEMENT-SYMBOL,COUNT)]
-type FORMULA = [(String,Int)]
+-- | [(Element-Symbol,Count)]
+type Formula = [(String,Int)]
 
--- | Ordered FORMULA and CHARGE.
-type FORMULA_CH = (FORMULA,Maybe Int)
+-- | Ordered Formula and Charge.
+type Formula_Ch = (Formula,Maybe Int)
 
--- | Format FORMULA.
-formula_pp :: FORMULA -> String
+-- | Format Formula.
+formula_pp :: Formula -> String
 formula_pp =
   let f (sym,k) = if k == 1 then sym else sym ++ show k
   in unwords . map f
 
--- | Format FORMULA_CH.
-formula_ch_pp :: FORMULA_CH -> String
+-- | Format Formula_Ch.
+formula_ch_pp :: Formula_Ch -> String
 formula_ch_pp (e,c) =
   let c' = maybe "" (\x -> show (abs x) ++ maybe "" return (signum_to_char x)) c
   in formula_pp e ++ c'
 
-{- | Inverse of 'formula_ch_pp', histogram is UN-SORTED.
+{- | Inverse of 'formula_ch_pp', histogram is un-sorted.
 
-> map (formula_ch_pp . formula_ch_parse) ["H2 O","C2 H4 O3","O4 S1"] == ["H2 O","C2 H4 O3","O4 S"]
-> map formula_ch_parse ["H A","C21 H26 Cl1 N4 O2 1+","O4 S1 2-"]
+>>> map (formula_ch_pp . formula_ch_parse) ["H2 O","C2 H4 O3","O4 S1"]
+["H2 O","C2 H4 O3","O4 S"]
+
+>>> map formula_ch_parse ["H A","C21 H26 Cl1 N4 O2 1+","O4 S1 2-"]
+[([("H",1),("A",1)],Nothing),([("C",21),("H",26),("Cl",1),("N",4),("O",2)],Just 1),([("O",4),("S",1)],Just (-2))]
 -}
-formula_ch_parse :: String -> FORMULA_CH
+formula_ch_parse :: String -> Formula_Ch
 formula_ch_parse txt =
   let f x = case span isDigit x of
               ([],_) -> case span isAlpha x of
@@ -769,8 +785,8 @@ formula_ch_parse txt =
        (e,[c]) -> (e,Just c)
        _ -> error ("formula_ch_parse: " ++ txt)
 
--- | Parse FORMULA, it is an 'error' for CHARGE to be given.
-formula_parse :: String -> FORMULA
+-- | Parse Formula, it is an 'error' for Charge to be given.
+formula_parse :: String -> Formula
 formula_parse txt =
   case formula_ch_parse txt of
     (e,Nothing) -> e
@@ -784,7 +800,7 @@ If carbon is present, the order should be: C, then H, then the other elements in
 If carbon is not present, the elements are listed purely in alphabetic order of their symbol.
 This is the 'Hill' system used by Chemical Abstracts.
 -}
-formula_sort_hill :: FORMULA -> FORMULA
+formula_sort_hill :: Formula -> Formula
 formula_sort_hill e =
   case lookup "C" e of
     Nothing -> e
@@ -792,26 +808,30 @@ formula_sort_hill e =
 
 {- | 'formula_sort_hill' of 'T.histogram'.
 
-> map (formula_pp . hill_formula_seq . words) ["A C H","A H","A C"] == ["C H A","A H","C A"]
+>>> map (formula_pp . hill_formula_seq . words) ["A C H","A H","A C"]
+["C H A","A H","C A"]
 -}
-hill_formula_seq :: [String] -> FORMULA
+hill_formula_seq :: [String] -> Formula
 hill_formula_seq = formula_sort_hill . T.histogram
 
 -- | 'formula_pp' of 'hill_formula_seq'
 hill_formula :: [String] -> String
 hill_formula = formula_pp . hill_formula_seq
 
--- | Apply 'abs' to COUNT at FORMULA.
-formula_abs :: FORMULA -> FORMULA
+-- | Apply 'abs' to count at Formula.
+formula_abs :: Formula -> Formula
 formula_abs = map (fmap abs)
 
 {- | Difference between two formula.
 
-> let f f1 f2 = formula_pp (formula_diff (formula_parse f1) (formula_parse f2))
-> f "C4 H9 N1 O3" "C4 H7 N1 O2" == "H2 O"
-> f "H2 O" "C4 H O" == "H C4"
+>>> let f f1 f2 = formula_pp (formula_diff (formula_parse f1) (formula_parse f2))
+>>> f "C4 H9 N1 O3" "C4 H7 N1 O2"
+"H2 O"
+
+>>> f "H2 O" "C4 H O"
+"H C4"
 -}
-formula_diff :: FORMULA -> FORMULA -> FORMULA
+formula_diff :: Formula -> Formula -> Formula
 formula_diff x y =
   let f (e,m) = case lookup e y of
                   Nothing -> Just (e,m)

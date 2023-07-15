@@ -4,13 +4,18 @@
 -- In Proc. ICMC, 1999.
 module Sound.Sc3.Data.Ats where
 
-import qualified Data.ByteString.Lazy as B {- bytestring -}
 import Data.Int {- base -}
 import Data.List {- base -}
-import Data.List.Split {- split -}
+
+import qualified Data.ByteString.Lazy as B {- bytestring -}
+import qualified Data.List.Split as Split {- split -}
+
+import qualified Music.Theory.List as List {- hmt-base -}
 
 import qualified Sound.File.Next as Au {- hsc3-sf -}
+
 import qualified Sound.Osc.Coding.Byte as Osc {- hosc -}
+
 import qualified Sound.Sc3 as Sc3 {- hsc3 -}
 
 -- | Ats analysis frame data.
@@ -40,11 +45,17 @@ data Ats = Ats {ats_header :: Ats_Header
                ,ats_frames :: [Ats_Frame]}
            deriving (Eq, Show)
 
+splitOn2 :: Eq a => [a] -> [a] -> ([a], [a])
+splitOn2 sep str =
+  case Split.splitOn sep str of
+    [p, q] -> (p, q)
+    _ -> error "splitOn2"
+
 -- | Very simple minded generic fields viewer for records.
 record_fields :: Show r => r -> [(String,String)]
 record_fields =
-    map ((\[p,q] -> (dropWhile (== ' ') p,q)) . splitOn " = ") .
-    splitOn "," .
+    map ((\(p,q) -> (dropWhile (== ' ') p,q)) . List.split_on_1_err " = ") .
+    Split.splitOn "," .
     takeWhile (/= '}') .
     tail .
     dropWhile (/= '{') .
@@ -108,24 +119,40 @@ ats_parse_header d =
                   ,ats_file_type = ft
                   ,ats_frame_length = fl}
 
--- | Read an Ats data file.
---
--- > ats <- ats_read "/home/rohan/data/audio/pf-c5.1.ats"
--- > let Ats hdr frm = ats
--- > putStrLn $ ats_header_pp hdr
--- > map length frm == replicate (ats_n_frames hdr) (ats_frame_length hdr)
---
--- > import Sound.Sc3.Plot {- hcs3-plot -}
--- > plotTable [ats_time ats]
--- > plotTable (ats_freq ats)
--- > plotTable (ats_ampl ats)
--- > plotTable (ats_phase ats)
--- > plot_p3_ln (map (map (\(t,f,a) -> (f,t,a))) (ats_tm_fr_am ats))
+{- | Read an Ats data file.
+
+>>> ats <- ats_read "/home/rohan/sw/hsc3-data/data/ats/pf-c5.4.ats"
+>>> let Ats hdr frm = ats
+>>> map length frm == replicate (ats_n_frames hdr) (ats_frame_length hdr)
+True
+
+> putStrLn $ ats_header_pp hdr
+
+@
+ats_sample_rate = 44100.0
+ats_frame_size = 2205
+ats_window_size = 8821
+ats_n_partials = 36
+ats_n_frames = 234
+ats_max_amplitude = 8.300120462729725e-2
+ats_max_frequency = 2112.43387414816
+ats_analysis_duration = 11.591451644897461
+ats_file_type = 4
+ats_frame_length = 134
+@
+
+> import Sound.Sc3.Plot {- hcs3-plot -}
+> plot_p1_ln [ats_time ats]
+> plot_p1_ln (ats_freq ats)
+> plot_p1_ln (ats_ampl ats)
+> plot_p1_ln (ats_phase ats)
+> plot_p3_ln (map (map (\(t,f,a) -> (f,t,a))) (ats_tm_fr_am ats))
+-}
 ats_read :: FilePath -> IO Ats
 ats_read fn = do
   d <- ats_read_f64 fn
   let hdr = ats_parse_header d
-  return (Ats hdr (chunksOf (ats_frame_length hdr) (drop 10 d)))
+  return (Ats hdr (Split.chunksOf (ats_frame_length hdr) (drop 10 d)))
 
 -- | Calculate partial depth and frame constant from filetype.
 --
@@ -192,10 +219,11 @@ ats_write_au ats_fn au_fn = do
       au_hdr = Au.Sf_Header (length d) Au.Float sr 1
   Au.au_write au_fn au_hdr [d]
 
--- | Run 'ats_write_au' and then 'Sc3.b_allocRead.
---
--- > ats_load_sc3 0 "/home/rohan/data/audio/pf-c5.4.ats"
--- > Sc3.withSc3 (Sc3.b_query1_unpack 0)
+{- | Run 'ats_write_au' and then 'Sc3.b_allocRead.
+
+> ats_load_sc3 0 "/home/rohan/sw/hsc3-data/data/ats/pf-c5.4.ats"
+> Sc3.withSc3 (Sc3.b_query1_unpack 0)
+-}
 ats_load_sc3 :: Int -> FilePath -> IO ()
 ats_load_sc3 b ats_fn = do
   let au_fn = ats_fn ++ ".au"

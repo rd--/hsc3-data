@@ -21,9 +21,12 @@ mp_dir = "/home/rohan/sw/hsc3-data/data/chemistry/mp"
 mp_poscar_file :: String -> FilePath
 mp_poscar_file nm = mp_dir </> "poscar" </> nm <.> "poscar"
 
--- | Load an Mp Poscar file as a Struct.
---
--- > s <- mp_load "mp-541848_B"
+{- | Load an Mp Poscar file as a Struct.
+
+>>> s <- mp_load "mp-541848_B"
+>>> struct_degree s
+(324,0)
+-}
 mp_load :: String -> IO Struct
 mp_load nm = do
   p <- poscar_load (mp_poscar_file nm)
@@ -36,9 +39,11 @@ sep1 e x =
     (i,_:j) -> (i,j)
     _ -> error "sep1"
 
--- | Mp names have a prefix, an ID and a descriptor.
---
--- > mp_name_split "mp-571298_SiC" == ("571298","SiC")
+{- | Mp names have a prefix, an ID and a descriptor.
+
+>>> mp_name_split "mp-571298_SiC"
+("571298","SiC")
+-}
 mp_name_split :: String -> (String, String)
 mp_name_split nm =
   case nm of

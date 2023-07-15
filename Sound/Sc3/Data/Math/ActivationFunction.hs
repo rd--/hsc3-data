@@ -94,9 +94,12 @@ af_gaussian x = exp (- (x * x))
 
 {- | Softmax, <https://en.wikipedia.org/wiki/Softmax_function>
 
-> let c = map (round . (* 100))
-> c (softmax [1, 2, 3, 4, 1, 2, 3]) == [2,6,17,47,2,6,17]
-> c (softmax (map (* 0.1) [1, 2, 3, 4, 1, 2, 3])) == [12,14,15,17,12,14,15]
+>>> let c = map (round . (* 100))
+>>> c (softmax [1, 2, 3, 4, 1, 2, 3])
+[2,6,17,47,2,6,17]
+
+>>> c (softmax (map (* 0.1) [1, 2, 3, 4, 1, 2, 3]))
+[12,14,15,17,12,14,15]
 -}
 softmax :: Floating n => [n] -> [n]
 softmax l = let r = map exp l in map (/ (sum r)) r

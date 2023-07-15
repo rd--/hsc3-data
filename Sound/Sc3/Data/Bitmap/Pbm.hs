@@ -48,10 +48,12 @@ decode_pbm1 = either (Left . show) (Right . fst) . I.decodePlainPBM . bs_string
 decode_pbm4 :: B.ByteString -> Either String I.PBM
 decode_pbm4 = either (Left . show) (Right . fst) . I.decodePBM
 
--- | Load one image from a Pbm(1) or Pbm(4) file.
---
--- > i <- read_pbm "/home/rohan/sw/hsc3-data/data/pbm/fh.pbm"
--- > pbm_dimensions i == (526,128)
+{- | Load one image from a Pbm(1) or Pbm(4) file.
+
+>>> i <- read_pbm "/home/rohan/sw/hsc3-data/data/pbm/fh.pbm"
+>>> pbm_dimensions i
+(526,128)
+-}
 read_pbm :: FilePath -> IO I.PBM
 read_pbm nm = do
   b <- B.readFile nm

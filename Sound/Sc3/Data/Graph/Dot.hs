@@ -15,19 +15,23 @@ import qualified Data.GraphViz.Types.Generalised as Gv {- graphviz -}
 
 {- | Run @dot@ to insert layout information into graph.
 
-> g = "graph g {graph[layout=neato]; node[shape=point]; 0 -- 1; 0 -- 2; 0 -- 3;}"
-> r <- fmap dg_parse (dot_run_layout g)
-> dg_to_gr_pos r
+>>> g = "graph g {graph[layout=neato]; node[shape=point]; 0 -- 1; 0 -- 2; 0 -- 3;}"
+>>> r <- fmap dg_parse (dot_run_layout g)
+>>> dg_to_gr_pos r
+([(0,(49.682,73.512)),(1,(125.56,85.289)),(2,(22.305,1.8)),(3,(1.8,133.5))],[(0,1),(0,2),(0,3)])
+
 > putStrLn (dg_print r)
 
 -}
 dot_run_layout :: String -> IO String
 dot_run_layout = readProcess "dot" ["-T","dot"]
 
--- | 'Gv.parseDotGraph' of 'T.pack'.
---
--- > st = [Gv.DE (Gv.DotEdge 1 2 []),Gv.DE (Gv.DotEdge 2 3 [])]
--- > Foldable.toList (Gv.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
+{- | 'Gv.parseDotGraph' of 'T.pack'.
+
+>>> st = [Gv.DE (Gv.DotEdge 1 2 []),Gv.DE (Gv.DotEdge 2 3 [])]
+>>> Foldable.toList (Gv.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
+True
+-}
 dg_parse :: (Ord t,Gv.ParseDot t) => String -> Gv.DotGraph t
 dg_parse = Gv.parseDotGraph . T.pack
 
@@ -119,9 +123,11 @@ dg_to_gr_f f g =
       e = mapMaybe ds_to_de st
   in (map f n,map de_to_e e)
 
--- | 'Gv.DotGraph' to 'E' set.
---
--- > dg_to_eset (dg_parse "graph {1 -- 2 -- 3}") == [(1,2),(2,3)]
+{- | 'Gv.DotGraph' to 'E' set.
+
+>>> dg_to_eset (dg_parse "graph {1 -- 2 -- 3}")
+[(1,2),(2,3)]
+-}
 dg_to_eset :: (Ord t,Eq t) => Gv.DotGraph t -> [E t]
 dg_to_eset = snd . dg_to_gr_f Gv.nodeID
 

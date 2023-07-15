@@ -67,7 +67,11 @@ uppermost_leftmost (x0,y0) (x1,y1) =
       EQ -> compare x0 x1
       r -> r
 
--- > next_slot (place_row (0,0) [50,35,27]) == (85,27)
+{- | Next slot
+
+>>> next_slot (place_row (0,0) [50,35,27])
+(85,27)
+-}
 next_slot :: [Sq] -> Pt
 next_slot sq =
     let f = minimumBy uppermost_leftmost .
@@ -75,7 +79,11 @@ next_slot sq =
             map sq_lower_left
     in f sq
 
--- > place_row (85,27) [8,19] == [((85,27),8),((93,27),19)]
+{- | Place row
+
+>>> place_row (85,27) [8,19]
+[((85,27),8),((93,27),19)]
+-}
 place_row :: Pt -> [Sz] -> [Sq]
 place_row (x,y) r =
     case r of
@@ -90,7 +98,10 @@ place_square_f pl pt sq =
                      pt' = next_slot pl'
                  in place_square_f pl' pt' sq'
 
--- > place_square sq_21_112
+{- | Place square
+
+> place_square sq_21_112
+-}
 place_square :: [[Sz]] -> [Sq]
 place_square = place_square_f [] (0,0)
 
@@ -188,8 +199,11 @@ bc_pt_connects pt =
     let f sq = sq_on_edge sq pt
     in filter f
 
--- > let r = [[],[],[('a','b')],[('a','b'),('a','c'),('b','c')]]
--- > in map all_pairs_asc ["","a","ab","abc"] == r
+{- | All pairs (ascending)
+
+>>> map all_pairs_asc ["","a","ab","abc"]
+[[],[],[('a','b')],[('a','b'),('a','c'),('b','c')]]
+-}
 all_pairs_asc :: Ord t => [t] -> [(t,t)]
 all_pairs_asc l = [(p,q) | p <- l, q <- l, p < q]
 

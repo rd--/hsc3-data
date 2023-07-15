@@ -39,8 +39,11 @@ dx7_sh_nparam = 19
 
 {- | Number of voice parameters, ie. (6 * 21) + 19
 
-> dx7_nparam == 145
-> dx7_nparam + dx7_name_nchar == 155
+>>> dx7_nparam
+145
+
+>>> dx7_nparam + dx7_name_nchar
+155
 -}
 dx7_nparam :: Num n => n
 dx7_nparam = 6 * dx7_op_nparam + dx7_sh_nparam
@@ -66,30 +69,39 @@ dx7_name_nchar = 10
 
 {- | Number of voice parameters.
 
-> dx7_nvoice == 155
-> dx7_nvoice - dx7_name_nchar == 145
-> dx7_nvoice * 32 == 4960
+>>> dx7_nvoice
+155
+
+>>> dx7_nvoice - dx7_name_nchar
+145
+
+>>> dx7_nvoice * 32
+4960
 -}
 dx7_nvoice :: Num n => n
 dx7_nvoice = dx7_nparam + dx7_name_nchar
 
 {- | Is /x/ in (32,126)?
 
-> map fromEnum "\t\n " == [9,10,32]
+>>> map fromEnum "\t\n "
+[9,10,32]
 -}
 dx7_ascii_verify :: U8 -> U8
 dx7_ascii_verify x = if x < 32 || x > 126 then error "ASCII?" else x
 
 {- | Replace out-of-range ASCII U8 with the ASCII code for /c/.
 
-> map (dx7_ascii_correct '?') [9,10,32] == [63,63,32]
+>>> map (dx7_ascii_correct '?') [9,10,32]
+[63,63,32]
 -}
 dx7_ascii_correct :: Char -> U8 -> U8
 dx7_ascii_correct c x = if x < 32 || x > 126 then dx7_ascii_verify (fromEnum c) else x
 
--- | Map ASCII U8 to 'Char'.
---
--- > map (dx7_ascii_char '?') [32 .. 126]
+{- | Map ASCII U8 to 'Char'.
+
+>>> map (dx7_ascii_char '?') [32 .. 126]
+" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+-}
 dx7_ascii_char :: Char -> U8 -> Char
 dx7_ascii_char c = toEnum . dx7_ascii_correct c
 
@@ -134,9 +146,10 @@ dx7_voice_set_verify chk_rng v = unless (all (dx7_voice_verify chk_rng) v) (erro
 dx7_voice_op_params :: Dx7_Voice -> [[U8]]
 dx7_voice_op_params = Split.chunksOf dx7_op_nparam . take (dx7_op_nparam * 6)
 
--- | Voice shared parameters (# = 19, IX = 126-144)
---
--- > putStrLn $ unlines $ map dx7_parameter_name [126 .. 144]
+{- | Voice shared parameters (# = 19, IX = 126-144)
+
+> putStrLn $ unlines $ map dx7_parameter_name [126 .. 144]
+-}
 dx7_voice_sh_params :: Dx7_Voice -> [U8]
 dx7_voice_sh_params = take dx7_sh_nparam . drop (dx7_op_nparam * 6)
 
@@ -144,26 +157,34 @@ dx7_voice_sh_params = take dx7_sh_nparam . drop (dx7_op_nparam * 6)
 dx7_init_op :: U8 -> [U8]
 dx7_init_op x = [99,99,99,99,99,99,99,0,39,0,0,0,0,0,0,0,x,0,1,0,7]
 
--- | Dx7 INIT PITCH EG (# = 8; IX = 126-133)
---
--- > putStrLn $ unlines $ map dx7_parameter_name [126 .. 133]
+{- | Dx7 INIT PITCH EG (# = 8; IX = 126-133)
+
+> putStrLn $ unlines $ map dx7_parameter_name [126 .. 133]
+-}
 dx7_init_pitch_eg :: [U8]
 dx7_init_pitch_eg = [99,99,99,99,50,50,50,50]
 
--- | Dx7 INIT LFO (# = 6; IX = 137-142)
---
--- > putStrLn $ unlines $ map dx7_parameter_name [137 .. 142]
+{- | Dx7 INIT LFO (# = 6; IX = 137-142)
+
+> putStrLn $ unlines $ map dx7_parameter_name [137 .. 142]
+-}
 dx7_init_lfo :: [U8]
 dx7_init_lfo = [35,0,0,0,1,0]
 
 dx7_init_sh :: [U8]
 dx7_init_sh = dx7_init_pitch_eg ++ [0,0,1] ++ dx7_init_lfo ++ [3,24]
 
--- | Dx7 INIT VOICE, from Dx7-II CART 64-B.
---
--- > dx7_voice_verify True dx7_init_voice == True
--- > dx7_voice_name '?' dx7_init_voice == "INIT VOICE"
--- > (minimum dx7_init_voice,maximum dx7_init_voice) == (0,99)
+{- | Dx7 INIT VOICE, from Dx7-II CART 64-B.
+
+>>> dx7_voice_verify True dx7_init_voice
+True
+
+>>> dx7_voice_name '?' dx7_init_voice
+"INIT VOICE"
+
+>>> (minimum dx7_init_voice,maximum dx7_init_voice)
+(0,99)
+-}
 dx7_init_voice :: Dx7_Voice
 dx7_init_voice =
   let op_6_2 = concat (replicate 5 (dx7_init_op 0))
@@ -248,13 +269,14 @@ dx7_typ_usr_str ty = T.lookup_err ty dx7_typ_usr_str_tbl
 dx7_usr_signed :: (Num n,Show n,Ord n) => n -> String
 dx7_usr_signed n = if n <= 0 then show n else '+' : show n
 
--- | USR string for range.
---
--- > dx7_usr_range True (-50,49)
+{- | USR string for range.
+
+> dx7_usr_range True (-50,49)
+-}
 dx7_usr_range :: Bool -> (Int,Int) -> Dx7_USR
 dx7_usr_range sgn (p,q) = intercalate ";" (map (if sgn then dx7_usr_signed else show) [p .. q])
 
--- | (Dx7-IX,NAME,STEPS,USR_DIFF,USR_STR)
+-- | (Dx7-Ix,Name,Steps,Usr_Diff,Usr_Str)
 --
 -- All parameters except the NAME data are in the range (0,STEPS-1).
 -- NAME data is in (32,126), ie. the ASCII printable characters.
@@ -272,11 +294,12 @@ dx7_parameter_range (ix,_,n,_,_) = if ix < 145 then (0,n - 1) else (32,126)
 dx7_parameter_range_usr :: Dx7_Parameter -> (I8,I8)
 dx7_parameter_range_usr (ix,_,n,d,_) = if ix < 125 then (d,d + n - 1) else (32,126)
 
--- | Normalise parameter value to be in (0,1).
--- Parameter values are at most in 0-99, excepting characters in voice name data.
---
--- > let p = dx7_op_parameter_tbl !! 20
--- > map (dx7_parameter_value_normalise p) [0 .. 14]
+{- | Normalise parameter value to be in (0,1).
+Parameter values are at most in 0-99, excepting characters in voice name data.
+
+> let p = dx7_op_parameter_tbl !! 20
+> map (dx7_parameter_value_normalise p) [0 .. 14]
+-}
 dx7_parameter_value_normalise :: Dx7_Parameter -> U8 -> Float
 dx7_parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
 
@@ -284,9 +307,11 @@ dx7_parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n -
 dx7_pitch_class_seq :: [String]
 dx7_pitch_class_seq = Split.splitOn ";" "C;C#;D;D#;E;F;F#;G;G#;A;A#;B"
 
--- | USR 4-character strings naming the 120 pitches from C-1 to B8.
---
--- > length dx7_pitch_seq) == 10 * 12
+{- | USR 4-character strings naming the 120 pitches from C-1 to B8.
+
+>>> length dx7_pitch_seq == 10 * 12
+True
+-}
 dx7_pitch_seq :: [String]
 dx7_pitch_seq = [p ++ show o | o <- [-1::Int .. 8],p <- dx7_pitch_class_seq]
 
@@ -298,9 +323,11 @@ dx7_kbd_brk_pt_to_midi = (+) 9
 dx7_kbd_brk_pt_usr :: Dx7_USR
 dx7_kbd_brk_pt_usr = intercalate ";" (take 100 (drop 9 dx7_pitch_seq))
 
--- | Template for six FM operators.
---
--- > length dx7_op_parameter_tbl == dx7_op_nparam
+{- | Template for six FM operators.
+
+>>> length dx7_op_parameter_tbl == dx7_op_nparam
+True
+-}
 dx7_op_parameter_tbl :: [Dx7_Parameter]
 dx7_op_parameter_tbl =
     [(00,"EG RATE 1",100,0,"")
@@ -348,9 +375,11 @@ operator_group_structure =
     ,("OSC","MODE;FREQ-COARSE;FREQ-FINE;DETUNE",[17..20])
     ]
 
--- | Six operators, descending order, one-indexed.
---
--- > length dx7_op6_dx7_parameter_tbl == 6 * dx7_op_nparam
+{- | Six operators, descending order, one-indexed.
+
+>>> length dx7_op6_dx7_parameter_tbl == 6 * dx7_op_nparam
+True
+-}
 dx7_op6_dx7_parameter_tbl :: [Dx7_Parameter]
 dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1]
 
@@ -358,9 +387,11 @@ dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1
 dx7_transpose_usr :: Dx7_USR
 dx7_transpose_usr = intercalate ";" (take 49 (drop 12 dx7_pitch_seq))
 
--- | Remainder (non-operator) of parameter table.
---
--- > length dx7_sh_parameter_tbl == dx7_sh_nparam
+{- | Remainder (non-operator) of parameter table.
+
+>>> length dx7_sh_parameter_tbl == dx7_sh_nparam
+True
+-}
 dx7_sh_parameter_tbl :: [Dx7_Parameter]
 dx7_sh_parameter_tbl =
     [(126,"PITCH EG RATE 1",100,0,"")
@@ -409,11 +440,14 @@ rem_group_structure =
     ,("LFO","SPEED;DELAY;PITCH-MOD-DEPTH;AMP-MOD-DEPTH;SYNC;WAVEFORM",[137..142])
     ,("VOICE NAME CHAR",";;;;;;;;;",[145..154])]
 
--- | All Dx7 parameters.
---
--- > length dx7_parameter_tbl == dx7_nvoice
--- > map dx7_parameter_range_usr dx7_parameter_tbl
--- > map dx7_parameter_range dx7_parameter_tbl
+{- | All Dx7 parameters.
+
+>>> length dx7_parameter_tbl == dx7_nvoice
+True
+
+> map dx7_parameter_range_usr dx7_parameter_tbl
+> map dx7_parameter_range dx7_parameter_tbl
+-}
 dx7_parameter_tbl :: [Dx7_Parameter]
 dx7_parameter_tbl =
   concat [dx7_op6_dx7_parameter_tbl
@@ -426,19 +460,31 @@ dx7_parameter_get n =
     fromMaybe (error "dx7_parameter_get") $
     find ((== n) . dx7_parameter_ix) dx7_parameter_tbl
 
--- | Lookup parameter name given index.
---
--- > dx7_parameter_name 0x14 == "OP 6 OSC DETUNE"
--- > dx7_parameter_name 0x50 == "OP 3 OSC MODE"
--- > dx7_parameter_name 0x86 == "ALGORITHM #"
--- > dx7_parameter_name 0x90 == "TRANSPOSE"
+{- | Lookup parameter name given index.
+
+>>> dx7_parameter_name 0x14
+"OP 6 OSC DETUNE"
+
+>>> dx7_parameter_name 0x50
+"OP 3 OSC MODE"
+
+>>> dx7_parameter_name 0x86
+"ALGORITHM #"
+
+>>> dx7_parameter_name 0x90
+"TRANSPOSE"
+-}
 dx7_parameter_name :: U8 -> String
 dx7_parameter_name = dx7_parameter_nm . dx7_parameter_get
 
--- | Lookup parameter index given name.
---
--- > dx7_parameter_index "ALGORITHM #" == 0x86
--- > dx7_parameter_index "OP 6 OSC DETUNE" == 0x14
+{- | Lookup parameter index given name.
+
+>>> dx7_parameter_index "ALGORITHM #" == 0x86
+True
+
+>>> dx7_parameter_index "OP 6 OSC DETUNE" == 0x14
+True
+-}
 dx7_parameter_index :: String -> U8
 dx7_parameter_index nm =
     maybe
@@ -470,9 +516,11 @@ dx7_name_encode c = map (dx7_ascii_correct c . fromEnum)
 
 -- * Dx7 Voice Data List
 
--- | Arrangement of parameters on printed Dx7 voice data list.
---
--- > sort (concatMap (\(_,_,ix) -> ix) dx7_voice_data_list) == [0 .. 20] ++ [126 .. 144]
+{- | Arrangement of parameters on printed Dx7 voice data list.
+
+>>> sort (concatMap (\(_,_,ix) -> ix) dx7_voice_data_list) == [0 .. 20] ++ [126 .. 144]
+True
+-}
 dx7_voice_data_list :: [(String, [String], [U8])]
 dx7_voice_data_list =
   [(""
@@ -499,9 +547,11 @@ dx7_voice_data_list =
 
 -- * Sysex
 
--- | Shift right by four places.
---
--- > map dx7_substatus [0x10,0x20] == [0x01,0x02]
+{- | Shift right by four places.
+
+>>> map dx7_substatus [0x10,0x20] == [0x01,0x02]
+True
+-}
 dx7_substatus :: U8 -> U8
 dx7_substatus = flip shiftR 4
 
@@ -842,8 +892,10 @@ dx7_store_hex_correct fn = dx7_store_hex True fn . map dx7_voice_param_correct
 
 -- * Util
 
--- | Take /n/ from /l/ extending with /z/ if required.
---
--- > take_extending_with '-' 10 "string" == "string----"
+{- | Take /n/ from /l/ extending with /z/ if required.
+
+>>> take_extending_with '-' 10 "string"
+"string----"
+-}
 take_extending_with :: t -> Int -> [t] -> [t]
 take_extending_with z n l = take n (l ++ repeat z)

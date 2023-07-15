@@ -1,7 +1,7 @@
 -- | Fasta <https://www.ncbi.nlm.nih.gov/BLAST/fasta.shtml>
 module Sound.Sc3.Data.Chemistry.Fasta where
 
--- | (IUPAC-CODE,BASES-REPRESENTED,DESCRIPTION)
+-- | (Iupac-Code,Bases-Represented,Description)
 fasta_nucleic_acid_tbl :: [(Char, [Char], String)]
 fasta_nucleic_acid_tbl =
   [('A',"A","adenosine")
@@ -10,7 +10,7 @@ fasta_nucleic_acid_tbl =
   ,('T',"T","thymidine")
   ,('N',"AGCT","any")
   ,('U',"U","uridine")
-  -- DEGENERATE
+  -- degenerate
   ,('K',"GT","keto")
   ,('S',"GC","strong")
   ,('Y',"TC","pyrimidine")
@@ -26,7 +26,7 @@ fasta_nucleic_acid_tbl =
 fasta_nucleic_acid_dict :: [Char]
 fasta_nucleic_acid_dict = map (\(x,_,_) -> x) fasta_nucleic_acid_tbl
 
--- | (IUPAC-CODE,DESCRIPTION)
+-- | (Iupac-Code,Description)
 fasta_amino_acid_code_tbl :: [(Char,String)]
 fasta_amino_acid_code_tbl =
   [('A',"alanine")

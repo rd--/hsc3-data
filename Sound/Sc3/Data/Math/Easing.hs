@@ -1,11 +1,14 @@
 -- | See Easing.h from <http://libcinder.org>, via f0 <http://fredrikolofsson.com/>.
 module Sound.Sc3.Data.Math.Easing where
 
--- > import Sound.Sc3.Plot {- hsc3-plot -}
--- > let ix = [0,0.01 .. 1]
--- > let ix_f f = map f ix
--- > let plot_ease p q = plotTable [ix_f p,ix_f q]
--- > plot_ease quad_in quad_out
+{- | Quad (in & out)
+
+> import Sound.Sc3.Plot {- hsc3-plot -}
+> let ix = [0,0.01 .. 1]
+> let ix_f f = map f ix
+> let plot_ease p q = plot_p1_ln [ix_f p,ix_f q]
+> plot_ease quad_in quad_out
+-}
 quad_in,quad_out :: Num a => a -> a
 quad_in t = t * t
 quad_out t = negate t * (t - 2)

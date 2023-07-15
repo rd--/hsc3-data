@@ -79,9 +79,11 @@ max_to_depth n =
               then 16
               else error "max_to_depth: n > 65535"
 
--- | Maximum value given bit depth, ie 2 ^ n - 1.
---
--- > map depth_to_max [8,16] == [2 ^ 8 - 1,2 ^ 16 - 1]
+{- | Maximum value given bit depth, ie 2 ^ n - 1.
+
+>>> map depth_to_max [8,16] == [2 ^ 8 - 1,2 ^ 16 - 1]
+True
+-}
 depth_to_max :: Depth -> Int
 depth_to_max n =
     case n of

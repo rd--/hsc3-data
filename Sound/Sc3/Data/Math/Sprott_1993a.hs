@@ -16,9 +16,11 @@ sprott_tbl_2_1 =
         c = map toEnum i
     in zip3 c i n
 
--- | Lookup coeffient at 'sprott_tbl_2_1'.
---
--- > sprott_coef 'M' == Just 0
+{- | Lookup coeffient at 'sprott_tbl_2_1'.
+
+>>> sprott_coef 'M'
+Just 0.0
+-}
 sprott_coef :: Char -> Maybe Double
 sprott_coef c =
     let (ch,_,cf) = unzip3 sprott_tbl_2_1
@@ -30,9 +32,11 @@ sprott_coef_err = fromJust . sprott_coef
 
 -- * General forms
 
--- | Pair each elements with the element /n/ places further along.
---
--- > with_delayed 3 [1..9] == [(1,4),(2,5),(3,6),(4,7),(5,8),(6,9)]
+{- | Pair each elements with the element /n/ places further along.
+
+>>> with_delayed 3 [1..9]
+[(1,4),(2,5),(3,6),(4,7),(5,8),(6,9)]
+-}
 with_delayed :: Int -> [t] -> [(t,t)]
 with_delayed n l =
     case l of
@@ -170,7 +174,7 @@ sphere_proj l =
                        ,ya + 0.5 * (y1 - y0) * cos ph)
     in map prj l
 
--- * CALC
+-- * Calc
 
 -- | Calculate one-dimensional code, /m/ is delay, /n/ is iteration degree, /i/ is initial value.
 calc_code_1 :: Int -> Int -> Double -> Code -> [(Double, Double)]
@@ -230,9 +234,10 @@ plot_code_3 n i (c,_) = plot_p3_pt [calc_code_3 n i c]
 type Code = String
 type Annotation = String
 
--- | One-dimensional codes.
---
--- > plot_code_1 5 12500 0.1 (codes_1 !! 0)
+{- | One-dimensional codes.
+
+> plot_code_1 5 12500 0.1 (codes_1 !! 0)
+-}
 codes_1 :: [(Code,Annotation)]
 codes_1 =
     [("AMu%","Fig 1-4")
@@ -247,9 +252,10 @@ codes_1 =
     ,("DFBIEVV","Fig 2-9")
     ,("DOOYRIL","Fig 2-10")]
 
--- | Two-dimensional codes.
---
--- > plot_code_2 False 8500 (0.1,0) (codes_2 !! 25)
+{- | Two-dimensional codes.
+
+> plot_code_2 False 8500 (0.1,0) (codes_2 !! 25)
+-}
 codes_2 :: [(Code,Annotation)]
 codes_2 =
     [("EWM?MPMMWMMMM","Fig 3-1") -- 0
@@ -283,9 +289,10 @@ codes_2 =
     ,("EAHSVIGTJKOTB","SELECTED.DIC #1")
     ]
 
--- | Three-dimensional codes.
---
--- > plot_code_3 8500 (0.1,0,0) (codes_3 !! 3)
+{- | Three-dimensional codes.
+
+> plot_code_3 8500 (0.1,0,0) (codes_3 !! 3)
+-}
 codes_3 :: [(Code,Annotation)]
 codes_3 =
     [("IJKRADSXGDBHIJTQJJDICEJKYSTXFNU","Fig 4-1")
@@ -293,19 +300,23 @@ codes_3 =
     ,("INRRXLCEYLFHYAPFSTPHHJMYRYJFBNM","Fig 4-4")
     ,("IWDWOGDGWGORJOBTUHFQBPRNTCBYQHP","Fig 4-8")]
 
--- > cf = map sprott_coef_err "FUXRRRUIRDYKDUBPHHHOMOBRIRBINCS"
--- > plot_p2_pt [take 25000 (iterate (quartic_2l cf) (0.1,0))]
+{-
+> cf = map sprott_coef_err "FUXRRRUIRDYKDUBPHHHOMOBRIRBINCS"
+> plot_p2_pt [take 25000 (iterate (quartic_2l cf) (0.1,0))]
+-}
 
 -- * Specialised forms
 
--- | Sprott p.9 (Equation 1C)
---
--- > plot_p2_pt [with_delayed 1 (take 5000 (iterate (logistic 4) 0.05))]
+{- | Sprott p.9 (Equation 1C)
+
+> plot_p2_pt [with_delayed 1 (take 5000 (iterate (logistic 4) 0.05))]
+-}
 logistic :: Num a => a -> a -> a
 logistic r x = r * x * (1 - x)
 
--- | Figure 3-1. The Hénon map (p.52)
---
--- > plot_p2_pt [take 5000 (iterate (henon (-1.4) 0.3) (0.1,0))]
+{- | Figure 3-1. The Hénon map (p.52)
+
+> plot_p2_pt [take 5000 (iterate (henon (-1.4) 0.3) (0.1,0))]
+-}
 henon :: Num t => t -> t -> (t, t) -> (t, t)
 henon a b (x,y) = (1 + a * x * x + b * y, x)

@@ -16,20 +16,45 @@ t8_list (p,q,r,s,t,u,v,w) = [p,q,r,s,t,u,v,w]
 -- | Glyphs are stored as 8-tuples of 'Word8' values in column order.
 type Cp437_Glyph = T8 Word8
 
--- | Translate 'Cp437_Glyph' to 'Bitindices'.
---
--- > let b = cp437_glyph_to_bitindices (cp437_font !! fromEnum 'O')
--- > putStrLn $ bitindices_show b
+{- | Translate 'Cp437_Glyph' to 'Bitindices'.
+
+> let b = cp437_glyph_to_bitindices (cp437_font !! fromEnum 'O')
+> putStrLn $ Bitmap.bitindices_show b
+
+@
+..@@@...
+.@@.@@..
+@@...@@.
+@@...@@.
+@@...@@.
+.@@.@@..
+..@@@...
+........
+@
+-}
 cp437_glyph_to_bitindices :: Cp437_Glyph -> Bitmap.Bitindices
 cp437_glyph_to_bitindices =
     let col c x = mapMaybe (\r -> if testBit x r then Just (r,c) else Nothing) [0 .. 7]
     in (,) (8,8) . concat . zipWith col [0 .. 7] . t8_list
 
--- | 'bitindices_show' of 'cp437_glyph_to_bitindices'.
---
--- > let f = putStrLn . ('\n' :) . cp437_glyph_show
--- > f (cp437_font !! fromEnum 'A')
--- > mapM_ f cp437_font
+{- | 'bitindices_show' of 'cp437_glyph_to_bitindices'.
+
+> let f = putStrLn . ('\n' :) . cp437_glyph_show
+> f (cp437_font !! fromEnum 'A')
+
+@
+..@@....
+.@@@@...
+@@..@@..
+@@..@@..
+@@@@@@..
+@@..@@..
+@@..@@..
+........
+@
+
+> mapM_ f cp437_font
+-}
 cp437_glyph_show :: Cp437_Glyph -> String
 cp437_glyph_show = Bitmap.bitindices_show . cp437_glyph_to_bitindices
 
@@ -37,9 +62,11 @@ cp437_glyph_show = Bitmap.bitindices_show . cp437_glyph_to_bitindices
 cp437_glyph_pbm1 :: Cp437_Glyph -> Pbm.Pbm1
 cp437_glyph_pbm1 = Pbm.bitindices_pbm1 . cp437_glyph_to_bitindices
 
--- | 8x8 Cp437 font data, courtesy <http://www.gammon.com.au/forum/?id=11516>
---
--- > length cp437_font == 256
+{- | 8x8 Cp437 font data, courtesy <http://www.gammon.com.au/forum/?id=11516>
+
+>>> length cp437_font
+256
+-}
 cp437_font :: [Cp437_Glyph]
 cp437_font =
   [(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00) -- 0x00

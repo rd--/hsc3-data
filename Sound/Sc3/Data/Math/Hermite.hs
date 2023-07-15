@@ -15,9 +15,9 @@ hermite_to_bezier ((p0,p1),(m0,m1)) = (p0,p0 + (m0 / 3),p1 - (m1 / 3),p1)
 
 {- | Hermite bases, expanded form.
 
-> f = v4_map (round . (*) 100)
-> r = [(100,0,0,0),(84,14,16,-5),(50,12,50,-12),(16,5,84,-14),(0,0,100,0)]
-> map (f . hermite_bases_exp) [0,1/4,1/2,3/4,1] == r
+>>> let f = v4_map (round . (*) 100)
+>>> map (f . hermite_bases_exp) [0,1/4,1/2,3/4,1]
+[(100,0,0,0),(84,14,16,-5),(50,12,50,-12),(16,5,84,-14),(0,0,100,0)]
 
 > import Sound.Sc3.Plot {- hsc3-plot -}
 > (p,q,r,s) = Data.List.unzip4 (map hermite_bases_exp [0,0.01 .. 1])
@@ -36,7 +36,9 @@ hermite_bases_exp t =
 
 {- | Hermite bases, factored form.
 
-> map (f . hermite_bases_fac) [0,1/4,1/2,3/4,1] == r
+>>> let f = v4_map (round . (*) 100)
+>>> map (f . hermite_bases_fac) [0,1/4,1/2,3/4,1]
+[(100,0,0,0),(84,14,16,-5),(50,12,50,-12),(16,5,84,-14),(0,0,100,0)]
 -}
 hermite_bases_fac :: Num n => n -> V4 n
 hermite_bases_fac t =
@@ -83,7 +85,11 @@ kochanek_bartels_spline_h (t,b,c) (p0,p1,p2,p3) =
            ((((1 - t) * (1 - b) * (1 + c)) / 2) * (p3 - p2))
   in ((p1,p2),(m1,m2))
 
--- > kochanek_bartels_spline (0,0,0) [0,1,1/3]
+{- | Kochanek Bartels spline
+
+>>> kochanek_bartels_spline (0,0,0) [0,1,1/3]
+[((0.0,1.0),(0.5,0.16666666666666663)),((1.0,0.3333333333333333),(0.16666666666666663,-0.33333333333333337))]
+-}
 kochanek_bartels_spline :: Fractional t => V3 t -> [t] -> [Hermite t]
 kochanek_bartels_spline o =
   let rpt_bnd l = head l : l ++ [last l]

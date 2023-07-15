@@ -1,5 +1,7 @@
--- | Bitmap functions.  Indexes are in (row,column) or (y-descending,x) form.
--- True/1 indicates presence (black) and False/0 absence (white).
+{- | Bitmap types & functions.
+Indexes are in (row,column) or (y-descending,x) form.
+True/1 indicates presence (black) and False/0 absence (white).
+-}
 module Sound.Sc3.Data.Bitmap.Type where
 
 import Data.Bits {- base -}
@@ -32,7 +34,7 @@ type Column = Int
 -- | ('Row','Column') index.
 type Ix = (Row,Column)
 
--- | Minima and maxima 'Ix' given 'Dimensions'.
+-- | Minima and maxima 'Ix' given 'Dimensions' (zero-indexed).
 dimensions_to_bounds :: Dimensions -> (Ix,Ix)
 dimensions_to_bounds (nr,nc) = ((0,0),(nr - 1,nc - 1))
 
@@ -44,54 +46,74 @@ ix_row = fst
 ix_column :: Ix -> Column
 ix_column = snd
 
--- | Row-order indices given 'Dimensions'.
---
--- > bm_indices (2,3) == [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2)]
+{- | Row-order indices given 'Dimensions'.
+
+>>> bm_indices (2,3)
+[(0,0),(0,1),(0,2),(1,0),(1,1),(1,2)]
+-}
 bm_indices :: Dimensions -> [Ix]
 bm_indices (nr,nc) = [(r,c) | r <- [0 .. nr - 1], c <- [0 .. nc - 1]]
 
--- | Translate 'Ix' to linear (row-order) index.
---
--- > map (ix_to_linear (3,4)) (bm_indices (3,4)) == [0..11]
+{- | Translate 'Ix' to linear (row-order) index.
+
+>>> map (ix_to_linear (3,4)) (bm_indices (3,4)) == [0..11]
+True
+-}
 ix_to_linear :: Dimensions -> Ix -> Int
 ix_to_linear (_,nc) (r,c) = r * nc + c
 
--- | Column-order variant.
---
--- > map (ix_to_linear_co (3,4)) (bm_indices (3,4)) == [0,3,6,9,1,4,7,10,2,5,8,11]
+{- | Column-order variant.
+
+>>> map (ix_to_linear_co (3,4)) (bm_indices (3,4))
+[0,3,6,9,1,4,7,10,2,5,8,11]
+-}
 ix_to_linear_co :: Dimensions -> Ix -> Int
 ix_to_linear_co (nr,_) (r,c) = c * nr + r
 
--- | Inverse of 'ix_to_linear'.
---
--- > map (linear_to_ix (2,3)) [0 .. 5] == bm_indices (2,3)
+{- | Inverse of 'ix_to_linear'.
+
+>>> map (linear_to_ix (2,3)) [0 .. 5] == bm_indices (2,3)
+True
+-}
 linear_to_ix :: Dimensions -> Int -> Ix
 linear_to_ix (_,nc) i = i `divMod` nc
 
--- > map (linear_to_ix_co (3,4)) [0,3,6,9,1,4,7,10,2,5,8,11]
+{- | Linear to Ix Column-order
+
+>>> map (linear_to_ix_co (3,4)) [0,3,6,9,1,4,7,10,2,5,8,11]
+[(0,0),(1,0),(2,0),(3,0),(0,1),(1,1),(2,1),(3,1),(0,2),(1,2),(2,2),(3,2)]
+-}
 linear_to_ix_co :: Dimensions -> Int -> Ix
 linear_to_ix_co (nr,_) i = i `divMod` nr
 
 indices_displace :: (Int,Int) -> Indices -> Indices
 indices_displace (dx,dy) = let f (r,c) = (r + dx,c + dy) in map f
 
--- | The eight vectors (ie. (dy,dx)) to move to a neighbouring cell, clockwise.
---
--- > length neighbour_vectors_at_1_cw == 8
+{- | The eight vectors (ie. (dy,dx)) to move to a neighbouring cell, clockwise.
+
+>>> length neighbour_vectors_at_1_cw
+8
+-}
 neighbour_vectors_at_1_cw :: Num n => [(n,n)]
 neighbour_vectors_at_1_cw =
     [(0, 1),( 1, 1),( 1,0),( 1,-1)
     ,(0,-1),(-1,-1),(-1,0),(-1, 1)]
 
--- > length neighbour_vectors_at_2_cw == 16
+{- | The sixteen vectors (dy,dx) to move to a two-neighbour cell.
+
+>>> length neighbour_vectors_at_2_cw
+16
+-}
 neighbour_vectors_at_2_cw :: Num n => [(n,n)]
 neighbour_vectors_at_2_cw =
     [(0, 2),( 1, 2),( 2, 2),( 2, 1),( 2,0),( 2,-1),( 2,-2),( 1,-2)
     ,(0,-2),(-1,-2),(-2,-2),(-2,-1),(-2,0),(-2, 1),(-2, 2),(-1, 2)]
 
--- | Given 'Dimensions' and an 'Ix' derive the set of neighbouring indices.
---
--- > map (length . neighbour_indices (3,3)) (bm_indices (3,3)) == [3,5,3,5,8,5,3,5,3]
+{- | Given 'Dimensions' and an 'Ix' derive the set of neighbouring indices.
+
+>>> map (length . neighbour_indices neighbour_vectors_at_1_cw (3, 3)) (bm_indices (3,3))
+[3,5,3,5,8,5,3,5,3]
+-}
 neighbour_indices :: [(Int,Int)] -> Dimensions -> Ix -> [Ix]
 neighbour_indices n_fn (nr,nc) (r,c) =
     let f (dr,dc) =
@@ -102,10 +124,14 @@ neighbour_indices n_fn (nr,nc) (r,c) =
                else Nothing
     in mapMaybe f n_fn
 
--- | Predicate to decide if indices neighbours by at most /distance/ moves.
---
--- > map (ix_are_neighbours 1 (0,0)) neighbour_vectors_at_1 == replicate 8 True
--- > map (ix_are_neighbours 2 (0,0)) neighbour_vectors_at_2 == replicate 16 True
+{- | Predicate to decide if indices neighbours by at most /distance/ moves.
+
+>>> map (ix_are_neighbours 1 (0,0)) neighbour_vectors_at_1_cw == replicate 8 True
+True
+
+>>> map (ix_are_neighbours 2 (0,0)) neighbour_vectors_at_2_cw == replicate 16 True
+True
+-}
 ix_are_neighbours :: (Num t,Ord t) => t -> (t,t) -> (t,t) -> Bool
 ix_are_neighbours d (r,c) (r',c') = abs (r - r') <= d && abs (c - c') <= d && (r,c) /= (r',c')
 
@@ -134,19 +160,27 @@ bitenc_test_lsb = testBit
 bitenc_test_msb :: Bits b => Int -> b -> Int -> Bool
 bitenc_test_msb sz x i = testBit x (sz - 1 - i)
 
--- | Unpack the /n/ _most_ significant elements of a 'FiniteBits' value.
---
--- > bitseq_show (bitseq_msb 4 (0xA0::Data.Word.Word8)) == "@.@."
+{- | Unpack the /n/ _most_ significant elements of a 'FiniteBits' value.
+
+>>> bitseq_show (bitseq_msb 4 (0xA0::Data.Word.Word8))
+"@.@."
+-}
 bitseq_msb :: FiniteBits b => Int -> b -> Bitseq
 bitseq_msb n x = let sz = finiteBitSize x in map (bitenc_test_msb sz x) [0 .. n - 1]
 
--- | Unpack the /n/ _least_ significant elements of a 'FiniteBits' value.
---
--- > bitseq_show (bitseq_lsb 4 (0x05::Data.Word.Word8)) == "@.@."
+{- | Unpack the /n/ _least_ significant elements of a 'FiniteBits' value.
+
+>>> bitseq_show (bitseq_lsb 4 (0x05::Data.Word.Word8))
+"@.@."
+-}
 bitseq_lsb :: FiniteBits b => Int -> b -> Bitseq
 bitseq_lsb n x = map (bitenc_test_lsb x) [0 .. n - 1]
 
--- > bitseq_elem (bitseq_lsb 8 (0x05::Data.Word.Word8)) == [0,2]
+{- | Bit sequence elements.
+
+>>> bitseq_elem (bitseq_lsb 8 (0x05::Data.Word.Word8))
+[0,2]
+-}
 bitseq_elem :: (Num n,Enum n) => Bitseq -> [n]
 bitseq_elem = mapMaybe (\(ix,b) -> if b then Just ix else Nothing) . zip [0..]
 
@@ -208,9 +242,11 @@ bitindices_columns ((_,nc),ix) =
 bitindices_swap :: Bitindices -> Bitindices
 bitindices_swap (dm,ix) = let f (i,j) = (j,i) in (f dm,map f ix)
 
--- | Magnify by (height,width) multipliers.
---
--- > bitindices_magnify (8,2) ((2,2),[(0,0),(1,1)])
+{- | Magnify by (height,width) multipliers.
+
+>>> bitindices_magnify (8,2) ((2,2),[(0,0),(1,1)])
+((16,4),[(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(1,0),(1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(2,8),(2,9),(2,10),(2,11),(2,12),(2,13),(2,14),(2,15),(3,8),(3,9),(3,10),(3,11),(3,12),(3,13),(3,14),(3,15)])
+-}
 bitindices_magnify :: (Int,Int) -> Bitindices -> Bitindices
 bitindices_magnify (mx,my) ((h,w),ix) =
     let f (r,c) = let r' = r * my
@@ -252,9 +288,11 @@ type BitMap = (Dimensions,Map.Map Ix Bool)
 bitmap_get :: BitMap -> Ix -> Bool
 bitmap_get (_,m) ix = Map.findWithDefault False ix m
 
--- | Lookup a sequence of keys in a map, halting when one is present.
---
--- > map_lookup_set (Map.fromList (zip [1..9] ['a'..])) [0,1] == Just (1,'a')
+{- | Lookup a sequence of keys in a map, halting when one is present.
+
+>>> map_lookup_set (Map.fromList (zip [1..9] ['a'..])) [0,1]
+Just (1,'a')
+-}
 map_lookup_set :: Ord k => Map.Map k a -> [k] -> Maybe (k,a)
 map_lookup_set m set =
     case set of
@@ -281,11 +319,19 @@ data Direction = Dir_Right | Dir_Left | Dir_Down | Dir_Up deriving (Eq, Show)
 direction_pp :: Direction -> String
 direction_pp = map toLower . show
 
--- > map direction_char [Right,Left,Down,Up] == "rldu"
-direction_char :: Direction -> Char
-direction_char = head . direction_pp
+{- | Direction to character code.
 
--- > mapMaybe parse_dir_char "rldu"
+>>> map direction_char [Dir_Right,Dir_Left,Dir_Down,Dir_Up]
+"rldu"
+-}
+direction_char :: Direction -> Char
+direction_char = head . drop 4 . direction_pp
+
+{- | Character code to direction.
+
+>>> mapMaybe parse_dir_char "rldu"
+[Dir_Right,Dir_Left,Dir_Down,Dir_Up]
+-}
 parse_dir_char :: Char -> Maybe Direction
 parse_dir_char c = lookup c (zip "rldu" [Dir_Right,Dir_Left,Dir_Down,Dir_Up])
 

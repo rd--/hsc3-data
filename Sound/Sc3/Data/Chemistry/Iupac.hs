@@ -4,7 +4,7 @@ module Sound.Sc3.Data.Chemistry.Iupac where
 import Data.Char {- base -}
 import Data.List {- base -}
 
-{- | (Iupac-CODE,BASES-REPRESENTED)
+{- | (Iupac-Code,Bases-Represented)
 
 <https://www.bioinformatics.org/sms/iupac.html>
 -}
@@ -19,11 +19,12 @@ iupac_nucleotide_tbl =
   ,('N',"ACGT")
   ,('-',""),('.',"")]
 
-{- | (Iupac-CODE,THREE-LETTER-CODE,DESCRIPTION)
+{- | (Iupac-Code,Three-Letter-Code,Description)
 
 <https://www.bioinformatics.org/sms/iupac.html>
 
-> length iupac_amino_acid_tbl == 22
+>>> length iupac_amino_acid_tbl
+22
 -}
 iupac_amino_acid_tbl :: [(Char,String,String)]
 iupac_amino_acid_tbl =
@@ -47,7 +48,7 @@ iupac_amino_acid_tbl =
   ,('V',"Val","Valine")
   ,('W',"Trp","Tryptophan")
   ,('Y',"Tyr","Tyrosine")
-  -- EXT
+  -- Ext
   ,('U',"Sec","Selenocysteine")
   ,('O',"Pyl","Pyrrolysine")]
 
@@ -58,9 +59,11 @@ iupac_one_letter_code_to_three_letter_code x =
       g (_,c3,_) = c3
   in fmap g (find f iupac_amino_acid_tbl)
 
--- | Translate from 3-letter Iupac code (case insensitive) to 1-letter Iupac code.
---
--- > iupac_three_letter_code_to_one_letter_code "GLY" == Just 'G'
+{- | Translate from 3-letter Iupac code (case insensitive) to 1-letter Iupac code.
+
+>>> iupac_three_letter_code_to_one_letter_code "GLY"
+Just 'G'
+-}
 iupac_three_letter_code_to_one_letter_code :: String -> Maybe Char
 iupac_three_letter_code_to_one_letter_code x =
   let ci p q = map toUpper p == map toUpper q

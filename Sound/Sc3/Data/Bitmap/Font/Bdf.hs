@@ -12,6 +12,8 @@ import System.FilePath {- filepath -}
 
 import qualified Data.List.Split as Split {- split -}
 
+import qualified Music.Theory.List {- hmt-base -}
+
 import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as Bitmap  {- hsc3-data -}
 
@@ -113,13 +115,13 @@ parse_glyph s =
        then error "parse_glyph: width > 8"
        else Glyph nm en (Box bb) (parse_bitpattern (h,w) s) pp
 
--- splitWhen variant (keeps delimiters at left)
+-- | splitWhen variant (keeps delimiters at left)
 sep_when :: (a -> Bool) -> [a] -> [[a]]
 sep_when = Split.split . Split.keepDelimsL . Split.whenElt
 
 bdf_parse :: Source -> Bdf
 bdf_parse s =
-  let (h:g) = sep_when (isPrefixOf "STARTCHAR") s
+  let (h, g) = Music.Theory.List.headTail (sep_when (isPrefixOf "STARTCHAR") s)
   in (properties h,map parse_glyph g)
 
 -- | 'bdf_parse' of 'readFile'
@@ -169,10 +171,10 @@ from_ascii_err f c = fromMaybe (error ("from_ascii: " ++ [c])) (from_ascii f c)
 -- * E/I
 
 -- | ('Encoding','Bitindices') representation of a glyph.
-type Glyph_EI = (Encoding,Bitmap.Bitindices)
+type Glyph_Ei = (Encoding,Bitmap.Bitindices)
 
--- | Load 'Glyph_EI' representations of 'bdf_printing_ascii' of font.
-bdf_load_ei :: FilePath -> IO [Glyph_EI]
+-- | Load 'Glyph_Ei' representations of 'bdf_printing_ascii' of font.
+bdf_load_ei :: FilePath -> IO [Glyph_Ei]
 bdf_load_ei fn = do
   f <- bdf_read fn
   let fb = bdf_fontboundingbox f

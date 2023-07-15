@@ -3,8 +3,8 @@ module Sound.Sc3.Data.Math.Loudness where
 
 -- * A Weighting
 
-{- | A-weighting curve multiplier function, ie. for linear magnitude
--- value.  See <http://en.wikipedia.org/wiki/A-weighting>
+{- | A-weighting curve multiplier function, ie. for linear magnitude value.
+See <http://en.wikipedia.org/wiki/A-weighting>
 
 > import Sound.Sc3.Plot {- hsc3-plot -}
 

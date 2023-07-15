@@ -34,10 +34,13 @@ type Mol_Bond = (V2 Int, Int)
 -- | (name,description,atom-count,bond-count,atoms,bonds,version)
 type Mol = (String, String, Int, Int, [Mol_Atom], [Mol_Bond], Int)
 
+mol_degree :: Mol -> (Int, Int)
+mol_degree (_, _, a, b, _, _, _) = (a, b)
+
 mol_empty :: Mol
 mol_empty = ("","",0,0,[],[],2000)
 
--- * GENERA
+-- * Genera
 
 mol_version :: String -> Int
 mol_version x =
@@ -56,8 +59,11 @@ mol_bond_stereo_tbl = [(0,"Not stereo"),(1,"Up"),(6,"Down")]
 
 {- | Mol counts line field lengths.
 
-> length mol_counts_flen == 12
-> sum mol_counts_flen == 39
+>>> length mol_v20_counts_flen
+12
+
+>>> sum mol_v20_counts_flen
+39
 -}
 mol_v20_counts_flen :: [Int]
 mol_v20_counts_flen = replicate 11 3 ++ [6]
@@ -70,9 +76,13 @@ mol_v20_counts_flen = replicate 11 3 ++ [6]
 11. number of lines of additional properties (999 in V3000)
 12. version number (V2000 or V3000)
 
-> txt = " 16 16  0  0  0  0  0  0  0  0999 V2000"
-> txt = "  5  4  0  0  0  0  0  0  0  0  0"
-> mol_v20_read_counts txt
+>>> let txt = " 16 16  0  0  0  0  0  0  0  0999 V2000"
+>>> mol_v20_read_counts txt
+(16,16,2000)
+
+>>> let txt = "  5  4  0  0  0  0  0  0  0  0  0"
+>>> mol_v20_read_counts txt
+(5,4,2000)
 -}
 mol_v20_read_counts :: String -> (Int,Int,Int)
 mol_v20_read_counts s =
@@ -81,12 +91,22 @@ mol_v20_read_counts s =
     a:b:_ -> (read a,read b,mol_version " V2000") -- ALLOW OMITTED FIELDS
     r -> error (show ("mol_v20_read_counts",s,r))
 
--- > length mol_atom_flen == 17
--- > sum mol_atom_flen == 69
+{- | Atom flen
+
+>>> length mol_v20_atom_flen
+17
+
+>>> sum mol_v20_atom_flen
+69
+-}
 mol_v20_atom_flen :: [Int]
 mol_v20_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
 
--- > mol_v20_read_atom "    0.0000    0.0000    0.0000 S   0  0  0  0  0"
+{- | Read atom
+
+>>> mol_v20_read_atom "    0.0000    0.0000    0.0000 S   0  0  0  0  0"
+((0.0,0.0,0.0),"S")
+-}
 mol_v20_read_atom :: String -> Mol_Atom
 mol_v20_read_atom s =
   case splitPlaces mol_v20_atom_flen s of
@@ -94,12 +114,22 @@ mol_v20_read_atom s =
     x:y:z:" ":a:_ -> ((read x,read y,read z),takeWhile (not . isSpace) a) -- ALLOW OMITTED FIELDS
     r -> error (show ("mol_v20_read_atom",s,r))
 
--- > length mol_bond_flen == 7
--- > sum mol_bond_flen == 21
+{- | Bond flen
+
+>>> length mol_v20_bond_flen
+7
+
+>>> sum mol_v20_bond_flen
+21
+-}
 mol_v20_bond_flen :: [Int]
 mol_v20_bond_flen = replicate 7 3
 
--- > mol_v20_read_bond "  1  2  2  0  0  0"
+{- | Read bond
+
+>>> mol_v20_read_bond "  1  2  2  0  0  0"
+((1,2),2)
+-}
 mol_v20_read_bond :: String -> Mol_Bond
 mol_v20_read_bond s =
   case splitPlaces mol_v20_bond_flen s of
@@ -144,7 +174,8 @@ mol_v30_counts s =
 5. z
 7. key=value
 
-> mol_v30_atom "M  V30 34 N -8.538 -51.035 -7.336 0 CHG=1"
+>>> mol_v30_atom "M  V30 34 N -8.538 -51.035 -7.336 0 CHG=1"
+((-8.538,-51.035,-7.336),"N")
 -}
 mol_v30_atom :: String -> Mol_Atom
 mol_v30_atom s =
@@ -220,9 +251,10 @@ mol_load fn = do
 mol_load_adi :: FilePath -> IO [Mol_Adi]
 mol_load_adi = fmap mol_adi . readFile
 
--- | List of all .ext files at /dir/.  Sdf is a superset of Mol, extensions are ".mol" and ".sdf".
---
--- > mol_dir_entries ".mol" "/home/rohan/rd/j/2020-03-30/mol/"
+{- | List of all .ext files at /dir/.  Sdf is a superset of Mol, extensions are ".mol" and ".sdf".
+
+> mol_dir_entries ".mol" "/home/rohan/rd/j/2020-03-30/mol/"
+-}
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
 mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
 
@@ -239,10 +271,11 @@ mol_load_dir ext dir = do
   dat <- mapM (mol_load . (</>) dir) fn
   return (zip nm dat)
 
--- | 'mol_load_adi' of 'mol_dir_filenames'.
---
--- > adi <- mol_load_dir_adi ".sdf" "/home/rohan/rd/j/2020-02-22/sdf/"
--- > mapM_ (putStrLn . mol_adi_pp) adi
+{- | 'mol_load_adi' of 'mol_dir_filenames'.
+
+> adi <- mol_load_dir_adi ".sdf" "/home/rohan/rd/j/2020-02-22/sdf/"
+> mapM_ (putStrLn . mol_adi_pp) adi
+-}
 mol_load_dir_adi :: String -> FilePath -> IO [[Mol_Adi]]
 mol_load_dir_adi ext dir = do
   fn <- mol_dir_filenames ext dir
@@ -252,9 +285,10 @@ mol_load_dir_adi ext dir = do
 
 let fn = "/home/rohan/rd/j/2019-10-08/sdf/5288826.sdf"
 m <- mol_load fn
-m
+mol_degree m == (40,44)
 
 let fn = "/home/rohan/rd/j/2020-03-30/mol/1poc.mol"
 m <- mol_load fn
-m
+mol_degree m == (1177,1135)
+
 -}

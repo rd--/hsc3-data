@@ -91,9 +91,11 @@ struct_is_empty s =
 
 -- * Connection
 
--- | Covalent radius (angstroms) of element /sym/, defaults to 250.
---
--- > map sym_radius ["Al","C","Cu","Fe","FE","S"]
+{- | Covalent radius (angstroms) of element /sym/, defaults to 250.
+
+>>> map sym_radius ["Al","C","Cu","Fe","FE","S"]
+[1.21,0.76,1.32,1.32,1.32,1.05]
+-}
 sym_radius :: Fractional n => String -> n
 sym_radius sym =
   let r = E.covalent_radius (E.atomic_number_err False sym)
@@ -262,9 +264,12 @@ struct_dir_entries =
 
 {- | 'struct_load_ext' of 'struct_dir_entries'
 
-> s <- struct_load_dir "/home/rohan/rd/j/2018-09-26/xyz/"
-> length s == 268
-> maximum (map struct_n_atoms s) == 272
+>>> s <- struct_load_dir "/home/rohan/rd/j/2018-09-26/xyz/"
+>>> length s
+268
+
+>>> maximum (map struct_n_atoms s)
+272
 -}
 struct_load_dir :: FilePath -> IO [Struct]
 struct_load_dir dir = struct_dir_entries dir >>= mapM (struct_load_ext . (dir </>))

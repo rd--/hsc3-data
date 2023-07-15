@@ -30,7 +30,7 @@ poscar_parse_atom s =
 -- | 3×3 lattice.
 type Lattice = V3 (V3 Double)
 
--- | Convert DIRECT coordinate to cartesian.
+-- | Convert direct coordinate to cartesian.
 poscar_direct_to_cartesian :: Lattice -> V3 Double -> V3 Double
 poscar_direct_to_cartesian (a1,a2,a3) (i,j,k) =
   v3_scale i a1 `v3_add` v3_scale j a2 `v3_add` v3_scale k a3
@@ -38,7 +38,7 @@ poscar_direct_to_cartesian (a1,a2,a3) (i,j,k) =
 -- | Direct or cartesian co-ordinates.
 data Poscar_Ty = Poscar_D | Poscar_C deriving (Eq,Enum,Show)
 
--- | (description,u,lattice,atom-histogram,atom-data)
+-- | (Description,U,Lattice,Atom-Histogram,Atom-Data)
 type Poscar = (String,Double,Lattice,[(String,Int)],Poscar_Ty,[(V3 Double,String)])
 
 poscar_description :: Poscar -> String
@@ -89,10 +89,12 @@ poscar_bounds p =
       r = unzip3 c
   in (v3_map minimum r,v3_map maximum r)
 
--- | Load ".poscar" file.
---
--- > p <- poscar_load "/home/rohan/sw/hsc3-data/data/chemistry/aflow/poscar/A3B_cI32_204_g_c.poscar"
--- > poscar_bounds p == let (l,r) = (-1.895,4.979302000000001) in ((l,l,l),(r,r,r))
+{- | Load ".poscar" file.
+
+>>> p <- poscar_load "/home/rohan/sw/hsc3-data/data/chemistry/aflow/poscar/A3B_cI32_204_g_c.poscar"
+>>> poscar_bounds p
+((-1.895,-1.895,-1.895),(4.979302000000001,4.979302000000001,4.979302000000001))
+-}
 poscar_load :: FilePath -> IO Poscar
 poscar_load = fmap poscar_parse . readFile
 

@@ -143,9 +143,11 @@ rgb24_to_gs_eq px =
 rgb24_to_gs_eq' :: Fractional n => Rgb24 -> n
 rgb24_to_gs_eq' = either_err "rgb24_to_gs_eq" . rgb24_to_gs_eq
 
--- | 'Grey' to 'Rgb24'.
---
--- > map gs_to_rgb24 [0.0,1.0] == [I.PixelRGB8 0 0 0,I.PixelRGB8 255 255 255]
+{- | 'Grey' to 'Rgb24'.
+
+>>> map gs_to_rgb24 [0.0,1.0]
+[PixelRGB8 0 0 0,PixelRGB8 255 255 255]
+-}
 gs_to_rgb24 :: RealFrac n => n -> Rgb24
 gs_to_rgb24 x = let x' = floor (x * 255) in I.PixelRGB8 x' x' x'
 
@@ -226,9 +228,11 @@ type Bw = Bool
 gs_to_bw_eq :: (Eq n, Num n) => e -> n -> Either e Bool
 gs_to_bw_eq err x = if x == 0 then Right True else if x == 1 then Right False else Left err
 
--- | gs < 0.5 = True, gs > 0.5 = False.
---
--- > map gs_to_bw_mp [0,0.25,0.5,0.75,1] == [True,True,False,False,False]
+{- | gs < 0.5 = True, gs > 0.5 = False.
+
+>>> map gs_to_bw_mp [0,0.25,0.5,0.75,1]
+[True,True,False,False,False]
+-}
 gs_to_bw_mp :: (Fractional n,Ord n) => n -> Bool
 gs_to_bw_mp = (< 0.5)
 

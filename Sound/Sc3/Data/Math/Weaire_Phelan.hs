@@ -33,7 +33,11 @@ wp_12 =
      ,(n1,0,-n2)
      ,(-n1,0,-n2)]
 
--- > map length wp_12_faces == replicate 12 5
+{- | Weaire Phelan 12 Faces
+
+>>> map length wp_12_faces == replicate 12 5
+True
+-}
 wp_12_faces :: [[Int]]
 wp_12_faces =
   [[1,2,3,4,5]
@@ -84,7 +88,11 @@ wp_14 =
      ,(0,-5,-5)
      ,(n2,-n1,-5)]
 
--- > map length wp_14_faces == replicate 2 6 ++ replicate 12 5
+{- | Weaire Phelan 14 Faces
+
+>>> map length wp_14_faces == replicate 2 6 ++ replicate 12 5
+True
+-}
 wp_14_faces :: [[Int]]
 wp_14_faces =
   [[1,2,3,4,5,6]

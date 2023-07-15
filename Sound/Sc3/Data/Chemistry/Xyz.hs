@@ -13,9 +13,11 @@ import qualified Music.Theory.Show as T {- hmt-base -}
 
 import Music.Theory.Geometry.Vector {- hmt-base -}
 
--- | Allow elided 0 before decimal place.
---
--- > map read_r ["-.5",".5"] == [-0.5,0.5]
+{- | Allow elided 0 before decimal place.
+
+>>> map read_r ["-.5",".5"]
+[-0.5,0.5]
+-}
 read_r :: String -> Double
 read_r s =
   case s of
@@ -65,9 +67,11 @@ xyz_parse fn s =
     k:dsc:ent -> (xyz_parse_cnt k,dsc,map (xyz_parse_entry fn) ent)
     _ -> error ("xyz_parse: " ++ fn)
 
--- | Generate Xyz file text.
---
--- > unlines (xyz_pp 4 (1,"x",[("C",(1,2,3))])) == "1\nx\nC  1.0000 2.0000 3.0000\n"
+{- | Generate Xyz file text.
+
+>>> unlines (xyz_pp 4 (1,"x",[("C",(1,2,3))]))
+"1\nx\nC  1.0000 2.0000 3.0000\n"
+-}
 xyz_pp :: Int -> Xyz -> [String]
 xyz_pp k (n_a,dsc,a) =
   let e_pp x = if length x == 2 then x else x ++ " "
@@ -81,17 +85,20 @@ xyz_bounds (_,_,a) =
       r = unzip3 c
   in (v3_map minimum r,v3_map maximum r)
 
--- | Load ".xyz" file.
---
--- > xyz <- xyz_load "/home/rohan/sw/hsc3-data/data/chemistry/cls/xyz/Al12W.xyz"
--- > xyz_bounds xyz == ((0.0,0.0,0.0),(7.5803,7.5803,7.5803))
+{- | Load ".xyz" file.
+
+>>> xyz <- xyz_load "/home/rohan/sw/hsc3-data/data/chemistry/cls/xyz/Al12W.xyz"
+>>> xyz_bounds xyz
+((0.0,0.0,0.0),(7.5803,7.5803,7.5803))
+-}
 xyz_load :: FilePath -> IO Xyz
 xyz_load fn = fmap (xyz_parse fn) (readFile fn)
 
--- | Write ".xyz" file, /k/ is precision to write co-ordinates to.
---
--- > xyz <- xyz_load "/home/rohan/sw/hsc3-data/data/chemistry/cls/xyz/Al12W.xyz"
--- > xyz_store 6 "/tmp/Al12W.xyz" xyz
+{- | Write ".xyz" file, /k/ is precision to write co-ordinates to.
+
+> xyz <- xyz_load "/home/rohan/sw/hsc3-data/data/chemistry/cls/xyz/Al12W.xyz"
+> xyz_store 6 "/tmp/Al12W.xyz" xyz
+-}
 xyz_store :: Int -> FilePath -> Xyz -> IO ()
 xyz_store k fn = writeFile fn . unlines . xyz_pp k
 

@@ -40,9 +40,11 @@ u32_pack_le (p,q,r,s) = u32_pack_be (s,r,q,p)
 
 -- * U21
 
--- | Pack 'U21' from three 'U7', MSB-LSB.
---
--- > map u21_pack_be [(0x02,0x00,0x00),(0x02,0x0F,0x00)] == [0x8000,0x8780]
+{- | Pack 'U21' from three 'U7', MSB-LSB.
+
+>>> map u21_pack_be [(0x02,0x00,0x00),(0x02,0x0F,0x00)] == [0x8000,0x8780]
+True
+-}
 u21_pack_be :: (U8,U8,U8) -> U24
 u21_pack_be = Midi.bits_21_join_be
 
