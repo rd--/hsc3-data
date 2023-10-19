@@ -115,6 +115,7 @@ Library
                    Sound.Sc3.Data.MimeType
                    Sound.Sc3.Data.Modal
                    Sound.Sc3.Data.Pvoc
+                   Sound.Sc3.Data.Reaper
                    Sound.Sc3.Data.Reverb
                    Sound.Sc3.Data.Roland.D50
                    Sound.Sc3.Data.Roland.D50.Db
