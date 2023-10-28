@@ -1,9 +1,10 @@
-{- | Arpabet phoneme definitions and CMU dictionary functions.
+{- | Arpabet phoneme definitions and Cmu dictionary functions.
 
 - <http://www.speech.cs.cmu.edu/cgi-bin/cmudict>
 - <http://en.wikipedia.org/wiki/Arpabet>
 - <https://github.com/cmusphinx/cmudict>
 - <http://webdocs.cs.ualberta.ca/~kondrak/cmudict.html>
+- <https://github.com/Alexir/CMUdict> 0.7a
 
 -}
 module Sound.Sc3.Data.CmuDict where
@@ -23,7 +24,7 @@ import qualified Data.Map as M {- containers -}
 data Stress = No_stress | Primary_stress | Secondary_stress
             deriving (Eq,Ord,Enum,Bounded,Read,Show)
 
-{- | Arpabet phonemes as used at CMU dictionary.
+{- | Arpabet phonemes as used at Cmu dictionary.
 
 >>> [AO .. NX] == [minBound .. maxBound]
 True

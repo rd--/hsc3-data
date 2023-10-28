@@ -27,13 +27,15 @@ common_sysex_prefix = [0xF0,0x00,0x20,0x6B,0x7F,0x42]
 with_common_sysex_prefix :: Num n => [n] -> Sysex n
 with_common_sysex_prefix = (++) common_sysex_prefix
 
--- | General form of set messages.
---
--- pp = parameter number,
--- cc = control id (see 'control_id_dsc'),
--- vv = value
---
--- > set_sysex 0x00 0x21 0x40 == with_common_sysex_prefix [0x02,0x00,0x00,0x21,0x40,0xF7]
+{- | General form of set messages.
+
+pp = parameter number,
+cc = control id (see 'control_id_dsc'),
+vv = value
+
+>>> set_sysex 0x00 0x21 0x40 == with_common_sysex_prefix [0x02,0x00,0x00,0x21,0x40,0xF7]
+True
+-}
 set_sysex :: Num n => n -> n -> n -> Sysex n
 set_sysex pp cc vv = with_common_sysex_prefix [0x02,0x00,pp,cc,vv,0xF7]
 
@@ -53,17 +55,19 @@ ctl_pad_ix0 = 0x70
 pp = parameter number,
 cc = control id
 
-> request_sysex 0x01 ctl_enc_ix0 == with_common_sysex_prefix [0x01,0x00,0x01,0x20,0xF7]
-
+>>> request_sysex 0x01 ctl_enc_ix0 == with_common_sysex_prefix [0x01,0x00,0x01,0x20,0xF7]
+True
 -}
 request_sysex :: Num n => n -> n -> Sysex n
 request_sysex pp cc = with_common_sysex_prefix [0x01,0x00,pp,cc,0xF7]
 
 -- * Global
 
--- | Global midi channel (0-15) [untested] (pressing chan and pad-n sets the global channel to n)
---
--- > global_midi_channel_set 0x0F == [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,0x40,0x06,0x0F,0xF7]
+{- | Global midi channel (0-15) [untested] (pressing chan and pad-n sets the global channel to n)
+
+>>> global_midi_channel_set 0x0F == [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,0x40,0x06,0x0F,0xF7]
+True
+-}
 global_midi_channel_set :: Num n => n -> Sysex n
 global_midi_channel_set = set_sysex 0x40 0x06 -- corrected from 0x50 0x06 & also 0x50 0x0B, see comments
 
@@ -71,18 +75,21 @@ global_midi_channel_set = set_sysex 0x40 0x06 -- corrected from 0x50 0x06 & also
 global_cv_gate_interface_receive_channel_set :: Num n => n -> Sysex n
 global_cv_gate_interface_receive_channel_set = set_sysex 0x50 0x0C
 
--- | Enumeration of encoder acceleration modes.
---
--- > map toEnum [0,1,2] == [Slow,Medium,Fast]
+{- | Enumeration of encoder acceleration modes.
+
+>>> map toEnum [0,1,2] == [Slow,Medium,Fast]
+-}
 data Acceleration = Slow | Medium | Fast deriving (Eq,Enum,Show)
 
 -- | Global encoder acceleration (0-2)
 global_encoder_acceleration_set :: Num n => Acceleration -> Sysex n
 global_encoder_acceleration_set = set_sysex 0x41 0x04 . enum_to_num
 
--- | Enumeration of pad velocity curves.
---
--- > map toEnum [0 .. 3] == [Linear,Logarithmic,Exponential,Full]
+{- | Enumeration of pad velocity curves.
+
+>>> map (toEnum :: Int -> Curve) [0 .. 3]
+[Linear,Logarithmic,Exponential,Full]
+-}
 data Curve = Linear | Logarithmic | Exponential | Full deriving (Eq,Enum,Show)
 
 -- | Set global pad velocity curve
@@ -467,9 +474,15 @@ sysex_lib_pad_mn =
   in [mk_pad_mn ix md | ix <- [0x30,0x3C,0x48]
                       , md <- [Toggle,Gate]]
 
--- | Library of named Sysex message sequences.
---
--- > map fst sysex_library
+{- | Library of named Sysex message sequences.
+
+>>> putStr $ unlines $ take 5 (map fst sysex_library)
+enc-acceleration-slow
+enc-acceleration-medium
+enc-acceleration-fast
+pad-velocity-curve-linear
+pad-velocity-curve-logarithmic
+-}
 sysex_library :: [(String, [Sysex Byte])]
 sysex_library =
   concat [sysex_lib_accel,sysex_lib_curve
@@ -477,9 +490,10 @@ sysex_library =
          ,sysex_lib_led
          ,sysex_lib_pad_cc,sysex_lib_pad_mn]
 
--- | Write 'sysex_library' to indicated directory.
---
--- > sysex_library_store "/home/rohan/sw/hsc3-data/data/midi/arturia/beatstep/"
+{- | Write 'sysex_library' to indicated directory.
+
+> sysex_library_store "/home/rohan/sw/hsc3-data/data/midi/arturia/beatstep/"
+-}
 sysex_library_store :: FilePath -> IO ()
 sysex_library_store dir = do
   let wr (nm,syx) = bytes_store (dir </> nm <.> "syx") (concat syx)
@@ -501,13 +515,14 @@ msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Off)) led_ix_set)
 msg [led_cntrl_seq_off]
 
 msg [global_midi_channel_set 0x00]
-msg [global_encoder_acceleration_set Slow]
+msg [global_encoder_acceleration_set Slow] -- Slow Medium Fast
 
 msg (enc_cc_set_16 (0x41,[0x00 .. 0x0F],(0x00,0x7F),Absolute))
 msg (enc_cc_set_16 (0x41,[0x00 .. 0x0F],(0x00,0x7F),Relative_X40))
 
 msg (enc_pn_set 0x00 (0x00,Coarse,(0x20,0x40),Nrpn))
 msg (enc_pn_set 0x00 (0x00,Fine,(0x20,0x40),Nrpn))
+msg (enc_cc_set 0x00 (0x00,0x00,(0x00,0x7f),Absolute))
 
 msg (pad_mn_set_16 (0x00,[0x3C .. ],Toggle))
 msg (pad_mn_set_16 (0x00,[0x3C .. ],Gate))
