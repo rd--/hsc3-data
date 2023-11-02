@@ -10,34 +10,34 @@ import Control.Monad {- base -}
 import Data.Word {- base -}
 import System.IO {- base -}
 
-import qualified Data.ByteString.Lazy as L {- bytestring -}
+import qualified Data.ByteString.Lazy as ByteString {- bytestring -}
 
-import qualified Music.Theory.Byte as T {- hmt-base -}
-import qualified Music.Theory.Math.Convert as T {- hmt-base -}
+import qualified Music.Theory.Byte as Byte {- hmt-base -}
+import qualified Music.Theory.Math.Convert as Convert {- hmt-base -}
 
-import Sound.File.Riff {- hsc3-sf -}
+import qualified Sound.File.Riff as Riff {- hsc3-sf -}
 
 -- | The kgrp Chunk data is a sequence of nine Chunks.
 --   Kloc,Env-{Amp,Flt,Aux},Filt,Zone-{1,2,3,4},
-akp_kgrp_chunks :: Chunk -> [Chunk]
+akp_kgrp_chunks :: Riff.Chunk -> [Riff.Chunk]
 akp_kgrp_chunks ch =
   case ch of
-    (("kgrp",344),dat) -> riff_parse_chunk_seq dat
+    (("kgrp",344),dat) -> Riff.riff_parse_chunk_seq dat
     _ -> error "akp_kgrp_chunks?"
 
 -- | Read Akp file.
 --   The structure is a sequence of six header chunks followed by a sequence of kgrp chunks.
-akp_read_ch :: Handle -> IO ([Chunk],[[Chunk]])
+akp_read_ch :: Handle -> IO ([Riff.Chunk],[[Riff.Chunk]])
 akp_read_ch h = do
-  (ty,_) <- riff_read_chunk_hdr h
+  (ty,_) <- Riff.riff_read_chunk_hdr h
   when (ty /= "RIFF") (error "riff_read: not RIFF")
-  ty' <- read_word32_ascii h
+  ty' <- Riff.read_word32_ascii h
   when (ty' /= "APRG") (error "riff_read: not APRG")
-  ch <- riff_read_chunk_seq h
+  ch <- Riff.riff_read_chunk_seq h
   return (take 6 ch,map akp_kgrp_chunks (drop 6 ch))
 
 -- | 'withFile' of 'akp_read_ch'
-akp_load_ch :: FilePath -> IO ([Chunk],[[Chunk]])
+akp_load_ch :: FilePath -> IO ([Riff.Chunk],[[Riff.Chunk]])
 akp_load_ch fn = withFile fn ReadMode akp_read_ch
 
 -- * Prg
@@ -45,8 +45,8 @@ akp_load_ch fn = withFile fn ReadMode akp_read_ch
 -- | (Midi-Prg-Number,Keygroup-Count)
 type Akp_Prg = (Word8,Word8)
 
-akp_prg_parse :: L.ByteString -> Akp_Prg
-akp_prg_parse dat = (L.index dat 1,L.index dat 2)
+akp_prg_parse :: ByteString.ByteString -> Akp_Prg
+akp_prg_parse dat = (ByteString.index dat 1,ByteString.index dat 2)
 
 -- * Tune (24-BYTES)
 
@@ -79,10 +79,10 @@ akp_tune_def :: Akp_Tune
 akp_tune_def = ((0,0),[0,0,0,0,0,0,0,0,0,0,0,0],(2,2),0,0)
 
 -- | TUNE parser.
-akp_tune_parse :: L.ByteString -> Akp_Tune
+akp_tune_parse :: ByteString.ByteString -> Akp_Tune
 akp_tune_parse dat =
-  let ix = L.index dat
-      sec n m = L.unpack (L.take (m - n + 1) (L.drop n dat))
+  let ix = ByteString.index dat
+      sec n m = ByteString.unpack (ByteString.take (m - n + 1) (ByteString.drop n dat))
   in ((ix 1,ix 2),sec 3 14,(ix 15,ix 16),ix 17,ix 18)
 
 -- * Lfo
@@ -114,12 +114,12 @@ type Akp_Lfo = (Word8,Word8,Word8,Word8,Word8,(Word8,Word8),(Word8,Word8,Word8))
 akp_lfo_def :: Akp_Lfo
 akp_lfo_def = (1,43,0,0,0,(15,0),(0,0,0))
 
-akp_lfo_parse :: L.ByteString -> Akp_Lfo
+akp_lfo_parse :: ByteString.ByteString -> Akp_Lfo
 akp_lfo_parse dat =
-  let ix = L.index dat
+  let ix = ByteString.index dat
   in (ix 1,ix 2,ix 3,ix 4,ix 5,(ix 7,ix 8),(ix 9,ix 10,ix 11))
 
--- * KLOC (16-BYTES)
+-- * Kloc (16-BYTES)
 
 {- | AKP KLOC
 
@@ -140,12 +140,12 @@ akp_lfo_parse dat =
 -}
 type Akp_Kloc = (Word8,Word8,Word8,Word8)
 
-akp_kloc_parse :: L.ByteString -> Akp_Kloc
+akp_kloc_parse :: ByteString.ByteString -> Akp_Kloc
 akp_kloc_parse dat =
-  let ix = L.index dat
+  let ix = ByteString.index dat
   in (ix 4,ix 5,ix 6,ix 7)
 
--- * ENV (18-BYTES)
+-- * Env (18-BYTES)
 
 {- | AKP ENV
 
@@ -160,12 +160,12 @@ type Akp_Env = (Word8,Word8,Word8,Word8)
 akp_env_def :: Akp_Env
 akp_env_def = (0,50,15,100)
 
-akp_env_parse :: L.ByteString -> Akp_Env
+akp_env_parse :: ByteString.ByteString -> Akp_Env
 akp_env_parse dat =
-  let ix = L.index dat
+  let ix = ByteString.index dat
   in (ix 1,ix 3,ix 4,ix 6)
 
--- * ZONE (48-BYTES)
+-- * Zone (48-BYTES)
 
 akp_playback_tbl :: [(Word8,String)]
 akp_playback_tbl =
@@ -197,26 +197,27 @@ akp_playback_tbl =
 -}
 type Akp_Zone = (String,Word8,Word8,Word8,Word8,Word8)
 
-akp_zone_parse :: L.ByteString -> Akp_Zone
+akp_zone_parse :: ByteString.ByteString -> Akp_Zone
 akp_zone_parse dat =
-  let ix = L.index dat
+  let ix = ByteString.index dat
       nm_n = ix 1
-      nm = map T.word8_to_char (L.unpack (section 2 (T.word8_to_int64 nm_n) dat))
+      u8 = ByteString.unpack (Riff.section_int64 2 (Convert.word8_to_int64 nm_n) dat)
+      nm = map Byte.word8_to_char u8
   in (nm,ix 36,ix 37,ix 39,ix 40,ix 42)
 
--- * CH
+-- * Ch
 
-data AKP_CH =
+data Akp_Ch =
     Akp_Prg Akp_Prg
   | Akp_Tune Akp_Tune
   | Akp_Lfo Akp_Lfo
   | Akp_Kloc Akp_Kloc
   | Akp_Env Akp_Env
   | Akp_Zone Akp_Zone
-  | Akp_No_Parse Chunk_Hdr
+  | Akp_No_Parse Riff.Chunk_Hdr
   deriving (Show)
 
-akp_ch_parse :: Chunk -> AKP_CH
+akp_ch_parse :: Riff.Chunk -> Akp_Ch
 akp_ch_parse ch =
   case ch of
     (("prg ",06),dat) -> Akp_Prg (akp_prg_parse dat)

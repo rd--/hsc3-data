@@ -3,21 +3,22 @@ module Sound.Sc3.Data.Pvoc where
 
 import Data.Word {- base -}
 
-import qualified Data.ByteString.Lazy as L {- bytestring -}
-import qualified Data.Vector.Unboxed as V {- vector -}
+import qualified Data.ByteString.Lazy as ByteString {- bytestring -}
+import qualified Data.Vector.Unboxed as Vector {- vector -}
 
-import qualified Sound.Osc.Coding.Byte as O {- hosc -}
-import qualified Sound.Osc.Coding.Convert as O {- hosc -}
+import qualified Sound.Osc.Coding.Byte as Byte {- hosc -}
+import qualified Sound.Osc.Coding.Convert as Convert {- hosc -}
 
 import qualified Sound.File.Riff as Riff {- hsc3-sf -}
 import qualified Sound.File.Wave as Wave {- hsc3-sf -}
 
--- | Pvoc-EX files
+-- | Pvoc-Ex files
 
+-- | Pvx Guid Text
 pvx_guid_text :: String
 pvx_guid_text = "8312B9C2-2E6E-11D4-A824-DE5B96C3AB21"
 
-{- | Guid
+{- | Pvx Guid U8
 
 >>> import Sound.File.Riff {- hsc3-sf -}
 >>> map (show_hex_uc 2) pvx_guid_u8
@@ -77,25 +78,25 @@ plain_record_pp =
 fmt_pvoc_80_pp :: Wave_Fmt_Pvoc_80 -> String
 fmt_pvoc_80_pp = plain_record_pp . show
 
-fmt_pvoc_80_parse_dat :: L.ByteString -> Wave_Fmt_Pvoc_80
+fmt_pvoc_80_parse_dat :: ByteString.ByteString -> Wave_Fmt_Pvoc_80
 fmt_pvoc_80_parse_dat dat =
     Wave_Fmt_Pvoc_80
-    (O.decode_word16_le (Riff.section 16 2 dat))
-    (O.decode_word16_le (Riff.section 18 2 dat))
-    (O.decode_word32_le (Riff.section 20 4 dat))
-    (Riff.decode_guid (Riff.section 24 16 dat))
-    (O.decode_word32_le (Riff.section 40 4 dat))
-    (O.decode_word32_le (Riff.section 44 4 dat))
-    (O.word16_to_enum (O.decode_word16_le (Riff.section 48 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (Riff.section 50 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (Riff.section 52 2 dat)))
-    (O.word16_to_enum (O.decode_word16_le (Riff.section 54 2 dat)))
-    (O.decode_word32_le (Riff.section 56 4 dat))
-    (O.decode_word32_le (Riff.section 60 4 dat))
-    (O.decode_word32_le (Riff.section 64 4 dat))
-    (O.decode_word32_le (Riff.section 68 4 dat))
-    (O.decode_f32_le (Riff.section 72 4 dat))
-    (O.decode_f32_le (Riff.section 76 4 dat))
+    (Byte.decode_word16_le (Riff.section_int64 16 2 dat))
+    (Byte.decode_word16_le (Riff.section_int64 18 2 dat))
+    (Byte.decode_word32_le (Riff.section_int64 20 4 dat))
+    (Riff.decode_guid (Riff.section_int64 24 16 dat))
+    (Byte.decode_word32_le (Riff.section_int64 40 4 dat))
+    (Byte.decode_word32_le (Riff.section_int64 44 4 dat))
+    (Convert.word16_to_enum (Byte.decode_word16_le (Riff.section_int64 48 2 dat)))
+    (Convert.word16_to_enum (Byte.decode_word16_le (Riff.section_int64 50 2 dat)))
+    (Convert.word16_to_enum (Byte.decode_word16_le (Riff.section_int64 52 2 dat)))
+    (Convert.word16_to_enum (Byte.decode_word16_le (Riff.section_int64 54 2 dat)))
+    (Byte.decode_word32_le (Riff.section_int64 56 4 dat))
+    (Byte.decode_word32_le (Riff.section_int64 60 4 dat))
+    (Byte.decode_word32_le (Riff.section_int64 64 4 dat))
+    (Byte.decode_word32_le (Riff.section_int64 68 4 dat))
+    (Byte.decode_f32_le (Riff.section_int64 72 4 dat))
+    (Byte.decode_f32_le (Riff.section_int64 76 4 dat))
 
 fmt_pvoc_80_check_guid :: Wave_Fmt_Pvoc_80 -> Bool
 fmt_pvoc_80_check_guid f = subFormat f /= pvx_guid_text
@@ -112,23 +113,23 @@ fmt_pvoc_80_parse ch =
 type Pvoc_Raw = (Pvoc_Hdr,Riff.Chunk)
 
 pvoc_nc :: Pvoc_Hdr -> Int
-pvoc_nc = O.word16_to_int . Wave.numChannels . fst
+pvoc_nc = Convert.word16_to_int . Wave.numChannels . fst
 
 pvoc_nb :: Pvoc_Hdr -> Int
-pvoc_nb = O.word32_to_int . nAnalysisBins . snd
+pvoc_nb = Convert.word32_to_int . nAnalysisBins . snd
 
 -- | Data is stored in frame order, channel interleaved.
-pvoc_data_parse_f32 :: Pvoc_Raw -> (Int,Int,V.Vector Float)
+pvoc_data_parse_f32 :: Pvoc_Raw -> (Int,Int,Vector.Vector Float)
 pvoc_data_parse_f32 ((wv,pv),((ty,sz),dat)) =
-    let n = O.word32_to_int sz `div` 4
-        nc = O.word16_to_int (Wave.numChannels wv)
-        nb = O.word32_to_int (nAnalysisBins pv)
+    let n = Convert.word32_to_int sz `div` 4
+        nc = Convert.word16_to_int (Wave.numChannels wv)
+        nb = Convert.word32_to_int (nAnalysisBins pv)
         nf = n `div` (nc * nb * 2)
     in if ty /= "data" || wWordFormat pv /= Pvoc_Ieee_Float || dwDataSize pv /= 32
        then error "pvoc_data_parse_f32"
-       else (n,nf,V.generate n (\i -> O.decode_f32_le (Riff.section_int (i * 4) 4 dat)))
+       else (n,nf,Vector.generate n (\i -> Byte.decode_f32_le (Riff.section_int (i * 4) 4 dat)))
 
-type Pvoc_Vec_F32 = (Pvoc_Hdr,(Int,Int,V.Vector Float))
+type Pvoc_Vec_F32 = (Pvoc_Hdr,(Int,Int,Vector.Vector Float))
 
 pvoc_load_vec_f32 :: FilePath -> IO Pvoc_Vec_F32
 pvoc_load_vec_f32 fn = do
@@ -139,13 +140,13 @@ pvoc_load_vec_f32 fn = do
                            in return (hdr,vec)
     _ -> error "pvoc_load"
 
-pvoc_vec_f32_bin :: Pvoc_Vec_F32 -> (Int,Int) -> V.Vector (Float,Float)
+pvoc_vec_f32_bin :: Pvoc_Vec_F32 -> (Int,Int) -> Vector.Vector (Float,Float)
 pvoc_vec_f32_bin (hdr,(_,nf,vec)) (ch,bin) =
     let nc = pvoc_nc hdr
         nb = pvoc_nb hdr
         f i = let j = i * nb * 2 * nc + ch * nb * 2 + bin * 2
-              in (vec V.! j,vec V.! (j + 1))
-    in V.generate nf f
+              in (vec Vector.! j,vec Vector.! (j + 1))
+    in Vector.generate nf f
 
 {-
 
@@ -156,7 +157,7 @@ pv <- pvoc_load_vec_f32 fn
 putStrLn (fmt_pvoc_80_pp hdr2)
 
 fmt ((a,f),i) = (f,fromIntegral i,a)
-gen b = let p = V.toList (pvoc_vec_f32_bin pv (0,b)) in map fmt (zip p [0..])
+gen b = let p = Vector.toList (pvoc_vec_f32_bin pv (0,b)) in map fmt (zip p [0..])
 
 import Sound.Sc3.Plot {- hsc3-plot -}
 plot_p3_ln (map gen [12 .. 24])
