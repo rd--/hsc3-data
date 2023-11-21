@@ -48,7 +48,8 @@ type Fdata n = (Voice,Vowel,[n],[n],[n])
 
 {- | Flatten 'Fdata' to numeric sequence.
 
->>> head (map (fdata_to_csv id) fdata_table)
+>>> import Music.Theory.List
+>>> head_err $ map (fdata_to_csv id) fdata_table
 [0,0,800,1150,2900,3900,4950,0,-6,-32,-20,-50,80,90,120,130,140]
 -}
 fdata_to_csv :: (Int -> n) -> Fdata n -> [n]

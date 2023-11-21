@@ -17,11 +17,11 @@ import qualified Safe {- safe -}
 import qualified System.Process as Process {- process -}
 
 import qualified Music.Theory.Byte as Byte {- hmt-base -}
-import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
 import qualified Music.Theory.Show as Show {- hmt-base -}
-import qualified Music.Theory.String as T {- hmt-base -}
+import qualified Music.Theory.String as String {- hmt-base -}
 
-import qualified Sound.Midi.Common as M {- midi-osc -}
+import qualified Sound.Midi.Common as Midi {- midi-osc -}
 
 -- | Unsigned 8-bit word.
 type U8 = Int
@@ -53,11 +53,11 @@ type Dx7_Param = [U8]
 
 -- | Equality ignoring indicated indices.
 dx7_param_eq_ignoring :: [U8] -> Dx7_Param -> Dx7_Param -> Bool
-dx7_param_eq_ignoring = T.list_eq_ignoring_indices
+dx7_param_eq_ignoring = List.list_eq_ignoring_indices
 
 -- | Replace each (ix,value) at 'Dx7_Param'.
 dx7_param_set :: [(U8,U8)] -> Dx7_Param -> Dx7_Param
-dx7_param_set = T.list_set_indices
+dx7_param_set = List.list_set_indices
 
 -- | Type-specialised !!.
 dx7_param_at :: Dx7_Param -> U8 -> U8
@@ -263,7 +263,7 @@ dx7_typ_usr_str_tbl =
 
 -- | Lookup Usr string for Type.
 dx7_typ_usr_str :: String -> Dx7_Usr
-dx7_typ_usr_str ty = T.lookup_err ty dx7_typ_usr_str_tbl
+dx7_typ_usr_str ty = List.lookup_err ty dx7_typ_usr_str_tbl
 
 -- | Show with '+' prefix if positive.
 dx7_usr_signed :: (Num n,Show n,Ord n) => n -> String
@@ -508,7 +508,7 @@ dx7_voice_name :: Char -> Dx7_Voice -> String
 dx7_voice_name c v = map (dx7_ascii_char c . dx7_param_at v) [145 .. 154]
 
 dx7_voice_name_dtw :: Dx7_Voice -> String
-dx7_voice_name_dtw = T.delete_trailing_whitespace . dx7_voice_name '?'
+dx7_voice_name_dtw = String.delete_trailing_whitespace . dx7_voice_name '?'
 
 -- | Encode ASCII name to U8 sequence.
 dx7_name_encode :: Char -> String -> [U8]
@@ -555,9 +555,9 @@ True
 dx7_substatus :: U8 -> U8
 dx7_substatus = flip shiftR 4
 
--- | 'M.bytes_load'.
+-- | 'Midi.bytes_load'.
 dx7_read_u8 :: FilePath -> IO [U8]
-dx7_read_u8 = M.bytes_load
+dx7_read_u8 = Midi.bytes_load
 
 -- * Sysex Message: format=0: Voice Data (163-bytes)
 
@@ -680,7 +680,7 @@ dx7_read_fmt9_sysex_err fn =
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
 dx7_write_fmt9_sysex :: FilePath -> Dx7_SysEx -> IO ()
-dx7_write_fmt9_sysex fn = M.bytes_store fn . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
+dx7_write_fmt9_sysex fn = Midi.bytes_store fn . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
 
 -- | Unpack bit-packed 'U8' sequence to sequence of 'Dx7_Voice' (see cmd/dx7-unpack.c).
 --   Input size must be a multiple of 128, output size will be a multiple of 155.
@@ -771,14 +771,14 @@ True
 >>> map length d == replicate 32 155
 True
 
->>> dx7_store_fmt9_sysex "/tmp/dx7.syx" 0 d
+> dx7_store_fmt9_sysex "/tmp/dx7.syx" 0 d
 > Process.rawSystem "cmp" ["-l",fn,"/tmp/dx7.syx"]
 
 -}
 dx7_store_fmt9_sysex :: FilePath -> U8 -> Dx7_Bank -> IO ()
 dx7_store_fmt9_sysex fn ch bnk = do
   syx <- dx7_fmt9_sysex_encode ch bnk
-  M.bytes_store fn syx
+  Midi.bytes_store fn syx
 
 -- * C: Sysex Message: Parameter Change
 

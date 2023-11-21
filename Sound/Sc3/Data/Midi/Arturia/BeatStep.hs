@@ -78,6 +78,7 @@ global_cv_gate_interface_receive_channel_set = set_sysex 0x50 0x0C
 {- | Enumeration of encoder acceleration modes.
 
 >>> map toEnum [0,1,2] == [Slow,Medium,Fast]
+True
 -}
 data Acceleration = Slow | Medium | Fast deriving (Eq,Enum,Show)
 

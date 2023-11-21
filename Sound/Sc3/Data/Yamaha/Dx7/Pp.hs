@@ -71,7 +71,7 @@ dx7_voice_concise_tbl v =
 
 >>> putStr $ unlines $ dx7_voice_concise_str dx7_init_voice
 INIT VOICE
-
+<BLANKLINE>
 OP R1 R2 R3 R4 L1 L2 L3 L4   BP LD RD   LC   RC RS AMS TS TL    PM PC PF PD
  6 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
  5 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
@@ -79,7 +79,7 @@ OP R1 R2 R3 R4 L1 L2 L3 L4   BP LD RD   LC   RC RS AMS TS TL    PM PC PF PD
  3 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
  2 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
  1 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0 99 RATIO  1  0  0
-
+<BLANKLINE>
    R1 R2 R3 R4 L1 L2 L3 L4 ALS FBL OPI LFS LFD LPMD LAMD LFKS LFW LPMS TRNP
 SH 99 99 99 99 50 50 50 50   1   0  ON  35   0    0    0   ON  TR    3   C2
 -}

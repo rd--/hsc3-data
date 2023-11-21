@@ -7,7 +7,7 @@ import Data.Either {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
-import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
 
 import Music.Theory.Geometry.Vector {- hmt-base -}
 
@@ -41,7 +41,7 @@ type Dalton = Double
 
 {- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
 
->>> let f (_,sym,_,_) = if length sym == 1 then Just (head sym) else Nothing
+>>> let f (_,sym,_,_) = if length sym == 1 then Just (List.head_err sym) else Nothing
 >>> Data.List.sort (mapMaybe f periodic_table)
 "BCFHIKNOPSUVWY"
 
@@ -806,13 +806,13 @@ formula_sort_hill e =
     Nothing -> e
     Just _ -> let (p,q) = partition (flip elem ["C","H"] . fst) e in p ++ q
 
-{- | 'formula_sort_hill' of 'T.histogram'.
+{- | 'formula_sort_hill' of 'List.histogram'.
 
 >>> map (formula_pp . hill_formula_seq . words) ["A C H","A H","A C"]
 ["C H A","A H","C A"]
 -}
 hill_formula_seq :: [String] -> Formula
-hill_formula_seq = formula_sort_hill . T.histogram
+hill_formula_seq = formula_sort_hill . List.histogram
 
 -- | 'formula_pp' of 'hill_formula_seq'
 hill_formula :: [String] -> String
