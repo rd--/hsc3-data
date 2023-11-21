@@ -57,17 +57,31 @@ dx7_voice_concise_tbl v =
   let (o6,o5,o4,o3,o2,o1,sh,nm) = T.t8_from_list (dx7_voice_grp v)
       w_fn k l = zipWith (flip (T.pad_left ' ')) l k
       o_hdr = "OP" : map fst dx7ii_op_parameter_names
-      o_fn i = (show i :) . zipWith (dx7_parameter_value_pp . dx7_parameter_get) [0..]
+      o_fn i = (show i :) . zipWith (dx7_parameter_value_pp False . dx7_parameter_get) [0..]
       o_tbl = w_fn (2 : dx7_op_char_count) o_hdr : zipWith o_fn [6::U8,5,4,3,2,1] [o6,o5,o4,o3,o2,o1]
-      sh_rw s = if head s == 'P' then tail s else s
+      sh_rw s = case uncons s of
+                  Just (h,t) -> if h == 'P' then t else s
+                  _ -> s
       sh_hdr = "" : map (sh_rw . fst) dx7ii_sh_parameter_names
-      sh_fn = ("SH" :) . zipWith (dx7_parameter_value_pp . dx7_parameter_get) [126..]
+      sh_fn = ("SH" :) . zipWith (dx7_parameter_value_pp False . dx7_parameter_get) [126..]
       sh_tbl = [w_fn (2 : dx7_sh_char_count) sh_hdr,sh_fn sh]
   in (map (dx7_ascii_char '?') nm,o_tbl,sh_tbl)
 
 {- | Concise Pp using parameter names from Dx7ii manual.
 
-> putStrLn $ unlines $ "" : dx7_voice_concise_str dx7_init_voice
+>>> putStr $ unlines $ dx7_voice_concise_str dx7_init_voice
+INIT VOICE
+
+OP R1 R2 R3 R4 L1 L2 L3 L4   BP LD RD   LC   RC RS AMS TS TL    PM PC PF PD
+ 6 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
+ 5 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
+ 4 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
+ 3 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
+ 2 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0  0 RATIO  1  0  0
+ 1 99 99 99 99 99 99 99  0   C3  0  0 -LIN -LIN  0   0  0 99 RATIO  1  0  0
+
+   R1 R2 R3 R4 L1 L2 L3 L4 ALS FBL OPI LFS LFD LPMD LAMD LFKS LFW LPMS TRNP
+SH 99 99 99 99 50 50 50 50   1   0  ON  35   0    0    0   ON  TR    3   C2
 -}
 dx7_voice_concise_str :: Dx7_Voice -> [String]
 dx7_voice_concise_str v =
@@ -82,9 +96,13 @@ dx7_voice_concise_seq = unlines . intercalate [""] . map dx7_voice_concise_str
 
 -- * Plain
 
--- | Pretty print value give 'Dx7_Parameter'.
-dx7_parameter_value_pp :: Dx7_Parameter -> U8 -> String
-dx7_parameter_value_pp p x =
+{- | Pretty print value give 'Dx7_Parameter'.
+
+>>> dx7_parameter_value_pp False (dx7_parameter_tbl !! 134) 3
+" 4"
+-}
+dx7_parameter_value_pp :: Bool -> Dx7_Parameter -> U8 -> String
+dx7_parameter_value_pp leadingZero p x =
   let (_,_,stp,d,u) = p
       (x_clip,err) = if x >= stp
                      then (stp - 1,printf "(Error Byte=0x%02X)" x)
@@ -92,25 +110,31 @@ dx7_parameter_value_pp p x =
       r = if u == "ASCII"
           then ['\'',dx7_ascii_char '?' x_clip,'\'']
           else case Split.splitOn ";" u of
-                 [_] -> printf "%2d" (x_clip + d)
+                 [_] -> printf (if leadingZero then "%02d" else "%2d") (x_clip + d)
                  e -> e !! x_clip
   in r ++ err
 
-dx7_parameter_pp :: Bool -> Dx7_Parameter -> U8 -> String
-dx7_parameter_pp with_ix p x =
+{- | Pretty Dx7_Parameter.
+
+>>> dx7_parameter_pp (False, True) (dx7_parameter_tbl !! 134) 3
+"134: ALGORITHM # =  4"
+-}
+dx7_parameter_pp :: (Bool, Bool) -> Dx7_Parameter -> U8 -> String
+dx7_parameter_pp (leadingZero, with_ix) p x =
   let (ix,nm,_,_,_) = p
+      pp = dx7_parameter_value_pp leadingZero p x
   in if with_ix
-     then printf "%03d: %s = %s" ix nm (dx7_parameter_value_pp p x)
-     else printf "%s = %s" nm (dx7_parameter_value_pp p x)
+     then printf "%03d: %s = %s" ix nm pp
+     else printf "%s = %s" nm pp
 
 dx7_parameter_set_pp :: Dx7_Parameter -> [U8] -> String
 dx7_parameter_set_pp p x =
   let (_,nm,_,_,_) = p
-  in printf "%s = %s" nm (intercalate "," (map (dx7_parameter_value_pp p) x))
+  in printf "%s = %s" nm (intercalate "," (map (dx7_parameter_value_pp False p) x))
 
 -- | Print complete parameter sequence.
-dx7_parameter_seq_pp :: Dx7_Voice -> [String]
-dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
+dx7_parameter_seq_pp :: (Bool, Bool) -> Dx7_Voice -> [String]
+dx7_parameter_seq_pp opt = zipWith (dx7_parameter_pp opt) dx7_parameter_tbl
 
 {- | Dx7_Voice pretty-printer.
 
@@ -119,7 +143,7 @@ dx7_parameter_seq_pp = zipWith (dx7_parameter_pp True) dx7_parameter_tbl
 dx7_voice_pp :: Dx7_Voice -> [String]
 dx7_voice_pp p =
   let p_grp = dx7_voice_grp p
-  in concat [zipWith (dx7_parameter_pp False) dx7_sh_parameter_tbl (p_grp !! 6)
+  in concat [zipWith (dx7_parameter_pp (False, False)) dx7_sh_parameter_tbl (p_grp !! 6)
             ,zipWith dx7_parameter_set_pp dx7_op_parameter_tbl (transpose (take 6 p_grp))]
 
 -- * Voice-Data List
@@ -128,18 +152,18 @@ dx7_voice_pp p =
 
 > putStrLn$unlines$ dx7_voice_data_list_pp (replicate 155 0)
 -}
-dx7_voice_data_list_pp :: Dx7_Voice -> [String]
-dx7_voice_data_list_pp d =
+dx7_voice_data_list_pp :: Bool -> Dx7_Voice -> [String]
+dx7_voice_data_list_pp leadingZero d =
   let u8_at = (!!)
       op_ix_set n = [n, n + dx7_op_nparam .. n + dx7_op_nparam * 5]
       op_ix_pp n = map
-                   (dx7_parameter_value_pp (u8_at dx7_op_parameter_tbl n) . u8_at d)
+                   (dx7_parameter_value_pp leadingZero (u8_at dx7_op_parameter_tbl n) . u8_at d)
                    (op_ix_set n)
       is_op_ix n = n < 126
       ix_val n =
         if is_op_ix n
         then intercalate "," (op_ix_pp n)
-        else dx7_parameter_value_pp (u8_at dx7_sh_parameter_tbl (n - 126)) (u8_at d n)
+        else dx7_parameter_value_pp leadingZero (u8_at dx7_sh_parameter_tbl (n - 126)) (u8_at d n)
       pp z nm ix = concat [z,nm,"=",ix_val ix]
       f (grp,nm,ix) =
         if null grp

@@ -24,11 +24,6 @@ http://sourceforge.net/u/tedfelix/dx7dump/
 #include "r-common/c/dx7.h"
 #include "r-common/c/failure.h"
 
-void fail_if(bool p,char *err)
-{
-    die_when(p,"DX7-UNPACK> FAIL: %s\n",err);
-}
-
 void print_u8_as_hex(u8 *b,int n)
 {
     for(int i = 0;i < n;i ++) {
@@ -41,7 +36,9 @@ void read_u8_as_hex(u8 *b,int n)
     for(int i = 0;i < n;i++) {
         unsigned int x;
 	int err = scanf("%02X",&x);
-        fail_if(err != 1,"SCANF?");
+        if(err != 1) {
+	    die("DX7-UNPACK> SCANF FAILED AT WORD %d OF %d\n",i,n);
+	}
         b[i] = (u8)x;
     }
 }

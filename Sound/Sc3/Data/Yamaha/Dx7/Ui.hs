@@ -45,16 +45,18 @@ dx7_ui_br = intercalate [Ui_LineBreak]
 
 dx7_voice_ui :: Dx7_Voice -> [Ui_Elem]
 dx7_voice_ui vc = do
-  let [op6,op5,op4,op3,op2,op1,sh,_] = dx7_voice_grp vc
-      vc_nm = dx7_voice_name '?' vc
-      nm = Ui_Label 10 145 vc_nm
-      op_ui = zipWith dx7_op_parameter_ui [6,5,4,3,2,1] [op6,op5,op4,op3,op2,op1]
-    in dx7_ui_br (concat [[[nm,Ui_LineBreak]
-                          ,dx7_op_hdr_ui]
-                         ,op_ui
-                         ,[[Ui_LineBreak]
-                          ,dx7_sh_hdr_ui
-                          ,dx7_sh_parameter_ui sh]])
+  case dx7_voice_grp vc of
+    [op6,op5,op4,op3,op2,op1,sh,_] ->
+      let vc_nm = dx7_voice_name '?' vc
+          nm = Ui_Label 10 145 vc_nm
+          op_ui = zipWith dx7_op_parameter_ui [6,5,4,3,2,1] [op6,op5,op4,op3,op2,op1]
+      in dx7_ui_br (concat [[[nm,Ui_LineBreak]
+                            ,dx7_op_hdr_ui]
+                           ,op_ui
+                           ,[[Ui_LineBreak]
+                            ,dx7_sh_hdr_ui
+                            ,dx7_sh_parameter_ui sh]])
+    _ -> error "dx7_voice_ui"
 
 -- > dx7_voice_ui_wr 9160 1 "/tmp/t.html" dx7_init_voice
 dx7_voice_ui_wr :: Int -> Int -> FilePath -> Dx7_Voice -> IO ()

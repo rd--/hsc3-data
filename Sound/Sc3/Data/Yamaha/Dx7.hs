@@ -240,47 +240,47 @@ dx7_yamaha_id = 0x43
 dx7_checksum :: [U8] -> U8
 dx7_checksum d = (complement (sum (map (0x7F .&.) d)) + 1) .&. 0x7F
 
--- | ; separated sequence of USR display values.
-type Dx7_USR = String
+-- | ; separated sequence of Usr display values.
+type Dx7_Usr = String
 
--- | Make (IX,STR) table from USR.
-dx7_usr_str_tbl :: Dx7_USR -> [(U8,String)]
+-- | Make (IX,STR) table from Usr.
+dx7_usr_str_tbl :: Dx7_Usr -> [(U8,String)]
 dx7_usr_str_tbl = zip [0..] . Split.splitOn ";"
 
--- | Lookup IX at USR.
-dx7_usr_str_ix :: Dx7_USR -> U8 -> String
+-- | Lookup IX at Usr.
+dx7_usr_str_ix :: Dx7_Usr -> U8 -> String
 dx7_usr_str_ix s k =
   fromMaybe (error ("dx7_usr_str_ix: " ++ show (s,k)))
   (lookup k (dx7_usr_str_tbl s))
 
--- | Table of (TYPE,USR).
-dx7_typ_usr_str_tbl :: [(String,Dx7_USR)]
+-- | Table of (Type,Usr).
+dx7_typ_usr_str_tbl :: [(String,Dx7_Usr)]
 dx7_typ_usr_str_tbl =
     [("BOOL","OFF;ON")
     ,("CURVE","-LIN;-EXP;+EXP;+LIN")
     ,("LFO-WAVE","TR;SD;SU;SQ;SI;SH") -- TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD
     ,("MODE","RATIO;FIXED")]
 
--- | Lookup USR string for TYPE.
-dx7_typ_usr_str :: String -> Dx7_USR
+-- | Lookup Usr string for Type.
+dx7_typ_usr_str :: String -> Dx7_Usr
 dx7_typ_usr_str ty = T.lookup_err ty dx7_typ_usr_str_tbl
 
 -- | Show with '+' prefix if positive.
 dx7_usr_signed :: (Num n,Show n,Ord n) => n -> String
 dx7_usr_signed n = if n <= 0 then show n else '+' : show n
 
-{- | USR string for range.
+{- | Usr string for range.
 
 > dx7_usr_range True (-50,49)
 -}
-dx7_usr_range :: Bool -> (Int,Int) -> Dx7_USR
+dx7_usr_range :: Bool -> (Int,Int) -> Dx7_Usr
 dx7_usr_range sgn (p,q) = intercalate ";" (map (if sgn then dx7_usr_signed else show) [p .. q])
 
 -- | (Dx7-Ix,Name,Steps,Usr_Diff,Usr_Str)
 --
 -- All parameters except the NAME data are in the range (0,STEPS-1).
 -- NAME data is in (32,126), ie. the ASCII printable characters.
-type Dx7_Parameter = (U8,String,U8,I8,Dx7_USR)
+type Dx7_Parameter = (U8,String,U8,I8,Dx7_Usr)
 
 dx7_parameter_ix :: Dx7_Parameter -> U8
 dx7_parameter_ix (n,_,_,_,_) = n
@@ -303,11 +303,11 @@ Parameter values are at most in 0-99, excepting characters in voice name data.
 dx7_parameter_value_normalise :: Dx7_Parameter -> U8 -> Float
 dx7_parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
 
--- | USR 2-character strings naming the 12 pitch-classes.
+-- | Usr 2-character strings naming the 12 pitch-classes.
 dx7_pitch_class_seq :: [String]
 dx7_pitch_class_seq = Split.splitOn ";" "C;C#;D;D#;E;F;F#;G;G#;A;A#;B"
 
-{- | USR 4-character strings naming the 120 pitches from C-1 to B8.
+{- | Usr 4-character strings naming the 120 pitches from C-1 to B8.
 
 >>> length dx7_pitch_seq == 10 * 12
 True
@@ -319,8 +319,8 @@ dx7_pitch_seq = [p ++ show o | o <- [-1::Int .. 8],p <- dx7_pitch_class_seq]
 dx7_kbd_brk_pt_to_midi :: U8 -> U8
 dx7_kbd_brk_pt_to_midi = (+) 9
 
--- | USR 4-char string for KBD-BRK-PT, from A-1 to C8
-dx7_kbd_brk_pt_usr :: Dx7_USR
+-- | Usr 4-char string for KBD-BRK-PT, from A-1 to C8
+dx7_kbd_brk_pt_usr :: Dx7_Usr
 dx7_kbd_brk_pt_usr = intercalate ";" (take 100 (drop 9 dx7_pitch_seq))
 
 {- | Template for six FM operators.
@@ -383,8 +383,8 @@ True
 dx7_op6_dx7_parameter_tbl :: [Dx7_Parameter]
 dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1]
 
--- | USR 3-CHAR string for TRANSPOSE, from C1 to C4
-dx7_transpose_usr :: Dx7_USR
+-- | Usr 3-CHAR string for TRANSPOSE, from C1 to C4
+dx7_transpose_usr :: Dx7_Usr
 dx7_transpose_usr = intercalate ";" (take 49 (drop 12 dx7_pitch_seq))
 
 {- | Remainder (non-operator) of parameter table.
@@ -576,29 +576,33 @@ dx7_read_u8 = M.bytes_load
 -}
 
 -- | A sysex message is a sequence of U8.
-type Dx7_SYSEX = [U8]
+type Dx7_SysEx = [U8]
 
--- | 6-element FMT=0 sysex header.
---
--- > dx7_fmt0_sysex_hdr 0 == [0xF0,0x43,0x00,0x00,0x01,0x1b]
+{- | 6-element FMT=0 sysex header.
+
+>>> dx7_fmt0_sysex_hdr 0 == [0xF0,0x43,0x00,0x00,0x01,0x1b]
+True
+-}
 dx7_fmt0_sysex_hdr :: U8 -> [U8]
 dx7_fmt0_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b]
 
--- | Generate 163-element Dx7 VOICE (FORMAT=0) sysex message.
---
--- > 6 + 155 + 2 == 163
-dx7_fmt0_sysex_encode :: Bool -> U8 -> Dx7_Voice -> Dx7_SYSEX
+{- | Generate 163-element Dx7 VOICE (FORMAT=0) sysex message.
+
+>>> 6 + 155 + 2
+163
+-}
+dx7_fmt0_sysex_encode :: Bool -> U8 -> Dx7_Voice -> Dx7_SysEx
 dx7_fmt0_sysex_encode chk_rng ch d =
   if dx7_voice_verify chk_rng d
   then dx7_fmt0_sysex_hdr ch ++ d ++ [dx7_checksum d,0xF7]
   else error "dx7_fmt0_sysex_encode?"
 
 -- | Select 155-element sub-sequence (6 - 161)
-dx7_fmt0_sysex_decode :: Dx7_SYSEX -> Dx7_Voice
+dx7_fmt0_sysex_decode :: Dx7_SysEx -> Dx7_Voice
 dx7_fmt0_sysex_decode = take 155 . drop 6
 
 -- | Add nil voice-name to 'Dx7_Param' and encode sysex.
-dx7_param_to_fmt0_sysex :: Dx7_Param -> Dx7_SYSEX
+dx7_param_to_fmt0_sysex :: Dx7_Param -> Dx7_SysEx
 dx7_param_to_fmt0_sysex p = dx7_fmt0_sysex_encode True 0 (dx7_param_to_dx7_voice "----------" p)
 
 -- * B: Sysex Message: Format=9: Bank Data (32 voices, 4104 bytes)
@@ -632,12 +636,13 @@ dx7_fmt9_sysex_dat = take 4096 . drop 6
 {- | Verify U8 sequence is FORMAT=9 Dx7 sysex data.
      Verification data is (sysex-length,sysex-header,checksum,end-of-sysex)
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/Dx7-ROM1A.syx"
-> d <- dx7_read_u8 fn
-> dx7_fmt9_sysex_verify 0 d == (True,True,True,True)
+>>> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+>>> d <- dx7_read_u8 fn
+>>> dx7_fmt9_sysex_verify 0 d == (True,True,True,True)
+True
 
 -}
-dx7_fmt9_sysex_verify :: U8 -> Dx7_SYSEX -> (Bool, Bool, Bool, Bool)
+dx7_fmt9_sysex_verify :: U8 -> Dx7_SysEx -> (Bool, Bool, Bool, Bool)
 dx7_fmt9_sysex_verify ch d =
   let hdr = take 6 d
       dat = take 4096 (drop 6 d)
@@ -649,14 +654,14 @@ dx7_fmt9_sysex_verify ch d =
      ,eof == 0xF7)
 
 -- | Run 'dx7_fmt9_sysex_verify' and lift /syx/ to 'Maybe'.
-dx7_fmt9_sysex_validate :: Dx7_SYSEX -> Maybe Dx7_SYSEX
+dx7_fmt9_sysex_validate :: Dx7_SysEx -> Maybe Dx7_SysEx
 dx7_fmt9_sysex_validate syx =
   if dx7_fmt9_sysex_verify 0 syx /= (True,True,True,True)
   then Nothing
   else Just syx
 
 -- | 'error' if /syx/ is not valid, else 'id'.
-dx7_fmt9_sysex_validate_err :: String -> Dx7_SYSEX -> Dx7_SYSEX
+dx7_fmt9_sysex_validate_err :: String -> Dx7_SysEx -> Dx7_SysEx
 dx7_fmt9_sysex_validate_err err =
   fromMaybe (error ("dx7_fmt9_sysex_validate: " ++ err)) .
   dx7_fmt9_sysex_validate
@@ -664,23 +669,23 @@ dx7_fmt9_sysex_validate_err err =
 {- | Load FORMAT=9 sysex file as 4104-element U8 sequence and run verification.
      See 'dx7_fmt9_sysex_verify'.
 -}
-dx7_read_fmt9_sysex :: FilePath -> IO (Maybe Dx7_SYSEX)
+dx7_read_fmt9_sysex :: FilePath -> IO (Maybe Dx7_SysEx)
 dx7_read_fmt9_sysex = fmap dx7_fmt9_sysex_validate  . dx7_read_u8
 
 -- | Erroring variant.
-dx7_read_fmt9_sysex_err :: FilePath -> IO Dx7_SYSEX
+dx7_read_fmt9_sysex_err :: FilePath -> IO Dx7_SysEx
 dx7_read_fmt9_sysex_err fn =
   let f = dx7_fmt9_sysex_validate_err ("dx7_read_fmt9_sysex: " ++ fn)
   in fmap f (dx7_read_u8 fn)
 
 -- | Write FORMAT=9 4104-element U8 sequence to file.
-dx7_write_fmt9_sysex :: FilePath -> Dx7_SYSEX -> IO ()
+dx7_write_fmt9_sysex :: FilePath -> Dx7_SysEx -> IO ()
 dx7_write_fmt9_sysex fn = M.bytes_store fn . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
 
 -- | Unpack bit-packed 'U8' sequence to sequence of 'Dx7_Voice' (see cmd/dx7-unpack.c).
 --   Input size must be a multiple of 128, output size will be a multiple of 155.
 --   IO because the bit packing is done by an external process.
-dx7_unpack_bitpacked_u8 :: Dx7_SYSEX -> IO [Dx7_Voice]
+dx7_unpack_bitpacked_u8 :: Dx7_SysEx -> IO [Dx7_Voice]
 dx7_unpack_bitpacked_u8 p = do
   when ((length p `rem` 128) /= 0) (error ("dx7_unpack_bitpacked_u8? " ++ show p))
   q <- Process.readProcess "hsc3-dx7-unpack" ["unpack"] (Byte.byte_seq_hex_pp False p)
@@ -688,26 +693,30 @@ dx7_unpack_bitpacked_u8 p = do
   when ((length r `rem` 155) /= 0) (error ("dx7_unpack_bitpacked_u8? " ++ q))
   return (Split.chunksOf 155 r)
 
--- | Decode FORMAT=9 SYSEX message.
+-- | Decode FORMAT=9 SysEx message.
 --   IO because the bit un-packing is done by an external process.
-dx7_fmt9_sysex_decode :: Dx7_SYSEX -> IO Dx7_Bank
+dx7_fmt9_sysex_decode :: Dx7_SysEx -> IO Dx7_Bank
 dx7_fmt9_sysex_decode = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
 
--- | Encode 'Dx7_Bank' to channel /ch/ FORMAT=9 'Dx7_SYSEX'.
-dx7_fmt9_sysex_encode :: U8 -> Dx7_Bank -> IO Dx7_SYSEX
+{- | Encode 'Dx7_Bank' to channel /ch/ FORMAT=9 'Dx7_SysEx'. -}
+dx7_fmt9_sysex_encode :: U8 -> Dx7_Bank -> IO Dx7_SysEx
 dx7_fmt9_sysex_encode ch bnk = do
   let dat = concat bnk
-      dat_str = Byte.byte_seq_hex_pp False dat ++ "\n"
+      dat_str = Byte.byte_seq_hex_pp False dat -- ++ "\n"
   when (length dat /= 4960) (error "dx7_fmt9_sysex_encode")
   syx <- Process.readProcess "hsc3-dx7-unpack" ["pack"] dat_str
   return (dx7_fmt9_sysex_gen ch (Byte.read_hex_byte_seq syx))
 
 {- | Read binary FORMAT=9 sysex file and unpack voice data.
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/Dx7-ROM1A.syx"
-> d <- dx7_load_fmt9_sysex_err fn
-> dx7_bank_verify True d
+>>> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+>>> d <- dx7_load_fmt9_sysex_err fn
+>>> dx7_bank_verify True d
+True
+
 > mapM_ (putStrLn . dx7_voice_name '?') d
+
+> import Sound.Sc3.Data.Yamaha.Dx7.Pp {- hsc3-data -}
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
@@ -726,8 +735,8 @@ Will read exact multiples of:
 
 128 (VMEM;BITPACKED-VOICE;32=4096),
 155 (VCED;UN-BITPACKED-VOICE),
-163 (FORMAT=0 SYSEX),
-4104 (FORMAT=9 SYSEX)
+163 (FORMAT=0 SysEx),
+4104 (FORMAT=9 SysEx)
 
 To truncate a long FORMAT=9 sysex file use:
 xxd -u -p -c 4104 -l 4104 x.syx | xxd -r -p > y.syx
@@ -754,9 +763,15 @@ dx7_load_sysex_try fn = do
 
 {- | Write binary Dx7 FORMAT=9 sysex file.
 
-> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/Dx7-ROM1A.syx"
-> d <- dx7_load_fmt9_sysex_err fn
-> dx7_store_fmt9_sysex "/tmp/dx7.syx" 0 d
+>>> let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/rom/DX7-ROM1A.syx"
+>>> d <- dx7_load_fmt9_sysex_err fn
+>>> length d == 32
+True
+
+>>> map length d == replicate 32 155
+True
+
+>>> dx7_store_fmt9_sysex "/tmp/dx7.syx" 0 d
 > Process.rawSystem "cmp" ["-l",fn,"/tmp/dx7.syx"]
 
 -}
@@ -768,13 +783,13 @@ dx7_store_fmt9_sysex fn ch bnk = do
 -- * C: Sysex Message: Parameter Change
 
 {-
-     11110000  F0   STATUS BYTE = START SYSEX
+     11110000  F0   STATUS BYTE = START SysEx
      0iiiiiii  43   ID = YAMAHA
      0sssnnnn  10   SUB-STATUS = 0x10 & CHANNEL NUMBER
      0gggggpp  **   PARAMETER GROUP (0=VOICE, 2=FUNCTION)
      0ppppppp  **   PARAMETER #
      0ddddddd  **   DATA BYTE
-     11110111  F7   STATUS BYTE = END SYSEX
+     11110111  F7   STATUS BYTE = END SysEx
 
 > gen_bitseq_pp 8 (0x10::U8) == "00010000"
 -}
@@ -813,7 +828,7 @@ In the latter case you parameter-byte holds the parameter-index minus 0x80.
 > dx7_param_change_sysex 0x00 (ix "ALGORITHM #") 0x18 == [0xF0,0x43,0x10,0x01,0x06,0x18,0xF7]
 > dx7_param_change_sysex 0x00 (ix "OP 6 OSC DETUNE") 0x07 == [0xF0,0x43,0x10,0x00,0x14,0x07,0xF7]
 -}
-dx7_param_change_sysex :: U8 -> U8 -> U8 -> Dx7_SYSEX
+dx7_param_change_sysex :: U8 -> U8 -> U8 -> Dx7_SysEx
 dx7_param_change_sysex ch param_ix param_data =
   let sub = if param_ix >= 0x80 then 0x01 else 0x00
       num = param_ix - if param_ix >= 0x80 then 0x80 else 0x00
@@ -822,7 +837,7 @@ dx7_param_change_sysex ch param_ix param_data =
 -- * E: Function Parameters: (Group=2)
 
 -- | B0=PITCH, B1=AMP, B2=EG-BIAS
-dx7_ctl_assign_usr :: Dx7_USR
+dx7_ctl_assign_usr :: Dx7_Usr
 dx7_ctl_assign_usr = intercalate ";" (map (Show.show_bin (Just 3)) [0::Int .. 7])
 
 -- | Dx7 function parameters, not stored with voice data.
@@ -846,17 +861,17 @@ dx7_function_parameters_tbl =
 -- * Request Sysex
 
 -- | Make data request sysex message, /n/ = channel, /k/ equal request type.
-dx7_data_request_sysex :: U8 -> U8 -> Dx7_SYSEX
+dx7_data_request_sysex :: U8 -> U8 -> Dx7_SysEx
 dx7_data_request_sysex n k = [0xF0,0x43,0x20 + n,k,0xF7]
 
 -- | Request voice edit buffer as FORMAT=0 sysex.
 --
 -- > dx7_data_request_sysex_fmt0 0 == [0xF0,0x43,0x20,0x00,0xF7]
-dx7_data_request_sysex_fmt0 :: U8 -> Dx7_SYSEX
+dx7_data_request_sysex_fmt0 :: U8 -> Dx7_SysEx
 dx7_data_request_sysex_fmt0 n = dx7_data_request_sysex n 0x00
 
 -- | Request 32-voice data as FORMAT=9 sysex.
-dx7_data_request_sysex_fmt9 :: U8 -> Dx7_SYSEX
+dx7_data_request_sysex_fmt9 :: U8 -> Dx7_SysEx
 dx7_data_request_sysex_fmt9 n = dx7_data_request_sysex n 0x09
 
 -- * Text/Hex

@@ -3,7 +3,7 @@ import Control.Exception {- base -}
 
 import UI.HSCurses.Curses {- hscurses -}
 
-import Music.Theory.Opt {- hmt-base -}
+import qualified Music.Theory.Opt as Opt {- hmt-base -}
 
 import Sound.Osc.Fd {- hosc -}
 
@@ -25,16 +25,16 @@ proc_msg w m =
 help :: [String]
 help = ["text-osc"]
 
-opt_def :: [OptUsr]
-opt_def = [("port","57350","int","UDP port number")]
+opt_def :: [Opt.OptUsr]
+opt_def = [("port","57350","int","Udp port number")]
 
 main :: IO ()
 main = do
-  (o,_a) <- opt_get_arg True help opt_def
+  (o,_a) <- Opt.opt_get_arg True help opt_def
   initCurses
   w <- initScr
   let f fd = forever (recvMessage fd >>= maybe (return ()) (proc_msg w))
-      t = udpServer "127.0.0.1" (opt_read o "port")
+      t = udpServer "127.0.0.1" (Opt.opt_read o "port")
   finally (withTransport t f) endWin
 
 {-

@@ -135,7 +135,7 @@ dx7ii_aced_param_nm =
           ,"UDTN", "FCCS1"]]
 
 -- | ACED USR strings for named parameters.
-dx7ii_aced_usr_str :: [(String,Dx7_USR)]
+dx7ii_aced_usr_str :: [(String,Dx7_Usr)]
 dx7ii_aced_usr_str =
   [("PEGR","8VA;4VA;1VA;1/2VA")
   ,("LTRG","SINGLE;MULTI")
@@ -199,10 +199,10 @@ dx7ii_pced_param_ix nm =
 dx7ii_pced_name :: Dx7ii_Pced -> String
 dx7ii_pced_name = map (dx7_ascii_char '?') . drop 31
 
--- | Table giving USR strings for named PARAM.
+-- | Table giving Usr strings for named PARAM.
 --
 -- > map (dx7ii_pced_param_ix . fst) dx7ii_pced_usr_str_tbl == [0,5,9,10,11,15,19,20,22]
-dx7ii_pced_usr_str_tbl :: [(U8,Dx7_USR)]
+dx7ii_pced_usr_str_tbl :: [(U8,Dx7_Usr)]
 dx7ii_pced_usr_str_tbl =
   [( 0 {-PLMD-}  ,"SINGLE;DUAL;SPLIT")
   ,( 5 {-MCSW-}  ,"00;01;10;11")

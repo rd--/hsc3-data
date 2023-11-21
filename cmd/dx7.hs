@@ -1,18 +1,18 @@
 import Control.Monad {- base -}
 import Data.List {- base -}
-import System.Environment {- base -}
 import System.IO {- base -}
 import Text.Printf {- base -}
 
 import Data.List.Split {- split -}
 
-import qualified Music.Theory.Array.Csv as T {- hmt-base -}
-import qualified Music.Theory.Byte as T {- hmt-base -}
+import qualified Music.Theory.Array.Csv as Array.Csv {- hmt-base -}
+import qualified Music.Theory.Byte as Byte {- hmt-base -}
+import qualified Music.Theory.Opt as Opt {- hmt-base -}
 
 import qualified Sound.Sc3.Data.Yamaha.Dx7 as Dx7 {- hsc3-data -}
-import qualified Sound.Sc3.Data.Yamaha.Dx7.Db as Dx7 {- hsc3-data -}
-import qualified Sound.Sc3.Data.Yamaha.Dx7.Hash as Dx7 {- hsc3-data -}
-import qualified Sound.Sc3.Data.Yamaha.Dx7.Pp as Dx7 {- hsc3-data -}
+import qualified Sound.Sc3.Data.Yamaha.Dx7.Db as Dx7.Db {- hsc3-data -}
+import qualified Sound.Sc3.Data.Yamaha.Dx7.Hash as Dx7.Hash {- hsc3-data -}
+import qualified Sound.Sc3.Data.Yamaha.Dx7.Pp as Dx7.Pp {- hsc3-data -}
 
 usage_str :: [String]
 usage_str =
@@ -29,11 +29,11 @@ usage_str =
 usage :: IO ()
 usage = putStrLn (unlines usage_str)
 
-type LD_F = FilePath -> IO (Maybe [Dx7.Dx7_Voice])
+type Load_F = FilePath -> IO (Maybe [Dx7.Dx7_Voice])
 
-type SEL = Maybe [Int]
+type Sel = Maybe [Int]
 
-dx7_print_f :: SEL -> LD_F -> ((Int,Dx7.Dx7_Voice) -> String) -> [FilePath] -> IO ()
+dx7_print_f :: Sel -> Load_F -> ((Int,Dx7.Dx7_Voice) -> String) -> [FilePath] -> IO ()
 dx7_print_f sel ld_f op =
   let sel_f x = maybe x (\r -> filter (\(k,_) -> k `elem` r) x) sel
       wr_f fn x = case x of
@@ -45,21 +45,21 @@ dx7_print_f sel ld_f op =
 -- > dx7_sysex_print (Just [1]) "concise" [fn]
 -- > dx7_sysex_print (Just [1,32]) "names" [fn]
 -- > dx7_sysex_print (Just [2,31]) "hash-names" [fn]
-dx7_print :: SEL -> LD_F -> String -> [FilePath] -> IO ()
-dx7_print sel ld cmd fn =
-  let print_concise = unlines . Dx7.dx7_voice_concise_str . snd
-      print_csv = Dx7.dx7_voice_to_csv . snd
+dx7_print :: Bool -> Sel -> Load_F -> String -> [FilePath] -> IO ()
+dx7_print leadingZeroes sel ld cmd fn =
+  let print_concise = unlines . Dx7.Pp.dx7_voice_concise_str . snd
+      print_csv = Dx7.Pp.dx7_voice_to_csv . snd
       print_hex pr_h (_,v) =
         if pr_h
-        then intercalate "," (Dx7.dx7_hash_vc_param_csv (Dx7.dx7_hash_vc v))
-        else T.byte_seq_hex_pp False v
-      print_parameters = unlines . Dx7.dx7_parameter_seq_pp . snd
-      print_voice_data_list = unlines . Dx7.dx7_voice_data_list_pp . snd
+        then intercalate "," (Dx7.Db.dx7_hash_vc_param_csv (Dx7.Db.dx7_hash_vc v))
+        else Byte.byte_seq_hex_pp False v
+      print_parameters = unlines . Dx7.Pp.dx7_parameter_seq_pp (leadingZeroes,True) . snd
+      print_voice_data_list = unlines . Dx7.Pp.dx7_voice_data_list_pp leadingZeroes . snd
       print_voice_name pr_h (k,v) =
         let nm = Dx7.dx7_voice_name '?' v
         in if pr_h
-           then let h = Dx7.dx7_voice_hash v
-                in printf "%s,%s" (Dx7.dx7_hash_pp h) (T.csv_quote_if_req nm)
+           then let h = Dx7.Hash.dx7_voice_hash v
+                in printf "%s,%s" (Dx7.Hash.dx7_hash_pp h) (Array.Csv.csv_quote_if_req nm)
            else printf "%2d %s" k nm
       print_f f = dx7_print_f sel ld f fn
   in case cmd of
@@ -73,11 +73,11 @@ dx7_print sel ld cmd fn =
     "voice-data-list" -> print_f print_voice_data_list
     _ -> usage
 
-dx7_hex_print :: SEL -> String -> [FilePath] -> IO ()
-dx7_hex_print sel = dx7_print sel (fmap Just . Dx7.dx7_load_hex)
+dx7_hex_print :: Bool -> Sel -> String -> [FilePath] -> IO ()
+dx7_hex_print opt sel = dx7_print opt sel (fmap Just . Dx7.dx7_load_hex)
 
-dx7_sysex_print :: SEL -> String -> [FilePath] -> IO ()
-dx7_sysex_print sel = dx7_print sel Dx7.dx7_load_sysex_try
+dx7_sysex_print :: Bool -> Sel -> String -> [FilePath] -> IO ()
+dx7_sysex_print opt sel = dx7_print opt sel Dx7.dx7_load_sysex_try
 
 dx7_sysex_verify_1 :: FilePath -> IO ()
 dx7_sysex_verify_1 fn = do
@@ -104,12 +104,14 @@ dx7_sysex_rewrite fn1 fn2 = do
 
 main :: IO ()
 main = do
-  a <- getArgs
-  let sel_f x = if x == "all" then Nothing else Just (map read (splitOn "," x))
+  let opt_def = [("leadingZeroes","False","bool","Print leading zeroes")]
+  (o,a) <- Opt.opt_get_arg True usage_str opt_def
+  let lz = Opt.opt_read o "leadingZeroes"
+      sel_f x = if x == "all" then Nothing else Just (map read (splitOn "," x))
   case a of
-    "hex":"print":sel:cmd:fn -> dx7_hex_print (sel_f sel) cmd fn
+    "hex":"print":sel:cmd:fn -> dx7_hex_print lz (sel_f sel) cmd fn
     ["sysex","add",fn1,fn2] -> dx7_sysex_add fn1 fn2
-    "sysex":"print":sel:cmd:fn -> dx7_sysex_print (sel_f sel) cmd fn
+    "sysex":"print":sel:cmd:fn -> dx7_sysex_print lz (sel_f sel) cmd fn
     ["sysex","rewrite",fn1,fn2] -> dx7_sysex_rewrite fn1 fn2
     "sysex":"verify":fn -> dx7_sysex_verify fn
     _ -> usage
