@@ -21,12 +21,12 @@ import Data.Maybe {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.Byte as T {- hmt-base -}
-import qualified Music.Theory.List as T {- hmt-base -}
-import qualified Music.Theory.Maybe as T {- hmt-base -}
+import qualified Music.Theory.Byte as Byte {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Maybe as Maybe {- hmt-base -}
 
-import qualified Sound.Midi.Common as M {- midi-osc -}
-import qualified Sound.Midi.Constant as M {- midi-osc -}
+import qualified Sound.Midi.Common as Midi {- midi-osc -}
+import qualified Sound.Midi.Constant as Constant {- midi-osc -}
 
 import Sound.Sc3.Data.Math.Types {- hsc3-data -}
 
@@ -118,18 +118,18 @@ type D50_Address = U24
 -- > d50_addr_parse_t3 "00-02-40" == Just (0x00,0x02,0x40)
 d50_addr_parse_t3 :: String -> Maybe (U8,U8,U8)
 d50_addr_parse_t3 str =
-  case T.read_hex_byte_seq (filter (/= '-') str) of
+  case Byte.read_hex_byte_seq (filter (/= '-') str) of
     [d1,d2,d3] -> Just (d1,d2,d3)
     _ -> Nothing
 
--- | Encode D50 address, alias for 'M.bits_21_join_be'
+-- | Encode D50 address, alias for 'Midi.bits_21_join_be'
 --
 -- > d50_addr_encode (0x02,0x00,0x00) == 0x8000
 d50_addr_encode :: (U8,U8,U8) -> D50_Address
-d50_addr_encode = M.bits_21_join_be
+d50_addr_encode = Midi.bits_21_join_be
 
 d50_addr_decode :: D50_Address -> (U8,U8,U8)
-d50_addr_decode = M.bits_21_sep_be
+d50_addr_decode = Midi.bits_21_sep_be
 
 -- | 'd50_addr_encode' of 'd50_addr_parse_t3'
 d50_addr_read :: String -> D50_Address
@@ -276,7 +276,7 @@ d50_work_area_base_address = 0x8000
 > 33216 - 32768 == 0x01C0 -- 448
 > 32768 + (448 * 64) == 0xF000 -- 61440
 > 61440 - 448 == 0xEE40 -- 60992
-> M.bits_21_sep_be 60992 == (0x03,0x5C,0x40)
+> Midi.bits_21_sep_be 60992 == (0x03,0x5C,0x40)
 
 -}
 d50_patch_memory_base :: U8 -> D50_Address
@@ -294,17 +294,17 @@ type D50_Reverb = [U8]
 -- | Reverb data is 8-bit, but is stored in only the least significant 4-bits of each U8.
 d50_reverb_join :: U8 -> U8 -> U8
 d50_reverb_join d1 d2 =
-  case (M.bits8_sep d1,M.bits8_sep d2) of
-    ((0x0,d3),(0x0,d4)) -> M.bits4_join (d3,d4)
+  case (Midi.bits8_sep d1,Midi.bits8_sep d2) of
+    ((0x0,d3),(0x0,d4)) -> Midi.bits4_join (d3,d4)
     _ -> error "d50_reverb_join?"
 
 -- | Inverse of 'd50_reverb_join'.
 d50_reverb_sep :: U8 -> (U8,U8)
-d50_reverb_sep = M.bits8_sep
+d50_reverb_sep = Midi.bits8_sep
 
 -- | Decode 376-element reverb block to 188-element reverb data.
 d50_reverb_decode :: [U8] -> [U8]
-d50_reverb_decode = map (uncurry d50_reverb_join) . T.adj2 2
+d50_reverb_decode = map (uncurry d50_reverb_join) . List.adj2 2
 
 -- | Inverse of 'd50_reverb_decode'
 d50_reverb_encode :: [U8] -> [U8]
@@ -354,7 +354,7 @@ d50_byte_to_char_err = fromMaybe (error "d50_byte_to_char") . d50_byte_to_char
 --
 -- > mapMaybe d50_char_to_byte "Inland" == [9,40,38,27,40,30]
 d50_char_to_byte :: Char -> Maybe U8
-d50_char_to_byte c = T.reverse_lookup c d50_char_table
+d50_char_to_byte c = List.reverse_lookup c d50_char_table
 
 -- | Erroring variant.
 d50_char_to_byte_err :: Char -> U8
@@ -377,7 +377,7 @@ d50_str_pad_centre rhs k s =
 --
 -- > map (d50_str_pad_lr 3 1) (words "0 5 10 20 100") == ["  0 ","  5 "," 10 "," 20 ","100 "]
 d50_str_pad_lr :: Int -> Int -> String -> String
-d50_str_pad_lr n m s = T.pad_right ' ' (n + m) (T.pad_left ' ' n s)
+d50_str_pad_lr n m s = List.pad_right ' ' (n + m) (List.pad_left ' ' n s)
 
 -- | Strings naming the 12 pitch-classes. (1-2 CHAR)
 d50_pitch_class_seq :: [String]
@@ -719,7 +719,7 @@ type D50_Diff = [(D50_Address,U8)]
 
 -- | Apply 'D50_Diff' to 'D50_Patch'.
 d50_diff_apply :: D50_Patch -> D50_Diff -> D50_Patch
-d50_diff_apply p d = map snd (T.merge_by_resolve const (compare `on` fst) (sort d) (zip [0..] p))
+d50_diff_apply p d = map snd (List.merge_by_resolve const (compare `on` fst) (sort d) (zip [0..] p))
 
 -- | Number of D50 non-name parameters.
 --
@@ -891,20 +891,20 @@ d50_patch_name_match cs (u1,l1,p1) (u2,l2,p2) =
       m x y = c x `isInfixOf` c y
   in m u1 u2 && m l1 l2 && m p1 p2
 
--- * Sysex
+-- * SysEx
 
 -- | SYSEX as sequence of U8.
-type D50_Sysex = [U8]
+type D50_SysEx = [U8]
 
 -- | Segment byte-sequence into SYSEX messages, no verification,
 -- ie. separate before each @0xF0@.
-d50_sysex_segment :: [U8] -> [D50_Sysex]
-d50_sysex_segment = tail . T.split_before 0xF0
+d50_sysex_segment :: [U8] -> [D50_SysEx]
+d50_sysex_segment = List.tail_err . List.split_before 0xF0
 
--- * D-50 Sysex Cmd
+-- * D-50 SysEx Cmd
 
--- | D50 Sysex command id.
-data D50_Sysex_Cmd =
+-- | D50 SysEx command id.
+data D50_SysEx_Cmd =
   Rq1_Cmd -- ^ REQUEST DATA - ONE WAY (0x11)
   | Dt1_Cmd -- ^ DATA SET - ONE WAY (0x12)
   | Wsd_Cmd -- ^ WANT TO SEND DATA (0x40)
@@ -916,8 +916,8 @@ data D50_Sysex_Cmd =
   | Rjc_Cmd -- ^ REJECTION (0x4F)
   deriving (Eq,Show)
 
--- | Table mapping 'D50_Sysex_Cmd' to it's 'U8' code.
-d50_sysex_cmd_tbl :: [(D50_Sysex_Cmd,U8)]
+-- | Table mapping 'D50_SysEx_Cmd' to it's 'U8' code.
+d50_sysex_cmd_tbl :: [(D50_SysEx_Cmd,U8)]
 d50_sysex_cmd_tbl =
     [(Rq1_Cmd,0x11)
     ,(Dt1_Cmd,0x12)
@@ -929,16 +929,16 @@ d50_sysex_cmd_tbl =
     ,(Err_Cmd,0x4E)
     ,(Rjc_Cmd,0x4F)]
 
--- | Sysex_Cmd to 8-bit identifier.
+-- | SysEx_Cmd to 8-bit identifier.
 --
 -- > let k = d50_sysex_cmd_encode Dt1_Cmd in (k == 0x12,k == 0b00010010)
 -- > let k = d50_sysex_cmd_encode Rq1_Cmd in (k == 0x11,k == 0b00010001)
-d50_sysex_cmd_encode :: D50_Sysex_Cmd -> U8
-d50_sysex_cmd_encode cmd = T.from_just "d50_sysex_cmd_encode" (lookup cmd d50_sysex_cmd_tbl)
+d50_sysex_cmd_encode :: D50_SysEx_Cmd -> U8
+d50_sysex_cmd_encode cmd = Maybe.from_just "d50_sysex_cmd_encode" (lookup cmd d50_sysex_cmd_tbl)
 
 -- | Inverse of 'd50_sysex_cmd_encode'.
-d50_sysex_cmd_decode :: U8 -> D50_Sysex_Cmd
-d50_sysex_cmd_decode i = T.from_just "d50_sysex_cmd_decode" (T.reverse_lookup i d50_sysex_cmd_tbl)
+d50_sysex_cmd_decode :: U8 -> D50_SysEx_Cmd
+d50_sysex_cmd_decode i = Maybe.from_just "d50_sysex_cmd_decode" (List.reverse_lookup i d50_sysex_cmd_tbl)
 
 -- | D50 device ID.
 --
@@ -955,30 +955,30 @@ CH - Channel (Device-ID)
 14 - Model-ID
 Cmd - Command-ID
 -}
-d50_cmd_hdr :: U8 -> D50_Sysex_Cmd -> [U8]
-d50_cmd_hdr ch cmd = [M.k_Sysex_Status,M.k_Roland_ID,ch,d50_id,d50_sysex_cmd_encode cmd]
+d50_cmd_hdr :: U8 -> D50_SysEx_Cmd -> [U8]
+d50_cmd_hdr ch cmd = [Constant.k_SysEx_Status,Constant.k_Roland_Id,ch,d50_id,d50_sysex_cmd_encode cmd]
 
 -- | Data with checksum and F7 appended.
 d50_cmd_data_chk :: [U8] -> [U8]
-d50_cmd_data_chk dat = dat ++ [roland_checksum dat,M.k_Sysex_End]
+d50_cmd_data_chk dat = dat ++ [roland_checksum dat,Constant.k_SysEx_End]
 
--- | Generate Addr/Size category of D-50 Sysex messages.
-d50_addr_sz_cmd_gen :: D50_Sysex_Cmd -> U8 -> D50_Address -> U24 -> D50_Sysex
+-- | Generate Addr/Size category of D-50 SysEx messages.
+d50_addr_sz_cmd_gen :: D50_SysEx_Cmd -> U8 -> D50_Address -> U24 -> D50_SysEx
 d50_addr_sz_cmd_gen cmd ch addr sz =
     let ((d1,d2,d3),(d4,d5,d6)) = (d50_addr_decode addr,d50_addr_decode sz)
     in concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk [d1,d2,d3,d4,d5,d6]]
 
--- | Generate Wsd command Sysex.
+-- | Generate Wsd command SysEx.
 --
 -- > let pp = T.byte_seq_hex_pp True
 -- > let syx = T.read_hex_byte_seq_ws "F0 41 00 14 40 02 00 00 02 0F 00 6D F7"
 -- > d50_wsd_gen 0 0x8000 0x8780 == syx
 -- > d50_cmd_parse syx == Just (0,Wsd_Cmd,[2,0,0,2,15,0],6)
-d50_wsd_gen :: U8 -> D50_Address -> U24 -> D50_Sysex
+d50_wsd_gen :: U8 -> D50_Address -> U24 -> D50_SysEx
 d50_wsd_gen = d50_addr_sz_cmd_gen Wsd_Cmd
 
 -- | Generate Rqd command sysex.
-d50_rqd_gen :: U8 -> D50_Address -> U24 -> D50_Sysex
+d50_rqd_gen :: U8 -> D50_Address -> U24 -> D50_SysEx
 d50_rqd_gen = d50_addr_sz_cmd_gen Rqd_Cmd
 
 {- | Generate RQI command SYSEX.
@@ -1005,40 +1005,40 @@ Size: [00-03-25] (421-bytes)
 > let r = map T.read_hex_byte_err (words "F0 41 00 14 11 00 00 00 00 03 40 3D F7")
 > d50_rq1_gen 0 0 0x1C0 == r
 -}
-d50_rq1_gen :: U8 -> D50_Address -> U24 -> D50_Sysex
+d50_rq1_gen :: U8 -> D50_Address -> U24 -> D50_SysEx
 d50_rq1_gen = d50_addr_sz_cmd_gen Rq1_Cmd
 
 -- | Make Ack sysex.
 --
 -- > pp (d50_ack_gen 0) == "F0 41 00 14 43 F7"
 -- > d50_cmd_parse (d50_ack_gen 0) == Just (0,Ack_Cmd,[],0)
-d50_ack_gen :: U8 -> D50_Sysex
-d50_ack_gen ch = d50_cmd_hdr ch Ack_Cmd ++ [M.k_Sysex_End]
+d50_ack_gen :: U8 -> D50_SysEx
+d50_ack_gen ch = d50_cmd_hdr ch Ack_Cmd ++ [Constant.k_SysEx_End]
 
 -- | Make EOD sysex.
 --
 -- > pp (d50_eod_gen 0) == "F0 41 00 14 45 F7"
 -- > d50_cmd_parse (d50_eod_gen 0) == Just (0,Eod_Cmd,[],0)
-d50_eod_gen :: U8 -> D50_Sysex
-d50_eod_gen ch = d50_cmd_hdr ch Eod_Cmd ++ [M.k_Sysex_End]
+d50_eod_gen :: U8 -> D50_SysEx
+d50_eod_gen ch = d50_cmd_hdr ch Eod_Cmd ++ [Constant.k_SysEx_End]
 
 -- | Make RJC sysex.
 --
 -- > pp (d50_rjc_gen 0) == "F0 41 00 14 4F F7"
 -- > d50_cmd_parse (d50_rjc_gen 0) == Just (0,0x4F,[],0)
-d50_rjc_gen :: U8 -> D50_Sysex
-d50_rjc_gen ch = d50_cmd_hdr ch Rjc_Cmd ++ [M.k_Sysex_End]
+d50_rjc_gen :: U8 -> D50_SysEx
+d50_rjc_gen ch = d50_cmd_hdr ch Rjc_Cmd ++ [Constant.k_SysEx_End]
 
--- | Parse Sysex to (Ch,Cmd,Dat,#Dat).
+-- | Parse SysEx to (Ch,Cmd,Dat,#Dat).
 --
 -- > d50_cmd_parse (d50_dsc_gen (Dt1_Cmd,0,1,[50])) == Just (0,Dt1_Cmd,[0,0,1,50],4)
-d50_cmd_parse :: D50_Sysex -> Maybe (U8,D50_Sysex_Cmd,[U8],U24)
+d50_cmd_parse :: D50_SysEx -> Maybe (U8,D50_SysEx_Cmd,[U8],U24)
 d50_cmd_parse b =
     let b0:b1:b2:b3:b4:b' = b
         dat_chk_n = u24_length b' - 1
         (dat_chk,[eox]) = u24_split_at dat_chk_n b'
         cmd = d50_sysex_cmd_decode b4
-    in if any not [b0 == M.k_Sysex_Status,b1 == M.k_Roland_ID,b3 == d50_id,eox == M.k_Sysex_End]
+    in if any not [b0 == Constant.k_SysEx_Status,b1 == Constant.k_Roland_Id,b3 == d50_id,eox == Constant.k_SysEx_End]
        then Nothing
        else if dat_chk_n == 0
             then Just (b2,cmd,[],0)
@@ -1065,16 +1065,16 @@ d50_data_addr (dat,dat_n) =
       _ -> Nothing
 
 -- | Parse addr/size command from SYSEX.
-d50_addr_sz_cmd_parse :: D50_Sysex -> Maybe (U8,D50_Sysex_Cmd,D50_Address,U24)
+d50_addr_sz_cmd_parse :: D50_SysEx -> Maybe (U8,D50_SysEx_Cmd,D50_Address,U24)
 d50_addr_sz_cmd_parse syx =
   case d50_cmd_parse syx of
     Just (ch,cmd,[a1,a2,a3,s1,s2,s3],6) -> Just (ch,cmd,d50_addr_encode (a1,a2,a3),d50_addr_encode (s1,s2,s3))
     _ -> Nothing
 
--- * D50 Dsc Sysex (Dt1|Dat)
+-- * D50 Dsc SysEx (Dt1|Dat)
 
 -- | Dsc = Data-set Command (Dt1|Dat), (Cmd,Device-Id,Address,Data)
-type D50_Dsc = (D50_Sysex_Cmd,U8,D50_Address,[U8])
+type D50_Dsc = (D50_SysEx_Cmd,U8,D50_Address,[U8])
 
 -- | ADDR field of DSC.
 d50_dsc_address :: D50_Dsc -> D50_Address
@@ -1085,14 +1085,14 @@ d50_dsc_data :: D50_Dsc -> [U8]
 d50_dsc_data (_,_,_,d) = d
 
 -- | Set the CMD element of DSC to /cmd/.
-d50_dsc_set_cmd :: D50_Sysex_Cmd -> D50_Dsc -> D50_Dsc
+d50_dsc_set_cmd :: D50_SysEx_Cmd -> D50_Dsc -> D50_Dsc
 d50_dsc_set_cmd cmd (_,ch,a,d) = (cmd,ch,a,d)
 
 -- | Parse DSC (DT1|DAT) SYSEX message.
 --
 -- > let b = d50_dsc_gen (Dt1_Cmd,0,1,[50])
 -- > d50_dsc_parse b == Just (Dt1_Cmd,0,1,[50])
-d50_dsc_parse :: D50_Sysex -> Maybe D50_Dsc
+d50_dsc_parse :: D50_SysEx -> Maybe D50_Dsc
 d50_dsc_parse syx =
     let Just (ch,cmd,addr_dat,addr_dat_n) = d50_cmd_parse syx
         Just (addr,dat,_dat_n) = d50_data_addr (addr_dat,addr_dat_n)
@@ -1101,14 +1101,14 @@ d50_dsc_parse syx =
        else Nothing
 
 -- | Erroring variant.
-d50_dsc_parse_err :: D50_Sysex -> D50_Dsc
+d50_dsc_parse_err :: D50_SysEx -> D50_Dsc
 d50_dsc_parse_err = fromMaybe (error "d50_dsc_parse") . d50_dsc_parse
 
--- | Generate Dsc (Dt1|Dat) Sysex Message.
+-- | Generate Dsc (Dt1|Dat) SysEx Message.
 --
 -- > d50_dsc_gen (Dt1_Cmd,0,1,[50]) == T.read_hex_byte_seq "F041001412000001324DF7"
 -- > d50_dsc_gen (Dt1_Cmd,0,1,[50]) == T.read_hex_byte_seq "F041001412000001324DF7"
-d50_dsc_gen :: D50_Dsc -> D50_Sysex
+d50_dsc_gen :: D50_Dsc -> D50_SysEx
 d50_dsc_gen (cmd,ch,a,d) =
     let (d1,d2,d3) = d50_addr_decode a
     in if length d > 256
@@ -1116,7 +1116,7 @@ d50_dsc_gen (cmd,ch,a,d) =
        else concat [d50_cmd_hdr ch cmd,d50_cmd_data_chk (d1 : d2 : d3 : d)]
 
 -- | Generate a sequence of DSC messages segmenting data sets longer than 256 elements.
-d50_dsc_gen_seq :: D50_Dsc -> [D50_Sysex]
+d50_dsc_gen_seq :: D50_Dsc -> [D50_SysEx]
 d50_dsc_gen_seq (cmd,ch,a,d) =
     if null d
     then []
@@ -1144,7 +1144,7 @@ k 1111 0111 F7 End of System Exclusive
 > let nm = (Patch,"Lower Tone Fine Tune")
 > d50_gen_dt1_nm 0 nm [0x10] == Just (T.read_hex_byte_seq "F0410014120003191054F7")
 -}
-d50_gen_dt1_nm :: U8 -> (D50_Parameter_Type,String) -> [U8] -> Maybe D50_Sysex
+d50_gen_dt1_nm :: U8 -> (D50_Parameter_Type,String) -> [U8] -> Maybe D50_SysEx
 d50_gen_dt1_nm ch nm d =
     let f a = d50_dsc_gen (Dt1_Cmd,ch,a,d)
     in fmap f (d50_named_parameter_to_address nm)
@@ -1158,7 +1158,7 @@ d50_dsc_seq_join sq =
       dat_seq = map d50_dsc_data sq
       size_seq = map u24_length dat_seq
       addr:_ = addr_seq
-  in if T.d_dx addr_seq `isPrefixOf` size_seq
+  in if List.d_dx addr_seq `isPrefixOf` size_seq
      then (addr,sum size_seq,concat dat_seq)
      else error "d50_dsc_seq_join?"
 
@@ -1193,26 +1193,26 @@ d50_wg_pitch_kf_dt1 r =
 -}
 d50_load_hex :: FilePath -> IO [D50_Patch]
 d50_load_hex fn = do
-  b <- T.load_hex_byte_seq fn
+  b <- Byte.load_hex_byte_seq fn
   case b of
     [] -> error "d50_load_hex?"
     x -> if any ((/=) 448 . length) x then error "d50_load_hex: 448?" else return x
 
 -- | Type specialised 'T.store_hex_byte_seq'
 d50_store_hex :: FilePath -> [D50_Patch] -> IO ()
-d50_store_hex = T.store_hex_byte_seq
+d50_store_hex = Byte.store_hex_byte_seq
 
 -- * Binary I/O
 
 -- | Load binary 'U8' sequence from file.
 d50_load_binary_u8 :: FilePath -> IO [U8]
-d50_load_binary_u8 = M.bytes_load
+d50_load_binary_u8 = Midi.bytes_load
 
 -- | Write binary 'U8' sequence to file.
 d50_store_binary_u8 :: FilePath -> [U8] -> IO ()
-d50_store_binary_u8 = M.bytes_store
+d50_store_binary_u8 = Midi.bytes_store
 
-{-| Load Dt1|Dat sequence from 36048-byte D-50 Sysex file.
+{-| Load Dt1|Dat sequence from 36048-byte D-50 SysEx file.
 
 > let sysex_fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > b <- d50_load_binary_u8 sysex_fn

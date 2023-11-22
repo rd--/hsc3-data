@@ -545,7 +545,7 @@ dx7_voice_data_list =
   ,(""
    ,["KEY TRANSPOSE"],[144])]
 
--- * Sysex
+-- * SysEx
 
 {- | Shift right by four places.
 
@@ -559,7 +559,7 @@ dx7_substatus = flip shiftR 4
 dx7_read_u8 :: FilePath -> IO [U8]
 dx7_read_u8 = Midi.bytes_load
 
--- * Sysex Message: format=0: Voice Data (163-bytes)
+-- * SysEx Message: format=0: Voice Data (163-bytes)
 
 {-
      11110000  F0   STATUS BYTE - START SYSEX
@@ -605,7 +605,7 @@ dx7_fmt0_sysex_decode = take 155 . drop 6
 dx7_param_to_fmt0_sysex :: Dx7_Param -> Dx7_SysEx
 dx7_param_to_fmt0_sysex p = dx7_fmt0_sysex_encode True 0 (dx7_param_to_dx7_voice "----------" p)
 
--- * B: Sysex Message: Format=9: Bank Data (32 voices, 4104 bytes)
+-- * B: SysEx Message: Format=9: Bank Data (32 voices, 4104 bytes)
 
 {-
      11110000  F0  240  STATUS BYTE - START SYSEX
@@ -780,7 +780,7 @@ dx7_store_fmt9_sysex fn ch bnk = do
   syx <- dx7_fmt9_sysex_encode ch bnk
   Midi.bytes_store fn syx
 
--- * C: Sysex Message: Parameter Change
+-- * C: SysEx Message: Parameter Change
 
 {-
      11110000  F0   STATUS BYTE = START SysEx
@@ -858,7 +858,7 @@ dx7_function_parameters_tbl =
     ,(76,"AFTERTOUCH RANGE",100,0,"")
     ,(77,"AFTERTOUCH ASSIGN",8,0,dx7_ctl_assign_usr)]
 
--- * Request Sysex
+-- * Request SysEx
 
 -- | Make data request sysex message, /n/ = channel, /k/ equal request type.
 dx7_data_request_sysex :: U8 -> U8 -> Dx7_SysEx

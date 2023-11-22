@@ -39,11 +39,11 @@ d50_syx_db_tree_get t nm =
 -- | (Syx-Name,File-Name,Patch-Index,Patch,Patch-Name-Set,Patch-Hash,Patch-Param)
 type D50_Syx_Vc = (String, FilePath, Int, D50_Patch, D50_Patch_Name_Set, D50_Hash, D50_Param)
 
--- | Get Sysex name.
+-- | Get SysEx name.
 d50_syx_vc_syx_name :: D50_Syx_Vc -> String
 d50_syx_vc_syx_name (nm,_,_,_,_,_,_) = nm
 
--- | Get Sysex file-name.
+-- | Get SysEx file-name.
 d50_syx_vc_syx_file_name :: D50_Syx_Vc -> String
 d50_syx_vc_syx_file_name (_,fn,_,_,_,_,_) = fn
 

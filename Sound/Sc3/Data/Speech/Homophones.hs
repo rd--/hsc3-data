@@ -6,6 +6,8 @@ import Data.List {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 
+import qualified Music.Theory.List as List {- hmt-base -}
+
 -- | Case-insenstive string comparison.
 str_cmp_ci :: String -> String -> Ordering
 str_cmp_ci p q = compare (map toLower p) (map toLower q)
@@ -15,7 +17,7 @@ type Hmph = [[String]]
 
 -- | The original list has each word as an initial word, this uniqifies the list.
 hmph_uniq :: Hmph -> Hmph
-hmph_uniq = nub . sortOn (map toLower . head) . map (sortBy str_cmp_ci)
+hmph_uniq = nub . sortOn (map toLower . List.head_err) . map (sortBy str_cmp_ci)
 
 -- | Parser, skips /k/ leading lines (header).
 hmph_parse :: Int -> String -> Hmph

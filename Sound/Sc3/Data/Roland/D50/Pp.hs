@@ -51,7 +51,7 @@ d50_patch_name_set_pp p =
   in concat [n," U: ",u," L: ",l]
 
 -- | Alias for 'T.byte_seq_hex_pp'
-d50_sysex_pp :: D50_Sysex -> String
+d50_sysex_pp :: D50_SysEx -> String
 d50_sysex_pp = T.byte_seq_hex_pp False
 
 -- * Structure

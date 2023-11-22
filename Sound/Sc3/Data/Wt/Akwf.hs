@@ -13,7 +13,7 @@ import qualified Sound.Sc3.Common.Buffer as Sc3 {- hsc3 -}
 import qualified Sound.Sc3.Server.Command.Plain as Sc3 {- hsc3 -}
 import qualified Sound.Sc3.Server.Transport.Monad as Sc3 {- hsc3 -}
 
-import qualified Sound.Sc3.Server.Command.MemCpy as MemCpy {- sc3-rdu -}
+--import qualified Sound.Sc3.Server.Command.MemCpy as MemCpy {- sc3-rdu -}
 
 import qualified Sound.File.Header as Sf {- hsc3-sf -}
 import qualified Sound.File.Wave as Sf {- hsc3-sf -}

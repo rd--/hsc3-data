@@ -57,7 +57,7 @@ record_fields =
     map ((\(p,q) -> (dropWhile (== ' ') p,q)) . List.split_on_1_err " = ") .
     Split.splitOn "," .
     takeWhile (/= '}') .
-    tail .
+    List.tail_err .
     dropWhile (/= '{') .
     show
 

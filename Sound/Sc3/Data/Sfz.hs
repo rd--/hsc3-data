@@ -28,10 +28,10 @@ import System.FilePath {- filepath -}
 
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.List as T {- hmt-base -}
-import qualified Music.Theory.Read as T {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Read as Read {- hmt-base -}
 
-import qualified Music.Theory.Pitch as T {- hmt -}
+import qualified Music.Theory.Pitch as Pitch {- hmt -}
 
 import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 
@@ -87,7 +87,7 @@ sfz_is_comment ln =
 
 -- | Headers are in angle brackets, ie. <group>.
 sfz_is_header :: String -> Bool
-sfz_is_header s = not (null s) && head s == '<' && last s == '>'
+sfz_is_header s = not (null s) && List.head_err s == '<' && last s == '>'
 
 -- | Sfz tokenizer, white space is allowed in the right hand sides of opcodes, ie. in file-names.
 --
@@ -108,9 +108,9 @@ sfz_tokenize =
 -- > map sfz_parse_pitch ["B3","60","C#4"] == [59,60,61]
 sfz_parse_pitch :: String -> Key
 sfz_parse_pitch s =
-  case T.read_maybe s of
+  case Read.read_maybe s of
     Just n -> n
-    _ -> T.pitch_to_midi (T.parse_iso_pitch_err s)
+    _ -> Pitch.pitch_to_midi (Pitch.parse_iso_pitch_err s)
 
 -- | An opcode is written key=value.
 --
@@ -218,7 +218,7 @@ sfz_loop_mode_sym_tbl :: [(String, Char)]
 sfz_loop_mode_sym_tbl = [("no_loop",'N'),("one_shot",'O'),("loop_continuous",'C'),("loop_sustain",'S')]
 
 sfz_loop_mode_sym :: String -> Char
-sfz_loop_mode_sym = flip T.lookup_err sfz_loop_mode_sym_tbl
+sfz_loop_mode_sym = flip List.lookup_err sfz_loop_mode_sym_tbl
 
 sfz_region_loop_mode_sym :: Sfz_Region -> Maybe Char
 sfz_region_loop_mode_sym = fmap sfz_loop_mode_sym . sfz_region_loop_mode

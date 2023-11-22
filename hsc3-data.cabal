@@ -132,6 +132,7 @@ Library
                    Sound.Sc3.Data.Sfz
                    Sound.Sc3.Data.String.ByteString
                    Sound.Sc3.Data.String.String
+                   Sound.Sc3.Data.Supperware.HeadTracker
                    Sound.Sc3.Data.Text.Markdown
                    Sound.Sc3.Data.Timestamp
                    Sound.Sc3.Data.Trace
