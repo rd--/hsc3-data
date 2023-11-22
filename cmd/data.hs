@@ -1,3 +1,4 @@
+import Data.Function {- base -}
 import Data.List {- base -}
 import Data.Word {- base -}
 import System.Environment {- base -}
@@ -8,6 +9,7 @@ import qualified Text.CSV.Lazy.String as Csv {- lazy-csv -}
 
 import qualified Music.Theory.Byte as Byte {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Show as Show {- hmt-base -}
 
 import qualified Music.Theory.Array.Csv.Midi.Mnd as Midi.Mnd {- hmt -}
 import qualified Music.Theory.Time.Seq as Seq {- hmt -}
@@ -178,6 +180,57 @@ pbm_indices_json pbm_fn json_fn = do
       f (r,c) = to_array [show r,show c]
   writeFile json_fn (to_array (map f ix))
 
+type PbmToCsv =
+  ((Double,Double,Maybe FilePath,Bool,Bool) -- midi note number
+  ,(Double,Maybe FilePath) -- time
+  ,(Double,Maybe FilePath) -- duration
+  ,(Double,Maybe FilePath)) -- velocity
+
+-- | Read Table from SoundFile.
+sf_tbl_rd :: Maybe FilePath -> IO [Double]
+sf_tbl_rd fn =
+    case fn of
+      Nothing -> return [1]
+      Just fn' -> fmap (List.head_err . snd) (Sf.SndFile.read fn')
+
+{- | Pbm to Csv/Mnd
+
+nc = number of columns (width), nr = number of rows (height)
+-}
+pbm_to_csv_mnd :: PbmToCsv -> FilePath -> FilePath -> IO ()
+pbm_to_csv_mnd opt pbm_fn csv_fn = do
+  let ((mnn,mnn_incr,mnn_tbl,inv,le),(tm_incr,tm_tbl),(du,du_tbl),(vel,vel_tbl)) = opt
+  i <- Pbm.read_pbm pbm_fn
+  tm_mod <- sf_tbl_rd tm_tbl
+  vel_mod <- sf_tbl_rd vel_tbl
+  du_mod <- sf_tbl_rd du_tbl
+  mnn_mod <- sf_tbl_rd mnn_tbl
+  let ((nr,nc),bi') = let z = Pbm.pbm_to_bitindices i
+                      in if le
+                         then Bitmap.bitindices_leading_edges Bitmap.Dir_Right z
+                         else z
+      bi = sortBy (compare `on` snd) bi'
+      mnn_sq = let sq = zipWith (*) [mnn,mnn + mnn_incr .. ] (Sc3.Common.Buffer.resamp1 nr mnn_mod)
+               in if inv then reverse sq else sq
+      tm_sq = List.dx_d 0 (map (* tm_incr) (Sc3.Common.Buffer.resamp1 nc tm_mod))
+      vel_sq = map (* vel) (Sc3.Common.Buffer.resamp1 nc vel_mod)
+      du_sq = map (* du) (Sc3.Common.Buffer.resamp1 nc du_mod)
+      f (y,x) = ((tm_sq !! x,du_sq !! y),(mnn_sq !! y,vel_sq !! x,0,[]))
+  putStrLn (unwords . map (Show.double_pp 3) $ mnn_sq)
+  Midi.Mnd.csv_mnd_write_tseq 4 csv_fn (Midi.Mnd.midi_wseq_to_midi_tseq (map f bi))
+
+pbm_to_csv_mnd_cli :: [String] -> IO ()
+pbm_to_csv_mnd_cli arg =
+  case arg of
+    [mnn,mnn_incr,mnn_tbl,inv,le,tm_incr,tm_tbl,du,du_tbl,gn,gn_tbl,pbm_fn,csv_fn] ->
+        let rd_tbl x = if x == "nil" then Nothing else Just x
+            opt = ((read mnn,read mnn_incr,rd_tbl mnn_tbl,inv == "inv",le == "le")
+                  ,(read tm_incr,rd_tbl tm_tbl)
+                  ,(read du,rd_tbl du_tbl)
+                  ,(read gn,rd_tbl gn_tbl))
+        in pbm_to_csv_mnd opt pbm_fn csv_fn
+    _ -> putStrLn (unlines help)
+
 {- | Pbm to Table
 
 > pbm_to_tbl Lang.Math.Statistics.mean True "/home/rohan/uc/sp-id/eof/pbm/gs/02.pbm" "/tmp/t.au"
@@ -236,6 +289,7 @@ help =
   ,"pbm"
   ,"    indices csv pbm-file csv-file"
   ,"    indices json pbm-file json-file"
+  ,"    to-csv-mnd mnn mnn+ mnn~ inv le tm+ tm~ du du~ gn gn~ pbm-file csv-file"
   ,"    to-tbl mode:(median|mean) normalise:bool image-file au-file"
   ,"pgm"
   ,"    to-au pgm-file au-file"
@@ -256,11 +310,12 @@ main = do
     ["hex","encode",t_fn,b_fn] -> Byte.load_hex_byte_seq t_fn >>= Byte.store_byte_seq b_fn . id_w8_seq . List.unlist1_err
     ["image","query","uniq",[mode],fn] -> image_query_unique mode fn
     ["image","to-pbm","eq",img_fn,pbm_fn] -> img_to_pbm Image.Plain.rgb24_to_bw_eq' img_fn pbm_fn
-    ["lm/rec.709",th,img_fn,pbm_fn] -> let f = (< (read_double th)) . Image.Plain.rgb_to_gs_rec_709 in img_to_pbm f img_fn pbm_fn
+    ["image","to-pbm","lm/rec.709",th,img_fn,pbm_fn] -> let f = (< (read_double th)) . Image.Plain.rgb_to_gs_rec_709 in img_to_pbm f img_fn pbm_fn
     ["image","to-pgm",d,"eq",img_fn,pgm_fn] -> img_to_pgm (read d) Image.Plain.rgb24_to_gs_eq' img_fn pgm_fn
     ["image","to-pgm",d,"lm/rec.709",img_fn,pgm_fn] -> img_to_pgm (read d) Image.Plain.rgb_to_gs_rec_709 img_fn pgm_fn
     ["pbm","indices","csv",pbm_fn,csv_fn] -> pbm_indices_csv pbm_fn csv_fn
     ["pbm","indices","json",pbm_fn,json_fn] -> pbm_indices_json pbm_fn json_fn
+    "pbm":"to-csv-mnd":rest -> pbm_to_csv_mnd_cli rest
     ["pbm","to-table",mode,nrm,pbm_fn,au_fn] -> pbm_to_tbl (Lang.Math.Statistics.parse_averaging_f mode) (read nrm) pbm_fn au_fn
     ["pgm","to-au",pgm_fn,au_fn] -> pgm_to_au pgm_fn au_fn
     _ -> putStrLn (unlines help)

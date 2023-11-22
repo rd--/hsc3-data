@@ -1,46 +1,47 @@
 import Control.Monad {- base -}
 import Data.Function {- base -}
 import Data.List {- base -}
-import qualified Data.Map as M {- containers -}
 import System.Environment {- base -}
 import System.FilePath {- base -}
 import Text.Printf {- base -}
 
-import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Data.Map as Map {- containers -}
 
-import qualified Sound.Sc3.Data.Bitmap.Pbm as I {- hsc3-data -}
-import qualified Sound.Sc3.Data.Bitmap.Type as B {- hsc3-data -}
+import qualified Music.Theory.List as List {- hmt-base -}
+
+import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
+import qualified Sound.Sc3.Data.Bitmap.Type as Bitmap {- hsc3-data -}
 import qualified Sound.Sc3.Data.Trace as Trace {- hsc3-data -}
 
-type Trace = [B.Ix]
+type Trace = [Bitmap.Ix]
 
 gen_neighbour_seq :: (Eq n,Num n) => (n,n) -> [(n,n)]
 gen_neighbour_seq e =
-    let vec = B.neighbour_vectors_at_1_cw ++ B.neighbour_vectors_at_2_cw
-    in T.rotate_starting_from_err e vec
+    let vec = Bitmap.neighbour_vectors_at_1_cw ++ Bitmap.neighbour_vectors_at_2_cw
+    in List.rotate_starting_from_err e vec
 
 -- ix is already removed from the map, if there is a neighbour it is removed in the result map.
-trace_step :: B.BitMap -> B.Ix -> Maybe (B.BitMap,B.Ix)
+trace_step :: Bitmap.BitMap -> Bitmap.Ix -> Maybe (Bitmap.BitMap,Bitmap.Ix)
 trace_step (d,m) ix =
-    case B.bitmap_neighbour_1 (gen_neighbour_seq (0,1)) (d,m) ix of
+    case Bitmap.bitmap_neighbour_1 (gen_neighbour_seq (0,1)) (d,m) ix of
       Nothing -> Nothing
-      Just (ix',True) -> Just ((d,M.delete ix' m),ix')
+      Just (ix',True) -> Just ((d,Map.delete ix' m),ix')
       Just (_,False) -> error "trace_step: False element in map"
 
-trace_rec :: Trace -> B.BitMap -> B.Ix -> (B.BitMap,Trace)
+trace_rec :: Trace -> Bitmap.BitMap -> Bitmap.Ix -> (Bitmap.BitMap,Trace)
 trace_rec r bm ix =
     case trace_step bm ix of
       Nothing -> (bm,reverse (ix : r))
       Just (bm',ix') -> trace_rec (ix : r) bm' ix'
 
-trace_gen :: B.BitMap -> Maybe (B.BitMap,Trace)
+trace_gen :: Bitmap.BitMap -> Maybe (Bitmap.BitMap,Trace)
 trace_gen (d,m) =
-    case M.minViewWithKey m of
+    case Map.minViewWithKey m of
       Just ((ix,True),m') -> Just (trace_rec [] (d,m') ix)
       Just ((_,False),_) -> error "trace_gen: False element in map"
       Nothing -> Nothing
 
-bm_trace :: B.BitMap -> [Trace]
+bm_trace :: Bitmap.BitMap -> [Trace]
 bm_trace bm =
     case trace_gen bm of
       Just (bm',tr) -> tr : bm_trace bm'
@@ -52,9 +53,9 @@ trace_join p q =
     case (p,q) of
       ([],_) -> error "trace_join: []"
       (_,[]) -> error "trace_join: []"
-      _ -> if B.ix_are_neighbours 1 (last p) (head q)
+      _ -> if Bitmap.ix_are_neighbours 1 (last p) (List.head_err q)
            then Just (p ++ q)
-           else if B.ix_are_neighbours 1 (last q) (head p)
+           else if Bitmap.ix_are_neighbours 1 (last q) (List.head_err p)
                 then Just (q ++ p)
                 else Nothing
 
@@ -85,26 +86,26 @@ trace2_set_write_csv fn =
     in Trace.trace_write_csv (show,f) fn . trace2_set_to_trace
 
 {-
-import qualified Music.Theory.Read as T {- hmt-base -}
+import qualified Music.Theory.Read as Read {- hmt-base -}
 trace_set_read_csv :: Read n => FilePath -> IO [[[n]]]
 trace_set_read_csv fn = do
-  tr <- Trace.trace_read_csv (T.read_int,map read) fn
-  return (map (map snd) (T.group_on fst tr))
+  tr <- Trace.trace_read_csv (Read.read_int,map read) fn
+  return (map (map snd) (List.group_on fst tr))
 -}
 
 pbm_trace :: (Bool,Int,Bool) -> FilePath -> FilePath -> IO ()
 pbm_trace (jn,lm,ly) pbm_fn out_dir = do
-  bm <- I.read_pbm_bitmap pbm_fn
+  bm <- Pbm.read_pbm_bitmap pbm_fn
   let nm = dropExtension (takeFileName pbm_fn)
       (dm,_) = bm
       tr = bm_trace bm
       tr' = if jn then trace_join_all tr else tr
       tr'' = reverse (sortBy (compare `on` length) (filter ((> lm) . length) tr'))
       out_fn ext = out_dir </> nm <.> ext
-      wr (n,t) = I.write_pbm_bitindices (out_fn (printf "trace.%03d.pbm" n)) (dm,t)
+      wr (n,t) = Pbm.write_pbm_bitindices (out_fn (printf "trace.%03d.pbm" n)) (dm,t)
   print out_dir
   when ly (mapM_ wr (zip [0::Int ..] tr''))
-  I.write_pbm_bitindices (out_fn "trace.pbm") (dm,concat tr'')
+  Pbm.write_pbm_bitindices (out_fn "trace.pbm") (dm,concat tr'')
   trace2_set_write_csv (out_fn "trace.csv") tr''
 
 help :: String

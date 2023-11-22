@@ -90,7 +90,7 @@ ats_get_decoder v =
         err = error "ats_get_decoder: not Ats file?"
     in if f_be v == 123.0 then f_be else if f_le v == 123.0 then f_le else err
 
--- | Ats files are sequences of 64-bit IEEE doubles.
+-- | Ats files are sequences of 64-bit Ieee doubles.
 ats_read_f64 :: FilePath -> IO [Double]
 ats_read_f64 fn = do
   d <- B.readFile fn

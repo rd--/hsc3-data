@@ -4,7 +4,7 @@ cmd =	chemistry \
 	kml-to-csv \
 	lpc \
 	midi \
-	pbm-to-csv-mnd pbm-trace \
+	pbm-trace \
 	pdb \
 	pvoc \
 	sf-condense sf-draw sf-to-png \

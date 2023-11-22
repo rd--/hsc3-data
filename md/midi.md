@@ -1,6 +1,6 @@
 # hsc3-midi
 
-MIDI utilities.
+Midi utilities.
 
 ## midi-header
 
