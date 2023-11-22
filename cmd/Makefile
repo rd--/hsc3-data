@@ -1,15 +1,11 @@
-cmd =	ats au-to-pbm au-to-pgm \
-	chemistry \
-	csv-mnd-to-midi csv-mnd-to-pgm csv-to-img \
-	d50 dx7 dx7-unpack \
-	hex \
-	img-edit img-query img-to-pbm img-to-pgm img-to-sf \
+cmd =	chemistry \
+	data d50 dx7 dx7-unpack \
+	img-edit img-to-sf \
 	kml-to-csv \
 	lpc \
 	midi \
-	pbm-indices pbm-to-csv-mnd pbm-to-tbl pbm-trace \
+	pbm-to-csv-mnd pbm-trace \
 	pdb \
-	pgm-to-au \
 	pvoc \
 	sf-condense sf-draw sf-to-png \
 	svl \
