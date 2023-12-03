@@ -5,6 +5,8 @@ import Data.Maybe {- base -}
 import Data.Word {- base -}
 import Numeric {- base -}
 import System.Environment {- base -}
+import System.FilePath {- filepath -}
+import Text.Printf {- base -}
 
 import qualified Data.Vector.Storable as Vector {- vector -}
 import qualified Data.Vector.Unboxed as Vector.Unboxed {- vector -}
@@ -32,16 +34,17 @@ import qualified Sound.File.HSndFile as Sf.SndFile {- hsc3-sf-hsndfile -}
 import qualified Sound.Sc3.Data.Ats as Ats {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as Bitmap {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb as Pdb {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Pdb.Parse {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Query as Pdb.Query {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Struct as Struct {- hsc3-data -}
 import qualified Sound.Sc3.Data.Image.Pgm as Pgm  {- hsc3-data -}
 import qualified Sound.Sc3.Data.Image.Plain as Image.Plain {- hsc3-data -}
 import qualified Sound.Sc3.Data.Lpc as Lpc {- hsc3-data -}
 import qualified Sound.Sc3.Data.Midi.Plain as Midi.Plain {- hsc3-data -}
-import qualified Sound.Sc3.Data.Chemistry.Pdb as Pdb {- hsc3-data -}
-import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Pdb.Parse {- hsc3-data -}
-import qualified Sound.Sc3.Data.Chemistry.Pdb.Query as Pdb.Query {- hsc3-data -}
-import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
 import qualified Sound.Sc3.Data.Pvoc as Pvoc {- hsc3-data -}
+import qualified Sound.Sc3.Data.Xml.Kml as Kml {- hsc3-data -}
 import qualified Sound.Sc3.Data.Xml.Svl as Xml.Svl {- hsc3-data -}
 
 -- * Ats
@@ -172,6 +175,63 @@ img_to_pgm :: Int -> (Image.Plain.Rgb24 -> Image.Plain.Grey) -> FilePath -> File
 img_to_pgm depth to_grey img_fn pgm_fn = do
   i <- Image.Plain.img_load img_fn
   Image.Plain.img_write_pgm5 depth to_grey pgm_fn i
+
+edit_pbm_le :: Bitmap.Direction -> FilePath -> FilePath -> IO ()
+edit_pbm_le dir in_fn out_fn = do
+  i <- Pbm.read_pbm in_fn
+  print ("(w/nc,h/nr)",Pbm.pbm_dimensions i)
+  let b = Bitmap.bitmap_leading_edges dir (Pbm.pbm_to_bitmap i)
+  Pbm.pbm4_write out_fn (Pbm.bitmap_to_pbm b)
+
+{-
+> let fn = "/home/rohan/uc/sp-id/eof/png/gs/03.pbm"
+> edit_pbm_le_all fn
+-}
+edit_pbm_le_all :: FilePath -> IO ()
+edit_pbm_le_all pbm_fn = do
+  let gen_nm dir = replaceExtension (concat [".le.",[Bitmap.direction_char dir],".pbm"]) pbm_fn
+      mk dir = edit_pbm_le dir pbm_fn (gen_nm dir)
+  mapM_ mk [Bitmap.Dir_Right,Bitmap.Dir_Left,Bitmap.Dir_Down,Bitmap.Dir_Up]
+
+img_to_sf :: (Image.Plain.Rgb24 -> Float) -> FilePath -> IO ()
+img_to_sf to_gs fn = do
+  i <- Image.Plain.img_load fn
+  Image.Plain.img_gs_write_au to_gs (fn <.> "au") i
+
+-- * Kml
+
+{-
+> kml_stat "/home/rohan/bnt.kml"
+-}
+kml_stat :: FilePath -> IO ()
+kml_stat kml_fn = do
+  c <- Kml.kml_load_coordinates kml_fn
+  let c' = concat c
+  print ("# coordinate sets",length c)
+  print ("# coordinates",length c')
+  print ("# coordinates/set",map length c)
+  let (x,y,z) = unzip3 c'
+  print ("min|max",minmax x,minmax y,minmax z)
+  let (x',y',z') = unzip3 (map unzip3 c)
+  print ("min|max/set",map minmax x',map minmax y',map minmax z')
+
+-- > kml_to_csv_concat "/home/rohan/bnt.kml" "/home/rohan/bnt.csv"
+kml_to_csv_concat :: FilePath -> FilePath -> IO ()
+kml_to_csv_concat kml_fn csv_fn = do
+  c <- Kml.kml_load_coordinates kml_fn
+  let f (p,q,r) = intercalate "," (map show [p,q,r])
+      s' = map f (concat c)
+  writeFile csv_fn (unlines s')
+
+-- > kml_to_csv_split "/home/rohan/bnt.kml" "/home/rohan/bnt"
+kml_to_csv_split :: FilePath -> FilePath -> IO ()
+kml_to_csv_split kml_fn csv_fn = do
+  c <- Kml.kml_load_coordinates kml_fn
+  let f (p,q,r) = intercalate "," (map show [p,q,r])
+      gen_nm :: Int -> String
+      gen_nm n = printf "%s.%03d.csv" csv_fn n
+      g (c',n) = writeFile (gen_nm n) (unlines (map f c'))
+  mapM_ g (zip c [0..])
 
 -- * Lpc
 
@@ -385,6 +445,30 @@ pvoc_plot fn b0 b1 = do
               in map fmt (zip p [0..])
   Plot.plot_p3_ln (map gen [b0 .. b1])
 
+-- * Sf
+
+md_to_fn :: String -> (Double -> Double)
+md_to_fn md =
+    case md of
+      "bw" -> (1 -)
+      "gs" -> id
+      _ -> error "md = {bw|gs}"
+
+{-
+:set -XScopedTypeVariables
+let fn = "/home/rohan/desert/01.bw.extract.png.au"
+(hdr,Just (vec :: Vector.Vector Float)) <- Sf.SndFile.read_vec fn
+ERROR: out of memory (requested 17783848960 bytes)
+-}
+sf_to_png :: (Double -> Double) -> FilePath -> FilePath -> IO ()
+sf_to_png op sf_fn png_fn = do
+  (hdr,Just vec) <- Sf.SndFile.read_vec sf_fn
+  let png =
+        Image.Plain.img_from_vec_co
+        (Sf.SndFile.frameCount hdr,Sf.SndFile.channelCount hdr)
+        (Vector.map op vec)
+  Image.Plain.img_write_png png_fn png
+
 -- * Svl
 
 svl_print_text :: Int -> FilePath -> IO ()
@@ -415,9 +499,16 @@ help =
   ,"    encode text-file binary-file"
   ,"    decode binary-file text-file"
   ,"image"
+  ,"    edit pbm le {r|l|d|u} input-file output-file"
+  ,"    edit pbm le/all pbm-file"
   ,"    query unique mode=(c|l|g) img-file"
   ,"    to-pbm convert=(eq|lm/rec.709) threshold?:real img-file pbm-file"
   ,"    to-pgm depth=(8|16) convert=(eq|lm/rec.709) img-file pbm-file"
+  ,"    to-sf mode=(bw/{r|eq}|gs/eq|gs/ch/{r|g|b}|gs/lm/rec.709) file-name"
+  ,"kml"
+  ,"    to-csv concat kml-file csv-file"
+  ,"    to-csv split kml-file csv-file-prefix"
+  ,"    stat kml-file"
   ,"lpc"
   ,"    txt|le|be print header file-name"
   ,"    txt|le|be print {frame|column} csv precision:int file-name frame:int"
@@ -435,8 +526,18 @@ help =
   ,"pvoc"
   ,"    header pvoc-file:string"
   ,"    plot pvoc-file:string lhs-bin:int rhs-bin:int"
+  ,"sf"
+  ,"    to-png {bw|gs} sound-file png-file"
   ,"svl"
   ,"    print text q:int/100 filename:string"
+  ,""
+  ,"Definitions:"
+  ,"   d = down"
+  ,"   l = left"
+  ,"   le = leading edges transform"
+  ,"   pbm = portable bitmap (black & white)"
+  ,"   r = right"
+  ,"   u = up"
   ]
 
 main :: IO ()
@@ -456,11 +557,23 @@ main = do
     ["csv","to-image","point","real","pbm",csv_fn,h,w,i,j,pbm_fn] -> csv_to_image_point_real_pbm csv_fn (read h,read w) (read i,read j) pbm_fn
     ["hex","decode",b_fn,t_fn] -> Byte.load_byte_seq b_fn >>= Byte.store_hex_byte_seq t_fn . return . id_w8_seq
     ["hex","encode",t_fn,b_fn] -> Byte.load_hex_byte_seq t_fn >>= Byte.store_byte_seq b_fn . id_w8_seq . List.unlist1_err
+    ["image","pbm","le",[dir],in_fn,out_fn] -> edit_pbm_le (Bitmap.parse_dir_char' dir) in_fn out_fn
+    ["image","pbm","le/all",pbm_fn] -> edit_pbm_le_all pbm_fn
     ["image","query","uniq",[mode],fn] -> image_query_unique mode fn
     ["image","to-pbm","eq",img_fn,pbm_fn] -> img_to_pbm Image.Plain.rgb24_to_bw_eq' img_fn pbm_fn
     ["image","to-pbm","lm/rec.709",th,img_fn,pbm_fn] -> let f = (< (read_double th)) . Image.Plain.rgb_to_gs_rec_709 in img_to_pbm f img_fn pbm_fn
     ["image","to-pgm",d,"eq",img_fn,pgm_fn] -> img_to_pgm (read d) Image.Plain.rgb24_to_gs_eq' img_fn pgm_fn
     ["image","to-pgm",d,"lm/rec.709",img_fn,pgm_fn] -> img_to_pgm (read d) Image.Plain.rgb_to_gs_rec_709 img_fn pgm_fn
+    ["image","bw/r",fn] -> img_to_sf (round_f32 . (1 - ) . Image.Plain.rgb24_to_gs_ch Image.Plain.Red) fn
+    ["image","bw/eq",fn] -> img_to_sf (fromIntegral . fromEnum . Image.Plain.rgb24_to_bw_eq') fn
+    ["image","gs/eq",fn] -> img_to_sf Image.Plain.rgb24_to_gs_eq' fn
+    ["image","gs/ch/r",fn] -> img_to_sf (Image.Plain.rgb24_to_gs_ch Image.Plain.Red) fn
+    ["image","gs/ch/g",fn] -> img_to_sf (Image.Plain.rgb24_to_gs_ch Image.Plain.Green) fn
+    ["image","gs/ch/b",fn] -> img_to_sf (Image.Plain.rgb24_to_gs_ch Image.Plain.Blue) fn
+    ["image","gs/lm/rec.709",fn] -> img_to_sf Image.Plain.rgb_to_gs_rec_709 fn
+    ["kml","stat",kml_fn] -> kml_stat kml_fn
+    ["kml","to-csv","concat",kml_fn,csv_fn] -> kml_to_csv_concat kml_fn csv_fn
+    ["kml","to-csv","split",kml_fn,csv_fn] -> kml_to_csv_split kml_fn csv_fn
     ["lpc",typ,"print","header",fn] -> lpc_print_header (typ_to_reader typ) fn
     ["lpc",typ,"print","frame","csv",k,fn,n] -> lpc_print_frame_csv (typ_to_reader typ) (read k) fn (read n)
     ["lpc",typ,"print","column","csv",k,fn,n] -> lpc_print_column_csv (typ_to_reader typ) (read k) fn (read n)
@@ -476,6 +589,7 @@ main = do
     ["pgm","to-au",pgm_fn,au_fn] -> pgm_to_au pgm_fn au_fn
     ["pvoc","header",fn] -> pvoc_header fn
     ["pvoc","plot",fn,b0,b1] -> pvoc_plot fn (read b0) (read b1)
+    ["sf","to-png",md,sf_fn,png_fn] -> sf_to_png (md_to_fn md) sf_fn png_fn
     ["svl","print","text",q,fn] -> svl_print_text (read q) fn
     _ -> putStrLn (unlines help)
 
@@ -496,3 +610,12 @@ float_pp k n = showFFloat (Just k) n ""
 
 read_double :: String -> Double
 read_double = read
+
+round_int :: RealFrac n => n -> Int
+round_int = round
+
+round_f32 :: Float -> Float
+round_f32 = fromIntegral . round_int
+
+minmax :: Ord x => [x] -> (x,x)
+minmax x = (minimum x,maximum x)

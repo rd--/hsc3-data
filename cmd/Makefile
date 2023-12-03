@@ -1,14 +1,7 @@
-cmd =	chemistry \
-	data d50 dx7 dx7-unpack \
-	img-edit img-to-sf \
-	kml-to-csv \
-	lpc \
+cmd =	data d50 dx7 dx7-unpack \
 	midi \
 	pbm-trace \
-	pdb \
-	pvoc \
-	sf-condense sf-draw sf-to-png \
-	svl \
+	sf-condense sf-draw \
 	text-monitor text-osc \
 	x11
 

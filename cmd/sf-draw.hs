@@ -1,56 +1,57 @@
 import Control.Monad {- base -}
-import qualified Data.Vector.Storable as V {- vector -}
 import System.Environment {- base -}
 
-import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
+import qualified Data.Vector.Storable as Vector {- vector -}
+
+import qualified Sound.File.HSndFile as Sf.SndFile {- hsc3-sf-hsndfile -}
 import qualified Sound.Sc3.Common.Math as M {- hsc3 -}
-import qualified Sound.Sc3.Common.Buffer.Vector as B {- hsc3 -}
-import qualified Sound.Sc3.Data.Bitmap.Pbm as P {- hsc3-data -}
+import qualified Sound.Sc3.Common.Buffer.Vector as Buffer.Vector {- hsc3 -}
+import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 
-vec_normalise_1 :: (Fractional b, Ord b, V.Storable b) => V.Vector b -> V.Vector b
+vec_normalise_1 :: (Fractional b, Ord b, Vector.Storable b) => Vector.Vector b -> Vector.Vector b
 vec_normalise_1 v =
-    let v' = V.map abs v
-        m = V.foldl1 max v'
-    in V.map (M.linlin_hs (- m,m) (-1,1)) v
+    let v' = Vector.map abs v
+        m = Vector.foldl1 max v'
+    in Vector.map (M.linlin_hs (- m,m) (-1,1)) v
 
-vec_normalise_2 :: (Fractional b, Ord b, V.Storable b) => V.Vector b -> V.Vector b
+vec_normalise_2 :: (Fractional b, Ord b, Vector.Storable b) => Vector.Vector b -> Vector.Vector b
 vec_normalise_2 v =
-    let l = V.foldl1 min v
-        r = V.foldl1 max v
-    in V.map (M.linlin_hs (l,r) (-1,1)) v
+    let l = Vector.foldl1 min v
+        r = Vector.foldl1 max v
+    in Vector.map (M.linlin_hs (l,r) (-1,1)) v
 
-vec_normalise_h :: (Fractional b, Ord b, V.Storable b) => Bool -> V.Vector b -> V.Vector b
+vec_normalise_h :: (Fractional b, Ord b, Vector.Storable b) => Bool -> Vector.Vector b -> Vector.Vector b
 vec_normalise_h hlf = if hlf then vec_normalise_2 else vec_normalise_1
 
-vec_ix :: Bool -> Double -> Int -> Int -> V.Vector Double -> Int -> [(Int,Int)]
+vec_ix :: Bool -> Double -> Int -> Int -> Vector.Vector Double -> Int -> [(Int,Int)]
 vec_ix sym h ch nc vec i =
-    let v = vec V.! ((i * nc) + ch)
+    let v = vec Vector.! ((i * nc) + ch)
         f x = round (((x + 1) / 2) * (h - 1))
     in if sym then [(f v,i),(f (negate v),i)] else [(f v,i)]
 
 sf_draw_plain :: (Bool,Bool,Bool,Bool,Bool) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_plain (nrm,hlf,inv,sym,sc3_wt) h ch sf_fn pbm_fn = do
-  (hdr,vec') <- Sf.read_vec_f64 sf_fn
-  let vec = ((if sym then V.map abs else id) .
-             (if inv then id else V.map negate) .
+  (hdr,vec') <- Sf.SndFile.read_vec_f64 sf_fn
+  let vec = ((if sym then Vector.map abs else id) .
+             (if inv then id else Vector.map negate) .
              (if nrm then vec_normalise_h hlf else id) .
-             (if sc3_wt then B.from_wavetable else id)) vec'
-      nc = Sf.channelCount hdr
-      nf = V.length vec -- not (Sf.frameCount hdr) due to B.from_wavetable
+             (if sc3_wt then Buffer.Vector.from_wavetable else id)) vec'
+      nc = Sf.SndFile.channelCount hdr
+      nf = Vector.length vec -- not (Sf.SndFile.frameCount hdr) due to Buffer.Vector.from_wavetable
       ix = vec_ix sym (fromIntegral h) ch nc vec
   when (ch >= nc) (error "ch >= nc")
   let b = ((h,nf),concatMap ix [0 .. nf - 1])
-  P.pbm4_write pbm_fn (P.bitindices_to_pbm b)
+  Pbm.pbm4_write pbm_fn (Pbm.bitindices_to_pbm b)
 
 sf_draw_table :: (Double,Double) -> Int -> Int -> FilePath -> FilePath -> IO ()
 sf_draw_table (l,r) h ch sf_fn pbm_fn = do
-  (hdr,vec') <- Sf.read_vec_f64 sf_fn
-  let vec = V.map (M.linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
-      nc = Sf.channelCount hdr
-      nf = Sf.frameCount hdr
+  (hdr,vec') <- Sf.SndFile.read_vec_f64 sf_fn
+  let vec = Vector.map (M.linlin_hs (l,r) (fromIntegral h - 1,0)) vec'
+      nc = Sf.SndFile.channelCount hdr
+      nf = Sf.SndFile.frameCount hdr
   when (ch >= nc) (error "ch >= nc")
-  let b = ((h,nf),zip (map (max 0 . min (h - 1) . floor) (V.toList vec)) [0..])
-  P.pbm4_write pbm_fn (P.bitindices_to_pbm b)
+  let b = ((h,nf),zip (map (max 0 . min (h - 1) . floor) (Vector.toList vec)) [0..])
+  Pbm.pbm4_write pbm_fn (Pbm.bitindices_to_pbm b)
 
 help :: [String]
 help =
