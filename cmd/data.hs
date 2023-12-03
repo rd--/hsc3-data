@@ -1,9 +1,13 @@
+import Control.Monad {- base -}
 import Data.Function {- base -}
 import Data.List {- base -}
+import Data.Maybe {- base -}
 import Data.Word {- base -}
+import Numeric {- base -}
 import System.Environment {- base -}
 
 import qualified Data.Vector.Storable as Vector {- vector -}
+import qualified Data.Vector.Unboxed as Vector.Unboxed {- vector -}
 
 import qualified Text.CSV.Lazy.String as Csv {- lazy-csv -}
 
@@ -17,17 +21,28 @@ import qualified Music.Theory.Time.Seq as Seq {- hmt -}
 import qualified Sound.Sc3 as Sc3 {- hsc3 -}
 import qualified Sound.Sc3.Common.Buffer as Sc3.Common.Buffer {- hsc3 -}
 
+import qualified Sound.Sc3.Plot as Plot {- hsc3-plot -}
+
 import qualified Sound.Sc3.Lang.Math.Statistics as Lang.Math.Statistics {- hsc3-lang -}
 
 import qualified Sound.File.Next as Sf.Au {- hsc3-sf -}
+import qualified Sound.File.Wave as Sf.Wave {- hsc3-sf -}
 import qualified Sound.File.HSndFile as Sf.SndFile {- hsc3-sf-hsndfile -}
 
 import qualified Sound.Sc3.Data.Ats as Ats {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as Bitmap {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Struct as Struct {- hsc3-data -}
 import qualified Sound.Sc3.Data.Image.Pgm as Pgm  {- hsc3-data -}
 import qualified Sound.Sc3.Data.Image.Plain as Image.Plain {- hsc3-data -}
+import qualified Sound.Sc3.Data.Lpc as Lpc {- hsc3-data -}
 import qualified Sound.Sc3.Data.Midi.Plain as Midi.Plain {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb as Pdb {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Pdb.Parse {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Query as Pdb.Query {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
+import qualified Sound.Sc3.Data.Pvoc as Pvoc {- hsc3-data -}
+import qualified Sound.Sc3.Data.Xml.Svl as Xml.Svl {- hsc3-data -}
 
 -- * Ats
 
@@ -62,6 +77,13 @@ au_to_pgm depth au_fn pgm_fn = do
   let dm = (Sf.Au.channelCount hdr,Sf.Au.frameCount hdr)
       img = Pgm.pgmf_from_vec_co dm vec
   Pgm.pgm5_save_0 pgm_fn (Pgm.pgmf_to_pgm depth img)
+
+-- * Chemistry
+
+struct_summary :: FilePath -> IO ()
+struct_summary fn = do
+  struct <- Struct.struct_load_txt fn
+  putStrLn (unlines (Struct.struct_stat struct))
 
 -- * Csv
 
@@ -150,6 +172,50 @@ img_to_pgm :: Int -> (Image.Plain.Rgb24 -> Image.Plain.Grey) -> FilePath -> File
 img_to_pgm depth to_grey img_fn pgm_fn = do
   i <- Image.Plain.img_load img_fn
   Image.Plain.img_write_pgm5 depth to_grey pgm_fn i
+
+-- * Lpc
+
+{- | Linear Predictive Coding
+
+> fn = "/home/rohan/sw/hsc3-data/data/lpc/fate.lpc"
+> lpc_print_header (typ_to_reader "be") fn
+> lpc_print_frame_csv (typ_to_reader "be") 6 fn 0
+> lpc_print_column_csv (typ_to_reader "be") 4 fn 3
+-}
+type Lpc_Reader = FilePath -> IO Lpc.Lpc
+
+lpc_print_header :: Lpc_Reader -> FilePath -> IO ()
+lpc_print_header reader fn = do
+  lpc <- reader fn
+  let hdr = Lpc.lpcHeader lpc
+  putStrLn (record_pp hdr)
+
+lpc_print_frame_csv :: Lpc_Reader -> Int -> FilePath -> Int -> IO ()
+lpc_print_frame_csv reader k fn n = do
+  lpc <- reader fn
+  let hdr = Lpc.lpcHeader lpc
+  when (n >= Lpc.lpcNFrames hdr) (error "lpc: n > nframes")
+  let frm = Lpc.lpcFrames lpc !! n
+  when (length frm /= Lpc.lpcFrameSize hdr) (error "lpc: framesize?")
+  putStrLn (intercalate "," (map (float_pp k) frm))
+
+lpc_print_column_csv :: Lpc_Reader -> Int -> FilePath -> Int -> IO ()
+lpc_print_column_csv reader k fn n = do
+  lpc <- reader fn
+  let hdr = Lpc.lpcHeader lpc
+      frm = Lpc.lpcFrames lpc
+  when (n >= Lpc.lpcFrameSize hdr) (error "lpc: n > frame_size")
+  let col = transpose frm !! n
+  when (length col /= Lpc.lpcNFrames hdr) (error "lpc: n_frames?")
+  putStrLn (intercalate "," (map (float_pp k) col))
+
+typ_to_reader :: String -> Lpc_Reader
+typ_to_reader typ =
+  case typ of
+    "txt" -> Lpc.lpc_read_text
+    "le" -> Lpc.lpc_read_binary Lpc.LittleEndian
+    "be" -> Lpc.lpc_read_binary Lpc.BigEndian
+    _ -> error "unknown typ?"
 
 -- * Pbm
 
@@ -251,6 +317,37 @@ pbm_to_tbl avg_f nrm pbm_fn au_fn = do
   Sf.SndFile.write au_fn (Sf.SndFile.Sf_Header 1 nc 1 Sf.SndFile.fmt_au_f32_be) [tbl]
   return ()
 
+-- * Pdb
+
+pdb_txt :: (Pdb.Parse.Dat -> [String]) -> FilePath -> IO ()
+pdb_txt f pdb_fn = Pdb.Parse.pdb_load_dat pdb_fn >>= putStr . unlines . f
+
+pdb_header :: FilePath -> IO ()
+pdb_header =
+  let pp (x,y,z) = concat [z," - ",y," - ",x]
+  in pdb_txt (return . pp . Pdb.Parse.dat_header)
+
+pdb_stat :: FilePath -> IO ()
+pdb_stat = let pp (i,j) = concat [i,": ",j] in pdb_txt (map pp . Pdb.Query.dat_stat)
+
+pdb_title :: FilePath -> IO ()
+pdb_title =
+  pdb_txt
+  (\x -> [concat
+           [Pdb.header_id4 (Pdb.Parse.dat_header x)
+           ," - "
+           ,Pdb.title_group (Pdb.Parse.dat_title x)]])
+
+pdb_seqres :: Bool -> FilePath -> IO ()
+pdb_seqres iupac =
+  let mk = if iupac then map (fromMaybe '.' . Pdb.pdb_seqres_code_lookup) else unwords
+      pp (c,r) = c : ':' : ' ' : mk r
+      sq = map pp . Pdb.seqres_group . Pdb.Parse.dat_seqres
+  in pdb_txt (\x -> Pdb.header_id4 (Pdb.Parse.dat_header x) : sq x)
+
+pdb_add_eol :: (t -> IO ()) -> t -> IO ()
+pdb_add_eol f x = f x >> putStrLn ""
+
 -- * Pgm
 
 pgm_to_au :: FilePath -> FilePath -> IO ()
@@ -262,10 +359,40 @@ pgm_to_au pgm_fn au_fn = do
       v = Pgm.pgmf_to_vec (nr,nc) img'
   Sf.Au.au_write_f32_vec au_fn (hdr,v)
 
--- * Main
+-- * Pvoc
 
-read_double :: String -> Double
-read_double = read
+{-
+let fn = "/home/rohan/uc/invisible/clarity/pvx/z.01.pvx"
+pvoc_header fn
+-}
+pvoc_header :: FilePath -> IO ()
+pvoc_header fn = do
+  pv <- Pvoc.pvoc_load_vec_f32 fn
+  let ((wave_hdr,pvoc_hdr),(_,nf,_)) = pv
+  putStrLn (Sf.Wave.wave_fmt_16_pp wave_hdr)
+  putStrLn (Pvoc.fmt_pvoc_80_pp pvoc_hdr)
+  putStrLn ("NFRAMES = " ++ show nf)
+
+{-
+pvoc_plot fn 12 24
+-}
+pvoc_plot :: FilePath -> Int -> Int -> IO ()
+pvoc_plot fn b0 b1 = do
+  pv <- Pvoc.pvoc_load_vec_f32 fn
+  let fmt ((a,f),i) = (f,i,a)
+      gen b = let ch = 0
+                  p = Vector.Unboxed.toList (Pvoc.pvoc_vec_f32_bin pv (ch,b))
+              in map fmt (zip p [0..])
+  Plot.plot_p3_ln (map gen [b0 .. b1])
+
+-- * Svl
+
+svl_print_text :: Int -> FilePath -> IO ()
+svl_print_text q fn =
+  Xml.Svl.svl_node_p_csec_seq_wr =<<
+  Xml.Svl.svl_load_node_p (Xml.Svl.svl_frame_to_csec q) id fn
+
+-- * Main
 
 help :: [String]
 help =
@@ -275,6 +402,11 @@ help =
   ,"au"
   ,"    to-pbm au-file pbm-file"
   ,"    to-pgm au-file pgm-file"
+  ,"chemistry"
+  ,"    struct to-obj k:int t1:real t2:real struct-file-name obj-file-name"
+  ,"    struct summary struct-file-name"
+  ,"    xyz to-obj k:int t1:real t2:real xyz-file-name obj-file-name"
+  ,"    xyz-dir to-obj k:int t1:real t2:real xyz-dir obj-dir"
   ,"csv"
   ,"    mnd-to-midi remove-overlaps:bool tempo:int time-signature:int/int csv-file midi-file"
   ,"    mnd-to-pgm width:int height:int csv-file pgm-file"
@@ -286,13 +418,25 @@ help =
   ,"    query unique mode=(c|l|g) img-file"
   ,"    to-pbm convert=(eq|lm/rec.709) threshold?:real img-file pbm-file"
   ,"    to-pgm depth=(8|16) convert=(eq|lm/rec.709) img-file pbm-file"
+  ,"lpc"
+  ,"    txt|le|be print header file-name"
+  ,"    txt|le|be print {frame|column} csv precision:int file-name frame:int"
   ,"pbm"
   ,"    indices csv pbm-file csv-file"
   ,"    indices json pbm-file json-file"
   ,"    to-csv-mnd mnn mnn+ mnn~ inv le tm+ tm~ du du~ gn gn~ pbm-file csv-file"
   ,"    to-tbl mode:(median|mean) normalise:bool image-file au-file"
+  ,"pdb"
+  ,"    header file-name..."
+  ,"    stat file-name..."
+  ,"    title file-name..."
   ,"pgm"
   ,"    to-au pgm-file au-file"
+  ,"pvoc"
+  ,"    header pvoc-file:string"
+  ,"    plot pvoc-file:string lhs-bin:int rhs-bin:int"
+  ,"svl"
+  ,"    print text q:int/100 filename:string"
   ]
 
 main :: IO ()
@@ -303,6 +447,10 @@ main = do
     ["ats","write-au",ats_fn,au_fn] -> Ats.ats_write_au ats_fn au_fn
     ["au","to-pbm",au_fn,pbm_fn] -> au_to_pbm au_fn pbm_fn
     ["au","to-pgm",depth,au_fn,pgm_fn] -> au_to_pgm (read depth) au_fn pgm_fn
+    ["chemistry","struct", "to-obj", k, t1, t2, struct_fn, obj_fn] -> Struct.ext_to_obj (read k) (Just (read t1,read t2)) struct_fn obj_fn
+    ["chemistry","struct", "summary", fn] -> struct_summary fn
+    ["chemistry","xyz", "to-obj",k,t1,t2,xyz_fn,obj_fn] -> Struct.xyz_to_obj (read k) (read t1,read t2) xyz_fn obj_fn
+    ["chemistry","xyz-dir", "to-obj",k,t1,t2,xyz_dir,obj_dir] -> Struct.xyz_to_obj_dir (read k) (read t1,read t2) xyz_dir obj_dir
     ["csv","mnd-to-midi",rw,tc,ts_n,ts_d,fn1,fn2] -> Midi.Plain.cvs_mnd_to_midi0 (read rw) (read tc) (read ts_n,read ts_d) fn1 fn2
     ["csv","mnd-to-pgm",w,h,csv_fn,pgm_fn] -> csv_mnd_to_pgm (read w,read h) csv_fn pgm_fn
     ["csv","to-image","point","real","pbm",csv_fn,h,w,i,j,pbm_fn] -> csv_to_image_point_real_pbm csv_fn (read h,read w) (read i,read j) pbm_fn
@@ -313,9 +461,38 @@ main = do
     ["image","to-pbm","lm/rec.709",th,img_fn,pbm_fn] -> let f = (< (read_double th)) . Image.Plain.rgb_to_gs_rec_709 in img_to_pbm f img_fn pbm_fn
     ["image","to-pgm",d,"eq",img_fn,pgm_fn] -> img_to_pgm (read d) Image.Plain.rgb24_to_gs_eq' img_fn pgm_fn
     ["image","to-pgm",d,"lm/rec.709",img_fn,pgm_fn] -> img_to_pgm (read d) Image.Plain.rgb_to_gs_rec_709 img_fn pgm_fn
+    ["lpc",typ,"print","header",fn] -> lpc_print_header (typ_to_reader typ) fn
+    ["lpc",typ,"print","frame","csv",k,fn,n] -> lpc_print_frame_csv (typ_to_reader typ) (read k) fn (read n)
+    ["lpc",typ,"print","column","csv",k,fn,n] -> lpc_print_column_csv (typ_to_reader typ) (read k) fn (read n)
     ["pbm","indices","csv",pbm_fn,csv_fn] -> pbm_indices_csv pbm_fn csv_fn
     ["pbm","indices","json",pbm_fn,json_fn] -> pbm_indices_json pbm_fn json_fn
     "pbm":"to-csv-mnd":rest -> pbm_to_csv_mnd_cli rest
     ["pbm","to-table",mode,nrm,pbm_fn,au_fn] -> pbm_to_tbl (Lang.Math.Statistics.parse_averaging_f mode) (read nrm) pbm_fn au_fn
+    "pdb":"header":fn -> mapM_ pdb_header fn
+    "pdb":"seqres":fn -> mapM_ (pdb_add_eol (pdb_seqres False)) fn
+    "pdb":"seqres-iupac":fn -> mapM_ (pdb_add_eol (pdb_seqres True)) fn
+    "pdb":"stat":fn -> mapM_ pdb_stat fn
+    "pdb":"title":fn -> mapM_ pdb_title fn
     ["pgm","to-au",pgm_fn,au_fn] -> pgm_to_au pgm_fn au_fn
+    ["pvoc","header",fn] -> pvoc_header fn
+    ["pvoc","plot",fn,b0,b1] -> pvoc_plot fn (read b0) (read b1)
+    ["svl","print","text",q,fn] -> svl_print_text (read q) fn
     _ -> putStrLn (unlines help)
+
+-- * Util
+
+{- | Pp record -}
+record_pp :: Show r => r -> String
+record_pp =
+  let f c = case c of
+              '{' -> "{\n  "
+              ',' -> ",\n "
+              '}' -> "\n}"
+              _ -> [c]
+  in concatMap f . show
+
+float_pp :: RealFloat a => Int -> a -> String
+float_pp k n = showFFloat (Just k) n ""
+
+read_double :: String -> Double
+read_double = read
