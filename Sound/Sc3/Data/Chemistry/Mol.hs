@@ -7,7 +7,6 @@ Limited". Journal of Chemical Information and Modeling. 32 (3): 244.
 <https://pubs.acs.org/doi/abs/10.1021/ci00007a012>
 
 Mol fields are fixed length.
-
 -}
 module Sound.Sc3.Data.Chemistry.Mol where
 
@@ -26,9 +25,10 @@ import Music.Theory.Geometry.Vector {- hmt-base -}
 -- | (xyz-coordinate, atomic-symbol)
 type Mol_Atom = (V3 Double, String)
 
--- | ((i,j),bond-type)
---   Mol files include BOND data.
---   Mol bond atom-id data is ONE-INDEXED.
+{- | ((i,j),bond-type)
+  Mol files include BOND data.
+  Mol bond atom-id data is ONE-INDEXED.
+-}
 type Mol_Bond = (V2 Int, Int)
 
 -- | (name,description,atom-count,bond-count,atoms,bonds,version)
@@ -38,7 +38,7 @@ mol_degree :: Mol -> (Int, Int)
 mol_degree (_, _, a, b, _, _, _) = (a, b)
 
 mol_empty :: Mol
-mol_empty = ("","",0,0,[],[],2000)
+mol_empty = ("", "", 0, 0, [], [], 2000)
 
 -- * Genera
 
@@ -49,11 +49,11 @@ mol_version x =
     " V3000" -> 3000
     _ -> error "mol_version"
 
-mol_bond_type_tbl :: [(Int,String)]
-mol_bond_type_tbl = [(1,"Single"),(2,"Double"),(3,"Triple"),(4,"Aromatic")]
+mol_bond_type_tbl :: [(Int, String)]
+mol_bond_type_tbl = [(1, "Single"), (2, "Double"), (3, "Triple"), (4, "Aromatic")]
 
-mol_bond_stereo_tbl :: [(Int,String)]
-mol_bond_stereo_tbl = [(0,"Not stereo"),(1,"Up"),(6,"Down")]
+mol_bond_stereo_tbl :: [(Int, String)]
+mol_bond_stereo_tbl = [(0, "Not stereo"), (1, "Up"), (6, "Down")]
 
 -- * V20
 
@@ -84,12 +84,12 @@ mol_v20_counts_flen = replicate 11 3 ++ [6]
 >>> mol_v20_read_counts txt
 (5,4,2000)
 -}
-mol_v20_read_counts :: String -> (Int,Int,Int)
+mol_v20_read_counts :: String -> (Int, Int, Int)
 mol_v20_read_counts s =
   case splitPlaces mol_v20_counts_flen s of
-    [a,b,_,_,_,_,_,_,_,_,_,v] -> (read a,read b,mol_version v)
-    a:b:_ -> (read a,read b,mol_version " V2000") -- ALLOW OMITTED FIELDS
-    r -> error (show ("mol_v20_read_counts",s,r))
+    [a, b, _, _, _, _, _, _, _, _, _, v] -> (read a, read b, mol_version v)
+    a : b : _ -> (read a, read b, mol_version " V2000") -- ALLOW OMITTED FIELDS
+    r -> error (show ("mol_v20_read_counts", s, r))
 
 {- | Atom flen
 
@@ -100,7 +100,7 @@ mol_v20_read_counts s =
 69
 -}
 mol_v20_atom_flen :: [Int]
-mol_v20_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
+mol_v20_atom_flen = [10, 10, 10, 1, 3, 2, 3] ++ replicate 10 3
 
 {- | Read atom
 
@@ -110,9 +110,9 @@ mol_v20_atom_flen = [10,10,10,1,3,2,3] ++ replicate 10 3
 mol_v20_read_atom :: String -> Mol_Atom
 mol_v20_read_atom s =
   case splitPlaces mol_v20_atom_flen s of
-    [x,y,z," ",a,_,_,_,_,_,_,_,_,_,_,_,_] -> ((read x,read y,read z),takeWhile (not . isSpace) a)
-    x:y:z:" ":a:_ -> ((read x,read y,read z),takeWhile (not . isSpace) a) -- ALLOW OMITTED FIELDS
-    r -> error (show ("mol_v20_read_atom",s,r))
+    [x, y, z, " ", a, _, _, _, _, _, _, _, _, _, _, _, _] -> ((read x, read y, read z), takeWhile (not . isSpace) a)
+    x : y : z : " " : a : _ -> ((read x, read y, read z), takeWhile (not . isSpace) a) -- ALLOW OMITTED FIELDS
+    r -> error (show ("mol_v20_read_atom", s, r))
 
 {- | Bond flen
 
@@ -133,20 +133,20 @@ mol_v20_bond_flen = replicate 7 3
 mol_v20_read_bond :: String -> Mol_Bond
 mol_v20_read_bond s =
   case splitPlaces mol_v20_bond_flen s of
-    [a0,a1,ty,_,_,_,_] -> ((read a0,read a1),read ty)
-    a0:a1:ty:_ -> ((read a0,read a1),read ty) -- allow omitted fields
-    r -> error (show ("mol_v20_read_bond",s,r))
+    [a0, a1, ty, _, _, _, _] -> ((read a0, read a1), read ty)
+    a0 : a1 : ty : _ -> ((read a0, read a1), read ty) -- allow omitted fields
+    r -> error (show ("mol_v20_read_bond", s, r))
 
 mol_v20_parse :: [String] -> Mol
 mol_v20_parse l =
   case l of
     [] -> mol_empty -- allow nil mol files
-    nm:dsc:_:cnt:dat ->
-      let (a_n,b_n,v) = mol_v20_read_counts cnt
+    nm : dsc : _ : cnt : dat ->
+      let (a_n, b_n, v) = mol_v20_read_counts cnt
           a = map mol_v20_read_atom (take a_n dat)
           b = map mol_v20_read_bond (take b_n (drop a_n dat))
-      in (nm,dsc,a_n,b_n,a,b,v)
-    _ -> error (show ("mol_v20_parse",l))
+      in (nm, dsc, a_n, b_n, a, b, v)
+    _ -> error (show ("mol_v20_parse", l))
 
 -- * V30
 
@@ -159,10 +159,10 @@ mol_v20_parse l =
 5. chirality (1 = chiral),
 6. molecule reg. no. (OPT)
 -}
-mol_v30_counts :: String -> (Int,Int)
+mol_v30_counts :: String -> (Int, Int)
 mol_v30_counts s =
   case words s of
-    ["M","V30","COUNTS",a,b,_,_,_] -> (read a,read b)
+    ["M", "V30", "COUNTS", a, b, _, _, _] -> (read a, read b)
     _ -> error "mol_v30_counts"
 
 {- | Returns fields ((3,4,5),2), fields are:
@@ -180,31 +180,33 @@ mol_v30_counts s =
 mol_v30_atom :: String -> Mol_Atom
 mol_v30_atom s =
   case words s of
-    "M":"V30":_k:nm:x:y:z:"0":_ -> ((read x,read y,read z),nm)
+    "M" : "V30" : _k : nm : x : y : z : "0" : _ -> ((read x, read y, read z), nm)
     _ -> error ("mol_v30_atom: " ++ s)
 
 mol_v30_bond :: String -> Mol_Bond
 mol_v30_bond s =
   case words s of
-    ["M","V30",_k,ty,a0,a1] -> ((read a0,read a1),read ty)
+    ["M", "V30", _k, ty, a0, a1] -> ((read a0, read a1), read ty)
     _ -> error "mol_v30_atom"
 
-mol_v30_parse :: (String,String) -> [String] -> Mol
-mol_v30_parse (nm,dsc) l =
+mol_v30_parse :: (String, String) -> [String] -> Mol
+mol_v30_parse (nm, dsc) l =
   let ix = atNote "mol_v30_parse"
-      verify k s = (ix l k == s) || error (show ("mol_v30_parse",k,l !! k,s))
-      (a,b) = mol_v30_counts (ix l 1)
-  in if verify 0 "M  V30 BEGIN CTAB" &&
-        verify 2 "M  V30 BEGIN ATOM" &&
-        verify (a + b + 6) "M  V30 END CTAB"
-     then (nm
-          ,dsc
-          ,a
-          ,b
-          ,map mol_v30_atom (take a (drop 3 l))
-          ,map mol_v30_bond (take b (drop (5 + a) l))
-          ,3000)
-     else error "mol_v30_parse?"
+      verify k s = (ix l k == s) || error (show ("mol_v30_parse", k, l !! k, s))
+      (a, b) = mol_v30_counts (ix l 1)
+  in if verify 0 "M  V30 BEGIN CTAB"
+      && verify 2 "M  V30 BEGIN ATOM"
+      && verify (a + b + 6) "M  V30 END CTAB"
+      then
+        ( nm
+        , dsc
+        , a
+        , b
+        , map mol_v30_atom (take a (drop 3 l))
+        , map mol_v30_bond (take b (drop (5 + a) l))
+        , 3000
+        )
+      else error "mol_v30_parse?"
 
 mol_v30_ent :: [String] -> [String]
 mol_v30_ent = filter ("M  V30 " `isPrefixOf`)
@@ -212,7 +214,7 @@ mol_v30_ent = filter ("M  V30 " `isPrefixOf`)
 -- * Associated Data Items
 
 -- | (Key,[Value])
-type Mol_Adi = (String,[String])
+type Mol_Adi = (String, [String])
 
 {- | Read the associated data items entries from Mol/Sdf file.
 
@@ -226,13 +228,13 @@ mol_adi =
       not_end = (/=) "M  END"
       rem_null = filter (not . null)
       f ln = case ln of
-               k:v -> (un_key k,v)
-               _ -> error "mol_adi: no-key?"
+        k : v -> (un_key k, v)
+        _ -> error "mol_adi: no-key?"
   in map f . rem_null . splitWhen null . takeWhile not_term . tail . dropWhile not_end . lines
 
 mol_adi_pp :: [Mol_Adi] -> String
 mol_adi_pp =
-  let f (k,v) = concat [k,": ",intercalate "\\n" v]
+  let f (k, v) = concat [k, ": ", intercalate "\\n" v]
   in unlines . map f
 
 -- * Load
@@ -244,7 +246,7 @@ mol_load fn = do
   let l = lines s
       r = mol_v20_parse l
   case r of
-    (nm,dsc,0,0,[],[],3000) -> return (mol_v30_parse (nm,dsc) (mol_v30_ent l))
+    (nm, dsc, 0, 0, [], [], 3000) -> return (mol_v30_parse (nm, dsc) (mol_v30_ent l))
     _ -> return r
 
 -- | 'mol_adi' of 'readFile'.

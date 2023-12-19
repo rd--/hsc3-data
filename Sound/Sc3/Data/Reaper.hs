@@ -20,8 +20,9 @@ type ChannelMap = [ChannelMapping]
 -- | Print ChannelMapping
 channelMappingPp :: ChannelMapping -> [String]
 channelMappingPp (user, name, system) =
-  [printf "ch%d=%d" (user - 1) (system - 1)
-  ,printf "name%d=%s" (user - 1) name]
+  [ printf "ch%d=%d" (user - 1) (system - 1)
+  , printf "name%d=%s" (user - 1) name
+  ]
 
 {- | Print ChannelMap
 

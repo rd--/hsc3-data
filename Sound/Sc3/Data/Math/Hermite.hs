@@ -11,7 +11,7 @@ type Bezier n = V4 n
 
 -- | Convert Hermite to bezier data of form (p0,p1,p2,p3).
 hermite_to_bezier :: Fractional n => Hermite n -> Bezier n
-hermite_to_bezier ((p0,p1),(m0,m1)) = (p0,p0 + (m0 / 3),p1 - (m1 / 3),p1)
+hermite_to_bezier ((p0, p1), (m0, m1)) = (p0, p0 + (m0 / 3), p1 - (m1 / 3), p1)
 
 {- | Hermite bases, expanded form.
 
@@ -19,10 +19,9 @@ hermite_to_bezier ((p0,p1),(m0,m1)) = (p0,p0 + (m0 / 3),p1 - (m1 / 3),p1)
 >>> map (f . hermite_bases_exp) [0,1/4,1/2,3/4,1]
 [(100,0,0,0),(84,14,16,-5),(50,12,50,-12),(16,5,84,-14),(0,0,100,0)]
 
-> import Sound.Sc3.Plot {- hsc3-plot -}
+> import Sound.Sc3.Plot
 > (p,q,r,s) = Data.List.unzip4 (map hermite_bases_exp [0,0.01 .. 1])
 > plot_p1_ln [p,q,r,s]
-
 -}
 hermite_bases_exp :: Num n => n -> V4 n
 hermite_bases_exp t =
@@ -32,7 +31,7 @@ hermite_bases_exp t =
       h10 = cub t - 2 * sqr t + t -- t * sq (1 - t)
       h01 = -2 * cub t + 3 * sqr t -- sq t * (3 - 2 * t)
       h11 = cub t - sqr t -- sq t * (t - 1)
-  in (h00,h10,h01,h11)
+  in (h00, h10, h01, h11)
 
 {- | Hermite bases, factored form.
 
@@ -47,12 +46,12 @@ hermite_bases_fac t =
       h10 = t * sqr (1 - t)
       h01 = sqr t * (3 - 2 * t)
       h11 = sqr t * (t - 1)
-  in (h00,h10,h01,h11)
+  in (h00, h10, h01, h11)
 
 -- | Evaluate Hermite at /t/.
 hermite :: Num n => Hermite n -> n -> n
-hermite ((p0,p1),(m0,m1)) t =
-  let (h00,h10,h01,h11) = hermite_bases_exp t
+hermite ((p0, p1), (m0, m1)) t =
+  let (h00, h10, h01, h11) = hermite_bases_exp t
   in h00 * p0 + h10 * m0 + h01 * p1 + h11 * m1
 
 {-
@@ -77,13 +76,15 @@ c = continuity = changes the sharpness in change between tangents
 Setting each parameter to zero would give a Catmull-Rom spline.
 -}
 kochanek_bartels_spline_h :: Fractional t => V3 t -> V4 t -> Hermite t
-kochanek_bartels_spline_h (t,b,c) (p0,p1,p2,p3) =
-  let m1 = ((((1 - t) * (1 + b) * (1 + c)) / 2) * (p1 - p0)) +
-           ((((1 - t) * (1 - b) * (1 - c)) / 2) * (p2 - p1))
+kochanek_bartels_spline_h (t, b, c) (p0, p1, p2, p3) =
+  let m1 =
+        ((((1 - t) * (1 + b) * (1 + c)) / 2) * (p1 - p0))
+          + ((((1 - t) * (1 - b) * (1 - c)) / 2) * (p2 - p1))
 
-      m2 = ((((1 - t) * (1 + b) * (1 - c)) / 2) * (p2 - p1)) +
-           ((((1 - t) * (1 - b) * (1 + c)) / 2) * (p3 - p2))
-  in ((p1,p2),(m1,m2))
+      m2 =
+        ((((1 - t) * (1 + b) * (1 - c)) / 2) * (p2 - p1))
+          + ((((1 - t) * (1 - b) * (1 + c)) / 2) * (p3 - p2))
+  in ((p1, p2), (m1, m2))
 
 {- | Kochanek Bartels spline
 
@@ -93,7 +94,7 @@ kochanek_bartels_spline_h (t,b,c) (p0,p1,p2,p3) =
 kochanek_bartels_spline :: Fractional t => V3 t -> [t] -> [Hermite t]
 kochanek_bartels_spline o =
   let rpt_bnd l = head l : l ++ [last l]
-      adj4 l = case l of {p:q:r:s:_ -> (p,q,r,s) : adj4 (tail l) ; _ -> []}
+      adj4 l = case l of p : q : r : s : _ -> (p, q, r, s) : adj4 (tail l); _ -> []
   in map (kochanek_bartels_spline_h o) . adj4 . rpt_bnd
 
 kochanek_bartels_spline_b :: Fractional t => V3 t -> [t] -> [Bezier t]
@@ -101,29 +102,28 @@ kochanek_bartels_spline_b param = map hermite_to_bezier . kochanek_bartels_splin
 
 kochanek_bartels_spline_v2_b :: Fractional n => V3 n -> [V2 n] -> [Bezier (V2 n)]
 kochanek_bartels_spline_v2_b param pt =
-  let (x,y) = unzip pt
+  let (x, y) = unzip pt
       f = kochanek_bartels_spline_b param
   in zipWith (v4_zip (,)) (f x) (f y)
 
 kochanek_bartels_spline_v3_b :: Fractional n => V3 n -> [V3 n] -> [Bezier (V3 n)]
 kochanek_bartels_spline_v3_b param pt =
-  let (x,y,z) = unzip3 pt
+  let (x, y, z) = unzip3 pt
       f = kochanek_bartels_spline_b param
   in zipWith3 (v4_zip3 (,,)) (f x) (f y) (f z)
 
 -- * Cardinal
 
 cardinal_spline_h :: Num n => n -> V4 n -> Hermite n
-cardinal_spline_h c (p0,p1,p2,p3) =
-  let m (i,j) = (1 - c) * (j - i)
-  in ((p1,p2),(m (p0,p2),m (p1,p3)))
+cardinal_spline_h c (p0, p1, p2, p3) =
+  let m (i, j) = (1 - c) * (j - i)
+  in ((p1, p2), (m (p0, p2), m (p1, p3)))
 
 cardinal_spline :: Num n => n -> [n] -> [Hermite n]
 cardinal_spline c =
   let rpt_bnd l = head l : l ++ [last l]
-      adj4 l = case l of {p:q:r:s:_ -> (p,q,r,s) : adj4 (tail l) ; _ -> []}
+      adj4 l = case l of p : q : r : s : _ -> (p, q, r, s) : adj4 (tail l); _ -> []
   in map (cardinal_spline_h c) . adj4 . rpt_bnd
-
 
 {-
 

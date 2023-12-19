@@ -4,7 +4,6 @@ A. Jain et. al.
 The Materials Project: A materials genome approach to accelerating materials innovation
 APL Materials, 2013, 1(1), 011002.
 <http://dx.doi.org/10.1063/1.4812323>
-
 -}
 module Sound.Sc3.Data.Chemistry.Mp where
 
@@ -30,13 +29,13 @@ mp_poscar_file nm = mp_dir </> "poscar" </> nm <.> "poscar"
 mp_load :: String -> IO Struct
 mp_load nm = do
   p <- poscar_load (mp_poscar_file nm)
-  return (poscar_to_struct Poscar_C (nm,p))
+  return (poscar_to_struct Poscar_C (nm, p))
 
 -- | Separate at first occurence of /e/ in /l/.
-sep1 :: Eq t => t -> [t] -> ([t],[t])
+sep1 :: Eq t => t -> [t] -> ([t], [t])
 sep1 e x =
   case break (== e) x of
-    (i,_:j) -> (i,j)
+    (i, _ : j) -> (i, j)
     _ -> error "sep1"
 
 {- | Mp names have a prefix, an ID and a descriptor.
@@ -47,5 +46,5 @@ sep1 e x =
 mp_name_split :: String -> (String, String)
 mp_name_split nm =
   case nm of
-    'm':'p':'-':x -> sep1 '_' x
+    'm' : 'p' : '-' : x -> sep1 '_' x
     _ -> error "mp_name_split"

@@ -11,3 +11,9 @@ clean:
 
 push-all:
 	r.gitlab-push.sh hsc3-data
+
+indent:
+	fourmolu -i Sound
+
+doctest:
+	doctest -Wno-x-partial -Wno-incomplete-uni-patterns Sound

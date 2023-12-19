@@ -34,10 +34,11 @@ COLUMNS        DATA  TYPE    FIELD        DEFINITION
 77 - 78        LString(2)    element      Element symbol, right-justified.
 79 - 80        LString(2)    charge       Charge  on the atom.
 -}
-atom_se :: Num i => ([i],[i])
+atom_se :: Num i => ([i], [i])
 atom_se =
-  ([ 1, 7,13,17,18,22,23,27,31,39,47,55,61,77,79]
-  ,[ 6,11,16,17,20,22,26,27,38,46,54,60,66,78,80])
+  ( [1, 7, 13, 17, 18, 22, 23, 27, 31, 39, 47, 55, 61, 77, 79]
+  , [6, 11, 16, 17, 20, 22, 26, 27, 38, 46, 54, 60, 66, 78, 80]
+  )
 
 {- | CISPEP
 
@@ -56,10 +57,11 @@ COLUMNS       DatA  TYPE    FIELD         DEFINITION
 44 - 46       Integer       modNum        Identifies the specific model.
 54 - 59       Real(6.2)     measure       Angle measurement in degrees.
 -}
-cispep_se :: Num i => ([i],[i])
+cispep_se :: Num i => ([i], [i])
 cispep_se =
-  ([ 1, 8,12,16,18,22,26,30,32,36,44,54]
-  ,[ 6,10,14,16,21,22,28,30,35,36,46,59])
+  ( [1, 8, 12, 16, 18, 22, 26, 30, 32, 36, 44, 54]
+  , [6, 10, 14, 16, 21, 22, 28, 30, 35, 36, 46, 59]
+  )
 
 {- | CONECT
 
@@ -72,8 +74,8 @@ COLUMNS       DatA  TYPE      FIELD        DEFINITION
 22 - 26        Integer        serial       Serial number of bonded atom
 27 - 31        Integer        serial       Serial number of bonded atom
 -}
-conect_se :: Num i => ([i],[i])
-conect_se = ([1,7,12,17,22,27],[6,11,16,21,26,31])
+conect_se :: Num i => ([i], [i])
+conect_se = ([1, 7, 12, 17, 22, 27], [6, 11, 16, 21, 26, 31])
 
 {- | CRYST1
 
@@ -89,8 +91,8 @@ COLUMNS       DatA  TYPE    FIELD          DEFINITION
 56 - 66       LString       sGroup         Space  group.
 67 - 70       Integer       z              Z value.
 -}
-cryst1_se :: Num i => ([i],[i])
-cryst1_se = ([1,7,16,25,34,41,48,56,67],[6,15,24,33,40,47,54,66,70])
+cryst1_se :: Num i => ([i], [i])
+cryst1_se = ([1, 7, 16, 25, 34, 41, 48, 56, 67], [6, 15, 24, 33, 40, 47, 54, 66, 70])
 
 {- | END
 
@@ -98,8 +100,8 @@ COLUMNS       DatA  TYPE     FIELD         DEFINITION
 -------------------------------------------------------
 1 -  6        Record name    "END   "
 -}
-end_se :: Num i => ([i],[i])
-end_se = ([1],[6])
+end_se :: Num i => ([i], [i])
+end_se = ([1], [6])
 
 {- | ENDMDL
 
@@ -107,8 +109,8 @@ COLUMNS       DatA  TYPE     FIELD        DEFINITION
 ------------------------------------------------------------------
 1 - 6         Record name   "ENDMDL"
 -}
-endmdl_se :: Num i => ([i],[i])
-endmdl_se = ([1],[6])
+endmdl_se :: Num i => ([i], [i])
+endmdl_se = ([1], [6])
 
 {- | FORMUL
 
@@ -121,8 +123,8 @@ COLUMNS        DatA TYPE     FIELD         DEFINITION
 19             Character     asterisk      "*" for water.
 20 - 70        String        text          Chemical formula.
 -}
-formul_se :: Num i => ([i],[i])
-formul_se = ([1,9,13,17,19,20],[6,10,15,18,19,70])
+formul_se :: Num i => ([i], [i])
+formul_se = ([1, 9, 13, 17, 19, 20], [6, 10, 15, 18, 19, 70])
 
 {- | HEADER
 
@@ -134,8 +136,8 @@ COLUMNS       DatA  TYPE     FIELD             DEFINITION
                                                coordinates  were received at the PDT.
 63 - 66       IDcode         idCode            This identifier is unique within the PDT.
 -}
-header_se :: Num i => ([i],[i])
-header_se = ([1,11,51,63],[6,50,59,66])
+header_se :: Num i => ([i], [i])
+header_se = ([1, 11, 51, 63], [6, 50, 59, 66])
 
 {- | HELIX
 
@@ -161,10 +163,11 @@ COLUMNS        DatA  TYPE     FIELD         DEFINITION
 41 - 70        String         comment       Comment about this helix.
 72 - 76        Integer        length        Length of this helix.
 -}
-helix_se :: Num i => ([i],[i])
+helix_se :: Num i => ([i], [i])
 helix_se =
-  ([1, 8,12,16,20,22,26,28,32,34,38,39,41,72]
-  ,[6,10,14,18,20,25,26,30,32,37,38,40,70,76])
+  ( [1, 8, 12, 16, 20, 22, 26, 28, 32, 34, 38, 39, 41, 72]
+  , [6, 10, 14, 18, 20, 25, 26, 30, 32, 37, 38, 40, 70, 76]
+  )
 
 {- | Het
 
@@ -179,8 +182,8 @@ COLUMNS       DatA  TYPE     FIELD         DEFINITION
                                            present in the entry.
 31 - 70       String        text           Text describing Het group.
 -}
-het_se :: Num i => ([i],[i])
-het_se = ([1,8,13,14,18,21,31],[6,10,13,17,18,25,70])
+het_se :: Num i => ([i], [i])
+het_se = ([1, 8, 13, 14, 18, 21, 31], [6, 10, 13, 17, 18, 25, 70])
 
 {- | LINK
 
@@ -203,9 +206,11 @@ COLUMNS         DatA TYPE      FIELD           DEFINITION
 67 - 72         SymOP          sym2            Symmetry operator atom 2.
 74 – 78         Real(5.2)      Length          Link distance
 -}
-link_se :: Num i => ([i],[i])
-link_se = ([1,13,17,18,22,23,27,43,47,48,52,53,57,60,67,74]
-          ,[6,16,17,20,22,26,27,46,47,50,52,56,57,65,72,78])
+link_se :: Num i => ([i], [i])
+link_se =
+  ( [1, 13, 17, 18, 22, 23, 27, 43, 47, 48, 52, 53, 57, 60, 67, 74]
+  , [6, 16, 17, 20, 22, 26, 27, 46, 47, 50, 52, 56, 57, 65, 72, 78]
+  )
 
 {- | Master
 
@@ -227,8 +232,8 @@ COLUMNS         DatA TYPE     FIELD          DEFINITION
 61 - 65         Integer       numConect      Number of CONECT records
 66 - 70         Integer       numSeq         Number of SEQRES records
 -}
-master_se :: (Num i,Enum i) => ([i],[i])
-master_se = (1 : [11,16 ..66],6 : [15,20 .. 70])
+master_se :: (Num i, Enum i) => ([i], [i])
+master_se = (1 : [11, 16 .. 66], 6 : [15, 20 .. 70])
 
 {- | MDLTYP
 
@@ -239,8 +244,8 @@ COLUMNS      DatA TYPE      FIELD         DEFINITION
 11 - 80      SList          comment       Free Text providing  additional structural
                                           annotation.
 -}
-mdltyp_se :: Num i => ([i],[i])
-mdltyp_se = ([1,9,11],[6,10,80])
+mdltyp_se :: Num i => ([i], [i])
+mdltyp_se = ([1, 9, 11], [6, 10, 80])
 
 {- | MODEL
 
@@ -249,8 +254,8 @@ COLUMNS        DatA  TYPE    FIELD          DEFINITION
  1 -  6        Record name   "MODEL "
 11 - 14        Integer       serial         Model serial number.
 -}
-model_se :: Num i => ([i],[i])
-model_se = ([1,11],[6,14])
+model_se :: Num i => ([i], [i])
+model_se = ([1, 11], [6, 14])
 
 {- | MODRES
 
@@ -265,10 +270,11 @@ COLUMNS        DatA TYPE     FIELD       DEFINITION
 25 - 27        Residue name  stdRes      Standard residue name.
 30 - 70        String        comment     Description of the residue modification.
 -}
-modres_se :: Num i => ([i],[i])
+modres_se :: Num i => ([i], [i])
 modres_se =
-  ([ 1, 8,13,17,19,23,25,30]
-  ,[ 6,11,15,17,22,23,27,70])
+  ( [1, 8, 13, 17, 19, 23, 25, 30]
+  , [6, 11, 15, 17, 22, 23, 27, 70]
+  )
 
 {- | NUMMDL
 
@@ -277,8 +283,8 @@ COLUMNS      DatA TYPE      FIELD         DEFINITION
  1 -  6      Record name    "NUMMDL"
 11 - 14      Integer        modelNumber   Number of models.
 -}
-nummdl_se :: Num i => ([i],[i])
-nummdl_se = ([1,11],[6,14])
+nummdl_se :: Num i => ([i], [i])
+nummdl_se = ([1, 11], [6, 14])
 
 {- | OBSLTE
 
@@ -298,8 +304,8 @@ COLUMNS       DatA  TYPE     FIELD         DEFINITION
 67 - 70       IDcode        rIdCode       ID code of entry that replaced this one.
 72 - 75       IDcode        rIdCode       ID code of entry that replaced this one.
 -}
-obslte_se :: Num i => ([i],[i])
-obslte_se = ([1,9,12,22,32,37,42,27,52,57,62,67,72],[6,10,20,25,35,40,45,50,55,60,65,70,75])
+obslte_se :: Num i => ([i], [i])
+obslte_se = ([1, 9, 12, 22, 32, 37, 42, 27, 52, 57, 62, 67, 72], [6, 10, 20, 25, 35, 40, 45, 50, 55, 60, 65, 70, 75])
 
 {- | REMARK
 
@@ -312,8 +318,8 @@ COLUMNS       DatA TYPE     FIELD         DEFINITION
 12 - 79       LString       empty         Left  as white space in first line
                                           of each  new remark.
 -}
-remark_se :: Num i => ([i],[i])
-remark_se = ([1,8,12],[6,10,79])
+remark_se :: Num i => ([i], [i])
+remark_se = ([1, 8, 12], [6, 10, 79])
 
 {- | SEQRES
 
@@ -342,8 +348,8 @@ COLUMNS        DatA TYPE      FIELD        DEFINITION
 64 - 66        Residue name   resName      Residue name.
 68 - 70        Residue name   resName      Residue name.
 -}
-seqres_se :: (Num i,Enum i) => ([i],[i])
-seqres_se = ([1,8,12,14] ++ [20,24 .. 68],[6,10,12,17] ++ [22,26 .. 70])
+seqres_se :: (Num i, Enum i) => ([i], [i])
+seqres_se = ([1, 8, 12, 14] ++ [20, 24 .. 68], [6, 10, 12, 17] ++ [22, 26 .. 70])
 
 {- | SHEET
 
@@ -386,10 +392,11 @@ COLUMNS       DatA  TYPE     FIELD          DEFINITION
 70             AChar         prevICode      Registration.  Insertion code in
                                             previous strand.
 -}
-sheet_se :: Num i => ([i],[i])
+sheet_se :: Num i => ([i], [i])
 sheet_se =
-  ([1, 8,12,15,18,22,23,27,29,33,34,38,39,42,46,50,51,55,57,61,65,66,70]
-  ,[6,10,14,16,20,22,26,27,31,33,37,38,40,45,48,50,54,55,60,63,65,69,70])
+  ( [1, 8, 12, 15, 18, 22, 23, 27, 29, 33, 34, 38, 39, 42, 46, 50, 51, 55, 57, 61, 65, 66, 70]
+  , [6, 10, 14, 16, 20, 22, 26, 27, 31, 33, 37, 38, 40, 45, 48, 50, 54, 55, 60, 63, 65, 69, 70]
+  )
 
 {- | SSBOND
 
@@ -409,9 +416,11 @@ COLUMNS        DatA  TYPE     FIELD            DEFINITION
 67 - 72        SymOP          sym2             Symmetry operator for residue 2.
 74 – 78        Real(5.2)      Length           Disulfide bond distance
 -}
-ssbond_se :: Num i => ([i],[i])
-ssbond_se = ([1, 8,12,16,18,22,26,30,32,36,60,67,74]
-            ,[6,10,14,16,21,22,28,30,35,36,65,72,78])
+ssbond_se :: Num i => ([i], [i])
+ssbond_se =
+  ( [1, 8, 12, 16, 18, 22, 26, 30, 32, 36, 60, 67, 74]
+  , [6, 10, 14, 16, 21, 22, 28, 30, 35, 36, 65, 72, 78]
+  )
 
 {- | TER
 
@@ -424,8 +433,8 @@ COLUMNS        DatA  TYPE    FIELD           DEFINITION
 23 - 26        Integer       resSeq          Residue sequence number.
 27             AChar         iCode           Insertion code.
 -}
-ter_se :: Num i => ([i],[i])
-ter_se = ([1,7,18,22,23,27],[6,11,20,22,26,27])
+ter_se :: Num i => ([i], [i])
+ter_se = ([1, 7, 18, 22, 23, 27], [6, 11, 20, 22, 26, 27])
 
 {- | TITLE
 
@@ -435,8 +444,8 @@ COLUMNS       DatA  TYPE     FIELD         DEFINITION
  9 - 10       Continuation   continuation  Allows concatenation of multiple records.
 11 - 80       String         title         Title of the  experiment.
 -}
-title_se :: Num i => ([i],[i])
-title_se = ([1,9,11],[6,10,80])
+title_se :: Num i => ([i], [i])
+title_se = ([1, 9, 11], [6, 10, 80])
 
 -- * Txt
 
@@ -445,20 +454,22 @@ type Txt = T.ByteString
 
 -- | ZERO-INDEXED [(START,LENGTH)] -> [SUB-STR]
 txt_parts :: Txt -> [(Int, Int)] -> [Txt]
-txt_parts s ix = let f (i,j) = T.take j (T.drop i s) in map f ix
+txt_parts s ix = let f (i, j) = T.take j (T.drop i s) in map f ix
 
 txt_parts_spl :: Txt -> [(Int, Int)] -> (Txt, [Txt])
-txt_parts_spl = let spl x = (head x,tail x) in fmap spl . txt_parts
+txt_parts_spl = let spl x = (head x, tail x) in fmap spl . txt_parts
 
--- | Plain text string (ie. as written)
---
--- > txt_pln (txt " a b c ") == " a b c "
+{- | Plain text string (ie. as written)
+
+> txt_pln (txt " a b c ") == " a b c "
+-}
 txt_pln :: Txt -> String
 txt_pln = T.unpack
 
--- | Unpack and trim Txt.
---
--- > txt_str (txt " a b c ") == "a b c"
+{- | Unpack and trim Txt.
+
+> txt_str (txt " a b c ") == "a b c"
+-}
 txt_str :: Txt -> String
 txt_str = T.unpack . fst . T.spanEnd isSpace . T.dropWhile isSpace
 
@@ -483,7 +494,7 @@ txt_nil = T.all isSpace
 
 -- | Readers for 'Char', 'String', 'Int' and 'Double'.
 txt_readers :: [Txt] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
-txt_readers x = (txt_chr . (x !!),txt_str . (x !!),txt_int . (x !!),txt_flt . (x !!))
+txt_readers x = (txt_chr . (x !!), txt_str . (x !!), txt_int . (x !!), txt_flt . (x !!))
 
 -- | Pack Txt.
 txt :: String -> Txt
@@ -492,7 +503,7 @@ txt = T.pack
 -- * Rec
 
 -- | (Record-Type,Record-Fields)
-type Rec = (Txt,[Txt])
+type Rec = (Txt, [Txt])
 
 -- | Record names are the initial six-characters, ie. "HET   " and "ATOM  " and "HETATM"
 txt_rec_name :: Txt -> Txt
@@ -504,112 +515,112 @@ txt_rec_match x = (==) x . txt_rec_name
 -- * Record Table
 
 -- | One-Indexed (Start,End) to Zero-Indexed (Start,Length)
-se_to_ix :: Num i => ([i],[i]) -> [(i,i)]
-se_to_ix (i,j) = zip (map (subtract 1) i) (map (+ 1) (zipWith (-) j i))
+se_to_ix :: Num i => ([i], [i]) -> [(i, i)]
+se_to_ix (i, j) = zip (map (subtract 1) i) (map (+ 1) (zipWith (-) j i))
 
 -- | Table of (Record-Type:String,Indices:Start-End).
-pdb_rec_str_se :: [(String,([Int],[Int]))]
+pdb_rec_str_se :: [(String, ([Int], [Int]))]
 pdb_rec_str_se =
-  [("ATOM  ",atom_se)
-  ,("CISPEP",cispep_se)
-  ,("CONECT",conect_se)
-  ,("CRYST1",cryst1_se)
-  ,("END   ",end_se)
-  ,("ENDMDL",endmdl_se)
-  ,("FORMUL",formul_se)
-  ,("HEADER",header_se)
-  ,("HELIX ",helix_se)
-  ,("HET   ",het_se)
-  ,("HETATM",atom_se)
-  ,("LINK  ",link_se)
-  ,("MASTER",master_se)
-  ,("MDLTYP",mdltyp_se)
-  ,("MODEL ",model_se)
-  ,("MODRES",modres_se)
-  ,("NUMMDL",nummdl_se)
-  ,("OBSLTE",obslte_se)
-  ,("REMARK",remark_se)
-  ,("SEQRES",seqres_se)
-  ,("SHEET ",sheet_se)
-  ,("SSBOND",ssbond_se)
-  ,("TER   ",ter_se)
-  ,("TITLE ",title_se)
+  [ ("ATOM  ", atom_se)
+  , ("CISPEP", cispep_se)
+  , ("CONECT", conect_se)
+  , ("CRYST1", cryst1_se)
+  , ("END   ", end_se)
+  , ("ENDMDL", endmdl_se)
+  , ("FORMUL", formul_se)
+  , ("HEADER", header_se)
+  , ("HELIX ", helix_se)
+  , ("HET   ", het_se)
+  , ("HETATM", atom_se)
+  , ("LINK  ", link_se)
+  , ("MASTER", master_se)
+  , ("MDLTYP", mdltyp_se)
+  , ("MODEL ", model_se)
+  , ("MODRES", modres_se)
+  , ("NUMMDL", nummdl_se)
+  , ("OBSLTE", obslte_se)
+  , ("REMARK", remark_se)
+  , ("SEQRES", seqres_se)
+  , ("SHEET ", sheet_se)
+  , ("SSBOND", ssbond_se)
+  , ("TER   ", ter_se)
+  , ("TITLE ", title_se)
   ]
 
 -- | Table of (Record-Type:Txt,Indices:Start-Length)
 pdb_rec_txt_ix :: [(Txt, [(Int, Int)])]
-pdb_rec_txt_ix = let f (nm,se) = (txt nm,se_to_ix se) in map f pdb_rec_str_se
+pdb_rec_txt_ix = let f (nm, se) = (txt nm, se_to_ix se) in map f pdb_rec_str_se
 
 -- * Unpack
 
 atom_unpack :: Rec -> Atom
-atom_unpack (r,x) =
-  let (c,s,i,f) = txt_readers x
-  in (r == txt "HETATM",i 0,s 1,c 2,(s 3,c 4,i 5,c 6),(f 7,f 8,f 9),s 12)
+atom_unpack (r, x) =
+  let (c, s, i, f) = txt_readers x
+  in (r == txt "HETATM", i 0, s 1, c 2, (s 3, c 4, i 5, c 6), (f 7, f 8, f 9), s 12)
 
 conect_unpack :: Rec -> Conect
-conect_unpack (_,x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
+conect_unpack (_, x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
 
 cryst1_unpack :: Rec -> Cryst1
-cryst1_unpack (_,x) = let (_,s,i,f) = txt_readers x in ((f 0,f 1,f 2),(f 3,f 4,f 5),s 7,i 8)
+cryst1_unpack (_, x) = let (_, s, i, f) = txt_readers x in ((f 0, f 1, f 2), (f 3, f 4, f 5), s 7, i 8)
 
 header_unpack :: Rec -> Header
-header_unpack (_,x) = let s = txt_str . (x !!) in (s 0,s 1,s 2)
+header_unpack (_, x) = let s = txt_str . (x !!) in (s 0, s 1, s 2)
 
 helix_unpack :: Rec -> Helix
-helix_unpack (_,x) =
-  let (c,s,i,_) = txt_readers x
-  in ((i 0,s 1),(s 2,c 3,i 4,c 5),(s 6,c 7,i 8,c 9),i 10,i 12)
+helix_unpack (_, x) =
+  let (c, s, i, _) = txt_readers x
+  in ((i 0, s 1), (s 2, c 3, i 4, c 5), (s 6, c 7, i 8, c 9), i 10, i 12)
 
 het_unpack :: Rec -> Het
-het_unpack (_,x) = let (c,s,i,_) = txt_readers x in ((s 0,c 1,i 2,c 3),i 4,s 5)
+het_unpack (_, x) = let (c, s, i, _) = txt_readers x in ((s 0, c 1, i 2, c 3), i 4, s 5)
 
 link_unpack :: Rec -> Link
-link_unpack (_,x) =
-  let (c,s,i,f) = txt_readers x
-  in (s 0,c 1,(s 2,c 3,i 4,c 5),s 6,c 7,(s 8,c 9,i 10,c 11),i 12,i 13,f 14)
+link_unpack (_, x) =
+  let (c, s, i, f) = txt_readers x
+  in (s 0, c 1, (s 2, c 3, i 4, c 5), s 6, c 7, (s 8, c 9, i 10, c 11), i 12, i 13, f 14)
 
 master_unpack :: Rec -> Master
-master_unpack (_,x) = let i = txt_int . (x !!) in (i 0,i 2,i 3,i 4,i 6,i 7,i 8,i 9,i 10,i 11)
+master_unpack (_, x) = let i = txt_int . (x !!) in (i 0, i 2, i 3, i 4, i 6, i 7, i 8, i 9, i 10, i 11)
 
 mdltyp_unpack :: Rec -> MdlTyp
-mdltyp_unpack (_,x) = (txt_pln (x !! 0),txt_str (x !! 1))
+mdltyp_unpack (_, x) = (txt_pln (x !! 0), txt_str (x !! 1))
 
 -- | Serial
 model_unpack :: Rec -> Int
-model_unpack (_,x) = txt_int (x !! 0)
+model_unpack (_, x) = txt_int (x !! 0)
 
 modres_unpack :: Rec -> ModRes
-modres_unpack (_,x) = let (c,s,i,_) = txt_readers x in (s 0,(s 1,c 2,i 3,c 4),s 5,s 6)
+modres_unpack (_, x) = let (c, s, i, _) = txt_readers x in (s 0, (s 1, c 2, i 3, c 4), s 5, s 6)
 
 nummdl_unpack :: Rec -> Int
-nummdl_unpack (_,x) = txt_int (x !! 0)
+nummdl_unpack (_, x) = txt_int (x !! 0)
 
 remark_unpack :: Rec -> Remark
-remark_unpack (_,x) = (txt_int (x !! 0),txt_pln (x !! 1))
+remark_unpack (_, x) = (txt_int (x !! 0), txt_pln (x !! 1))
 
 -- | Removes nil entries.
 seqres_unpack :: Rec -> SeqRes
-seqres_unpack (_,x) =
-  let (c,s,i,_) = txt_readers x
-  in (i 0,c 1,i 2,filter (not . null) (map s [3 .. 15]))
+seqres_unpack (_, x) =
+  let (c, s, i, _) = txt_readers x
+  in (i 0, c 1, i 2, filter (not . null) (map s [3 .. 15]))
 
 sheet_unpack :: Rec -> Sheet
-sheet_unpack (_,x) =
-  let (c,s,i,_) = txt_readers x
-  in (i 0,s 1,i 2,(s 3,c 4,i 5,c 6),(s 7,c 8,i 9,c 10))
+sheet_unpack (_, x) =
+  let (c, s, i, _) = txt_readers x
+  in (i 0, s 1, i 2, (s 3, c 4, i 5, c 6), (s 7, c 8, i 9, c 10))
 
 ssbond_unpack :: Rec -> SsBond
-ssbond_unpack (_,x) =
-  let (c,s,i,f) = txt_readers x
+ssbond_unpack (_, x) =
+  let (c, s, i, f) = txt_readers x
       cys n = if s n /= "CYS" then error "ssbond_unpack?" else "CYS"
-  in (i 0,(cys 1,c 2,i 3,c 4),(cys 5,c 6,i 7,c 8),i 9,i 10,f 11)
+  in (i 0, (cys 1, c 2, i 3, c 4), (cys 5, c 6, i 7, c 8), i 9, i 10, f 11)
 
 ter_unpack :: Rec -> Ter
-ter_unpack (_,x) = let (c,s,i,_) = txt_readers x in (i 0,(s 1,c 2,i 3,c 4))
+ter_unpack (_, x) = let (c, s, i, _) = txt_readers x in (i 0, (s 1, c 2, i 3, c 4))
 
 title_unpack :: Rec -> Title
-title_unpack (_,x) = (txt_pln (x !! 0),txt_str (x !! 1))
+title_unpack (_, x) = (txt_pln (x !! 0), txt_str (x !! 1))
 
 -- * Parse
 
@@ -618,10 +629,10 @@ parse_txt_ix f s = fmap (txt_parts_spl s) (f (txt_rec_name s))
 
 pdb_rec_parse :: Txt -> Txt -> Maybe Rec
 pdb_rec_parse nm =
-  let ix = fromMaybe (error (show ("pdb_rec_parse",nm))) (lookup nm pdb_rec_txt_ix)
+  let ix = fromMaybe (error (show ("pdb_rec_parse", nm))) (lookup nm pdb_rec_txt_ix)
   in if T.length nm /= 6
-     then error "pdb_rec_parse?"
-     else parse_txt_ix (\z -> if z == nm then Just ix else Nothing)
+      then error "pdb_rec_parse?"
+      else parse_txt_ix (\z -> if z == nm then Just ix else Nothing)
 
 pdb_rec_parse_set :: [Txt] -> Txt -> Maybe Rec
 pdb_rec_parse_set nm = parse_txt_ix (\z -> if z `elem` nm then lookup z pdb_rec_txt_ix else Nothing)
@@ -647,10 +658,10 @@ pdb_dat_rec_set ty_set = mapMaybe (pdb_rec_parse_set ty_set)
 
 -- | Atom and Hetatm records
 dat_atom_all :: Dat -> [Atom]
-dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ","HETATM"])
+dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ", "HETATM"])
 
 -- | (Atom,Hetatm)
-dat_atom :: Dat -> ([Atom],[Atom])
+dat_atom :: Dat -> ([Atom], [Atom])
 dat_atom = partition (not . atom_het) . dat_atom_all
 
 -- | Atom
@@ -710,17 +721,18 @@ dat_title = map title_unpack . pdb_dat_rec (txt "TITLE ")
 
 dat_parse :: Dat -> Pdb
 dat_parse x =
-  (dat_header x
-  ,title_group (dat_title x)
-  ,dat_nummdl x
-  ,dat_cryst1 x
-  ,dat_atom x
-  ,conect_group (dat_conect x)
-  ,seqres_group (dat_seqres x)
-  ,dat_helix x
-  ,dat_sheet x
-  ,dat_link x
-  ,dat_ssbond x)
+  ( dat_header x
+  , title_group (dat_title x)
+  , dat_nummdl x
+  , dat_cryst1 x
+  , dat_atom x
+  , conect_group (dat_conect x)
+  , seqres_group (dat_seqres x)
+  , dat_helix x
+  , dat_sheet x
+  , dat_link x
+  , dat_ssbond x
+  )
 
 -- * Io
 

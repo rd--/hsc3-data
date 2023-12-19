@@ -60,7 +60,7 @@ Library
                    xml,
                    zmidi-core
   default-language:Haskell2010
-  GHC-Options:     -Wall -fwarn-tabs
+  GHC-Options:     -Wall -Wno-x-partial -Wno-incomplete-uni-patterns -fwarn-tabs
   Exposed-modules: Sound.Sc3.Data.Akai.Akp
                    Sound.Sc3.Data.Akai.S900
                    Sound.Sc3.Data.Array.Csv

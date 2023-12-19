@@ -19,8 +19,8 @@ str = S.pack
 str_concat :: [STR] -> STR
 str_concat = S.concat
 
-str_read_err :: String -> Maybe (t,STR) -> t
-str_read_err msg = maybe (error msg) (\(i,j) -> if str_null j then i else error msg)
+str_read_err :: String -> Maybe (t, STR) -> t
+str_read_err msg = maybe (error msg) (\(i, j) -> if str_null j then i else error msg)
 
 -- > str_read_int (str "12345678901234567890")
 str_read_int :: STR -> Int
@@ -73,10 +73,9 @@ str_write_file :: FilePath -> STR -> IO ()
 str_write_file = S.writeFile
 
 -- > str_show_integral 1234567890123456789
-str_show_integral :: (Integral t,Show t) => t -> STR
+str_show_integral :: (Integral t, Show t) => t -> STR
 str_show_integral = str . show
 
 -- > str_show_real_float 2 1.234567890123456789
-str_show_real_float :: (RealFloat t,Show t) => Int -> t -> STR
+str_show_real_float :: (RealFloat t, Show t) => Int -> t -> STR
 str_show_real_float k n = str (showFFloat (Just k) n "")
-

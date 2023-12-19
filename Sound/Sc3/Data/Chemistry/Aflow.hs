@@ -8,7 +8,6 @@ Michael J.Mehl et. al.
 
 Pt.1: <https://arxiv.org/abs/1607.02532>,
 Pt.2: <https://arxiv.org/abs/1806.07864>
-
 -}
 module Sound.Sc3.Data.Chemistry.Aflow where
 
@@ -32,14 +31,14 @@ read_aflow_index_csv fn = do
   tbl <- T.csv_table_read_def id fn
   let f r =
         case r of
-          [i,j,k] -> (read i,j,k)
+          [i, j, k] -> (read i, j, k)
           _ -> error "read_aflow_index_csv"
   return (map f tbl)
 
 -- | Read A index (ie. PART 1)
-aflow_index_A :: IO [(Int,String,String)]
+aflow_index_A :: IO [(Int, String, String)]
 aflow_index_A = read_aflow_index_csv (aflow_file "csv/index.A.csv")
 
 -- | Read A index (ie. PART 2)
-aflow_index_B :: IO [(Int,String,String)]
+aflow_index_B :: IO [(Int, String, String)]
 aflow_index_B = read_aflow_index_csv (aflow_file "csv/index.B.csv")

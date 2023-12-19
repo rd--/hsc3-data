@@ -16,8 +16,9 @@ csv_read_datum ty fn = do
   tbl <- Csv.csv_table_read_def id fn
   return (array_to_datum ty tbl)
 
--- | Write array of 'Datum' to CSV file.
--- /fp_prec/ is the precision to write floating point values at.
+{- | Write array of 'Datum' to CSV file.
+/fp_prec/ is the precision to write floating point values at.
+-}
 csv_write_datum :: Int -> FilePath -> [[Datum]] -> IO ()
 csv_write_datum fp_prec fn tbl =
   let tbl' = map (map (showDatum (Just fp_prec))) tbl

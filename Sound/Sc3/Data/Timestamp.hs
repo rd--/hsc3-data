@@ -12,8 +12,8 @@ import qualified Data.Time as T {- time -}
 gen_iso8601_time_stamp :: Bool -> IO String
 gen_iso8601_time_stamp ext =
   fmap
-  (T.formatTime T.defaultTimeLocale (if ext then  "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S"))
-  T.getZonedTime
+    (T.formatTime T.defaultTimeLocale (if ext then "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S"))
+    T.getZonedTime
 
 -- | Variant useful for forming portable file-names, with @:@ re-written as @-@.
 gen_iso8601_time_stamp_fn :: IO String
@@ -102,18 +102,18 @@ iso8601_fmt_ext_tz = "%FT%H:%M:%S%z"
 -- | Apply /f/ at /l/ until if provides a value, or 'Nothing' if it never does.
 locate :: (t -> Maybe u) -> [t] -> Maybe u
 locate f l =
-    case l of
-      [] -> Nothing
-      e:l' -> case f e of
-                Just r -> Just r
-                Nothing -> locate f l'
+  case l of
+    [] -> Nothing
+    e : l' -> case f e of
+      Just r -> Just r
+      Nothing -> locate f l'
 
 -- | Attempt to parse time-stamp using a sequence of format strings.
 parse_timestamp_fmt_seq :: T.ParseTime t => [String] -> String -> Maybe t
 parse_timestamp_fmt_seq fmt s =
-    let ptm = T.parseTimeM True T.defaultTimeLocale
-        try x = ptm x s
-    in locate try fmt
+  let ptm = T.parseTimeM True T.defaultTimeLocale
+      try x = ptm x s
+  in locate try fmt
 
 {- | Somewhat flexible time-stamp parser.
 
@@ -146,16 +146,16 @@ Just 2014-11-18 19:45:44
 
 >>> parse_timestamp "Wed, 22 Feb 2006 09:39:30 +1100 (AUS Eastern Standard Time)"
 Nothing
-
 -}
 parse_timestamp :: String -> Maybe T.LocalTime
 parse_timestamp =
-    parse_timestamp_fmt_seq
-    [rfc822_fmt_lenient
-    ,rfc822_fmt_infix_named_tz
-    ,rfc822_fmt_postfix_named_tz
-    ,rfc822_fmt_no_day_of_week
-    ,rfc822_fmt_no_tz
-    ,iso8601_fmt_basic
-    ,iso8601_fmt_ext
-    ,iso8601_fmt_ext_tz]
+  parse_timestamp_fmt_seq
+    [ rfc822_fmt_lenient
+    , rfc822_fmt_infix_named_tz
+    , rfc822_fmt_postfix_named_tz
+    , rfc822_fmt_no_day_of_week
+    , rfc822_fmt_no_tz
+    , iso8601_fmt_basic
+    , iso8601_fmt_ext
+    , iso8601_fmt_ext_tz
+    ]

@@ -7,36 +7,37 @@ import qualified Sound.Midi.Common as Midi {- midi-osc -}
 import Sound.Sc3.Data.Math.Types {- hsc3-data -}
 
 -- | (LSB,MSB)
-u12_pack_le :: (U4,U8) -> U12
-u12_pack_le (p,q) = u4_to_u12 p .|. shiftL (u8_to_u12 q) 4
+u12_pack_le :: (U4, U8) -> U12
+u12_pack_le (p, q) = u4_to_u12 p .|. shiftL (u8_to_u12 q) 4
 
 -- | (LSB,MSB)
-u16_pack_le :: (U8,U8) -> U16
-u16_pack_le (p,q) = u8_to_u16 p .|. shiftL (u8_to_u16 q) 8
+u16_pack_le :: (U8, U8) -> U16
+u16_pack_le (p, q) = u8_to_u16 p .|. shiftL (u8_to_u16 q) 8
 
 -- | Pack 'U24' from three 'U8', MSB-LSB.
-u24_pack_be :: (U8,U8,U8) -> U24
-u24_pack_be (p,q,r) = shiftL (u8_to_u32 p) 16 .|. shiftL (u8_to_u32 q) 8 .|. u8_to_u32 r
+u24_pack_be :: (U8, U8, U8) -> U24
+u24_pack_be (p, q, r) = shiftL (u8_to_u32 p) 16 .|. shiftL (u8_to_u32 q) 8 .|. u8_to_u32 r
 
-u24_pack_le :: (U8,U8,U8) -> U24
-u24_pack_le (p,q,r) = u24_pack_be (r,q,p)
+u24_pack_le :: (U8, U8, U8) -> U24
+u24_pack_le (p, q, r) = u24_pack_be (r, q, p)
 
-u24_unpack_be :: U24 -> (U8,U8,U8)
+u24_unpack_be :: U24 -> (U8, U8, U8)
 u24_unpack_be a =
-  (u32_to_u8 (shiftR a 16 .&. 0xFF)
-  ,u32_to_u8 (shiftR a 8 .&. 0xFF)
-  ,u32_to_u8 (a .&. 0xFF))
+  ( u32_to_u8 (shiftR a 16 .&. 0xFF)
+  , u32_to_u8 (shiftR a 8 .&. 0xFF)
+  , u32_to_u8 (a .&. 0xFF)
+  )
 
 -- | Pack 'U32' from four 'U8', MSB-LSB.
-u32_pack_be :: (U8,U8,U8,U8) -> U32
-u32_pack_be (p,q,r,s) =
-  shiftL (u8_to_u32 p) 24 .|.
-  shiftL (u8_to_u32 q) 16 .|.
-  shiftL (u8_to_u32 r)  8 .|.
-  u8_to_u32 s
+u32_pack_be :: (U8, U8, U8, U8) -> U32
+u32_pack_be (p, q, r, s) =
+  shiftL (u8_to_u32 p) 24
+    .|. shiftL (u8_to_u32 q) 16
+    .|. shiftL (u8_to_u32 r) 8
+    .|. u8_to_u32 s
 
-u32_pack_le :: (U8,U8,U8,U8) -> U32
-u32_pack_le (p,q,r,s) = u32_pack_be (s,r,q,p)
+u32_pack_le :: (U8, U8, U8, U8) -> U32
+u32_pack_le (p, q, r, s) = u32_pack_be (s, r, q, p)
 
 -- * U21
 
@@ -45,12 +46,12 @@ u32_pack_le (p,q,r,s) = u32_pack_be (s,r,q,p)
 >>> map u21_pack_be [(0x02,0x00,0x00),(0x02,0x0F,0x00)] == [0x8000,0x8780]
 True
 -}
-u21_pack_be :: (U8,U8,U8) -> U24
+u21_pack_be :: (U8, U8, U8) -> U24
 u21_pack_be = Midi.bits_21_join_be
 
-u21_pack_le :: (U8,U8,U8) -> U24
-u21_pack_le (p,q,r) = u21_pack_be (r,q,p)
+u21_pack_le :: (U8, U8, U8) -> U24
+u21_pack_le (p, q, r) = u21_pack_be (r, q, p)
 
 -- | Unpack 'U24' to 'U8', MSB-LSB.
-u21_unpack_be :: U24 -> (U8,U8,U8)
+u21_unpack_be :: U24 -> (U8, U8, U8)
 u21_unpack_be = Midi.bits_21_sep_be

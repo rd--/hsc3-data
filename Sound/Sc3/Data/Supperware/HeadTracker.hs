@@ -11,7 +11,7 @@ import qualified Sound.Midi.Constant as Constant {- midi-osc -}
 import qualified Sound.Midi.Type as Midi {- midi-osc -}
 
 -- | Two element (zero-prefixed) manufacturer id.
-supperwareManufacturerId :: Num i => (i,i,i)
+supperwareManufacturerId :: Num i => (i, i, i)
 supperwareManufacturerId = (0x00, 0x21, 0x42)
 
 -- | Enclose bytes in SysEx pre and post ambles.
@@ -23,9 +23,10 @@ supperwareSysEx contents = [Constant.k_SysEx_Status, 0x00, 0x21, 0x42] ++ conten
 >>> decodeQ2Dot11 (0x19,0x22) -- pi/2
 1.5791015625
 
->>> decodeQ2Dot11 (0x19,0x22) / pi * 180
+>>> decodeQ2Dot11 (0x19,0x22) / pi * 180 -- 90
+90.47585495376379
 -}
-decodeQ2Dot11 :: (Integral i, Bits i, Fractional r) => (i,i) -> r
+decodeQ2Dot11 :: (Integral i, Bits i, Fractional r) => (i, i) -> r
 decodeQ2Dot11 (b1, b2) =
   let w = (shiftL b1 7) + b2
       w' = if (w >= 0x2000) then w - 0x4000 else w
@@ -47,7 +48,7 @@ angleModeByte angleMode =
 
 {- | Turn head tracker on.
 
->>> turnOnMessage Matrix False
+>>> turnOnMessage MatrixMode False
 [240,0,33,66,0,0,8,1,9,3,64,247]
 -}
 turnOnMessage :: Num i => AngleMode -> Bool -> Midi.SysEx i
@@ -90,27 +91,31 @@ calibrateCompassMessage = singleValueSysEx (0x00, 0x03, 0x44)
 readbackMessage :: Num i => Midi.SysEx i
 readbackMessage =
   supperwareSysEx
-  [0x02 -- Message 2 : Readback
-  ,0x03 -- Magnetometer
-  ,0x04 -- Gesture and chirality
-  ,0x11 -- Travel mode
-  ]
+    [ 0x02 -- Message 2 : Readback
+    , 0x03 -- Magnetometer
+    , 0x04 -- Gesture and chirality
+    , 0x11 -- Travel mode
+    ]
 
-data Angle t = Ypr (t,t,t) | Quaternion (t,t,t,t) | Matrix (M33 t)
+data Angle t = Ypr (t, t, t) | Quaternion (t, t, t, t) | Matrix (M33 t)
   deriving (Eq, Show)
 
-decodeYpr :: (Integral i, Bits i, Fractional r) => (i,i,i,i,i,i) -> Angle r
-decodeYpr (y1,y2,p1,p2,r1,r2) =
-  Ypr (decodeQ2Dot11 (y1,y2)
-      ,decodeQ2Dot11 (p1,p2)
-      ,decodeQ2Dot11 (r1,r2))
+decodeYpr :: (Integral i, Bits i, Fractional r) => (i, i, i, i, i, i) -> Angle r
+decodeYpr (y1, y2, p1, p2, r1, r2) =
+  Ypr
+    ( decodeQ2Dot11 (y1, y2)
+    , decodeQ2Dot11 (p1, p2)
+    , decodeQ2Dot11 (r1, r2)
+    )
 
-decodeQuaternion :: (Integral i, Bits i, Fractional r) => (i,i,i,i,i,i,i,i) -> Angle r
-decodeQuaternion (w1,w2,x1,x2,y1,y2,z1,z2) =
-  Quaternion (decodeQ2Dot11 (w1,w2)
-             ,decodeQ2Dot11 (x1,x2)
-             ,decodeQ2Dot11 (y1,y2)
-             ,decodeQ2Dot11 (z1,z2))
+decodeQuaternion :: (Integral i, Bits i, Fractional r) => (i, i, i, i, i, i, i, i) -> Angle r
+decodeQuaternion (w1, w2, x1, x2, y1, y2, z1, z2) =
+  Quaternion
+    ( decodeQ2Dot11 (w1, w2)
+    , decodeQ2Dot11 (x1, x2)
+    , decodeQ2Dot11 (y1, y2)
+    , decodeQ2Dot11 (z1, z2)
+    )
 
 decodeMatrix :: (Integral i, Bits i, Fractional r) => [i] -> Angle r
 decodeMatrix bytes =
@@ -120,11 +125,11 @@ decodeMatrix bytes =
 parseSysEx :: (Integral i, Bits i, Fractional r) => [i] -> Maybe (Angle r)
 parseSysEx sysEx =
   case sysEx of
-    [0xF0,0x00,0x21,0x42,0x40,0x00,y1,y2,p1,p2,r1,r2,0xF7] ->
-      Just (decodeYpr (y1,y2,p1,p2,r1,r2))
-    [0xF0,0x00,0x21,0x42,0x40,0x01,w1,w2,x1,x2,y1,y2,z1,z2,0xF7] ->
-      Just (decodeQuaternion (w1,w2,x1,x2,y1,y2,z1,z2))
-    0xF0:0x00:0x21:0x42:0x40:0x02:rest ->
+    [0xF0, 0x00, 0x21, 0x42, 0x40, 0x00, y1, y2, p1, p2, r1, r2, 0xF7] ->
+      Just (decodeYpr (y1, y2, p1, p2, r1, r2))
+    [0xF0, 0x00, 0x21, 0x42, 0x40, 0x01, w1, w2, x1, x2, y1, y2, z1, z2, 0xF7] ->
+      Just (decodeQuaternion (w1, w2, x1, x2, y1, y2, z1, z2))
+    0xF0 : 0x00 : 0x21 : 0x42 : 0x40 : 0x02 : rest ->
       Just (decodeMatrix (take (9 * 2) rest))
     _ -> Nothing
 
@@ -144,4 +149,3 @@ printYpr (Just (Ypr (y,p,r))) = let f x = round (x * 180) in print (f y,f p,f r)
 pm_with_input_device i (\fd -> forever (pm_sysex_read fd >>= (printYpr . parseSysEx)))
 
 -}
-

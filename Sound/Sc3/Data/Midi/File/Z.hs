@@ -59,14 +59,14 @@ z_parse_midi_voice_event e =
     Z.ProgramChange st d1 -> M.Program_Change (z_status_ch st) (fromIntegral d1)
     Z.ChanAftertouch st d1 -> M.Channel_Aftertouch (z_status_ch st) (fromIntegral d1)
     Z.PitchBend st d ->
-      let (d1,d2) = M.bits_14_sep_le (z_word14_to_int d)
+      let (d1, d2) = M.bits_14_sep_le (z_word14_to_int d)
       in M.Pitch_Bend (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
 
 -- | Parse voice message at 'Z.MidiMessage' to 'M.Channel_Voice_Message'.
-z_parse_midi_message :: Z.MidiMessage -> Maybe (Z.DeltaTime,M.Channel_Voice_Message Int)
-z_parse_midi_message (t,e) =
+z_parse_midi_message :: Z.MidiMessage -> Maybe (Z.DeltaTime, M.Channel_Voice_Message Int)
+z_parse_midi_message (t, e) =
   case e of
-    Z.VoiceEvent _ v -> Just (t,z_parse_midi_voice_event v)
+    Z.VoiceEvent _ v -> Just (t, z_parse_midi_voice_event v)
     _ -> Nothing
 
 -- | Parse voice messages at 'Z.MidiTrack'.
@@ -104,9 +104,9 @@ z_is_tempo_event = isJust . z_meta_event_tempo
 -- | Sequence of 'Z.SetTempo' events.
 z_midi_track_tempo :: Z.MidiTrack -> T.Tseq Word64 (Maybe Word32)
 z_midi_track_tempo =
-  filter (isJust . snd) .
-  map (fmap (z_meta_event_tempo <=< z_meta_event)) .
-  z_midi_track_to_abs
+  filter (isJust . snd)
+    . map (fmap (z_meta_event_tempo <=< z_meta_event))
+    . z_midi_track_to_abs
 
 -- | 'Z.MidiTrack' with delta time-stamps converted to absolute time.
 z_midi_track_to_abs :: Z.MidiTrack -> T.Tseq Word64 Z.MidiEvent

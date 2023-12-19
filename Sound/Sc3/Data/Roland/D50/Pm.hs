@@ -7,9 +7,10 @@ import Sound.Sc3.Data.Math.Types {- hsc3-data -}
 import Sound.Sc3.Data.Roland.D50 {- hsc3-data -}
 import Sound.Sc3.Data.Roland.D50.Pp {- hsc3-data -}
 
--- | Send Ack sysex.
---
--- > Pm.pm_with_default_output (d50_send_ack 0)
+{- | Send Ack sysex.
+
+> Pm.pm_with_default_output (d50_send_ack 0)
+-}
 d50_send_ack :: U8 -> Pm.Pm_Fd -> IO ()
 d50_send_ack ch fd = Pm.pm_sysex_write fd (d50_ack_gen ch)
 
@@ -30,7 +31,7 @@ d50_recv_ack :: Pm.Pm_Fd -> IO ()
 d50_recv_ack fd = do
   syx <- Pm.pm_sysex_read fd
   case d50_cmd_parse syx of
-    Just (_,Ack_Cmd,[],0) -> return ()
+    Just (_, Ack_Cmd, [], 0) -> return ()
     _ -> error "d50_recv_ack?"
 
 -- | Receive RQD sysex, else error.
@@ -38,41 +39,42 @@ d50_recv_rqd :: Pm.Pm_Fd -> IO (D50_Address, U24)
 d50_recv_rqd fd = do
   syx <- Pm.pm_sysex_read fd
   case d50_addr_sz_cmd_parse syx of
-    Just (_,Rqd_Cmd,addr,sz) -> return (addr,sz)
+    Just (_, Rqd_Cmd, addr, sz) -> return (addr, sz)
     _ -> error ("d50_recv_rqd? : " ++ d50_sysex_pp syx)
 
 -- | Read sequence of DAT sysex, send ACK for each, until EOD sysex arrives.
-d50_recv_dat_seq :: U8 -> (Pm.Pm_Fd,Pm.Pm_Fd) -> IO [D50_Dsc]
-d50_recv_dat_seq ch (in_fd,out_fd) =
+d50_recv_dat_seq :: U8 -> (Pm.Pm_Fd, Pm.Pm_Fd) -> IO [D50_Dsc]
+d50_recv_dat_seq ch (in_fd, out_fd) =
   let recur st = do
         syx <- Pm.pm_sysex_read in_fd
         case d50_cmd_parse syx of
-          Just (_,Dat_Cmd,_,_) ->
-            d50_send_ack ch out_fd >>
-            recur (d50_dsc_parse_err syx : st)
-          Just (_,Eod_Cmd,[],0) -> return (reverse st)
+          Just (_, Dat_Cmd, _, _) ->
+            d50_send_ack ch out_fd
+              >> recur (d50_dsc_parse_err syx : st)
+          Just (_, Eod_Cmd, [], 0) -> return (reverse st)
           _ -> error "d50_recv_dat_seq?"
   in recur []
 
 -- | Read WSD sysex, send ACK, then run 'd50_recv_dat_seq'.
-d50_recv_dat :: U8 -> (Pm.Pm_Fd,Pm.Pm_Fd) -> IO [D50_Dsc]
-d50_recv_dat ch (in_fd,out_fd) =  do
+d50_recv_dat :: U8 -> (Pm.Pm_Fd, Pm.Pm_Fd) -> IO [D50_Dsc]
+d50_recv_dat ch (in_fd, out_fd) = do
   syx <- Pm.pm_sysex_read in_fd
   case d50_cmd_parse syx of
-    Just (_,Wsd_Cmd,_,6) -> do
+    Just (_, Wsd_Cmd, _, 6) -> do
       d50_send_ack ch out_fd
-      d50_recv_dat_seq ch (in_fd,out_fd)
+      d50_recv_dat_seq ch (in_fd, out_fd)
     _ -> error "d50_recv_dat?"
 
 -- | 'd50_recv_dat' with default MIDI I/O.
 d50_recv_dat_def :: U8 -> IO [D50_Dsc]
 d50_recv_dat_def ch = Pm.pm_with_io_def (d50_recv_dat ch)
 
--- | Run 'd50_recv_dat_def' then 'd50_bulk_data_transfer_parse'.
---
--- > (p,r) <- d50_recv_bulk_data 0
--- > map d50_patch_name p
-d50_recv_bulk_data :: U8 -> IO ([D50_Patch],[D50_Reverb])
+{- | Run 'd50_recv_dat_def' then 'd50_bulk_data_transfer_parse'.
+
+> (p,r) <- d50_recv_bulk_data 0
+> map d50_patch_name p
+-}
+d50_recv_bulk_data :: U8 -> IO ([D50_Patch], [D50_Reverb])
 d50_recv_bulk_data ch = do
   d <- d50_recv_dat_def ch
   case d50_bulk_data_transfer_parse (d50_dsc_seq_join d) of
@@ -80,18 +82,19 @@ d50_recv_bulk_data ch = do
     Just r -> return r
 
 -- | Send each 'D50_Dsc' then wait for 'ACK'.
-d50_send_dat_seq :: [D50_Dsc] -> (Pm.Pm_Fd,Pm.Pm_Fd) -> IO ()
-d50_send_dat_seq dsc (in_fd,out_fd) =
-  let f e = d50_send_dsc (d50_dsc_set_cmd Dat_Cmd e) out_fd >>
-            d50_recv_ack in_fd
+d50_send_dat_seq :: [D50_Dsc] -> (Pm.Pm_Fd, Pm.Pm_Fd) -> IO ()
+d50_send_dat_seq dsc (in_fd, out_fd) =
+  let f e =
+        d50_send_dsc (d50_dsc_set_cmd Dat_Cmd e) out_fd
+          >> d50_recv_ack in_fd
   in mapM_ f dsc
 
 -- | Send WSD, recv ACK, run 'd50_send_dat_seq', send EOD.
-d50_send_bulk_data :: U8 -> [D50_Dsc] -> (Pm.Pm_Fd,Pm.Pm_Fd) -> IO ()
-d50_send_bulk_data ch dsc (in_fd,out_fd) = do
+d50_send_bulk_data :: U8 -> [D50_Dsc] -> (Pm.Pm_Fd, Pm.Pm_Fd) -> IO ()
+d50_send_bulk_data ch dsc (in_fd, out_fd) = do
   d50_send_wsd ch 0x8000 0x8780 out_fd
   d50_recv_ack in_fd
-  d50_send_dat_seq dsc (in_fd,out_fd)
+  d50_send_dat_seq dsc (in_fd, out_fd)
   d50_send_eod ch out_fd
 
 -- | 'Pm.pm_with_io_def' of 'd50_send_bulk_data'
@@ -101,7 +104,7 @@ d50_send_bulk_data_def ch dsc = Pm.pm_with_io_def (d50_send_bulk_data ch dsc)
 -- | Send patch data to temporary memory area, as DT1 command sequence.
 d50_send_patch_tmp_fd :: D50_Patch -> Pm.Pm_Fd -> IO ()
 d50_send_patch_tmp_fd p fd = do
-  let d = d50_dsc_gen_seq (Dt1_Cmd,0,0,p)
+  let d = d50_dsc_gen_seq (Dt1_Cmd, 0, 0, p)
   -- mapM_ (putStrLn . d50_sysex_pp) d
   Pm.pm_sysex_write_seq 20 fd d
 
@@ -110,7 +113,6 @@ d50_send_patch_tmp_fd p fd = do
 > let fn = "/home/rohan/sw/hsc3-data/data/roland/d50/PN-D50-00.syx"
 > (p,r) <- d50_load_sysex fn
 > d50_send_patch_tmp_def (p !! 0)
-
 -}
 d50_send_patch_tmp_def :: D50_Patch -> IO ()
 d50_send_patch_tmp_def = Pm.pm_with_default_output . d50_send_patch_tmp_fd

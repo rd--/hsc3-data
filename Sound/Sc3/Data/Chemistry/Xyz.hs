@@ -21,50 +21,52 @@ import Music.Theory.Geometry.Vector {- hmt-base -}
 read_r :: String -> Double
 read_r s =
   case s of
-    '-':'.':s' -> read ('-':'0':'.':s')
-    '.':_ -> read ('0':s)
+    '-' : '.' : s' -> read ('-' : '0' : '.' : s')
+    '.' : _ -> read ('0' : s)
     _ -> read s
 
 -- | (atomic-symbol,xyz-coordinate)
-type Xyz_ATOM = (String,V3 Double)
+type Xyz_ATOM = (String, V3 Double)
 
 -- | (k = n-atoms,d = description,e = [atom]
-type Xyz = (Int,String,[Xyz_ATOM])
+type Xyz = (Int, String, [Xyz_ATOM])
 
 -- | Number of atoms.
 xyz_degree :: Xyz -> Int
-xyz_degree (k,_,_) = k
+xyz_degree (k, _, _) = k
 
 -- | k == |atoms|
 xyz_is_valid :: Xyz -> Bool
-xyz_is_valid (k,_dsc,ent) = k == length ent
+xyz_is_valid (k, _dsc, ent) = k == length ent
 
 -- | Set of atoms present.
 xyz_atom_set :: Xyz -> [String]
-xyz_atom_set (_,_,ent) = nub (sort (map fst ent))
+xyz_atom_set (_, _, ent) = nub (sort (map fst ent))
 
 {- | The first line is the number of atoms.  This may be preceded by
-whitespace and anything following is ignored. -}
+whitespace and anything following is ignored.
+-}
 xyz_parse_cnt :: String -> Int
 xyz_parse_cnt s =
   case words s of
-    k:_ -> read k
+    k : _ -> read k
     _ -> error ("xyz_parse_cnt: " ++ s)
 
 {- | Each entry describing an atom must contain at least four fields of
 information separated by whitespace: the atom's type and its X, Y, and
-Z positions. -}
+Z positions.
+-}
 xyz_parse_entry :: String -> String -> Xyz_ATOM
 xyz_parse_entry fn s =
   case words s of
-    a:x:y:z:_ -> (a,(read_r x,read_r y,read_r z))
+    a : x : y : z : _ -> (a, (read_r x, read_r y, read_r z))
     _ -> error ("xyz_parse_entry: " ++ fn)
 
 -- | Parse ".xyz" file.
 xyz_parse :: FilePath -> String -> Xyz
 xyz_parse fn s =
   case lines s of
-    k:dsc:ent -> (xyz_parse_cnt k,dsc,map (xyz_parse_entry fn) ent)
+    k : dsc : ent -> (xyz_parse_cnt k, dsc, map (xyz_parse_entry fn) ent)
     _ -> error ("xyz_parse: " ++ fn)
 
 {- | Generate Xyz file text.
@@ -73,17 +75,17 @@ xyz_parse fn s =
 "1\nx\nC  1.0000 2.0000 3.0000\n"
 -}
 xyz_pp :: Int -> Xyz -> [String]
-xyz_pp k (n_a,dsc,a) =
+xyz_pp k (n_a, dsc, a) =
   let e_pp x = if length x == 2 then x else x ++ " "
-      a_pp (e,(x,y,z)) = unwords (e_pp e : map (T.double_pp k) [x,y,z])
-  in [show n_a,dsc] ++ map a_pp a
+      a_pp (e, (x, y, z)) = unwords (e_pp e : map (T.double_pp k) [x, y, z])
+  in [show n_a, dsc] ++ map a_pp a
 
 -- | (minima,maxima) of atoms.
 xyz_bounds :: Xyz -> V2 (V3 Double)
-xyz_bounds (_,_,a) =
+xyz_bounds (_, _, a) =
   let c = map snd a
       r = unzip3 c
-  in (v3_map minimum r,v3_map maximum r)
+  in (v3_map minimum r, v3_map maximum r)
 
 {- | Load ".xyz" file.
 

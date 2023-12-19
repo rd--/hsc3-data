@@ -18,13 +18,13 @@ import qualified Sound.Sc3.Data.Xml as Xml {- hsc3-data -}
 -- * Fxb / Io
 
 -- | Load Obxd Fxb file, returns the number of progams and the Xml data.
-obxd_fxb_load_xml :: FilePath -> IO (Word32,String)
+obxd_fxb_load_xml :: FilePath -> IO (Word32, String)
 obxd_fxb_load_xml fxb_fn = do
-  (fx_id,fx_v,fx_sz,dat) <- Vst.fx_load_CcnK_FBCh fxb_fn
+  (fx_id, fx_v, fx_sz, dat) <- Vst.fx_load_CcnK_FBCh fxb_fn
   when (Vst.word32_to_str fx_id /= "Obxd") (error "obxd_load_fxb: fx-id?")
-  when (fx_v /= 100) (print ("obxd_load_fxb: fx-version?",fx_v))
+  when (fx_v /= 100) (print ("obxd_load_fxb: fx-version?", fx_v))
   let xml_n = Vst.pack_word32 (reverse (take 4 (drop 4 dat)))
-  return (fx_sz,map Vst.word8_to_char (genericTake xml_n (drop 8 dat)))
+  return (fx_sz, map Vst.word8_to_char (genericTake xml_n (drop 8 dat)))
 
 -- * Xml / Io
 
@@ -36,19 +36,20 @@ obxd_load_xml_lax fn = do
       str_pack = B.pack . map (fromIntegral . fromEnum)
       is_ascii_print :: Word8 -> Bool
       is_ascii_print c = c >= 32 && c <= 126
-      (_,r) = B.breakSubstring (str_pack "<Datsounds") b
+      (_, r) = B.breakSubstring (str_pack "<Datsounds") b
   return (B.takeWhile is_ascii_print r)
 
 -- * Xml / Parse
 
 -- | (Program-Name,Parameter-Data)
-type Obxd_Program = (String,[Double])
+type Obxd_Program = (String, [Double])
 
 -- | Parse attributes from program element (for fxb) or Datsounds element (for fxp).
 obxd_attr_parse :: X.Element -> Obxd_Program
 obxd_attr_parse e =
-  (Xml.x_get_attr "programName" e
-  ,map (\x -> read (Xml.x_get_attr (show x) e)) [0::Int .. 70])
+  ( Xml.x_get_attr "programName" e
+  , map (\x -> read (Xml.x_get_attr (show x) e)) [0 :: Int .. 70]
+  )
 
 -- | Parse Fxp Xml data.
 obd_fxp_xml_parse :: X.XmlSource x => x -> Obxd_Program
@@ -74,10 +75,10 @@ obxd_fxb_load_lax = fmap obd_fxb_xml_parse . obxd_load_xml_lax
 
 -- | Encode 'Obxd_Program' as CSV entry, /k/ is the precision to print to.
 obxd_program_to_csv :: Int -> Obxd_Program -> String
-obxd_program_to_csv k (nm,dat) =
+obxd_program_to_csv k (nm, dat) =
   if ',' `elem` nm
-  then error "obxd_program_to_csv: name comma?"
-  else intercalate "," (nm : map (Sc3.real_pp k) dat)
+    then error "obxd_program_to_csv: name comma?"
+    else intercalate "," (nm : map (Sc3.real_pp k) dat)
 
 -- | 'writeFile' of 'obxd_program_to_csv'.
 obxd_write_csv :: Int -> FilePath -> [Obxd_Program] -> IO ()
@@ -87,10 +88,11 @@ obxd_write_csv k fn = writeFile fn . unlines . map (obxd_program_to_csv k)
 obxd_parse_csv :: String -> Obxd_Program
 obxd_parse_csv s =
   case Split.splitOn "," s of
-    nm:dat -> let n = length dat
-              in if n < 71 || n > 80
-                 then error ("obxd_parse_csv: n-param = " ++ show n)
-                 else (nm,map read dat)
+    nm : dat ->
+      let n = length dat
+      in if n < 71 || n > 80
+          then error ("obxd_parse_csv: n-param = " ++ show n)
+          else (nm, map read dat)
     _ -> error "obxd_parse_csv?"
 
 -- | 'obxd_parse_csv' of 'readFile'.
@@ -104,85 +106,102 @@ obxd_load_csv fn = do
 -- | 'writeFile' of 'obxd_load_fxb'
 obxd_fxb_to_xml :: FilePath -> FilePath -> IO ()
 obxd_fxb_to_xml fxb_fn xml_fn = do
-  (_,xml_str) <- obxd_fxb_load_xml fxb_fn
+  (_, xml_str) <- obxd_fxb_load_xml fxb_fn
   writeFile xml_fn xml_str
 
 -- | 'obd_xml_parse' of 'obxd_load_fxb'
 obxd_load_programs :: FilePath -> IO [Obxd_Program]
 obxd_load_programs fn = do
-  (n,x) <- obxd_fxb_load_xml fn
+  (n, x) <- obxd_fxb_load_xml fn
   let p = obd_fxb_xml_parse x
-  when (n /= genericLength p) (print ("obxd_load_programs?",n,length p))
+  when (n /= genericLength p) (print ("obxd_load_programs?", n, length p))
   return p
 
 -- > length obxd_def == 80
 obxd_param_def :: [Double]
-obxd_param_def = [0,0,0.5,1,0.5,0.5,0,0,0,0.6,0,0,0,0,0,0.2,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0.3,0.3,0.3,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0,1,0,0,0,0,0,0,0.3,0]
+obxd_param_def = [0, 0, 0.5, 1, 0.5, 0.5, 0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0.2, 0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.3, 0.3, 0.3, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 1, 0, 0, 0, 0, 0, 0, 0.3, 0]
 
 -- > length obxd_param_nm == 80
 obxd_param_nm :: [String]
 obxd_param_nm =
-  ["UNDEFINED" -- 0
-  ,"MIDILEARN"
-  ,"VOLUME"
-  ,"VOICE_COUNT"
-  ,"TUNE"
-  ,"OCTAVE"
-  ,"BENDRANGE"
-  ,"BENDOSC2"
-  ,"LEGATOMODE"
-  ,"BENDLFORATE"
-  ,"VFLTENV" -- 10
-  ,"VAMPENV"
-  ,"ASPLAYEDALLOCATION"
-  ,"PORTAMENTO"
-  ,"UNISON"
-  ,"UDET"
-  ,"OSC2_DET"
-  ,"LFOFREQ"
-  ,"LFOSINWAVE","LFOSQUAREWAVE","LFOSHWAVE" -- 18-20
-  ,"LFO1AMT","LFO2AMT"
-  ,"LFOOSC1","LFOOSC2","LFOFILTER","LFOPW1","LFOPW2"
-  ,"OSC2HS"
-  ,"XMOD"
-  ,"OSC1P" -- 30
-  ,"OSC2P"
-  ,"OSCQuantize"
-  ,"OSC1Saw"
-  ,"OSC1Pul"
-  ,"OSC2Saw"
-  ,"OSC2Pul"
-  ,"PW"
-  ,"BRIGHTNESS"
-  ,"ENVPITCH"
-  ,"OSC1MIX" -- 40
-  ,"OSC2MIX"
-  ,"NOISEMIX"
-  ,"FLT_KF"
-  ,"CUTOFF"
-  ,"RESONANCE"
-  ,"MULTIMODE"
-  ,"FILTER_WARM"
-  ,"BANDPASS"
-  ,"FOURPOLE"
-  ,"ENVELOPE_AMT" -- 50
-  ,"LATK"
-  ,"LDEC"
-  ,"LSUS"
-  ,"LREL"
-  ,"FATK"
-  ,"FDEC"
-  ,"FSUS"
-  ,"FREL"
-  ,"ENVDER","FILTERDER","PORTADER" -- 59-61
-  ,"PAN1","PAN2","PAN3","PAN4","PAN5","PAN6","PAN7","PAN8"
-  ,"UNLEARN" -- 70
-  ,"ECONOMY_MODE" -- 2014-07-06
-  ,"LFO_SYNC" -- 2014-07-18
-  ,"PW_ENV" -- 2014-07-21
-  ,"PW_ENV_BOTH"
-  ,"ENV_PITCH_BOTH"
-  ,"FENV_INVERT"
-  ,"PW_OSC2_OFS"
-  ,"LEVEL_DIF"
-  ,"SELF_OSC_PUSH"]
+  [ "UNDEFINED" -- 0
+  , "MIDILEARN"
+  , "VOLUME"
+  , "VOICE_COUNT"
+  , "TUNE"
+  , "OCTAVE"
+  , "BENDRANGE"
+  , "BENDOSC2"
+  , "LEGATOMODE"
+  , "BENDLFORATE"
+  , "VFLTENV" -- 10
+  , "VAMPENV"
+  , "ASPLAYEDALLOCATION"
+  , "PORTAMENTO"
+  , "UNISON"
+  , "UDET"
+  , "OSC2_DET"
+  , "LFOFREQ"
+  , "LFOSINWAVE"
+  , "LFOSQUAREWAVE"
+  , "LFOSHWAVE" -- 18-20
+  , "LFO1AMT"
+  , "LFO2AMT"
+  , "LFOOSC1"
+  , "LFOOSC2"
+  , "LFOFILTER"
+  , "LFOPW1"
+  , "LFOPW2"
+  , "OSC2HS"
+  , "XMOD"
+  , "OSC1P" -- 30
+  , "OSC2P"
+  , "OSCQuantize"
+  , "OSC1Saw"
+  , "OSC1Pul"
+  , "OSC2Saw"
+  , "OSC2Pul"
+  , "PW"
+  , "BRIGHTNESS"
+  , "ENVPITCH"
+  , "OSC1MIX" -- 40
+  , "OSC2MIX"
+  , "NOISEMIX"
+  , "FLT_KF"
+  , "CUTOFF"
+  , "RESONANCE"
+  , "MULTIMODE"
+  , "FILTER_WARM"
+  , "BANDPASS"
+  , "FOURPOLE"
+  , "ENVELOPE_AMT" -- 50
+  , "LATK"
+  , "LDEC"
+  , "LSUS"
+  , "LREL"
+  , "FATK"
+  , "FDEC"
+  , "FSUS"
+  , "FREL"
+  , "ENVDER"
+  , "FILTERDER"
+  , "PORTADER" -- 59-61
+  , "PAN1"
+  , "PAN2"
+  , "PAN3"
+  , "PAN4"
+  , "PAN5"
+  , "PAN6"
+  , "PAN7"
+  , "PAN8"
+  , "UNLEARN" -- 70
+  , "ECONOMY_MODE" -- 2014-07-06
+  , "LFO_SYNC" -- 2014-07-18
+  , "PW_ENV" -- 2014-07-21
+  , "PW_ENV_BOTH"
+  , "ENV_PITCH_BOTH"
+  , "FENV_INVERT"
+  , "PW_OSC2_OFS"
+  , "LEVEL_DIF"
+  , "SELF_OSC_PUSH"
+  ]

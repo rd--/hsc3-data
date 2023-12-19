@@ -1,10 +1,11 @@
--- | Yamaha Dx7
---
---  6-OP: GS-1 FM = 1981, DX1 & Dx7 = 1983, TX816 = 1984, Dx7-IID = 1986, Dx7S & TX802 = 1987
---  4-OP: DX9 = 1983, DX21 & DX100 = 1985, DX11 & TX81Z = 1987
---
--- <https://github.com/asb2m10/dexed/blob/master/Documentation/sysex-format.txt>
--- <https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
+{- | Yamaha Dx7
+
+ 6-OP: GS-1 FM = 1981, DX1 & Dx7 = 1983, TX816 = 1984, Dx7-IID = 1986, Dx7S & TX802 = 1987
+ 4-OP: DX9 = 1983, DX21 & DX100 = 1985, DX11 & TX81Z = 1987
+
+<https://github.com/asb2m10/dexed/blob/master/Documentation/sysex-format.txt>
+<https://sourceforge.net/u/tedfelix/dx7dump/ci/master/tree/dx7dump.cpp>
+-}
 module Sound.Sc3.Data.Yamaha.Dx7 where
 
 import Control.Monad {- base -}
@@ -56,7 +57,7 @@ dx7_param_eq_ignoring :: [U8] -> Dx7_Param -> Dx7_Param -> Bool
 dx7_param_eq_ignoring = List.list_eq_ignoring_indices
 
 -- | Replace each (ix,value) at 'Dx7_Param'.
-dx7_param_set :: [(U8,U8)] -> Dx7_Param -> Dx7_Param
+dx7_param_set :: [(U8, U8)] -> Dx7_Param -> Dx7_Param
 dx7_param_set = List.list_set_indices
 
 -- | Type-specialised !!.
@@ -112,26 +113,27 @@ type Dx7_Voice = [U8]
 dx7_param_to_dx7_voice :: String -> Dx7_Param -> Dx7_Voice
 dx7_param_to_dx7_voice nm =
   if length nm /= 10
-  then error "dx7_param_to_dx7_voice"
-  else flip (++) (map fromEnum nm)
+    then error "dx7_param_to_dx7_voice"
+    else flip (++) (map fromEnum nm)
 
--- | Select the 145 parameter bytes from a 155-byte 'Dx7_Voice'.
---   ie. delete the 10 ASCII character voice-name.
+{- | Select the 145 parameter bytes from a 155-byte 'Dx7_Voice'.
+  ie. delete the 10 ASCII character voice-name.
+-}
 dx7_voice_param :: Dx7_Voice -> Dx7_Param
 dx7_voice_param = take 145
 
 -- | Collect any out-of-range parameter data as (IX,VALUE,(MIN,MAX)) triples.
-dx7_voice_out_of_range :: Dx7_Voice -> [(U8,U8,(U8,U8))]
+dx7_voice_out_of_range :: Dx7_Voice -> [(U8, U8, (U8, U8))]
 dx7_voice_out_of_range d =
   let rng = map dx7_parameter_range dx7_parameter_tbl
-      chk (ix,n,(l,r)) = if n >= l && n <= r then Nothing else Just (ix,n,(l,r))
-  in mapMaybe chk (zip3 [0..154] d rng)
+      chk (ix, n, (l, r)) = if n >= l && n <= r then Nothing else Just (ix, n, (l, r))
+  in mapMaybe chk (zip3 [0 .. 154] d rng)
 
 -- | Re-write any out-of-range parameter data to be within range.
 dx7_voice_param_correct :: Dx7_Voice -> Dx7_Voice
 dx7_voice_param_correct d =
   let rng = map dx7_parameter_range dx7_parameter_tbl
-      clp n (l,r) = if n < l then l else if n > r then r else n
+      clp n (l, r) = if n < l then l else if n > r then r else n
   in zipWith clp d rng
 
 -- | Check the voice has 'dx7_nvoice' bytes, and perhaps that all parameter data is in range.
@@ -155,24 +157,24 @@ dx7_voice_sh_params = take dx7_sh_nparam . drop (dx7_op_nparam * 6)
 
 -- | Dx7 INIT operator, /x/ is the output level (# = 21)
 dx7_init_op :: U8 -> [U8]
-dx7_init_op x = [99,99,99,99,99,99,99,0,39,0,0,0,0,0,0,0,x,0,1,0,7]
+dx7_init_op x = [99, 99, 99, 99, 99, 99, 99, 0, 39, 0, 0, 0, 0, 0, 0, 0, x, 0, 1, 0, 7]
 
 {- | Dx7 INIT PITCH EG (# = 8; IX = 126-133)
 
 > putStrLn $ unlines $ map dx7_parameter_name [126 .. 133]
 -}
 dx7_init_pitch_eg :: [U8]
-dx7_init_pitch_eg = [99,99,99,99,50,50,50,50]
+dx7_init_pitch_eg = [99, 99, 99, 99, 50, 50, 50, 50]
 
 {- | Dx7 INIT LFO (# = 6; IX = 137-142)
 
 > putStrLn $ unlines $ map dx7_parameter_name [137 .. 142]
 -}
 dx7_init_lfo :: [U8]
-dx7_init_lfo = [35,0,0,0,1,0]
+dx7_init_lfo = [35, 0, 0, 0, 1, 0]
 
 dx7_init_sh :: [U8]
-dx7_init_sh = dx7_init_pitch_eg ++ [0,0,1] ++ dx7_init_lfo ++ [3,24]
+dx7_init_sh = dx7_init_pitch_eg ++ [0, 0, 1] ++ dx7_init_lfo ++ [3, 24]
 
 {- | Dx7 INIT VOICE, from Dx7-II CART 64-B.
 
@@ -190,7 +192,7 @@ dx7_init_voice =
   let op_6_2 = concat (replicate 5 (dx7_init_op 0))
       op_1 = dx7_init_op 99
       nm = dx7_name_encode '?' "INIT VOICE"
-  in concat [op_6_2,op_1,dx7_init_sh,nm]
+  in concat [op_6_2, op_1, dx7_init_sh, nm]
 
 {-
 -- | Type-specialised 'B.pack'.
@@ -219,8 +221,9 @@ type Dx7_Bank = [Dx7_Voice]
 dx7_bank_verify :: Bool -> Dx7_Bank -> Bool
 dx7_bank_verify chk_rng b = length b == 32 && all (dx7_voice_verify chk_rng) b
 
--- | Make bank from /v/, if there are less than 32 voices extend with 'dx7_init_voice'.
---   It is an error for there to be more than 32 voices.
+{- | Make bank from /v/, if there are less than 32 voices extend with 'dx7_init_voice'.
+  It is an error for there to be more than 32 voices.
+-}
 dx7_voices_to_bank :: [Dx7_Voice] -> Dx7_Bank
 dx7_voices_to_bank v =
   case compare (length v) 32 of
@@ -244,55 +247,58 @@ dx7_checksum d = (complement (sum (map (0x7F .&.) d)) + 1) .&. 0x7F
 type Dx7_Usr = String
 
 -- | Make (IX,STR) table from Usr.
-dx7_usr_str_tbl :: Dx7_Usr -> [(U8,String)]
-dx7_usr_str_tbl = zip [0..] . Split.splitOn ";"
+dx7_usr_str_tbl :: Dx7_Usr -> [(U8, String)]
+dx7_usr_str_tbl = zip [0 ..] . Split.splitOn ";"
 
 -- | Lookup IX at Usr.
 dx7_usr_str_ix :: Dx7_Usr -> U8 -> String
 dx7_usr_str_ix s k =
-  fromMaybe (error ("dx7_usr_str_ix: " ++ show (s,k)))
-  (lookup k (dx7_usr_str_tbl s))
+  fromMaybe
+    (error ("dx7_usr_str_ix: " ++ show (s, k)))
+    (lookup k (dx7_usr_str_tbl s))
 
 -- | Table of (Type,Usr).
-dx7_typ_usr_str_tbl :: [(String,Dx7_Usr)]
+dx7_typ_usr_str_tbl :: [(String, Dx7_Usr)]
 dx7_typ_usr_str_tbl =
-    [("BOOL","OFF;ON")
-    ,("CURVE","-LIN;-EXP;+EXP;+LIN")
-    ,("LFO-WAVE","TR;SD;SU;SQ;SI;SH") -- TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD
-    ,("MODE","RATIO;FIXED")]
+  [ ("BOOL", "OFF;ON")
+  , ("CURVE", "-LIN;-EXP;+EXP;+LIN")
+  , ("LFO-WAVE", "TR;SD;SU;SQ;SI;SH") -- TRIANGLE;SAWTOOTH-DOWN;SAWTOOTH-UP;SQUARE;SINE;SAMPLE-AND-HOLD
+  , ("MODE", "RATIO;FIXED")
+  ]
 
 -- | Lookup Usr string for Type.
 dx7_typ_usr_str :: String -> Dx7_Usr
 dx7_typ_usr_str ty = List.lookup_err ty dx7_typ_usr_str_tbl
 
 -- | Show with '+' prefix if positive.
-dx7_usr_signed :: (Num n,Show n,Ord n) => n -> String
+dx7_usr_signed :: (Num n, Show n, Ord n) => n -> String
 dx7_usr_signed n = if n <= 0 then show n else '+' : show n
 
 {- | Usr string for range.
 
 > dx7_usr_range True (-50,49)
 -}
-dx7_usr_range :: Bool -> (Int,Int) -> Dx7_Usr
-dx7_usr_range sgn (p,q) = intercalate ";" (map (if sgn then dx7_usr_signed else show) [p .. q])
+dx7_usr_range :: Bool -> (Int, Int) -> Dx7_Usr
+dx7_usr_range sgn (p, q) = intercalate ";" (map (if sgn then dx7_usr_signed else show) [p .. q])
 
--- | (Dx7-Ix,Name,Steps,Usr_Diff,Usr_Str)
---
--- All parameters except the NAME data are in the range (0,STEPS-1).
--- NAME data is in (32,126), ie. the ASCII printable characters.
-type Dx7_Parameter = (U8,String,U8,I8,Dx7_Usr)
+{- | (Dx7-Ix,Name,Steps,Usr_Diff,Usr_Str)
+
+All parameters except the NAME data are in the range (0,STEPS-1).
+NAME data is in (32,126), ie. the ASCII printable characters.
+-}
+type Dx7_Parameter = (U8, String, U8, I8, Dx7_Usr)
 
 dx7_parameter_ix :: Dx7_Parameter -> U8
-dx7_parameter_ix (n,_,_,_,_) = n
+dx7_parameter_ix (n, _, _, _, _) = n
 
 dx7_parameter_nm :: Dx7_Parameter -> String
-dx7_parameter_nm (_,nm,_,_,_) = nm
+dx7_parameter_nm (_, nm, _, _, _) = nm
 
-dx7_parameter_range :: Dx7_Parameter -> (U8,U8)
-dx7_parameter_range (ix,_,n,_,_) = if ix < 145 then (0,n - 1) else (32,126)
+dx7_parameter_range :: Dx7_Parameter -> (U8, U8)
+dx7_parameter_range (ix, _, n, _, _) = if ix < 145 then (0, n - 1) else (32, 126)
 
-dx7_parameter_range_usr :: Dx7_Parameter -> (I8,I8)
-dx7_parameter_range_usr (ix,_,n,d,_) = if ix < 125 then (d,d + n - 1) else (32,126)
+dx7_parameter_range_usr :: Dx7_Parameter -> (I8, I8)
+dx7_parameter_range_usr (ix, _, n, d, _) = if ix < 125 then (d, d + n - 1) else (32, 126)
 
 {- | Normalise parameter value to be in (0,1).
 Parameter values are at most in 0-99, excepting characters in voice name data.
@@ -301,7 +307,7 @@ Parameter values are at most in 0-99, excepting characters in voice name data.
 > map (dx7_parameter_value_normalise p) [0 .. 14]
 -}
 dx7_parameter_value_normalise :: Dx7_Parameter -> U8 -> Float
-dx7_parameter_value_normalise (_,_,n,_,_) x = fromIntegral x / fromIntegral (n - 1)
+dx7_parameter_value_normalise (_, _, n, _, _) x = fromIntegral x / fromIntegral (n - 1)
 
 -- | Usr 2-character strings naming the 12 pitch-classes.
 dx7_pitch_class_seq :: [String]
@@ -313,7 +319,7 @@ dx7_pitch_class_seq = Split.splitOn ";" "C;C#;D;D#;E;F;F#;G;G#;A;A#;B"
 True
 -}
 dx7_pitch_seq :: [String]
-dx7_pitch_seq = [p ++ show o | o <- [-1::Int .. 8],p <- dx7_pitch_class_seq]
+dx7_pitch_seq = [p ++ show o | o <- [-1 :: Int .. 8], p <- dx7_pitch_class_seq]
 
 -- | The KBD-BRK-PT value of 0 is pitch A-1 which is midi note number 9.
 dx7_kbd_brk_pt_to_midi :: U8 -> U8
@@ -330,50 +336,50 @@ True
 -}
 dx7_op_parameter_tbl :: [Dx7_Parameter]
 dx7_op_parameter_tbl =
-    [(00,"EG RATE 1",100,0,"")
-    ,(01,"EG RATE 2",100,0,"")
-    ,(02,"EG RATE 3",100,0,"")
-    ,(03,"EG RATE 4",100,0,"")
-    ,(04,"EG LEVEL 1",100,0,"")
-    ,(05,"EG LEVEL 2",100,0,"")
-    ,(06,"EG LEVEL 3",100,0,"")
-    ,(07,"EG LEVEL 4",100,0,"")
-    ,(08,"KBD LEV SCL BRK PT",100,0,dx7_kbd_brk_pt_usr) -- 4-CHAR
-    ,(09,"KBD LEV SCL LFT DEPTH",100,0,"")
-    ,(10,"KBD LEV SCL RHT DEPTH",100,0,"")
-    ,(11,"KBD LEV SCL LFT CURVE",4,0,dx7_typ_usr_str "CURVE") -- 4-CHAR (2=UNIQ)
-    ,(12,"KBD LEV SCL RHT CURVE",4,0,dx7_typ_usr_str "CURVE") -- 4-CHAR
-    ,(13,"KBD RATE SCALING",8,0,"") -- 1-CHAR
-    ,(14,"AMP MOD SENSITIVITY",4,0,"") -- 1-CHAR
-    ,(15,"KEY VEL SENSITIVITY",8,0,"") -- 1-CHAR
-    ,(16,"OPERATOR OUTPUT LEVEL",100,0,"")
-    ,(17,"OSC MODE",2,0,dx7_typ_usr_str "MODE") -- 5-CHAR (1=UNIQ)
-    ,(18,"OSC FREQ COARSE",32,0,"")
-    ,(19,"OSC FREQ FINE",100,0,"")
-    ,(20,"OSC DETUNE",15,-7,"") -- 2-CHAR 0x14=20
-    ]
+  [ (00, "EG RATE 1", 100, 0, "")
+  , (01, "EG RATE 2", 100, 0, "")
+  , (02, "EG RATE 3", 100, 0, "")
+  , (03, "EG RATE 4", 100, 0, "")
+  , (04, "EG LEVEL 1", 100, 0, "")
+  , (05, "EG LEVEL 2", 100, 0, "")
+  , (06, "EG LEVEL 3", 100, 0, "")
+  , (07, "EG LEVEL 4", 100, 0, "")
+  , (08, "KBD LEV SCL BRK PT", 100, 0, dx7_kbd_brk_pt_usr) -- 4-CHAR
+  , (09, "KBD LEV SCL LFT DEPTH", 100, 0, "")
+  , (10, "KBD LEV SCL RHT DEPTH", 100, 0, "")
+  , (11, "KBD LEV SCL LFT CURVE", 4, 0, dx7_typ_usr_str "CURVE") -- 4-CHAR (2=UNIQ)
+  , (12, "KBD LEV SCL RHT CURVE", 4, 0, dx7_typ_usr_str "CURVE") -- 4-CHAR
+  , (13, "KBD RATE SCALING", 8, 0, "") -- 1-CHAR
+  , (14, "AMP MOD SENSITIVITY", 4, 0, "") -- 1-CHAR
+  , (15, "KEY VEL SENSITIVITY", 8, 0, "") -- 1-CHAR
+  , (16, "OPERATOR OUTPUT LEVEL", 100, 0, "")
+  , (17, "OSC MODE", 2, 0, dx7_typ_usr_str "MODE") -- 5-CHAR (1=UNIQ)
+  , (18, "OSC FREQ COARSE", 32, 0, "")
+  , (19, "OSC FREQ FINE", 100, 0, "")
+  , (20, "OSC DETUNE", 15, -7, "") -- 2-CHAR 0x14=20
+  ]
 
 -- | Rewrite 'dx7_op_parameter_tbl' for operator /n/.
 dx7_rewrite_op_dx7_parameter_tbl :: U8 -> [Dx7_Parameter]
 dx7_rewrite_op_dx7_parameter_tbl n =
-    let n' = 6 - n
-        f (ix,nm,stp,usr_diff,usr_str) =
-            let ix' = ix + (dx7_op_nparam * n')
-                nm' = "OP " ++ show n ++ " " ++ nm
-            in (ix',nm',stp,usr_diff,usr_str)
-    in map f dx7_op_parameter_tbl
+  let n' = 6 - n
+      f (ix, nm, stp, usr_diff, usr_str) =
+        let ix' = ix + (dx7_op_nparam * n')
+            nm' = "OP " ++ show n ++ " " ++ nm
+        in (ix', nm', stp, usr_diff, usr_str)
+  in map f dx7_op_parameter_tbl
 
 -- | Group Structure (group-name,field-names,indices)
-type Group_Structure = (String,String,[U8])
+type Group_Structure = (String, String, [U8])
 
 -- | Operator group structure, 4;4;5;4
 operator_group_structure :: [Group_Structure]
 operator_group_structure =
-    [("EG RATE","1;2;3;4",[0..3])
-    ,("EG LEVEL","1;2;3;4",[4..7])
-    ,("KBD LEV SCL","BRK-PT;LFT-DEPTH;RHT-DEPTH;LFT-CURVE;RHT-CURVE",[8..12])
-    ,("OSC","MODE;FREQ-COARSE;FREQ-FINE;DETUNE",[17..20])
-    ]
+  [ ("EG RATE", "1;2;3;4", [0 .. 3])
+  , ("EG LEVEL", "1;2;3;4", [4 .. 7])
+  , ("KBD LEV SCL", "BRK-PT;LFT-DEPTH;RHT-DEPTH;LFT-CURVE;RHT-CURVE", [8 .. 12])
+  , ("OSC", "MODE;FREQ-COARSE;FREQ-FINE;DETUNE", [17 .. 20])
+  ]
 
 {- | Six operators, descending order, one-indexed.
 
@@ -381,7 +387,7 @@ operator_group_structure =
 True
 -}
 dx7_op6_dx7_parameter_tbl :: [Dx7_Parameter]
-dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6,5 .. 1]
+dx7_op6_dx7_parameter_tbl = concatMap dx7_rewrite_op_dx7_parameter_tbl [6, 5 .. 1]
 
 -- | Usr 3-CHAR string for TRANSPOSE, from C1 to C4
 dx7_transpose_usr :: Dx7_Usr
@@ -394,51 +400,53 @@ True
 -}
 dx7_sh_parameter_tbl :: [Dx7_Parameter]
 dx7_sh_parameter_tbl =
-    [(126,"PITCH EG RATE 1",100,0,"")
-    ,(127,"PITCH EG RATE 2",100,0,"")
-    ,(128,"PITCH EG RATE 3",100,0,"")
-    ,(129,"PITCH EG RATE 4",100,0,"")
-    ,(130,"PITCH EG LEVEL 1",100,0,"")
-    ,(131,"PITCH EG LEVEL 2",100,0,"")
-    ,(132,"PITCH EG LEVEL 3",100,0,"")
-    ,(133,"PITCH EG LEVEL 4",100,0,"")
-    ,(134,"ALGORITHM #",32,1,"") -- 0x86=134
-    ,(135,"FEEDBACK",8,0,"") -- 1-CHAR
-    ,(136,"OSCILLATOR SYNC",2,0,dx7_typ_usr_str "BOOL") -- 3-CHAR
-    ,(137,"LFO SPEED",100,0,"")
-    ,(138,"LFO DELAY",100,0,"")
-    ,(139,"LFO PITCH MOD DEPTH",100,0,"")
-    ,(140,"LFO AMP MOD DEPTH",100,0,"")
-    ,(141,"LFO SYNC",2,0,dx7_typ_usr_str "BOOL") -- 3-CHAR
-    ,(142,"LFO WAVEFORM",6,0,dx7_typ_usr_str "LFO-WAVE") -- 2-CHAR
-    ,(143,"PITCH MOD SENSITIVITY",8,0,"") -- 1-CHAR
-    ,(144,"TRANSPOSE",49,0,dx7_transpose_usr) -- 3-CHAR
-    ]
+  [ (126, "PITCH EG RATE 1", 100, 0, "")
+  , (127, "PITCH EG RATE 2", 100, 0, "")
+  , (128, "PITCH EG RATE 3", 100, 0, "")
+  , (129, "PITCH EG RATE 4", 100, 0, "")
+  , (130, "PITCH EG LEVEL 1", 100, 0, "")
+  , (131, "PITCH EG LEVEL 2", 100, 0, "")
+  , (132, "PITCH EG LEVEL 3", 100, 0, "")
+  , (133, "PITCH EG LEVEL 4", 100, 0, "")
+  , (134, "ALGORITHM #", 32, 1, "") -- 0x86=134
+  , (135, "FEEDBACK", 8, 0, "") -- 1-CHAR
+  , (136, "OSCILLATOR SYNC", 2, 0, dx7_typ_usr_str "BOOL") -- 3-CHAR
+  , (137, "LFO SPEED", 100, 0, "")
+  , (138, "LFO DELAY", 100, 0, "")
+  , (139, "LFO PITCH MOD DEPTH", 100, 0, "")
+  , (140, "LFO AMP MOD DEPTH", 100, 0, "")
+  , (141, "LFO SYNC", 2, 0, dx7_typ_usr_str "BOOL") -- 3-CHAR
+  , (142, "LFO WAVEFORM", 6, 0, dx7_typ_usr_str "LFO-WAVE") -- 2-CHAR
+  , (143, "PITCH MOD SENSITIVITY", 8, 0, "") -- 1-CHAR
+  , (144, "TRANSPOSE", 49, 0, dx7_transpose_usr) -- 3-CHAR
+  ]
 
 -- | Voice name data is ASCII.
 dx7_name_dx7_parameter_tbl :: [Dx7_Parameter]
 dx7_name_dx7_parameter_tbl =
-    [(145,"VOICE NAME CHAR 01",128,0,"ASCII")
-    ,(146,"VOICE NAME CHAR 02",128,0,"ASCII")
-    ,(147,"VOICE NAME CHAR 03",128,0,"ASCII")
-    ,(148,"VOICE NAME CHAR 04",128,0,"ASCII")
-    ,(149,"VOICE NAME CHAR 05",128,0,"ASCII")
-    ,(150,"VOICE NAME CHAR 06",128,0,"ASCII")
-    ,(151,"VOICE NAME CHAR 07",128,0,"ASCII")
-    ,(152,"VOICE NAME CHAR 08",128,0,"ASCII")
-    ,(153,"VOICE NAME CHAR 09",128,0,"ASCII")
-    ,(154,"VOICE NAME CHAR 10",128,0,"ASCII")]
+  [ (145, "VOICE NAME CHAR 01", 128, 0, "ASCII")
+  , (146, "VOICE NAME CHAR 02", 128, 0, "ASCII")
+  , (147, "VOICE NAME CHAR 03", 128, 0, "ASCII")
+  , (148, "VOICE NAME CHAR 04", 128, 0, "ASCII")
+  , (149, "VOICE NAME CHAR 05", 128, 0, "ASCII")
+  , (150, "VOICE NAME CHAR 06", 128, 0, "ASCII")
+  , (151, "VOICE NAME CHAR 07", 128, 0, "ASCII")
+  , (152, "VOICE NAME CHAR 08", 128, 0, "ASCII")
+  , (153, "VOICE NAME CHAR 09", 128, 0, "ASCII")
+  , (154, "VOICE NAME CHAR 10", 128, 0, "ASCII")
+  ]
 
 -- | NOT STORED IN VOICE DATA
 dx7_opstatus_param :: Dx7_Parameter
-dx7_opstatus_param = (155,"OPERATOR ON/OFF",2,0,"BIT5=OP1 - BIT0=OP6")
+dx7_opstatus_param = (155, "OPERATOR ON/OFF", 2, 0, "BIT5=OP1 - BIT0=OP6")
 
 rem_group_structure :: [Group_Structure]
 rem_group_structure =
-    [("PITCH EG RATE","1;2;3;4",[126..129])
-    ,("PITCH EG LEVEL","1;2;3;4",[130..133])
-    ,("LFO","SPEED;DELAY;PITCH-MOD-DEPTH;AMP-MOD-DEPTH;SYNC;WAVEFORM",[137..142])
-    ,("VOICE NAME CHAR",";;;;;;;;;",[145..154])]
+  [ ("PITCH EG RATE", "1;2;3;4", [126 .. 129])
+  , ("PITCH EG LEVEL", "1;2;3;4", [130 .. 133])
+  , ("LFO", "SPEED;DELAY;PITCH-MOD-DEPTH;AMP-MOD-DEPTH;SYNC;WAVEFORM", [137 .. 142])
+  , ("VOICE NAME CHAR", ";;;;;;;;;", [145 .. 154])
+  ]
 
 {- | All Dx7 parameters.
 
@@ -450,14 +458,16 @@ True
 -}
 dx7_parameter_tbl :: [Dx7_Parameter]
 dx7_parameter_tbl =
-  concat [dx7_op6_dx7_parameter_tbl
-         ,dx7_sh_parameter_tbl
-         ,dx7_name_dx7_parameter_tbl]
+  concat
+    [ dx7_op6_dx7_parameter_tbl
+    , dx7_sh_parameter_tbl
+    , dx7_name_dx7_parameter_tbl
+    ]
 
 -- | Lookup Dx7_Parameter given index.
 dx7_parameter_get :: U8 -> Dx7_Parameter
 dx7_parameter_get n =
-    fromMaybe (error "dx7_parameter_get") $
+  fromMaybe (error "dx7_parameter_get") $
     find ((== n) . dx7_parameter_ix) dx7_parameter_tbl
 
 {- | Lookup parameter name given index.
@@ -487,17 +497,18 @@ True
 -}
 dx7_parameter_index :: String -> U8
 dx7_parameter_index nm =
-    maybe
+  maybe
     (error "dx7_parameter_ix")
     dx7_parameter_ix
     (find ((== nm) . dx7_parameter_nm) dx7_parameter_tbl)
 
 dx7_voice_grp_places :: [Int]
-dx7_voice_grp_places = concat [replicate 6 dx7_op_nparam,[dx7_sh_nparam,dx7_name_nchar]]
+dx7_voice_grp_places = concat [replicate 6 dx7_op_nparam, [dx7_sh_nparam, dx7_name_nchar]]
 
--- | Group 6-operators (in sequence 6-1), shared params and name.
---
--- > dx7_voice_grp dx7_init_voice
+{- | Group 6-operators (in sequence 6-1), shared params and name.
+
+> dx7_voice_grp dx7_init_voice
+-}
 dx7_voice_grp :: Dx7_Voice -> [[U8]]
 dx7_voice_grp = Split.splitPlaces dx7_voice_grp_places
 
@@ -523,27 +534,58 @@ True
 -}
 dx7_voice_data_list :: [(String, [String], [U8])]
 dx7_voice_data_list =
-  [(""
-   ,["ALGORITHM"],[134])
-  ,(""
-   ,["FEEDBACK"],[135])
-  ,("LFO"
-   ,["WAVE","SPEED","DELAY","PMD","AMD","SYNC"],[142,137,138,139,140,141])
-  ,("MOD SENSITIVITY"
-   ,["PITCH","AMPLITUDE"],[143,14])
-  ,("OSCILLATOR"
-   ,["MOD","SYNC","FREQ. COARSE","FREQ. FINE","DETUNE"],17:136:[18 .. 20])
-  ,("EG"
-   ,["R1","R2","R3","R4","L1","L2","L3","L4"],[0 .. 7])
-  ,("KEYBOARD LEVEL SCALING"
-   ,["BREAK POINT","CURVE L","CURVE R","DEPTH L","DEPTH R"],[8,11,12,9,10])
-  ,("",["K.BOARD RATE SCALING"],[13])
-  ,("OPERATOR"
-   ,["OUTPUT LEVEL","VELO SENS"],[16,15])
-  ,("PITCH EG"
-   ,["R1","R2","R3","R4","L1","L2","L3","L4"],[126 .. 133])
-  ,(""
-   ,["KEY TRANSPOSE"],[144])]
+  [
+    ( ""
+    , ["ALGORITHM"]
+    , [134]
+    )
+  ,
+    ( ""
+    , ["FEEDBACK"]
+    , [135]
+    )
+  ,
+    ( "LFO"
+    , ["WAVE", "SPEED", "DELAY", "PMD", "AMD", "SYNC"]
+    , [142, 137, 138, 139, 140, 141]
+    )
+  ,
+    ( "MOD SENSITIVITY"
+    , ["PITCH", "AMPLITUDE"]
+    , [143, 14]
+    )
+  ,
+    ( "OSCILLATOR"
+    , ["MOD", "SYNC", "FREQ. COARSE", "FREQ. FINE", "DETUNE"]
+    , 17 : 136 : [18 .. 20]
+    )
+  ,
+    ( "EG"
+    , ["R1", "R2", "R3", "R4", "L1", "L2", "L3", "L4"]
+    , [0 .. 7]
+    )
+  ,
+    ( "KEYBOARD LEVEL SCALING"
+    , ["BREAK POINT", "CURVE L", "CURVE R", "DEPTH L", "DEPTH R"]
+    , [8, 11, 12, 9, 10]
+    )
+  , ("", ["K.BOARD RATE SCALING"], [13])
+  ,
+    ( "OPERATOR"
+    , ["OUTPUT LEVEL", "VELO SENS"]
+    , [16, 15]
+    )
+  ,
+    ( "PITCH EG"
+    , ["R1", "R2", "R3", "R4", "L1", "L2", "L3", "L4"]
+    , [126 .. 133]
+    )
+  ,
+    ( ""
+    , ["KEY TRANSPOSE"]
+    , [144]
+    )
+  ]
 
 -- * SysEx
 
@@ -584,7 +626,7 @@ type Dx7_SysEx = [U8]
 True
 -}
 dx7_fmt0_sysex_hdr :: U8 -> [U8]
-dx7_fmt0_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b]
+dx7_fmt0_sysex_hdr ch = [0xF0, 0x43, 0x00 + ch, 0x00, 0x01, 0x1b]
 
 {- | Generate 163-element Dx7 VOICE (FORMAT=0) sysex message.
 
@@ -594,8 +636,8 @@ dx7_fmt0_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x00,0x01,0x1b]
 dx7_fmt0_sysex_encode :: Bool -> U8 -> Dx7_Voice -> Dx7_SysEx
 dx7_fmt0_sysex_encode chk_rng ch d =
   if dx7_voice_verify chk_rng d
-  then dx7_fmt0_sysex_hdr ch ++ d ++ [dx7_checksum d,0xF7]
-  else error "dx7_fmt0_sysex_encode?"
+    then dx7_fmt0_sysex_hdr ch ++ d ++ [dx7_checksum d, 0xF7]
+    else error "dx7_fmt0_sysex_encode?"
 
 -- | Select 155-element sub-sequence (6 - 161)
 dx7_fmt0_sysex_decode :: Dx7_SysEx -> Dx7_Voice
@@ -623,11 +665,11 @@ dx7_param_to_fmt0_sysex p = dx7_fmt0_sysex_encode True 0 (dx7_param_to_dx7_voice
 
 -- | 6-byte header sequence for FORMAT=9 Dx7 sysex data.
 dx7_fmt9_sysex_hdr :: U8 -> [U8]
-dx7_fmt9_sysex_hdr ch = [0xF0,0x43,0x00 + ch,0x09,0x20,0x00]
+dx7_fmt9_sysex_hdr ch = [0xF0, 0x43, 0x00 + ch, 0x09, 0x20, 0x00]
 
 -- | Given 4096-element bit-packed data sequence, generate 4104-element FORMAT=9 sysex message data.
 dx7_fmt9_sysex_gen :: U8 -> [U8] -> [U8]
-dx7_fmt9_sysex_gen ch dat = dx7_fmt9_sysex_hdr ch ++ dat ++ [dx7_checksum dat,0xF7]
+dx7_fmt9_sysex_gen ch dat = dx7_fmt9_sysex_hdr ch ++ dat ++ [dx7_checksum dat, 0xF7]
 
 -- | Select bytes (6 - 4102) of 'U8' sequence.
 dx7_fmt9_sysex_dat :: [U8] -> [U8]
@@ -640,7 +682,6 @@ dx7_fmt9_sysex_dat = take 4096 . drop 6
 >>> d <- dx7_read_u8 fn
 >>> dx7_fmt9_sysex_verify 0 d == (True,True,True,True)
 True
-
 -}
 dx7_fmt9_sysex_verify :: U8 -> Dx7_SysEx -> (Bool, Bool, Bool, Bool)
 dx7_fmt9_sysex_verify ch d =
@@ -648,29 +689,30 @@ dx7_fmt9_sysex_verify ch d =
       dat = take 4096 (drop 6 d)
       chk = Safe.at d (6 + 4096)
       eof = Safe.at d (6 + 4096 + 1)
-  in (length d == 6 + 4096 + 2
-     ,hdr == dx7_fmt9_sysex_hdr ch
-     ,chk == dx7_checksum dat
-     ,eof == 0xF7)
+  in ( length d == 6 + 4096 + 2
+     , hdr == dx7_fmt9_sysex_hdr ch
+     , chk == dx7_checksum dat
+     , eof == 0xF7
+     )
 
 -- | Run 'dx7_fmt9_sysex_verify' and lift /syx/ to 'Maybe'.
 dx7_fmt9_sysex_validate :: Dx7_SysEx -> Maybe Dx7_SysEx
 dx7_fmt9_sysex_validate syx =
-  if dx7_fmt9_sysex_verify 0 syx /= (True,True,True,True)
-  then Nothing
-  else Just syx
+  if dx7_fmt9_sysex_verify 0 syx /= (True, True, True, True)
+    then Nothing
+    else Just syx
 
 -- | 'error' if /syx/ is not valid, else 'id'.
 dx7_fmt9_sysex_validate_err :: String -> Dx7_SysEx -> Dx7_SysEx
 dx7_fmt9_sysex_validate_err err =
-  fromMaybe (error ("dx7_fmt9_sysex_validate: " ++ err)) .
-  dx7_fmt9_sysex_validate
+  fromMaybe (error ("dx7_fmt9_sysex_validate: " ++ err))
+    . dx7_fmt9_sysex_validate
 
 {- | Load FORMAT=9 sysex file as 4104-element U8 sequence and run verification.
      See 'dx7_fmt9_sysex_verify'.
 -}
 dx7_read_fmt9_sysex :: FilePath -> IO (Maybe Dx7_SysEx)
-dx7_read_fmt9_sysex = fmap dx7_fmt9_sysex_validate  . dx7_read_u8
+dx7_read_fmt9_sysex = fmap dx7_fmt9_sysex_validate . dx7_read_u8
 
 -- | Erroring variant.
 dx7_read_fmt9_sysex_err :: FilePath -> IO Dx7_SysEx
@@ -682,9 +724,10 @@ dx7_read_fmt9_sysex_err fn =
 dx7_write_fmt9_sysex :: FilePath -> Dx7_SysEx -> IO ()
 dx7_write_fmt9_sysex fn = Midi.bytes_store fn . dx7_fmt9_sysex_validate_err "dx7_write_fmt9_sysex?"
 
--- | Unpack bit-packed 'U8' sequence to sequence of 'Dx7_Voice' (see cmd/dx7-unpack.c).
---   Input size must be a multiple of 128, output size will be a multiple of 155.
---   IO because the bit packing is done by an external process.
+{- | Unpack bit-packed 'U8' sequence to sequence of 'Dx7_Voice' (see cmd/dx7-unpack.c).
+  Input size must be a multiple of 128, output size will be a multiple of 155.
+  IO because the bit packing is done by an external process.
+-}
 dx7_unpack_bitpacked_u8 :: Dx7_SysEx -> IO [Dx7_Voice]
 dx7_unpack_bitpacked_u8 p = do
   when ((length p `rem` 128) /= 0) (error ("dx7_unpack_bitpacked_u8? " ++ show p))
@@ -693,12 +736,13 @@ dx7_unpack_bitpacked_u8 p = do
   when ((length r `rem` 155) /= 0) (error ("dx7_unpack_bitpacked_u8? " ++ q))
   return (Split.chunksOf 155 r)
 
--- | Decode FORMAT=9 SysEx message.
---   IO because the bit un-packing is done by an external process.
+{- | Decode FORMAT=9 SysEx message.
+  IO because the bit un-packing is done by an external process.
+-}
 dx7_fmt9_sysex_decode :: Dx7_SysEx -> IO Dx7_Bank
 dx7_fmt9_sysex_decode = dx7_unpack_bitpacked_u8 . dx7_fmt9_sysex_dat
 
-{- | Encode 'Dx7_Bank' to channel /ch/ FORMAT=9 'Dx7_SysEx'. -}
+-- | Encode 'Dx7_Bank' to channel /ch/ FORMAT=9 'Dx7_SysEx'.
 dx7_fmt9_sysex_encode :: U8 -> Dx7_Bank -> IO Dx7_SysEx
 dx7_fmt9_sysex_encode ch bnk = do
   let dat = concat bnk
@@ -714,15 +758,46 @@ dx7_fmt9_sysex_encode ch bnk = do
 >>> dx7_bank_verify True d
 True
 
-> mapM_ (putStrLn . dx7_voice_name '?') d
+>>> mapM_ (putStrLn . dx7_voice_name_dtw) d
+BRASS   1
+BRASS   2
+BRASS   3
+STRINGS 1
+STRINGS 2
+STRINGS 3
+ORCHESTRA
+PIANO   1
+PIANO   2
+PIANO   3
+E.PIANO 1
+GUITAR  1
+GUITAR  2
+SYN-LEAD 1
+BASS    1
+BASS    2
+E.ORGAN 1
+PIPES   1
+HARPSICH 1
+CLAV    1
+VIBE    1
+MARIMBA
+KOTO
+FLUTE   1
+ORCH-CHIME
+TUB BELLS
+STEEL DRUM
+TIMPANI
+REFS WHISL
+VOICE   1
+TRAIN
+TAKE OFF
 
-> import Sound.Sc3.Data.Yamaha.Dx7.Pp {- hsc3-data -}
+> import Sound.Sc3.Data.Yamaha.Dx7.Pp
 > mapM_ (putStrLn . unlines . dx7_parameter_seq_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_pp) d
 > mapM_ (putStrLn . unlines . dx7_voice_data_list_pp) d
 
 > dx7_fmt0_sysex_encode True 0x0 (d !! 0)
-
 -}
 dx7_load_fmt9_sysex_err :: FilePath -> IO Dx7_Bank
 dx7_load_fmt9_sysex_err fn = do
@@ -740,7 +815,6 @@ Will read exact multiples of:
 
 To truncate a long FORMAT=9 sysex file use:
 xxd -u -p -c 4104 -l 4104 x.syx | xxd -r -p > y.syx
-
 -}
 dx7_load_sysex_try :: FilePath -> IO (Maybe [Dx7_Voice])
 dx7_load_sysex_try fn = do
@@ -752,14 +826,17 @@ dx7_load_sysex_try fn = do
     1650 -> return Nothing -- Dx7-II PERF SYSEX
     _ ->
       if is_mult 128
-      then fmap Just (dx7_unpack_bitpacked_u8 x)
-      else if is_mult 155
-           then return (Just (Split.chunksOf 155 x))
-           else if is_mult 163
+        then fmap Just (dx7_unpack_bitpacked_u8 x)
+        else
+          if is_mult 155
+            then return (Just (Split.chunksOf 155 x))
+            else
+              if is_mult 163
                 then return (Just (map dx7_fmt0_sysex_decode (Split.chunksOf 163 x)))
-                else if n `rem` 4104 == 0
-                     then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
-                     else return Nothing
+                else
+                  if n `rem` 4104 == 0
+                    then fmap (Just . concat) (mapM decode_syx (Split.chunksOf 4104 x))
+                    else return Nothing
 
 {- | Write binary Dx7 FORMAT=9 sysex file.
 
@@ -773,7 +850,6 @@ True
 
 > dx7_store_fmt9_sysex "/tmp/dx7.syx" 0 d
 > Process.rawSystem "cmp" ["-l",fn,"/tmp/dx7.syx"]
-
 -}
 dx7_store_fmt9_sysex :: FilePath -> U8 -> Dx7_Bank -> IO ()
 dx7_store_fmt9_sysex fn ch bnk = do
@@ -798,20 +874,22 @@ dx7_store_fmt9_sysex fn ch bnk = do
 dx7_param_change_sysex_n :: Num n => n
 dx7_param_change_sysex_n = 7
 
--- | Dx7 (group,sub-group) to byte.
---
--- > gen_bitseq_pp 8 (dx7_group_join (0,0)) == "00000000"
--- > gen_bitseq_pp 8 (dx7_group_join (2,0)) == "00001000"
--- > gen_bitseq_pp 8 (dx7_group_join (6,0)) == "00011000"
--- > dx7_group_join (6,0) == 0x18
-dx7_group_join :: (U8,U8) -> U8
-dx7_group_join (g1,g2) = shiftL g1 2 + g2
+{- | Dx7 (group,sub-group) to byte.
 
--- | Generate Dx7 parameter change sysex.
---
--- > dx7_parameter_change_sysex 0 (0x06,0) dx7_microtune_octave [1,2,3]
-dx7_parameter_change_sysex :: U8 -> (U8,U8) -> U8 -> [U8] -> [U8]
-dx7_parameter_change_sysex ch grp p d = [0xF0,0x43,0x10 + ch,dx7_group_join grp,p] ++ d ++ [0xF7]
+> gen_bitseq_pp 8 (dx7_group_join (0,0)) == "00000000"
+> gen_bitseq_pp 8 (dx7_group_join (2,0)) == "00001000"
+> gen_bitseq_pp 8 (dx7_group_join (6,0)) == "00011000"
+> dx7_group_join (6,0) == 0x18
+-}
+dx7_group_join :: (U8, U8) -> U8
+dx7_group_join (g1, g2) = shiftL g1 2 + g2
+
+{- | Generate Dx7 parameter change sysex.
+
+> dx7_parameter_change_sysex 0 (0x06,0) dx7_microtune_octave [1,2,3]
+-}
+dx7_parameter_change_sysex :: U8 -> (U8, U8) -> U8 -> [U8] -> [U8]
+dx7_parameter_change_sysex ch grp p d = [0xF0, 0x43, 0x10 + ch, dx7_group_join grp, p] ++ d ++ [0xF7]
 
 {- | Construct Dx7 param change sysex.  Variant of 'dx7_parameter_change_sysex'.
 
@@ -832,41 +910,43 @@ dx7_param_change_sysex :: U8 -> U8 -> U8 -> Dx7_SysEx
 dx7_param_change_sysex ch param_ix param_data =
   let sub = if param_ix >= 0x80 then 0x01 else 0x00
       num = param_ix - if param_ix >= 0x80 then 0x80 else 0x00
-  in dx7_parameter_change_sysex ch (0x00,sub) num [param_data]
+  in dx7_parameter_change_sysex ch (0x00, sub) num [param_data]
 
 -- * E: Function Parameters: (Group=2)
 
 -- | B0=PITCH, B1=AMP, B2=EG-BIAS
 dx7_ctl_assign_usr :: Dx7_Usr
-dx7_ctl_assign_usr = intercalate ";" (map (Show.show_bin (Just 3)) [0::Int .. 7])
+dx7_ctl_assign_usr = intercalate ";" (map (Show.show_bin (Just 3)) [0 :: Int .. 7])
 
 -- | Dx7 function parameters, not stored with voice data.
 dx7_function_parameters_tbl :: [Dx7_Parameter]
 dx7_function_parameters_tbl =
-    [(64,"MODE CHANGE",2,0,"POLY;MONO")
-    ,(65,"PITCH BEND RANGE",13,0,"")
-    ,(66,"PITCH BEND STEP",13,0,"")
-    ,(67,"PORTAMENTO MODE ",2,0,"RETAIN;FOLLOW")
-    ,(68,"PORTAMENTO GLISS",2,0,"OFF;ON") -- ?
-    ,(69,"PORTAMENTO TIME ",100,0,"")
-    ,(70,"MOD WHEEL RANGE ",100,0,"")
-    ,(71,"MOD WHEEL ASSIGN",8,0,dx7_ctl_assign_usr)
-    ,(72,"FOOT CONTROL RANGE",100,0,"")
-    ,(73,"FOOT CONTROL ASSIGN",8,0,dx7_ctl_assign_usr)
-    ,(74,"BREATH CONT RANGE",100,0,"")
-    ,(75,"BREATH CONT ASSIGN",8,0,dx7_ctl_assign_usr)
-    ,(76,"AFTERTOUCH RANGE",100,0,"")
-    ,(77,"AFTERTOUCH ASSIGN",8,0,dx7_ctl_assign_usr)]
+  [ (64, "MODE CHANGE", 2, 0, "POLY;MONO")
+  , (65, "PITCH BEND RANGE", 13, 0, "")
+  , (66, "PITCH BEND STEP", 13, 0, "")
+  , (67, "PORTAMENTO MODE ", 2, 0, "RETAIN;FOLLOW")
+  , (68, "PORTAMENTO GLISS", 2, 0, "OFF;ON") -- ?
+  , (69, "PORTAMENTO TIME ", 100, 0, "")
+  , (70, "MOD WHEEL RANGE ", 100, 0, "")
+  , (71, "MOD WHEEL ASSIGN", 8, 0, dx7_ctl_assign_usr)
+  , (72, "FOOT CONTROL RANGE", 100, 0, "")
+  , (73, "FOOT CONTROL ASSIGN", 8, 0, dx7_ctl_assign_usr)
+  , (74, "BREATH CONT RANGE", 100, 0, "")
+  , (75, "BREATH CONT ASSIGN", 8, 0, dx7_ctl_assign_usr)
+  , (76, "AFTERTOUCH RANGE", 100, 0, "")
+  , (77, "AFTERTOUCH ASSIGN", 8, 0, dx7_ctl_assign_usr)
+  ]
 
 -- * Request SysEx
 
 -- | Make data request sysex message, /n/ = channel, /k/ equal request type.
 dx7_data_request_sysex :: U8 -> U8 -> Dx7_SysEx
-dx7_data_request_sysex n k = [0xF0,0x43,0x20 + n,k,0xF7]
+dx7_data_request_sysex n k = [0xF0, 0x43, 0x20 + n, k, 0xF7]
 
--- | Request voice edit buffer as FORMAT=0 sysex.
---
--- > dx7_data_request_sysex_fmt0 0 == [0xF0,0x43,0x20,0x00,0xF7]
+{- | Request voice edit buffer as FORMAT=0 sysex.
+
+> dx7_data_request_sysex_fmt0 0 == [0xF0,0x43,0x20,0x00,0xF7]
+-}
 dx7_data_request_sysex_fmt0 :: U8 -> Dx7_SysEx
 dx7_data_request_sysex_fmt0 n = dx7_data_request_sysex n 0x00
 
@@ -876,8 +956,9 @@ dx7_data_request_sysex_fmt9 n = dx7_data_request_sysex n 0x09
 
 -- * Text/Hex
 
--- | Read sequence of unpacked 155 voice-data parameters from text file.
---   U8 are encoded as two-character hexadecimal numbers (00-FF).
+{- | Read sequence of unpacked 155 voice-data parameters from text file.
+  U8 are encoded as two-character hexadecimal numbers (00-FF).
+-}
 dx7_load_hex :: FilePath -> IO [Dx7_Voice]
 dx7_load_hex fn = do
   d <- Byte.load_hex_byte_seq fn
@@ -894,7 +975,6 @@ dx7_load_hex fn = do
 
 > t <- dx7_load_hex "/tmp/dx7.hex.text"
 > (length d,length t,d == t) == (32,32,True)
-
 -}
 dx7_store_hex :: Bool -> FilePath -> [Dx7_Voice] -> IO ()
 dx7_store_hex chk_rng fn v = do

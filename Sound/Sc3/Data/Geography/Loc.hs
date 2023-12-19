@@ -9,7 +9,6 @@ import qualified Music.Theory.Io as Io {- hmt-base -}
 
 import Sound.Sc3.Data.Geography.Core {- hsc3-data -}
 
-
 -- | Geographical location.
 type Geo_Loc = (Coord, [String])
 
@@ -19,7 +18,7 @@ p_geography_by p = do
   _ <- C.char ':'
   _ <- C.char ' '
   (lambda, phi) <- p_coord_by p
-  return ((lambda, phi),map unwords nm)
+  return ((lambda, phi), map unwords nm)
 
 p_geography :: P Geo_Loc
 p_geography = p_geography_by p_qdms_ws
@@ -31,7 +30,7 @@ p_geographies = do
   return xs
 
 g_pp :: Geo_Loc -> String
-g_pp (coord,name) = intercalate ", " name ++ coord_pp coord
+g_pp (coord, name) = intercalate ", " name ++ coord_pp coord
 
 {- | Parse geography
 
@@ -47,9 +46,9 @@ parse_geographies = C.parse p_geographies
 -- * Eq
 
 g_match :: [String] -> Geo_Loc -> Bool
-g_match q (_,l) =
-    let f a = any (\x -> a `isInfixOf` x) l
-    in all f q
+g_match q (_, l) =
+  let f a = any (\x -> a `isInfixOf` x) l
+  in all f q
 
 -- * Io
 

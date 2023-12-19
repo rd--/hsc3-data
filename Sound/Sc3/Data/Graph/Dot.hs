@@ -9,7 +9,7 @@ import System.Process {- process -}
 import qualified Data.Text.Lazy as T {- text -}
 import qualified Data.Text.Lazy.IO as T {- text -}
 
-import qualified Data.GraphViz as Gv hiding (DotGraph(..)) {- graphviz -}
+import qualified Data.GraphViz as Gv hiding (DotGraph {- graphviz -} (..))
 import qualified Data.GraphViz.Attributes.Complete as Gv {- graphviz -}
 import qualified Data.GraphViz.Types.Generalised as Gv {- graphviz -}
 
@@ -21,10 +21,9 @@ import qualified Data.GraphViz.Types.Generalised as Gv {- graphviz -}
 ([(0,(49.682,73.512)),(1,(125.56,85.289)),(2,(22.305,1.8)),(3,(1.8,133.5))],[(0,1),(0,2),(0,3)])
 
 > putStrLn (dg_print r)
-
 -}
 dot_run_layout :: String -> IO String
-dot_run_layout = readProcess "dot" ["-T","dot"]
+dot_run_layout = readProcess "dot" ["-T", "dot"]
 
 {- | 'Gv.parseDotGraph' of 'T.pack'.
 
@@ -32,7 +31,7 @@ dot_run_layout = readProcess "dot" ["-T","dot"]
 >>> Foldable.toList (Gv.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
 True
 -}
-dg_parse :: (Ord t,Gv.ParseDot t) => String -> Gv.DotGraph t
+dg_parse :: (Ord t, Gv.ParseDot t) => String -> Gv.DotGraph t
 dg_parse = Gv.parseDotGraph . T.pack
 
 -- | Type specialised to 'Int'.
@@ -40,11 +39,11 @@ dg_parse_int :: String -> Gv.DotGraph Int
 dg_parse_int = Gv.parseDotGraph . T.pack
 
 -- | 'T.unpack' of 'Gv.printDotGraph'.
-dg_print :: (Ord t,Gv.PrintDot t) => Gv.DotGraph t -> String
+dg_print :: (Ord t, Gv.PrintDot t) => Gv.DotGraph t -> String
 dg_print = T.unpack . Gv.printDotGraph
 
 -- | 'Gv.parseDotGraph' of 'T.readFile'.
-dg_load :: (Ord t,Gv.ParseDot t) => FilePath -> IO (Gv.DotGraph t)
+dg_load :: (Ord t, Gv.ParseDot t) => FilePath -> IO (Gv.DotGraph t)
 dg_load = fmap Gv.parseDotGraph . T.readFile
 
 -- | Type specialised to 'Int'.
@@ -72,7 +71,7 @@ type Pos = (Double, Double)
 attr_to_pos :: Gv.Attribute -> Maybe Pos
 attr_to_pos a =
   case a of
-    Gv.Pos (Gv.PointPos (Gv.Point x y _ _)) -> Just (x,y)
+    Gv.Pos (Gv.PointPos (Gv.Point x y _ _)) -> Just (x, y)
     _ -> Nothing
 
 -- | 'Attribute' to label.
@@ -89,7 +88,7 @@ type V t = t
 type E t = (t, t)
 
 -- | Graph of 'V' and 'E'.
-type Gr t = ([V t],[E t])
+type Gr t = ([V t], [E t])
 
 -- | 'V' with position.
 type V_pos t = (t, Pos)
@@ -104,55 +103,55 @@ type V_lbl_pos t = (t, (String, Pos))
 dn_to_v_lbl_pos :: Gv.DotNode t -> V_lbl_pos t
 dn_to_v_lbl_pos n =
   let a = Gv.nodeAttributes n
-  in case (mapMaybe attr_to_label a,mapMaybe attr_to_pos a) of
-       ([],[p]) -> (Gv.nodeID n,("",p))
-       ([l],[p]) -> (Gv.nodeID n,(l,p))
-       _ -> error "dn_parse"
+  in case (mapMaybe attr_to_label a, mapMaybe attr_to_pos a) of
+      ([], [p]) -> (Gv.nodeID n, ("", p))
+      ([l], [p]) -> (Gv.nodeID n, (l, p))
+      _ -> error "dn_parse"
 
 -- | 'Gv.DotEdge' to 'E'.
 de_to_e :: Gv.DotEdge t -> E t
-de_to_e e = (Gv.fromNode e,Gv.toNode e)
+de_to_e e = (Gv.fromNode e, Gv.toNode e)
 
--- | 'Gv.DotGraph' to graph given node to vertex function.
--- Dot graphs need not contain any node statements.
--- However graphs that have been annotated with position data have a complete set.
+{- | 'Gv.DotGraph' to graph given node to vertex function.
+Dot graphs need not contain any node statements.
+However graphs that have been annotated with position data have a complete set.
+-}
 dg_to_gr_f :: (Gv.DotNode t -> v) -> Gv.DotGraph t -> ([v], [E t])
 dg_to_gr_f f g =
   let st = Foldable.toList (Gv.graphStatements g)
       n = mapMaybe ds_to_dn st
       e = mapMaybe ds_to_de st
-  in (map f n,map de_to_e e)
+  in (map f n, map de_to_e e)
 
 {- | 'Gv.DotGraph' to 'E' set.
 
 >>> dg_to_eset (dg_parse "graph {1 -- 2 -- 3}")
 [(1,2),(2,3)]
 -}
-dg_to_eset :: (Ord t,Eq t) => Gv.DotGraph t -> [E t]
+dg_to_eset :: (Ord t, Eq t) => Gv.DotGraph t -> [E t]
 dg_to_eset = snd . dg_to_gr_f Gv.nodeID
 
 -- | 'Gv.DotGraph' to 'V_lbl_pos' graph.
-dg_to_gr_lbl_pos  :: Gv.DotGraph t -> ([V_lbl_pos t], [E t])
+dg_to_gr_lbl_pos :: Gv.DotGraph t -> ([V_lbl_pos t], [E t])
 dg_to_gr_lbl_pos = dg_to_gr_f dn_to_v_lbl_pos
 
 -- | 'Gv.DotGraph' to 'V_pos' graph.
 dg_to_gr_pos :: Gv.DotGraph t -> Gr_pos t
 dg_to_gr_pos g =
-  let (n,e) = dg_to_gr_lbl_pos g
-      f (k,(_,p)) = (k,p)
-  in (map f n,e)
+  let (n, e) = dg_to_gr_lbl_pos g
+      f (k, (_, p)) = (k, p)
+  in (map f n, e)
 
 -- | (min,max) bounds of graph.
-gr_pos_bounds :: Gr_pos t -> (Pos,Pos)
-gr_pos_bounds (v,_) =
+gr_pos_bounds :: Gr_pos t -> (Pos, Pos)
+gr_pos_bounds (v, _) =
   let r = unzip (map snd v)
       bimap1 f = bimap f f
-  in (bimap1 minimum r,bimap1 maximum r)
+  in (bimap1 minimum r, bimap1 maximum r)
 
 -- | Scale graph position data by /mul/.
 gr_pos_scale :: Double -> Gr_pos t -> Gr_pos t
-gr_pos_scale mul (v,e) =
+gr_pos_scale mul (v, e) =
   let bimap1 f = bimap f f
       v' = map (second (bimap1 (* mul))) v
-  in (v',e)
-
+  in (v', e)

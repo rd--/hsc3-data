@@ -42,7 +42,6 @@ Read local mime.types:
 
 >>> lookupMimeType localDb "midi"
 "audio/midi"
-
 -}
 module Sound.Sc3.Data.MimeType where
 
@@ -62,8 +61,8 @@ loadMimeTypes fn = do
   let l = filter (not . isEmptyOrComment) (lines s)
       w = map words l
       f te = case te of
-               typ:ext -> (typ,ext)
-               _ -> error "loadMimeTypes?"
+        typ : ext -> (typ, ext)
+        _ -> error "loadMimeTypes?"
   return (map f w)
 
 lookupMimeTypes :: MimeTypes -> FileExtension -> [MimeType]

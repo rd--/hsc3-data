@@ -8,9 +8,10 @@ import Sound.Sc3 {- hsc3 -}
 
 import qualified Sound.Sc3.Server.Command.Plain as Sc3 {- hsc3 -}
 
--- | Convert Dx7 patch (ie. sequence of 'Word8') sequence data to a
---   sequence of 'OSC' messages.  The OSC messages will load the patch
---   data into the indicated buffer.
+{- | Convert Dx7 patch (ie. sequence of 'Word8') sequence data to a
+  sequence of 'OSC' messages.  The OSC messages will load the patch
+  data into the indicated buffer.
+-}
 dx7_sc3_data_msg_seq :: Sc3.Buffer_Id -> [[Word8]] -> [Message]
 dx7_sc3_data_msg_seq buf = Sc3.b_setn1_segmented 256 buf 0 . map fromIntegral . concat
 

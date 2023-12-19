@@ -12,9 +12,10 @@ import qualified Data.Digest.Murmur32 as Hash {- murmur-hash -}
 -- | D50 parameter data hashes are 32-bit words.
 type D50_Hash = Word32
 
--- | Parse 'D50_Hash' from 8-character hex string.
---
--- > d50_hash_parse "8C7F8CB0" == 0x8C7F8CB0
+{- | Parse 'D50_Hash' from 8-character hex string.
+
+> d50_hash_parse "8C7F8CB0" == 0x8C7F8CB0
+-}
 d50_hash_parse :: String -> D50_Hash
 d50_hash_parse = read . ("0x" ++)
 

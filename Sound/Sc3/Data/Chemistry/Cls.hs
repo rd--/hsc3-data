@@ -3,7 +3,6 @@
 Crystal Lattice Structures
 U.S. Naval Research Laboratory
 Center for Computational Materials Science
-
 -}
 module Sound.Sc3.Data.Chemistry.Cls where
 
@@ -17,7 +16,7 @@ import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
 -- | Lookup Cls_DIR, or default to local directory.
 cls_dir :: IO FilePath
 cls_dir = do
-  r <-  lookupEnv "CLS_DIR"
+  r <- lookupEnv "CLS_DIR"
   return (fromMaybe "/home/rohan/sw/hsc3-data/data/chemistry/cls/" r)
 
 -- | Make Cls xyz filename from ID.
@@ -34,7 +33,7 @@ cls_load :: String -> IO Struct
 cls_load nm = do
   d <- cls_dir
   x <- Xyz.xyz_load (d </> cls_xyz_file nm)
-  return (xyz_to_struct (nm,x))
+  return (xyz_to_struct (nm, x))
 
 {- | Load all Cls Xyz files as Structs.
 

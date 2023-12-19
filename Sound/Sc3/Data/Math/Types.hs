@@ -88,9 +88,10 @@ u12_to_i12_def d x = if x > 4095 then d else x
 u12_to_i12_err :: U12 -> I12
 u12_to_i12_err x = u12_to_i12_def (error ("u12_to_i12: " ++ show x)) x
 
--- | U12 as I12, ie. two's complement bit-pattern.
---
--- > map u12_as_i12 [0,1,2047,2048,2049,4095] == [0,1,2047,-2048,-2047,-1]
+{- | U12 as I12, ie. two's complement bit-pattern.
+
+> map u12_as_i12 [0,1,2047,2048,2049,4095] == [0,1,2047,-2048,-2047,-1]
+-}
 u12_as_i12 :: U12 -> I12
 u12_as_i12 x = let y = u12_to_i12_err x in if y >= 2048 then y - 2048 * 2 else y
 
@@ -153,7 +154,6 @@ f32_to_i16_def d x = if x < (-32768) || x > 32767 then d else floor x
 
 f32_to_i16_err :: F32 -> I16
 f32_to_i16_err x = f32_to_i16_def (error ("f32_to_i16: " ++ show x)) x
-
 
 int_to_u8_def :: U8 -> Int -> U8
 int_to_u8_def d x = if x < 0 || x > 255 then d else x

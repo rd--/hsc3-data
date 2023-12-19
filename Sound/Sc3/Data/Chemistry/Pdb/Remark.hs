@@ -15,7 +15,7 @@ import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}
 -- * Remark 350 - Biomt
 
 -- | (N,Seq,Mx-n,Vec-n)
-type Remark_350_Biomt = (Int,Int,V3 Double,Double)
+type Remark_350_Biomt = (Int, Int, V3 Double, Double)
 
 {- | Parse Remark 350 - BIOMT
 
@@ -23,25 +23,26 @@ x = (350,"  BIOMT2   2  0.866025 -0.500000  0.000000     -237.03981")
 parse_remark_350_biomt x == Just (2,2,(0.866025,-0.5,0.0),-237.03981)
 -}
 parse_remark_350_biomt :: Remark -> Maybe Remark_350_Biomt
-parse_remark_350_biomt (n,s) =
+parse_remark_350_biomt (n, s) =
   if n == 350 && take 7 s == "  BIOMT"
-  then let x = words (drop 7 s)
-           (i,f) = (read . (x !!),read . (x !!))
-       in Just (i 0,i 1,(f 2,f 3,f 4),f 5)
-  else Nothing
+    then
+      let x = words (drop 7 s)
+          (i, f) = (read . (x !!), read . (x !!))
+      in Just (i 0, i 1, (f 2, f 3, f 4), f 5)
+    else Nothing
 
 remark_350_biomt_group :: [Remark_350_Biomt] -> [[Mtrx Double]]
 remark_350_biomt_group =
-  let err x = error (show ("remark_350_biomt_group?",x))
-      f1 (i,j,p,q) = (i,j,(p,q))
+  let err x = error (show ("remark_350_biomt_group?", x))
+      f1 (i, j, p, q) = (i, j, (p, q))
       f2 x = case unzip3 x of
-               ([1,2,3],[n1,n2,n3],[(m1,v1),(m2,v2),(m3,v3)]) ->
-                 if n1 == n2 && n1 == n3
-                 then (n1,((m1,m2,m3),(v1,v2,v3)))
-                 else err (n1,n2,n3)
-               e -> err e
+        ([1, 2, 3], [n1, n2, n3], [(m1, v1), (m2, v2), (m3, v3)]) ->
+          if n1 == n2 && n1 == n3
+            then (n1, ((m1, m2, m3), (v1, v2, v3)))
+            else err (n1, n2, n3)
+        e -> err e
       f3 x = if null (head x) then tail x else err x
-      f4 x = let (p,q) = unzip x in if p `isPrefixOf` [1..] then q else err p
+      f4 x = let (p, q) = unzip x in if p `isPrefixOf` [1 ..] then q else err p
   in map f4 . f3 . T.split_when_keeping_left ((== 1) . fst) . map (f2 . map f1) . chunksOf 3
 
 dat_remark_350_biomt :: Dat -> [[Mtrx Double]]

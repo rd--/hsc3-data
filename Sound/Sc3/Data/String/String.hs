@@ -64,9 +64,9 @@ str_write_file :: FilePath -> STR -> IO ()
 str_write_file = writeFile
 
 -- > str_show_integral 1234567890123456789
-str_show_integral :: (Integral t,Show t) => t -> STR
+str_show_integral :: (Integral t, Show t) => t -> STR
 str_show_integral = show
 
 -- > str_show_real_float 4 1.234567890123456789
-str_show_real_float :: (RealFloat t,Show t) => Int -> t -> STR
+str_show_real_float :: (RealFloat t, Show t) => Int -> t -> STR
 str_show_real_float k n = showFFloat (Just k) n ""

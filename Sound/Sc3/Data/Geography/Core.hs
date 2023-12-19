@@ -22,19 +22,19 @@ type P a = C.GenParser Char () a
 -- * Core
 
 dms_to_degree :: Dms -> Double
-dms_to_degree (d,m,s) =
-    let i = fromIntegral
-    in i d + ((i m * 60 + i s) / 3600)
+dms_to_degree (d, m, s) =
+  let i = fromIntegral
+  in i d + ((i m * 60 + i s) / 3600)
 
 -- | N & E are 'id', W & S are 'negate'.
 quadrant_f :: Char -> (Double -> Double)
 quadrant_f q =
-    case q of
-      'N' -> id
-      'E' -> id
-      'W' -> negate
-      'S' -> negate
-      _ -> error "quadrant_to_f"
+  case q of
+    'N' -> id
+    'E' -> id
+    'W' -> negate
+    'S' -> negate
+    _ -> error "quadrant_to_f"
 
 {- | Translate from 'Qdms' to 'R' degree.
 
@@ -42,17 +42,17 @@ quadrant_f q =
 -37.81388888888889
 -}
 qdms_to_degree :: Qdms -> Double
-qdms_to_degree (q,d,m,s) = quadrant_f q (dms_to_degree (d,m,s))
+qdms_to_degree (q, d, m, s) = quadrant_f q (dms_to_degree (d, m, s))
 
 degree_to_dms :: Double -> Dms
 degree_to_dms dgr =
-    let i = fromIntegral
-        d = abs dgr
-        d' = truncate d
-        m = 60 * (d - i d')
-        m' = truncate m
-        s = 60 * (m - i m')
-    in (d',m',round s)
+  let i = fromIntegral
+      d = abs dgr
+      d' = truncate d
+      m = 60 * (d - i d')
+      m' = truncate m
+      s = 60 * (m - i m')
+  in (d', m', round s)
 
 {- | Given target quadrants, the inverse of 'qdms_to_degree'.
 
@@ -60,16 +60,16 @@ degree_to_dms dgr =
 ('S',37,48,50)
 -}
 degree_to_qdms :: (Char, Char) -> Double -> Qdms
-degree_to_qdms (l,r) dgr =
-    let q = if dgr < 0 then l else r
-        (d,m,s) = degree_to_dms dgr
-    in (q,d,m,s)
+degree_to_qdms (l, r) dgr =
+  let q = if dgr < 0 then l else r
+      (d, m, s) = degree_to_dms dgr
+  in (q, d, m, s)
 
 latitude_to_qdms :: Double -> Qdms
-latitude_to_qdms = degree_to_qdms ('S','N')
+latitude_to_qdms = degree_to_qdms ('S', 'N')
 
 longitude_to_qdms :: Double -> Qdms
-longitude_to_qdms = degree_to_qdms ('W','E')
+longitude_to_qdms = degree_to_qdms ('W', 'E')
 
 -- * Parse
 
@@ -106,7 +106,7 @@ p_qdms_unicode = do
   s <- p_int
   _ <- C.char '″'
   q <- C.oneOf "NSEW"
-  return (q,d,m,s)
+  return (q, d, m, s)
 
 -- | Parser for 'Qdms' with leading direction and whitespace.
 p_qdms_ws :: P Qdms
@@ -118,14 +118,14 @@ p_qdms_ws = do
   m <- p_int
   _ <- C.char ' '
   s <- p_int
-  return (q,d,m,s)
+  return (q, d, m, s)
 
 p_coord_by :: P Qdms -> P Coord
 p_coord_by p = do
   phi <- fmap qdms_to_degree p
   _ <- C.char ' '
   lambda <- fmap qdms_to_degree p
-  return (phi,lambda)
+  return (phi, lambda)
 
 p_coord :: P Coord
 p_coord = p_coord_by p_qdms_ws
@@ -183,10 +183,10 @@ parse_coord_unicode = C.parse (p_coord_by p_qdms_unicode) "parse_coord_unicode"
 -- * Pretty print (Pp)
 
 qdms_pp :: Qdms -> String
-qdms_pp (q,d,m,s) = q : ' ' : unwords (map show [d,m,s])
+qdms_pp (q, d, m, s) = q : ' ' : unwords (map show [d, m, s])
 
 coord_pp :: Coord -> String
-coord_pp (phi,lambda) =
-    let phi' = latitude_to_qdms phi
-        lambda' = longitude_to_qdms lambda
-    in qdms_pp phi' ++ " " ++ qdms_pp lambda'
+coord_pp (phi, lambda) =
+  let phi' = latitude_to_qdms phi
+      lambda' = longitude_to_qdms lambda
+  in qdms_pp phi' ++ " " ++ qdms_pp lambda'

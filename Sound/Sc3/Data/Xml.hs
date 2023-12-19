@@ -22,9 +22,9 @@ x_get_elem_set nm = error_if_null ("x_get_elem_set: " ++ nm) . X.findChildren (X
 -- | Descending sequence of 'x_get_elem'
 x_get_elem_path :: [String] -> X.Element -> X.Element
 x_get_elem_path p x =
-    case p of
-      [] -> x
-      nm:p1 -> x_get_elem_path p1 (x_get_elem nm x)
+  case p of
+    [] -> x
+    nm : p1 -> x_get_elem_path p1 (x_get_elem nm x)
 
 -- | 'X.findElement'
 x_has_elem :: String -> X.Element -> Bool
@@ -45,9 +45,9 @@ x_elem_name = X.qName . X.elName
 -- | 'X.elContent'
 xml_elem_text_cdata_uniq :: X.Element -> String
 xml_elem_text_cdata_uniq e =
-    case X.elContent e of
-      [X.Text (X.CData X.CDataText str _)] -> str
-      _ -> error "xml_elem_text_cdata_uniq"
+  case X.elContent e of
+    [X.Text (X.CData X.CDataText str _)] -> str
+    _ -> error "xml_elem_text_cdata_uniq"
 
 -- | Erroring variant of ' X.parseXMLDoc'.
 xml_parse_err :: X.XmlSource x => x -> X.Element

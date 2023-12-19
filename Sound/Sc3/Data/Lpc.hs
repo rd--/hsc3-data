@@ -1,6 +1,7 @@
--- | Reader for Lpc analysis data files.
---
--- <http://www.csounds.com/manual/html/lpanal.html>
+{- | Reader for Lpc analysis data files.
+
+<http://www.csounds.com/manual/html/lpanal.html>
+-}
 module Sound.Sc3.Data.Lpc where
 
 import Control.Monad {- base -}
@@ -18,25 +19,38 @@ import qualified Sound.Osc.Coding.Byte as O {- hosc -}
 -- * Types
 
 -- | Lpc analysis meta-data.
-data LpcHeader = LpcHeader { lpcHeaderSize :: Int -- ^ bytes, 28 (0x001C)
-                           , lpcMagic :: Int -- ^ uid, 999 (0x03E7)
-                           , lpcNPoles :: Int -- ^ number of filter poles
-                           , lpcFrameSize :: Int -- ^ element count (4 + nPoles)
-                           , lpcFrameRate :: Float -- ^ frames-per-second
-                           , lpcSampleRate :: Float -- ^ samples-per-second
-                           , lpcAnalysisDuration :: Float -- ^ seconds
-                           , lpcNFrames :: Int -- ^ frame-count (ie. duration * frame-rate)
-                           } deriving (Eq, Show)
+data LpcHeader = LpcHeader
+  { lpcHeaderSize :: Int
+  -- ^ bytes, 28 (0x001C)
+  , lpcMagic :: Int
+  -- ^ uid, 999 (0x03E7)
+  , lpcNPoles :: Int
+  -- ^ number of filter poles
+  , lpcFrameSize :: Int
+  -- ^ element count (4 + nPoles)
+  , lpcFrameRate :: Float
+  -- ^ frames-per-second
+  , lpcSampleRate :: Float
+  -- ^ samples-per-second
+  , lpcAnalysisDuration :: Float
+  -- ^ seconds
+  , lpcNFrames :: Int
+  -- ^ frame-count (ie. duration * frame-rate)
+  }
+  deriving (Eq, Show)
 
--- | Lpc analysis frame data.
---   A frame consists of RMS2 (residual), RMS1 (input), ERRN, and CPS fields,
---   followed by /n/ filter co-efficients.
+{- | Lpc analysis frame data.
+  A frame consists of RMS2 (residual), RMS1 (input), ERRN, and CPS fields,
+  followed by /n/ filter co-efficients.
+-}
 type LpcFrame = [Float]
 
 -- | Lpc analysis data.
-data Lpc = Lpc { lpcHeader :: LpcHeader
-               , lpcFrames :: [LpcFrame] }
-           deriving (Eq, Show)
+data Lpc = Lpc
+  { lpcHeader :: LpcHeader
+  , lpcFrames :: [LpcFrame]
+  }
+  deriving (Eq, Show)
 
 -- * Text
 
@@ -50,7 +64,7 @@ read_i32_text = read
 lpc_read_text :: FilePath -> IO Lpc
 lpc_read_text fn = do
   s <- readFile fn
-  let h1:h2:h3:rest = lines s
+  let h1 : h2 : h3 : rest = lines s
   when (h1 /= "LPANAL") (error (printf "lpc_read_text: not LPANAL file: %s" h1))
   let [hs, lm, np, fs] = map read_i32_text (words h2)
       [fr, sr, fd] = map read_f32_text (words h3)
@@ -65,17 +79,18 @@ lpc_read_text fn = do
 data Endian = LittleEndian | BigEndian deriving (Eq)
 
 -- | Binary Int32 and Float readers.
-endian_to_readers :: Endian -> (Handle -> IO Int,Handle -> IO Float)
+endian_to_readers :: Endian -> (Handle -> IO Int, Handle -> IO Float)
 endian_to_readers e =
   case e of
-    LittleEndian -> (O.read_i32_le,O.read_f32_le)
-    BigEndian -> (O.read_i32,O.read_f32)
+    LittleEndian -> (O.read_i32_le, O.read_f32_le)
+    BigEndian -> (O.read_i32, O.read_f32)
 
--- | Read a lpanal binary format Lpc data file.
---   RMS2 and RMS1 are /not/ normalised.
+{- | Read a lpanal binary format Lpc data file.
+  RMS2 and RMS1 are /not/ normalised.
+-}
 lpc_read_binary :: Endian -> FilePath -> IO Lpc
 lpc_read_binary e fn = do
-  let (read_i32,read_f32) = endian_to_readers e
+  let (read_i32, read_f32) = endian_to_readers e
   h <- openFile fn ReadMode
   l <- hFileSize h
   [hs, lm, np, fs] <- replicateM 4 (read_i32 h)
@@ -100,11 +115,12 @@ f32_normalise x = let m = recip (maximum x) in map (* m) x
 -- | Transpose and normalise Lpc frame data.
 lpc_sc3_data :: [[Float]] -> [[Float]]
 lpc_sc3_data d =
-  let rms2:rms1:rest = transpose d
+  let rms2 : rms1 : rest = transpose d
   in f32_normalise rms2 : f32_normalise rms1 : rest
 
--- | Analysis data in format required by the Sc3 Lpc UGens.
---   Normalises rms2 and rms1 before packing.
+{- | Analysis data in format required by the Sc3 Lpc UGens.
+  Normalises rms2 and rms1 before packing.
+-}
 lpcSc3 :: Lpc -> [Float]
 lpcSc3 (Lpc h d) =
   let to_f32 = fromIntegral

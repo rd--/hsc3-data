@@ -37,7 +37,7 @@ related work in
 * * *
 
 ```
-$ doctest Sound/Sc3/Data
-Examples: 203  Tried: 203  Errors: 0  Failures: 0
+$ make doctest
+Examples: 293  Tried: 293  Errors: 0  Failures: 0
 $
 ```
