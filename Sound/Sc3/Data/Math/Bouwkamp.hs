@@ -7,18 +7,19 @@ are sequentially placed in the highest (and leftmost) possible slots.
 -}
 module Sound.Sc3.Data.Math.Bouwkamp where
 
-import Data.Colour.SRGB {- colour -}
 import Data.List {- base -}
 import Text.Printf {- base -}
+
+import Data.Colour.SRGB {- colour -}
 
 import qualified Language.Dot as D {- language-dot -}
 import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
 import qualified Data.Cg.Minus as Cg {- hcg-minus -}
 import qualified Data.Cg.Minus.Colour.Ryb as Ryb {- hcg-minus -}
-import qualified Data.Cg.Minus.Picture as Cg {- hcg-minus -}
+import qualified Data.Cg.Minus.Picture as Picture {- hcg-minus -}
 
-import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
 
 type Pt = (Int, Int)
 type Sz = Int
@@ -125,13 +126,13 @@ gen_poly h = let f = map (to_pt h) . sq_corners_cw in map f
 gen_clr :: Int -> [Cg.Ca]
 gen_clr = map (\(r, g, b) -> Cg.rgba_to_ca (r, g, b, 1)) . drop 2 . Ryb.rgb_colour_gen . (+ 2)
 
-gen_pic :: Maybe [Cg.Ca] -> Int -> [Sq] -> Cg.Picture Double
+gen_pic :: Maybe [Cg.Ca] -> Int -> [Sq] -> Picture.Picture Double
 gen_pic m_clr sz sq = do
   let p = gen_poly sz sq
-      black_pen = Cg.Pen 0.1 (Cg.rgba_to_ca (0, 0, 0, 1)) Cg.no_dash
+      black_pen = Picture.Pen 0.1 (Cg.rgba_to_ca (0, 0, 0, 1)) Picture.no_dash
    in case m_clr of
-        Just clr_seq -> zipWith Cg.polygon_f clr_seq p
-        Nothing -> map (Cg.polygon_l black_pen) p
+        Just clr_seq -> zipWith Picture.polygon_f clr_seq p
+        Nothing -> map (Picture.polygon_l black_pen) p
 
 -- * Csv
 
@@ -145,6 +146,10 @@ gen_csv nm = writeFile nm . unlines . concatMap (map ln_entry . sq_ln)
 
 -- * Type
 
+{- | (l, w, h, n) l=length w=width h=height n=entries
+w should equal h.
+l should equal length (concat n).
+-}
 type Bouwkamp_Code = (Int, Int, Int, [[Int]])
 
 bc_to_sq :: Bouwkamp_Code -> [Sq]
@@ -214,7 +219,7 @@ bc_connection_graph sq =
       f pt = bc_pt_connects pt sq
       g (pt, ls) = map (\(p, q) -> ((p, q), pt)) (all_pairs_asc ls)
       e = sort (concatMap g (zip v (map f v)))
-  in T.collate_adjacent e
+  in List.collate_adjacent e
 
 -- * Dot
 
@@ -249,7 +254,7 @@ bc_connection_graph_dot opt sq_set =
           (sq_nm sq)
           [ dot_attr_str "label" (sq_txt sq)
           , dot_attr_str "style" "filled"
-          , dot_attr_str "fillcolor" (T.lookup_err sq clr_tbl)
+          , dot_attr_str "fillcolor" (List.lookup_err sq clr_tbl)
           ]
       embrace s = "{" ++ s ++ "}"
       pt_set_pp = if opt then embrace . intercalate "∘" . map pt_pp else const ""

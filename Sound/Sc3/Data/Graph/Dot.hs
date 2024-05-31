@@ -6,10 +6,10 @@ import qualified Data.Foldable as Foldable {- base -}
 import Data.Maybe {- base -}
 import System.Process {- process -}
 
-import qualified Data.Text.Lazy as T {- text -}
-import qualified Data.Text.Lazy.IO as T {- text -}
+import qualified Data.Text.Lazy as Text.Lazy {- text -}
+import qualified Data.Text.Lazy.IO as Text.Lazy.IO {- text -}
 
-import qualified Data.GraphViz as Gv hiding (DotGraph {- graphviz -} (..))
+import qualified Data.GraphViz as Gv hiding (DotGraph(..)) {- graphviz -}
 import qualified Data.GraphViz.Attributes.Complete as Gv {- graphviz -}
 import qualified Data.GraphViz.Types.Generalised as Gv {- graphviz -}
 
@@ -25,26 +25,26 @@ import qualified Data.GraphViz.Types.Generalised as Gv {- graphviz -}
 dot_run_layout :: String -> IO String
 dot_run_layout = readProcess "dot" ["-T", "dot"]
 
-{- | 'Gv.parseDotGraph' of 'T.pack'.
+{- | 'Gv.parseDotGraph' of 'Text.Lazy.pack'.
 
 >>> st = [Gv.DE (Gv.DotEdge 1 2 []),Gv.DE (Gv.DotEdge 2 3 [])]
 >>> Foldable.toList (Gv.graphStatements (dg_parse "graph {1 -- 2 -- 3}")) == st
 True
 -}
 dg_parse :: (Ord t, Gv.ParseDot t) => String -> Gv.DotGraph t
-dg_parse = Gv.parseDotGraph . T.pack
+dg_parse = Gv.parseDotGraph . Text.Lazy.pack
 
 -- | Type specialised to 'Int'.
 dg_parse_int :: String -> Gv.DotGraph Int
-dg_parse_int = Gv.parseDotGraph . T.pack
+dg_parse_int = Gv.parseDotGraph . Text.Lazy.pack
 
--- | 'T.unpack' of 'Gv.printDotGraph'.
+-- | 'Text.Lazy.unpack' of 'Gv.printDotGraph'.
 dg_print :: (Ord t, Gv.PrintDot t) => Gv.DotGraph t -> String
-dg_print = T.unpack . Gv.printDotGraph
+dg_print = Text.Lazy.unpack . Gv.printDotGraph
 
--- | 'Gv.parseDotGraph' of 'T.readFile'.
+-- | 'Gv.parseDotGraph' of 'Text.Lazy.readFile'.
 dg_load :: (Ord t, Gv.ParseDot t) => FilePath -> IO (Gv.DotGraph t)
-dg_load = fmap Gv.parseDotGraph . T.readFile
+dg_load = fmap Gv.parseDotGraph . Text.Lazy.IO.readFile
 
 -- | Type specialised to 'Int'.
 dg_load_int :: FilePath -> IO (Gv.DotGraph Int)
@@ -78,7 +78,7 @@ attr_to_pos a =
 attr_to_label :: Gv.Attribute -> Maybe String
 attr_to_label a =
   case a of
-    Gv.Label (Gv.StrLabel t) -> Just (T.unpack t)
+    Gv.Label (Gv.StrLabel t) -> Just (Text.Lazy.unpack t)
     _ -> Nothing
 
 -- | Vertex.
