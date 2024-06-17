@@ -34,4 +34,4 @@ mk-pdb:
 	(rm -f pdb ; make pdb ; cp pdb $(prefix)/bin/hsc3-pdb)
 
 dep:
-	cabal install hscurses
+	cabal v1-install hscurses

@@ -9,14 +9,14 @@ import qualified Sound.Midi.Type as Midi {- midi-osc -}
 import qualified Sound.Sc3.Data.Midi.File.C as Midi.File.C {- hsc3-data -}
 import qualified Sound.Sc3.Data.Midi.Plain as Midi.Plain {- hsc3-data -}
 
-node_to_text :: Int -> (Int,Codec.Midi.Message) -> [String]
-node_to_text n (t,m) =
-  let l_f = (["T","","",""] ++)
-      r_f = ("M" :) . map show . (\(p,q,r) -> [fromIntegral p,q,r]) . Midi.cvm_to_cvm3
-    in show n : show t : either l_f r_f (Midi.File.C.c_parse_message m)
+node_to_text :: Int -> (Int, Codec.Midi.Message) -> [String]
+node_to_text n (t, m) =
+  let l_f = (["T", "", "", ""] ++)
+      r_f = ("M" :) . map show . (\(p, q, r) -> [fromIntegral p, q, r]) . Midi.cvm_to_cvm3
+  in show n : show t : either l_f r_f (Midi.File.C.c_parse_message m)
 
 track_to_text :: (Int, [(Int, Codec.Midi.Message)]) -> [[String]]
-track_to_text (n,t) = map (node_to_text n) t
+track_to_text (n, t) = map (node_to_text n) t
 
 pad_right :: a -> Int -> [a] -> [a]
 pad_right x n l = l ++ replicate (n - length l) x
@@ -25,21 +25,21 @@ gen_csv :: [[String]] -> String
 gen_csv tbl =
   let w = maximum (map length tbl)
       tbl' = map (pad_right "" w) tbl
-  in Csv.csv_table_pp id (False,',',False,Csv.Csv_Align_Right) (Nothing,tbl')
+  in Csv.csv_table_pp id (False, ',', False, Csv.Csv_Align_Right) (Nothing, tbl')
 
 midi_to_csv_text :: FilePath -> IO ()
 midi_to_csv_text m_fn = do
   m <- Midi.File.C.c_load_midi m_fn
-  let tbl = concatMap (track_to_text) (zip [0..] (map Codec.Midi.toAbsTime (Codec.Midi.tracks m)))
+  let tbl = concatMap (track_to_text) (zip [0 ..] (map Codec.Midi.toAbsTime (Codec.Midi.tracks m)))
   putStrLn (gen_csv tbl)
 
 midi_header :: FilePath -> IO ()
 midi_header m_fn = do
   m <- Midi.File.C.c_load_midi m_fn
-  let (ty,t_div,n) = Midi.File.C.c_midi_header m
-  print ("file-type",ty)
-  print ("time-div",t_div)
-  print ("number-of-tracks",n)
+  let (ty, t_div, n) = Midi.File.C.c_midi_header m
+  print ("file-type", ty)
+  print ("time-div", t_div)
+  print ("number-of-tracks", n)
 
 midi_to_csv_mnd :: FilePath -> FilePath -> IO ()
 midi_to_csv_mnd midi_fn csv_fn = do
@@ -48,20 +48,20 @@ midi_to_csv_mnd midi_fn csv_fn = do
 
 usage :: [String]
 usage =
-  ["hsc3-midi"
-  ,""
-  ,"  midi-header midi-file"
-  ,"  midi-to-csv-mnd midi-file csv-file"
-  ,"  midi-to-csv-text midi-file"
+  [ "hsc3-midi"
+  , ""
+  , "  midi-header midi-file"
+  , "  midi-to-csv-mnd midi-file csv-file"
+  , "  midi-to-csv-text midi-file"
   ]
 
 main :: IO ()
 main = do
   a <- getArgs
   case a of
-    ["midi-header",midi_fn] -> midi_header midi_fn
-    ["midi-to-csv-mnd",midi_fn,csv_fn] -> midi_to_csv_mnd midi_fn csv_fn
-    ["midi-to-csv-text",midi_fn] -> midi_to_csv_text midi_fn
+    ["midi-header", midi_fn] -> midi_header midi_fn
+    ["midi-to-csv-mnd", midi_fn, csv_fn] -> midi_to_csv_mnd midi_fn csv_fn
+    ["midi-to-csv-text", midi_fn] -> midi_to_csv_text midi_fn
     _ -> putStrLn (unlines usage)
 
 {-

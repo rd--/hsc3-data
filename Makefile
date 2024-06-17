@@ -13,7 +13,7 @@ push-all:
 	r.gitlab-push.sh hsc3-data
 
 indent:
-	fourmolu -i Sound
+	fourmolu -i Sound cmd
 
 doctest:
 	doctest -Wno-x-partial -Wno-incomplete-uni-patterns Sound

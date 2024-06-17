@@ -9,7 +9,7 @@ import System.Process {- process -}
 import qualified Data.Text.Lazy as Text.Lazy {- text -}
 import qualified Data.Text.Lazy.IO as Text.Lazy.IO {- text -}
 
-import qualified Data.GraphViz as Gv hiding (DotGraph(..)) {- graphviz -}
+import qualified Data.GraphViz as Gv hiding (DotGraph {- graphviz -} (..))
 import qualified Data.GraphViz.Attributes.Complete as Gv {- graphviz -}
 import qualified Data.GraphViz.Types.Generalised as Gv {- graphviz -}
 

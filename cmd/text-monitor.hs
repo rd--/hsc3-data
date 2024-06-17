@@ -13,9 +13,9 @@ set_ln w n s = do
 
 recv_ln :: Char -> Window -> String -> IO ()
 recv_ln c w s = do
-  let (n,_) = break (== c) s
+  let (n, _) = break (== c) s
   case reads n of
-    [(n',_)] -> set_ln w n' s
+    [(n', _)] -> set_ln w n' s
     _ -> return ()
 
 text_monitor :: Char -> Window -> IO ()
@@ -28,9 +28,9 @@ main :: IO ()
 main = do
   a <- getArgs
   let c = case a of
-            ["stdin","space"] -> ' '
-            ["stdin","comma"] -> ','
-            _ -> error "text-monitor stdin space|comma"
+        ["stdin", "space"] -> ' '
+        ["stdin", "comma"] -> ','
+        _ -> error "text-monitor stdin space|comma"
   hSetBuffering stdin LineBuffering
   initCurses
   w <- initScr
