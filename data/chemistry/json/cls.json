@@ -1,5 +1,5 @@
-[
-	{
+{
+	"0201": {
 		"description": "(La,Ba)_2 Cu O_4 High-T_c superconductor | I4/mmm, #139                        ",
 		"edges": [
 			[0, 4],
@@ -197,7 +197,7 @@
 			"O"
 		]
 	},
-	{
+	"1212c": {
 		"description": "Y Ba_2 Cu_3 O_(7-x) High-T_c superconductor | Pmmm, #47                        ",
 		"edges": [
 			[0, 1],
@@ -399,7 +399,7 @@
 			"O"
 		]
 	},
-	{
+	"6h": {
 		"description": "CSi  (Moissanite-6H) P6_3mc (C^4_{6v}, #186) & hP12 & W subs for Si            ",
 		"edges": [
 			[0, 1],
@@ -716,7 +716,7 @@
 			"W"
 		]
 	},
-	{
+	"Ag2Se": {
 		"description": "Ag_2 Se & P 2_1 2_1 2_1  D_2^4 #19 (a^3) & oP12 & Below 406K & Pearson's Handbo",
 		"edges": [
 			[0, 1],
@@ -1682,7 +1682,7 @@
 			"Au"
 		]
 	},
-	{
+	"Al12W": {
 		"description": "Al_{12} W & Im(-3) & T_h^5 & #204 & cI26                                       ",
 		"edges": [
 			[0, 1],
@@ -1872,7 +1872,7 @@
 			"Al"
 		]
 	},
-	{
+	"AlN3Ti4": {
 		"description": "Al N_3 Ti_4 & P6_3/mmc & #194 & D_{6h}^4 & hP16 & MAX phase                    ",
 		"edges": [
 			[0, 4],
@@ -2434,7 +2434,7 @@
 			"Ti"
 		]
 	},
-	{
+	"AlPS4": {
 		"description": "Al P S_4 & P222 & D_2^1 & #16 & oP12 & Pearson's Handbook                      ",
 		"edges": [
 			[0, 4],
@@ -2512,7 +2512,7 @@
 			"Al"
 		]
 	},
-	{
+	"AsCu3S4": {
 		"description": "AsCu_3S_4 & Lazarevicite & P(-4)3m #215 T^1_d & cP8 & Pearson's Handbook       ",
 		"edges": [
 			[0, 4],
@@ -2574,7 +2574,7 @@
 			"As"
 		]
 	},
-	{
+	"AsGa": {
 		"description": "AsGa (> 24 GPa) & Imm2-C_{2v}^20 #44 & oI4 & Pearson's Handbook Vol. I 1135    ",
 		"edges": [
 			[0, 3],
@@ -2665,7 +2665,7 @@
 			"As"
 		]
 	},
-	{
+	"AsK3S4": {
 		"description": "As K_3 S_4 & oP32 & Pna2_1-C_{2v}^9 #33 & Pearson's Handbook I, 1164",
 		"edges": [
 			[1, 4],
@@ -2824,7 +2824,7 @@
 			"S"
 		]
 	},
-	{
+	"AsKSe2P1": {
 		"description": "AsKSe_2 & P1 (#1, C^1_1) & aP16 & Pearson's Handbook I, 1164",
 		"edges": [
 			[0, 15],
@@ -3157,7 +3157,7 @@
 			"Sn"
 		]
 	},
-	{
+	"Au5Mn2": {
 		"description": "Au_5 Mn_2 & C2/m-C_{2h}^3 #12 (ai^3) & mC14 & Pearson Handbook I, Alloys 346-7 ",
 		"edges": [
 			[0, 1],
@@ -3589,7 +3589,7 @@
 			"Mn"
 		]
 	},
-	{
+	"B-R105": {
 		"description": "B_105 & R(-3)m-D_{3d}^5 (#166) & hR105 & Donohue, pp. 61-78 (Hoard et al.)     ",
 		"edges": [
 			[0, 1],
@@ -4101,7 +4101,7 @@
 			"B"
 		]
 	},
-	{
+	"B-T50": {
 		"description": "T-50 Boron & P4_2/nnm (#134) D^{12}_{4h}& tP50 & T-50 Boron (2nd setting) & Donohue, pp. 48-56",
 		"edges": [
 			[0, 2],
@@ -4589,7 +4589,7 @@
 			"B"
 		]
 	},
-	{
+	"B2Pd5": {
 		"description": "B_2 Pd_5 & B2/b & #15 & C_{2h}^6 & mC28 & base-centered monoclinic primitive ce",
 		"edges": [
 			[0, 1],
@@ -5279,7 +5279,7 @@
 			"Pd"
 		]
 	},
-	{
+	"BaPtSb": {
 		"description": "BaPtSb   & P-6m2 (#187) D_{3h}^1 & hP3                                         ",
 		"edges": [
 			[0, 1],
@@ -5395,7 +5395,7 @@
 			"Ba"
 		]
 	},
-	{
+	"BaS3": {
 		"description": "BaS_3 & & P2_12_12 - D_{2}^3 #18 (abc^3) & oP16 & Pearsons Handbook II 1701    ",
 		"edges": [
 			[0, 3],
@@ -5657,7 +5657,7 @@
 			"Ba"
 		]
 	},
-	{
+	"Bainite": {
 		"description": "Bainite (Fe_3C) & P6_322 & #182 D_6^6 & hP8                                    ",
 		"edges": [
 			[0, 4],
@@ -5919,7 +5919,7 @@
 			"Fe"
 		]
 	},
-	{
+	"Bergman": {
 		"description": "Mg_{32} (Al,Zn)_{49} & Bergman Phase & \tIm(-3)-T_h^5 #204 (ae^2fg^3h) & Bergman et al., Acta Cryst. 10, 254 (1957)",
 		"edges": [
 			[0, 11],
@@ -7121,7 +7121,7 @@
 			"Zn"
 		]
 	},
-	{
+	"C2CeNi": {
 		"description": "C_2 Ce Ni & Amm2 & C_{2v}^{14} & #38 & oC8 & Pearson's Handbook                ",
 		"edges": [
 			[0, 1],
@@ -7215,7 +7215,7 @@
 			"Ce"
 		]
 	},
-	{
+	"CMo": {
 		"description": "CMo & P6_3/mmc & #194 & D_{6h}^4 & hP12                                        ",
 		"edges": [
 			[0, 7],
@@ -7565,7 +7565,7 @@
 			"C"
 		]
 	},
-	{
+	"CNCl": {
 		"description": "CNCl & Pmmn-D_{2h}^{13} #59 & oP6 & Wyckoff, Vol. I, p. 173                    ",
 		"edges": [
 			[0, 1],
@@ -7703,7 +7703,7 @@
 			"Cl"
 		]
 	},
-	{
+	"CTi2": {
 		"description": "CTi_2 & Fd(-3)m & #227 & O_h^7 & cF48                                          ",
 		"edges": [
 			[0, 1],
@@ -8291,7 +8291,7 @@
 			"C"
 		]
 	},
-	{
+	"CaC6": {
 		"description": "CaC_6 & R(_3)-D_{3d}^5 #166 (ag) & hR7 & Emery et al. PRB 95, 087003 (2005)    ",
 		"edges": [
 			[0, 1],
@@ -9095,7 +9095,7 @@
 			"C"
 		]
 	},
-	{
+	"CaCuO2": {
 		"description": "(Ca_.86 Sr_.14) CuO_2 & tP4 & P4/mmm-D_{4h}^1 #123 (adf) & Siegrist et al., Nature 334, 231-2 (1988)",
 		"edges": [
 			[0, 1],
@@ -9459,7 +9459,7 @@
 			"Cu"
 		]
 	},
-	{
+	"CaIn2": {
 		"description": "CaIn_2 & P6_3/mmc-D_{6h}^4 #194 & hP6 & Pearson, Alloys, pp. 499-500           ",
 		"edges": [
 			[0, 1],
@@ -9600,7 +9600,7 @@
 			"Ca"
 		]
 	},
-	{
+	"CdTe": {
 		"description": "CdTe & Pmm2-C_{2v}^1 #25 & oP2 & Pearson's Handbook Vol. II  2186              ",
 		"edges": [
 			[0, 1],
@@ -9701,7 +9701,7 @@
 			"Te"
 		]
 	},
-	{
+	"Cf": {
 		"description": "Cf & P(-1) (#2, C^1_i) & aP4 & Donohue",
 		"edges": [
 			[0, 4],
@@ -9758,7 +9758,7 @@
 			"Cf"
 		]
 	},
-	{
+	"CuTe": {
 		"description": "CuTe & Pmmn & D^{13}_{2h} & #59 & oP4                                          ",
 		"edges": [
 			[0, 5],
@@ -9814,7 +9814,7 @@
 			"Cu"
 		]
 	},
-	{
+	"Fe2C": {
 		"description": "Fe_2 C & Pnnm (#58) & oP6                                                      ",
 		"edges": [
 			[0, 4],
@@ -10222,7 +10222,7 @@
 			"C"
 		]
 	},
-	{
+	"Fe4C": {
 		"description": "Fe_4 C & P(-4)3m (#215) & cP5                                                  ",
 		"edges": [
 			[0, 1],
@@ -10490,7 +10490,7 @@
 			"C"
 		]
 	},
-	{
+	"FeS2": {
 		"description": "FeS_2 & P1 (#1, C^1_1) & aP12                                                  ",
 		"edges": [
 			[0, 5],
@@ -10569,7 +10569,7 @@
 			"Fe"
 		]
 	},
-	{
+	"FeTiO3": {
 		"description": "FeTiO_3 & R(-3)-C_{3i}^2 (#148) & hR10 & Wyckoff II, 420-422                   ",
 		"edges": [
 			[0, 9],
@@ -11111,7 +11111,7 @@
 			"Fe"
 		]
 	},
-	{
+	"Ga2Hf": {
 		"description": "Ga_2 Hf & I4_1/amd     & #141 & tI24                                           ",
 		"edges": [
 			[0, 6],
@@ -11374,7 +11374,7 @@
 			"Hf"
 		]
 	},
-	{
+	"Ga3Pt5": {
 		"description": "Ga_3 Pt_5 & Cmmm & #65 oC16                                                    ",
 		"edges": [
 			[0, 4],
@@ -11750,7 +11750,7 @@
 			"Ni"
 		]
 	},
-	{
+	"Ga4Ni": {
 		"description": "Ga_4 Ni & I23-T^3 #197 & cI40 & Pearson's Handbook                             ",
 		"edges": [
 			[0, 1],
@@ -12052,7 +12052,7 @@
 			"Ga"
 		]
 	},
-	{
+	"Ga4Ni3": {
 		"description": "Ga_4 Ni_3 & Ia(-3)d & O_h^{10} & #230 & cI112 & Pearson's Handbook             ",
 		"edges": [
 			[1, 11],
@@ -12864,7 +12864,7 @@
 			"Ni"
 		]
 	},
-	{
+	"GeS2": {
 		"description": "GeS_2 & cF72 & Fdd2-C_{2v}^{17} (#43) & Wyckoff, Vol. I, pp. 324-6             ",
 		"edges": [
 			[1, 6],
@@ -13134,7 +13134,7 @@
 			"S"
 		]
 	},
-	{
+	"H3Ho": {
 		"description": "H_3 Ho & P(-3)c1-D_{3d}^4 #165 (adfg) & hP24 & Pearsons Handbook III 3829; Allo",
 		"edges": [
 			[0, 80],
@@ -14154,7 +14154,7 @@
 			"H"
 		]
 	},
-	{
+	"HoCoGa5": {
 		"description": "HoCoGa5 & P4/mmm-D_{4h}^1 #123 (abci) & tI7 & Pearson's Handbook II, 2403      ",
 		"edges": [
 			[0, 1],
@@ -14268,7 +14268,7 @@
 			"Ho"
 		]
 	},
-	{
+	"IrV": {
 		"description": "alpha IrV & Cmmm-D_{2h}^{19} #65 (jg) & oC8 & Pearson Handbook IV 4139, Alloys ",
 		"edges": [
 			[0, 1],
@@ -14825,7 +14825,7 @@
 			"V"
 		]
 	},
-	{
+	"L1_3": {
 		"description": "CdPt_3 & Cmmm-D_{2h}^{19} #65 (abf) & L1_3 & oC8 & Stefano Curtarolo, Dane Morg",
 		"edges": [
 			[0, 1],
@@ -15085,7 +15085,7 @@
 			"Cd"
 		]
 	},
-	{
+	"Li3N": {
 		"description": "Li_3 N & P6/mmm-D_{6h}^1 #191 & hP4 & Pearson, Alloys, p 503                   ",
 		"edges": [
 			[0, 1],
@@ -15373,7 +15373,7 @@
 			"N"
 		]
 	},
-	{
+	"LiBC": {
 		"description": "LiBC & P6_3/mmc-D_{6h}^4 #194 (acd) & hP6 & W\\\"orle et al., Z. Anorg. Allg. Che",
 		"edges": [
 			[0, 7],
@@ -16235,7 +16235,7 @@
 			"Li"
 		]
 	},
-	{
+	"LiNbO3f": {
 		"description": "Ferro-electric LiNbO3 & R3c (#161, C^6_{3v}) & hR10 & Acta Cryst. B50, 405 (1994)",
 		"edges": [
 			[0, 4],
@@ -16680,7 +16680,7 @@
 			"Nb"
 		]
 	},
-	{
+	"LiNbO3p": {
 		"description": "Para-electric LiNbO3 & R(-3)c (#167, D^6_{3d}) & hR10 & Acta Cryst. B50, 405 (1994)",
 		"edges": [
 			[0, 1],
@@ -17228,7 +17228,7 @@
 			"O"
 		]
 	},
-	{
+	"Li_cI16": {
 		"description": "Li & cI16 & I(-4)3d-T_d^6 & Hanfland et al., Nature 408, 174-8 (9 November 2000)",
 		"edges": [
 			[0, 11],
@@ -17351,7 +17351,7 @@
 			"Li"
 		]
 	},
-	{
+	"Mg2Ni": {
 		"description": "Mg_2 Ni & P6_222-D_6^4 #180 & hP18 & Villars and Calvert, Pearson's Handbook IV",
 		"edges": [
 			[0, 2],
@@ -17726,7 +17726,7 @@
 			"Mg"
 		]
 	},
-	{
+	"MgSnCu4": {
 		"description": "Mg Sn Cu_4 & F(-4)3m-T_d^2 #216 & cF24 & Pearson, Alloys, p 656",
 		"edges": [
 			[0, 7],
@@ -17922,7 +17922,7 @@
 			"Mg"
 		]
 	},
-	{
+	"Mn3O4": {
 		"description": "Mn_3 O_4 & I4_1/amd-D_{4h}^{19} #141 (adh) & tI28 & Pearsons Handbook IV 4347  ",
 		"edges": [
 			[0, 1],
@@ -18124,7 +18124,7 @@
 			"O"
 		]
 	},
-	{
+	"MoPt2": {
 		"description": "Mo Pt_2 & Immm & D_{2h}^{25} & #71 & oI6 & Pearson's Handbook                  ",
 		"edges": [
 			[0, 1],
@@ -18391,7 +18391,7 @@
 			"Pt"
 		]
 	},
-	{
+	"NH3": {
 		"description": "NH_3 & P 2_1 3-T^4 #198 & cP16 & ND_3 data from Wyckoff Vol II. pp. 117-9      ",
 		"edges": [
 			[0, 1],
@@ -18555,7 +18555,7 @@
 			"H"
 		]
 	},
-	{
+	"N_2": {
 		"description": "N_2 (alpha) & Pa(-3)-T_h^6 #205 & cP8 & Wyckoff Vol I., pp. 29-30              ",
 		"edges": [
 			[0, 4],
@@ -18635,7 +18635,7 @@
 			"N"
 		]
 	},
-	{
+	"NbP": {
 		"description": "NbP     & I4_1/amd (#141) & tI8 & \"40\"                                         ",
 		"edges": [
 			[0, 1],
@@ -18733,7 +18733,7 @@
 			"Nb"
 		]
 	},
-	{
+	"Ni3S2": {
 		"description": "Ni_3 S_2 & R32 & D_3^7 & #155 & hP5                                            ",
 		"edges": [
 			[0, 1],
@@ -18828,7 +18828,7 @@
 			"S"
 		]
 	},
-	{
+	"NiTi": {
 		"description": "NiTi & P2_1/m-C_{2h}^2 & mP4 & Pearson's Handbook Vol. IV, p. 4715             ",
 		"edges": [
 			[0, 6],
@@ -18944,7 +18944,7 @@
 			"Ni"
 		]
 	},
-	{
+	"NiTi2": {
 		"description": "NiTi_2 & Fd(-3)m-O_h^7 #227 & cF96 & Pearson's Handbook Vol. IV, p. 4715       ",
 		"edges": [
 			[0, 1],
@@ -19709,7 +19709,7 @@
 			"Ni"
 		]
 	},
-	{
+	"P2I4": {
 		"description": "P_2 I_4 & P(-1)-C_i^1 #2 & Wyckoff, Vol. I, p 375                              ",
 		"edges": [
 			[0, 1],
@@ -19901,7 +19901,7 @@
 			"I"
 		]
 	},
-	{
+	"PPrS4": {
 		"description": "PPrS_4 & I4/acd (#142) D_{4h}^{20} & tI96 & Pearson's Handbook",
 		"edges": [
 			[0, 6],
@@ -20337,7 +20337,7 @@
 			"Pr"
 		]
 	},
-	{
+	"Pt3O4": {
 		"description": "Pt_3 O_4 & Im(-3)m & O_h^9 & # 229 & cI14                                      ",
 		"edges": [
 			[0, 4],
@@ -20423,7 +20423,7 @@
 			"Pt"
 		]
 	},
-	{
+	"ReSi2": {
 		"description": "Re Si_2 & Immm & D_{2h}^{25} & #71 & oI6 & Pearson's Handbook                  ",
 		"edges": [
 			[0, 1],
@@ -20688,7 +20688,7 @@
 			"Si"
 		]
 	},
-	{
+	"Sb2Tl7": {
 		"description": "Sb_2 Tl_7 & Im(-3)m & O_h^9 & #229 & cI54                                      ",
 		"edges": [
 			[1, 37],
@@ -20888,7 +20888,7 @@
 			"Tl"
 		]
 	},
-	{
+	"SiF4": {
 		"description": "Si F_4 & I(-4)3m-T_d^3 #197 & cI10 & Wyckoff, Vol. II, p 127                   ",
 		"edges": [
 			[0, 1],
@@ -21024,7 +21024,7 @@
 			"F"
 		]
 	},
-	{
+	"Te": {
 		"description": "High-pressure Te & mP4 & P2_1-C_2^2 #4                                         ",
 		"edges": [
 			[0, 1],
@@ -21127,7 +21127,7 @@
 			"Te"
 		]
 	},
-	{
+	"V4Zn5": {
 		"description": "V_4 Zn_5 & I4/mmm-D_{4h}^{17} #139 (ahi) & tI18 & Pearson's Handbook IV, 5354  ",
 		"edges": [
 			[0, 2],
@@ -21683,7 +21683,7 @@
 			"V"
 		]
 	},
-	{
+	"ZrO2": {
 		"description": "ZrO_2 & P2_1/c-C_{2h}^5 #14 & Baddeleyite & mP12 & Wyckoff v I p 244           ",
 		"edges": [
 			[0, 1],
@@ -21742,7 +21742,7 @@
 			"O"
 		]
 	},
-	{
+	"ZrSiO4": {
 		"description": "Zr Si O_4 & Zircon & I4_1/amd & D_{4h}^{19} & #141 & cP12 & Robinson et al. Ame",
 		"edges": [
 			[0, 1],
@@ -21936,7 +21936,7 @@
 			"Zr"
 		]
 	},
-	{
+	"a1": {
 		"description": "Au (standing in for Cu) & Fm(-3)m & #225 & cF4 & A1 & Ashcroft and Mermin, 70",
 		"edges": [
 			[0, 2],
@@ -22010,7 +22010,7 @@
 			"Au"
 		]
 	},
-	{
+	"a10": {
 		"description": "Hg (alpha) & A10 & hR1 & R(-3)m-D_{3d}^5 #166 & Pearson (Alloys) p. 559        ",
 		"edges": [
 			[0, 1],
@@ -22039,7 +22039,7 @@
 		],
 		"vertexLabels": ["Hg", "Hg", "Hg", "Hg", "Hg", "Hg", "Hg", "Hg"]
 	},
-	{
+	"a11": {
 		"description": "alpha Ga & Cmca-D_{2h}^{18} #64 & oC8 & A11 & Villars and Calvert, Pearson's Handbook III, 3423",
 		"edges": [
 			[0, 13],
@@ -22292,7 +22292,7 @@
 			"Ga"
 		]
 	},
-	{
+	"a12": {
 		"description": "alpha Mn & I(-4)3m-T_d^3 #217 (acg^2) & A12 & cI58 & Donohue, p 192",
 		"edges": [
 			[0, 5],
@@ -22686,7 +22686,7 @@
 			"Mn"
 		]
 	},
-	{
+	"a13": {
 		"description": "A13 -- Beta Manganese -- cP20 -- P4_132 -- #213 -- Mn & Mn2 for different types",
 		"edges": [
 			[0, 8],
@@ -22796,7 +22796,7 @@
 			"Mn"
 		]
 	},
-	{
+	"a14": {
 		"description": "I_2 & Cmca & #64 & D^{18}_{2h} & oC8 & A14                                     ",
 		"edges": [
 			[0, 1],
@@ -23156,7 +23156,7 @@
 			"I"
 		]
 	},
-	{
+	"a15": {
 		"description": "Cr_3 Si & Pm(-3)n-O_h^3 #223 & A15 & cP8 & Nevitt, Ch. 13 in Westbrook         ",
 		"edges": [
 			[0, 2],
@@ -23274,7 +23274,7 @@
 			"Si"
 		]
 	},
-	{
+	"a16": {
 		"description": "alpha-S & Fddd-D_{2h}^{24} #70 & oF128 & A16 & Villars and Calvert, Pearson's Handbook IV, 5117",
 		"edges": [
 			[0, 39],
@@ -23580,7 +23580,7 @@
 			"S"
 		]
 	},
-	{
+	"a17": {
 		"description": "P (black) & Cmca-D_{2h}^{18} #64 & oC8 & A17 & Pearson, Alloys, p 779          ",
 		"edges": [
 			[0, 1],
@@ -23821,7 +23821,7 @@
 			"P"
 		]
 	},
-	{
+	"a2": {
 		"description": "Nb (for W) & Im(-3)m & #229 & cI2 & A2 & Ashcroft and Mermin, 70",
 		"edges": [
 			[0, 1],
@@ -23859,7 +23859,7 @@
 		],
 		"vertexLabels": ["Nb", "Nb", "Nb", "Nb", "Nb", "Nb", "Nb", "Nb", "Nb"]
 	},
-	{
+	"a20": {
 		"description": "alpha U & Cmcm-D_{2h}^{17} #63 & oC4 & A20 & Pearson, Alloys, p. 764",
 		"edges": [
 			[0, 6],
@@ -24069,7 +24069,7 @@
 			"U"
 		]
 	},
-	{
+	"a3": {
 		"description": "Mg & P6_3/mmc-D_{6h}^4 #194 & hP2 & A3 & Ashcroft and Mermin, 77               ",
 		"edges": [
 			[0, 1],
@@ -24228,7 +24228,7 @@
 			"Mg"
 		]
 	},
-	{
+	"a3p": {
 		"description": "alpha La & P6_3/mmc (#194) & hP4 & A3' & Donohue, p. 87",
 		"edges": [
 			[0, 2],
@@ -24370,7 +24370,7 @@
 			"La"
 		]
 	},
-	{
+	"a5": {
 		"description": "A5 (beta-Sn) & tI4 & I4_1/amd (#141) & Pearson (Alloys) 311",
 		"edges": [
 			[0, 1],
@@ -24418,7 +24418,7 @@
 			"Sn"
 		]
 	},
-	{
+	"a6": {
 		"description": "In & I4/mmm-D_{4h}^{17} #139 & tI2 & A6 & Pearson (Alloys) 310                 ",
 		"edges": [],
 		"name": "a6",
@@ -24435,7 +24435,7 @@
 		],
 		"vertexLabels": ["In", "In", "In", "In", "In", "In", "In", "In", "In"]
 	},
-	{
+	"a7": {
 		"description": "As (alpha) & A7 & hR2 & R(-3)m-D_{3d}^5 #166 & Pearson (Alloys) p. 559         ",
 		"edges": [
 			[0, 10],
@@ -24645,7 +24645,7 @@
 			"As"
 		]
 	},
-	{
+	"a8": {
 		"description": "gamma Se & P3_21-D_3^6 #152 & hP3 & A8 & Villars and Calvert, Pearson's Handbook IV, 5215",
 		"edges": [
 			[0, 1],
@@ -24711,7 +24711,7 @@
 			"Se"
 		]
 	},
-	{
+	"a9": {
 		"description": "Graphite (unbuckled hexagonal) & P6_3/mmc & D_{6h}^4 & #194 & A9 & hP4 & Wyckoff Vol. I, p. 26",
 		"edges": [
 			[0, 5],
@@ -24958,7 +24958,7 @@
 			"C"
 		]
 	},
-	{
+	"aO2": {
 		"description": "alpha O_2 & C2/m-C_{2h}^3 #12 & mC4 & Meier and Helmholdt, PRB 29, 1387 (1984) ",
 		"edges": [
 			[0, 1],
@@ -25068,7 +25068,7 @@
 			"O"
 		]
 	},
-	{
+	"aPu": {
 		"description": "alpha-Pu & mP16 & P2_1/m -- C_{2h}^2  (#11) & H used to denote unit cell bounda",
 		"edges": [
 			[0, 1],
@@ -25940,7 +25940,7 @@
 			"Pu"
 		]
 	},
-	{
+	"a_a": {
 		"description": "Pa & I4/mmm-D_{4h}^{17} #139 & tI2 & A_a & Pearson (Alloys) 562                ",
 		"edges": [
 			[0, 1],
@@ -25978,7 +25978,7 @@
 		],
 		"vertexLabels": ["Pa", "Pa", "Pa", "Pa", "Pa", "Pa", "Pa", "Pa", "Pa"]
 	},
-	{
+	"a_c": {
 		"description": "alpha-Np & Pnma & #62 & oP8 & A_c & Donohue, p. 151",
 		"edges": [
 			[0, 1],
@@ -26051,7 +26051,7 @@
 			"Np"
 		]
 	},
-	{
+	"a_d": {
 		"description": "beta-Np & P4/nmm (D^7_{4h}) #129 & tP4 & A_d & Donohue, p. 154",
 		"edges": [
 			[0, 1],
@@ -26107,7 +26107,7 @@
 			"Np"
 		]
 	},
-	{
+	"a_f": {
 		"description": "Au for HgSn_{6-10} & P6/mmm (#191) D^1_{6h} & hP1 & A_f & Pearson Alloys p 478 ",
 		"edges": [
 			[0, 1],
@@ -26173,7 +26173,7 @@
 			"Au"
 		]
 	},
-	{
+	"a_k": {
 		"description": "alpha-Se & P2_1/c-C_{2h}^5 #14 & mP64 & A_k & Villars and Calvert, Pearson's Handbook IV, 5216",
 		"edges": [
 			[0, 3],
@@ -26391,7 +26391,7 @@
 			"Se"
 		]
 	},
-	{
+	"a_l": {
 		"description": "beta-Se & P2_1/c-C_{2h}^5 #14 & mP32 & A_l & Donohue, pp. 379-84",
 		"edges": [
 			[0, 2],
@@ -26493,7 +26493,7 @@
 			"Se"
 		]
 	},
-	{
+	"acrist": {
 		"description": "alpha (low) cristobalte & SiO_2 & P4_1_2_1 (#92) D^4_4 & hP12                  ",
 		"edges": [
 			[0, 3],
@@ -26723,7 +26723,7 @@
 			"O"
 		]
 	},
-	{
+	"alb4mg": {
 		"description": "AlB_4Mg & P6/mmm - D_{6h}^1 (#191) & hP6 & cond-mat/0204015                    ",
 		"edges": [
 			[0, 2],
@@ -26895,7 +26895,7 @@
 			"Al"
 		]
 	},
-	{
+	"alccr2": {
 		"description": "AlCCr2 & P6_3/mmc & #194 & D_{6h}^4 & hP8                                      ",
 		"edges": [
 			[0, 4],
@@ -27109,7 +27109,7 @@
 			"C"
 		]
 	},
-	{
+	"alphaB": {
 		"description": "alpha-Boron & R(-3)m D^5_{3d} #166 & hR12                                      ",
 		"edges": [
 			[0, 1],
@@ -27695,7 +27695,7 @@
 			"B"
 		]
 	},
-	{
+	"ascf108": {
 		"description": "27 atom fcc supercell of fcc with full symmetry & Fm(-3)m & O_h^5 & #225 & cF10",
 		"edges": [
 			[0, 1],
@@ -28803,7 +28803,7 @@
 			"Ni"
 		]
 	},
-	{
+	"asci32": {
 		"description": "16 atom bcc supercell of fcc with full symmetry & Im(-3)m & O_h^9 & #229 & cI32",
 		"edges": [
 			[0, 1],
@@ -29179,7 +29179,7 @@
 			"Fe"
 		]
 	},
-	{
+	"ascp32": {
 		"description": "32 atom simple supercell of fcc with full symmetry & Pm(-3)m & O_h^1 & #221 & c",
 		"edges": [
 			[0, 1],
@@ -29555,7 +29555,7 @@
 			"Fe"
 		]
 	},
-	{
+	"b1": {
 		"description": "NaCl & Fm(-3)m-O_h^5 #225 & cF8 & B1 & Kittel p. 17                            ",
 		"edges": [
 			[0, 3],
@@ -29673,7 +29673,7 @@
 			"Na"
 		]
 	},
-	{
+	"b10": {
 		"description": "Pb O & P4/nmm & #129 & tP4 & B10                                               ",
 		"edges": [
 			[0, 5],
@@ -29723,7 +29723,7 @@
 			"O"
 		]
 	},
-	{
+	"b11": {
 		"description": "gamma CuTi & P4/nmm & #129 & tP4 & B11                                         ",
 		"edges": [
 			[0, 1],
@@ -30063,7 +30063,7 @@
 			"Cu"
 		]
 	},
-	{
+	"b12": {
 		"description": "BN (old structure) & P6_3mc & C_{6h}^4 & #186 & hP4 & B12 & Structure Reports 18, 125-6 (1941) & with exagerated z",
 		"edges": [
 			[0, 12],
@@ -30214,7 +30214,7 @@
 			"N"
 		]
 	},
-	{
+	"b13": {
 		"description": "NiS & B13 & hR6 & R3m - C_{3v}^5 #160                                          ",
 		"edges": [
 			[0, 4],
@@ -30272,7 +30272,7 @@
 			"Ni"
 		]
 	},
-	{
+	"b16": {
 		"description": "Pnma             #62 & oP8 & GeS & B16                                         ",
 		"edges": [
 			[0, 4],
@@ -30494,7 +30494,7 @@
 			"S"
 		]
 	},
-	{
+	"b17": {
 		"description": "P4_2/mmc-D_{4h}^9 #131 & tP4 & PtS & B17                                       ",
 		"edges": [
 			[0, 4],
@@ -30542,7 +30542,7 @@
 			"Pt"
 		]
 	},
-	{
+	"b18": {
 		"description": "CuS & P6_3/mmc (#194, D^4_{6h}) & hP12 & B18                                   ",
 		"edges": [
 			[0, 3],
@@ -30747,7 +30747,7 @@
 			"S"
 		]
 	},
-	{
+	"b19": {
 		"description": "CdAu -- B19 -- oP4 -- Pmma (#51)                                               ",
 		"edges": [
 			[0, 1],
@@ -31220,7 +31220,7 @@
 			"Cd"
 		]
 	},
-	{
+	"b2": {
 		"description": "CsCl & Pm(-3)m-O_h^1 #221 & cP2 & B2 & Kittel p. 17                            ",
 		"edges": [
 			[0, 1],
@@ -31258,7 +31258,7 @@
 		],
 		"vertexLabels": ["Cs", "Cl", "Cs", "Cs", "Cs", "Cs", "Cs", "Cs", "Cs"]
 	},
-	{
+	"b20": {
 		"description": "FeSi -- B20 -- cP8 -- P2_1 3 -- #198",
 		"edges": [
 			[0, 5],
@@ -31607,7 +31607,7 @@
 			"Si"
 		]
 	},
-	{
+	"b21": {
 		"description": "CO & P2_1 3 (#198, T^4) & B21 & cF8                                            ",
 		"edges": [
 			[0, 4],
@@ -31687,7 +31687,7 @@
 			"O"
 		]
 	},
-	{
+	"b24": {
 		"description": "B24 & FTl & oF8 & Fmmm - D_{2h}^{23} (#69)                                     ",
 		"edges": [],
 		"name": "b24",
@@ -31750,7 +31750,7 @@
 			"Tl"
 		]
 	},
-	{
+	"b26": {
 		"description": "CuO (Cr for Cu) & C2/c (#15) C^6_{2h} & mC8 & B26                              ",
 		"edges": [
 			[0, 1],
@@ -31850,7 +31850,7 @@
 			"Cr"
 		]
 	},
-	{
+	"b27": {
 		"description": "B27 & FeB & oP8 & Pnma (#62)                                                   ",
 		"edges": [
 			[0, 1],
@@ -31936,7 +31936,7 @@
 			"B"
 		]
 	},
-	{
+	"b29": {
 		"description": "SnS & Pnma-D_{2h}^{16} #62 & B29 & oP8 & Strukturbericht III, pp. 14-15        ",
 		"edges": [
 			[0, 3],
@@ -32098,7 +32098,7 @@
 			"Sn"
 		]
 	},
-	{
+	"b3": {
 		"description": "ZnS (Zincblende) & Fm(-3)m-T_d^2 #216 & cF8 & B3 & Wyckoff v I p 108-110       ",
 		"edges": [
 			[1, 2],
@@ -32160,7 +32160,7 @@
 			"Zn"
 		]
 	},
-	{
+	"b31": {
 		"description": "MnP & Pnma-D_{2h}^{16} #62 & B31 & oP8 & Pearson's Handbook Vol. IV  4347      ",
 		"edges": [
 			[0, 2],
@@ -32259,7 +32259,7 @@
 			"Mn"
 		]
 	},
-	{
+	"b32": {
 		"description": "B32 (NaTl) Phase",
 		"edges": [
 			[0, 14],
@@ -32403,7 +32403,7 @@
 			"Tl"
 		]
 	},
-	{
+	"b33": {
 		"description": "CrB & Cmmm - D_{2h}^{17} #63 (c^2) & oC8 & B33                                 ",
 		"edges": [
 			[0, 1],
@@ -32770,7 +32770,7 @@
 			"B"
 		]
 	},
-	{
+	"b34": {
 		"description": "P4_2/m-C_{4h}^2 #84 & tP16 & PdS & B34                                         ",
 		"edges": [
 			[2, 8],
@@ -32862,7 +32862,7 @@
 			"S"
 		]
 	},
-	{
+	"b35": {
 		"description": "CoSn   & P6/mmm (#191) D_{6h}^1 & hP6 & B35                                    ",
 		"edges": [
 			[0, 3],
@@ -33086,7 +33086,7 @@
 			"Sn"
 		]
 	},
-	{
+	"b37": {
 		"description": "AlKTe_2 for SeTl & I4/mcm-D_{4h}^{18} #140 & tI16 & B37 & Pearson's Handbook V. I, p. 891",
 		"edges": [
 			[0, 2],
@@ -33209,7 +33209,7 @@
 			"K"
 		]
 	},
-	{
+	"b4": {
 		"description": "Wurtzite & B4 & ZnS & P6_3mc #186 & hP4                                        ",
 		"edges": [
 			[0, 1],
@@ -33342,7 +33342,7 @@
 			"S"
 		]
 	},
-	{
+	"b8_1": {
 		"description": "AsNi & P6_3/mmc-D_{6h}^4 #194 & hP4 & B8_2 & Pearson, Alloys, p. 452           ",
 		"edges": [
 			[0, 1],
@@ -33456,7 +33456,7 @@
 			"Ni"
 		]
 	},
-	{
+	"b8_2": {
 		"description": "InNi_2 & P6_3/mmc-D_{6h}^4 #194 & hP6 & B8_2 & Pearson, Alloys, p. 530         ",
 		"edges": [
 			[0, 1],
@@ -33636,7 +33636,7 @@
 			"Ni"
 		]
 	},
-	{
+	"b9": {
 		"description": "HgS (Cinnabar) -- B9 -- hP6 -- P3_2 21 (#154)",
 		"edges": [
 			[0, 21],
@@ -33720,7 +33720,7 @@
 			"S"
 		]
 	},
-	{
+	"bBeO": {
 		"description": "beta-BeO & tP8 & P4_2/mnm - D_{4h}^{14} #136 (fg) & D. K. Smith et al., Acta Cryst. 18, 393 (1965)",
 		"edges": [
 			[0, 4],
@@ -34018,7 +34018,7 @@
 			"O"
 		]
 	},
-	{
+	"bIn2S3": {
 		"description": "beta In2S3 & I4_1/amd-D_{4h}^{19} #141 (ceh^4) & tI80 & Rampersadh et al., Phys",
 		"edges": [
 			[0, 11],
@@ -34425,7 +34425,7 @@
 			"S"
 		]
 	},
-	{
+	"bO2": {
 		"description": "beta O_2 & R(-3)m-D_{3d}^5 #166 & hR2 & Meier and Helmholdt, PRB 29, 1387 (1984)",
 		"edges": [
 			[0, 1],
@@ -34535,7 +34535,7 @@
 			"O"
 		]
 	},
-	{
+	"bPu": {
 		"description": "beta-Pu & mI34 & B2/m -- C_{2h}^3  (#12)                                       ",
 		"edges": [
 			[0, 1],
@@ -34944,7 +34944,7 @@
 			"Pu"
 		]
 	},
-	{
+	"bPuI2m": {
 		"description": "beta-Pu & mI34 & I2/m-C_{2h}^3 (#12) & Donohue pp. 162-3",
 		"edges": [
 			[0, 19],
@@ -35226,7 +35226,7 @@
 			"Pu"
 		]
 	},
-	{
+	"bU": {
 		"description": "beta-U & tP30 & P4_2/mnm -- D_{4h}^{14}  (#136) & Donohue, p. 141",
 		"edges": [
 			[0, 8],
@@ -35568,7 +35568,7 @@
 			"U"
 		]
 	},
-	{
+	"b_a": {
 		"description": "CoU & I2_13 & T^5 & #199 & cI16 & B_a                                          ",
 		"edges": [
 			[0, 1],
@@ -35781,7 +35781,7 @@
 			"U"
 		]
 	},
-	{
+	"b_b": {
 		"description": "eta AgZn & P(-3) & C_{3i}^1 & #147 & hP9 & B_b                                 ",
 		"edges": [
 			[0, 1],
@@ -35997,7 +35997,7 @@
 			"Ag"
 		]
 	},
-	{
+	"b_e": {
 		"description": "CdSb & Pbca (#61, D^{15}_{2h}) & B_e & oP16 & H to show boundaries             ",
 		"edges": [
 			[0, 2],
@@ -36089,7 +36089,7 @@
 			"Cd"
 		]
 	},
-	{
+	"b_g": {
 		"description": "BMo & I4_1/amd (#141, D^{19}_{4h}) & B_g & tI16                                ",
 		"edges": [
 			[0, 1],
@@ -36301,7 +36301,7 @@
 			"B"
 		]
 	},
-	{
+	"b_i": {
 		"description": "AsTi & P6_3/mmc-D_{6h}^4 #194 & hP8 & B_i & Wyckoff Vol I, 148                ",
 		"edges": [
 			[0, 4],
@@ -36455,7 +36455,7 @@
 			"As"
 		]
 	},
-	{
+	"b_k": {
 		"description": "BN & P6_3/mmc & D_{6h}^4 & #194 & B_k & hP4                                    ",
 		"edges": [
 			[0, 10],
@@ -36735,7 +36735,7 @@
 			"N"
 		]
 	},
-	{
+	"bc8": {
 		"description": "Silicon bc8 phase & Space group Ia(-3) (#206)                                  ",
 		"edges": [
 			[1, 2],
@@ -36847,7 +36847,7 @@
 			"Si"
 		]
 	},
-	{
+	"bct5": {
 		"description": "Five-fold coordinated body-centered tetragonal lattice (tI4) I4/mmm (#139)",
 		"edges": [
 			[0, 6],
@@ -36898,7 +36898,7 @@
 			"Si"
 		]
 	},
-	{
+	"bgr": {
 		"description": "Graphite (buckled hexagonal) & P6_3mc & C_{6h}^4 & #186 & hP4 & Wyckoff Vol. I, p. 26",
 		"edges": [
 			[0, 5],
@@ -37145,7 +37145,7 @@
 			"C"
 		]
 	},
-	{
+	"bh": {
 		"description": "WC & P-6m2 & #187 & hP2 & B_h                                                  ",
 		"edges": [
 			[0, 1],
@@ -37295,7 +37295,7 @@
 			"W"
 		]
 	},
-	{
+	"c10": {
 		"description": "beta Tridymite (SiO_2) & P6_3/mmc (#194, D^4_{6h}) & hP12                      ",
 		"edges": [
 			[0, 2],
@@ -37461,7 +37461,7 @@
 			"O"
 		]
 	},
-	{
+	"c11_b": {
 		"description": "C11_b & MoSi_2 & I4/mmm & D_{4h}^{17} & #139 & tI6 & Pearson's Alloys, pp. 589-",
 		"edges": [
 			[0, 1],
@@ -37726,7 +37726,7 @@
 			"Si"
 		]
 	},
-	{
+	"c14": {
 		"description": "Mg Zn_2 & P6_3/mmc-D_{6h}^4 #194 & hP12 & C14 & Laves & Pearson, Alloys, p 657 ",
 		"edges": [
 			[0, 2],
@@ -37958,7 +37958,7 @@
 			"Zn"
 		]
 	},
-	{
+	"c15": {
 		"description": "Cu_2Mg (cubic Laves) & Fd(-3)m-O_h^7 (#227) & cF24 & C15 & Wyckoff Vol. I, p. 365",
 		"edges": [
 			[0, 18],
@@ -38154,7 +38154,7 @@
 			"Mg"
 		]
 	},
-	{
+	"c16": {
 		"description": "Al_2 Cu & I4/mcm & D_{4h}^{18} & #194 & tI12 & C16                             ",
 		"edges": [
 			[0, 1],
@@ -38291,7 +38291,7 @@
 			"Cu"
 		]
 	},
-	{
+	"c18": {
 		"description": "Fe S_2 & P4/nnm & D_{2h}^{12} & #58 & C18 & oP6 & Marcasite                    ",
 		"edges": [
 			[0, 2],
@@ -38345,7 +38345,7 @@
 			"S"
 		]
 	},
-	{
+	"c19": {
 		"description": "alpha-Sm & R(-3)m (#166, D^5_{3d}) & hR3 & C19                                 ",
 		"edges": [
 			[0, 1],
@@ -39159,7 +39159,7 @@
 			"Sm"
 		]
 	},
-	{
+	"c1_b": {
 		"description": "C1_b    & F(-4)3m (#216) & cF12 & MgAgAs (Half Heusler) / AlLiSi (previous version had As and Ag switched)",
 		"edges": [
 			[0, 3],
@@ -39317,7 +39317,7 @@
 			"Mg"
 		]
 	},
-	{
+	"c2": {
 		"description": "Pyrite -- FeS_2 -- C3 -- cP12 -- Pa3",
 		"edges": [
 			[1, 21],
@@ -39396,7 +39396,7 @@
 			"S"
 		]
 	},
-	{
+	"c21": {
 		"description": "TiO_2 (Brookite) & Pbca (#61, D^{15}_{2h}) & C21 & oP24 & Strukturbericht II, 14",
 		"edges": [
 			[0, 3],
@@ -39870,7 +39870,7 @@
 			"O"
 		]
 	},
-	{
+	"c22": {
 		"description": "Fe_2P & C22 & hP9 & P(-6)2m-D_{3h}^3 #183 & Pearson's Handbook",
 		"edges": [
 			[0, 6],
@@ -40620,7 +40620,7 @@
 			"Fe"
 		]
 	},
-	{
+	"c22o": {
 		"description": "Fe_2P & C22 & hP9 & P321-D_3^2 #150 & Strukturbereicht II, p. 15 & Original    ",
 		"edges": [
 			[0, 6],
@@ -41316,7 +41316,7 @@
 			"Fe"
 		]
 	},
-	{
+	"c23": {
 		"description": "Pb Cl_2 & Pnma & D_{2h}^{16} & #62 & C23 & oP12 & Struk V.II 16                ",
 		"edges": [
 			[0, 3],
@@ -41386,7 +41386,7 @@
 			"Pb"
 		]
 	},
-	{
+	"c24": {
 		"description": "HgBr_2 & C24 & oC12 & Cmc2_1-C_{2v}^{12} #36 & Strukturbericht II, p. 18      ",
 		"edges": [
 			[0, 2],
@@ -41586,7 +41586,7 @@
 			"Hg"
 		]
 	},
-	{
+	"c25": {
 		"description": "HgCl_2 & C25 & oP12 & Pnma-D_{2h}^{16} #62 & Strukturbereicht II, p. 19        ",
 		"edges": [
 			[0, 2],
@@ -41857,7 +41857,7 @@
 			"Cl"
 		]
 	},
-	{
+	"c3": {
 		"description": "Ag_2 O   (Cuprite) Pn(-3)m (#224) & cP6 & C3                                   ",
 		"edges": [[0, 4], [1, 4], [2, 4], [3, 4], [5, 7], [5, 9], [5, 12], [5, 15]],
 		"name": "c3",
@@ -41898,7 +41898,7 @@
 			"Ag"
 		]
 	},
-	{
+	"c32": {
 		"description": "AlB_2 & P6/mmm-D_{6h}^1 #191 & hP3 & C32 & hexagonal omega & Pearson's Handbook Vol. I, p 656",
 		"edges": [
 			[0, 1],
@@ -42058,7 +42058,7 @@
 			"Al"
 		]
 	},
-	{
+	"c33": {
 		"description": "Bi_2 Te_3 & R(-3)m-D_{3d}^5 #166 & hR5 & C33 & Wyckoff, v II, pp. 29-31        ",
 		"edges": [
 			[0, 1],
@@ -42308,7 +42308,7 @@
 			"Bi"
 		]
 	},
-	{
+	"c34": {
 		"description": "AuTe_2 & C2/m (#12) C_{2h}^3 & mC6 & C34                                       ",
 		"edges": [
 			[0, 2],
@@ -42458,7 +42458,7 @@
 			"Te"
 		]
 	},
-	{
+	"c35": {
 		"description": "CaCl_2 & C35 & oP6 & Pnnm-D_{2h}^{12} #58 & Strukturbereicht III, p. 30        ",
 		"edges": [
 			[0, 2],
@@ -42512,7 +42512,7 @@
 			"Cl"
 		]
 	},
-	{
+	"c36": {
 		"description": "Mg Ni_2 & P6_3/mmc-D_{6h}^4 #194 & hP24 & C36 & Laves & Pearson, Alloys, p 660  ",
 		"edges": [
 			[0, 3],
@@ -43209,7 +43209,7 @@
 			"Mg"
 		]
 	},
-	{
+	"c37": {
 		"description": "Co_2 Si & Pnma & D_{2h}^{16} & #62 & C37 & oP12                                ",
 		"edges": [
 			[0, 4],
@@ -43336,7 +43336,7 @@
 			"Co"
 		]
 	},
-	{
+	"c38": {
 		"description": "Cu_2 Sb & P4/nmm & D_{4h}^7 & #129 & C38 & tP6                                 ",
 		"edges": [
 			[0, 1],
@@ -43427,7 +43427,7 @@
 			"Sb"
 		]
 	},
-	{
+	"c3ring": {
 		"description": "C in (P6_3/mmc; #194) Peter Schultz's 4-fold coordinated 3 member rings        ",
 		"edges": [
 			[0, 57],
@@ -44381,7 +44381,7 @@
 			"C"
 		]
 	},
-	{
+	"c4": {
 		"description": "TiO_2 & P4_2/mnm-D_{4h}^14 #136 & Rutile & tP6 & C4 & Wyckoff Vol I. pp. 250-2",
 		"edges": [
 			[0, 1],
@@ -44447,7 +44447,7 @@
 			"O"
 		]
 	},
-	{
+	"c40": {
 		"description": "CrSi_2 & Use Ge_2 Ta parameters & P6_222 (#180, D^4_6) & hP9 & C40             ",
 		"edges": [
 			[0, 1],
@@ -44659,7 +44659,7 @@
 			"Ge"
 		]
 	},
-	{
+	"c42": {
 		"description": "S Si_2 & Ibam & D^{26}_{2h} & #72 & C42 & oI12                                 ",
 		"edges": [
 			[1, 2],
@@ -44877,7 +44877,7 @@
 			"S"
 		]
 	},
-	{
+	"c46": {
 		"description": "AuTe_2 & Pma2-C_{2v}^4 #28 & oP24 & C46 & Krennerite & (Au_0.8,Ag_0.2)Te_2 & Tunnell and Murata, Am. Min. 35, 359 (1950)",
 		"edges": [
 			[0, 64],
@@ -45753,7 +45753,7 @@
 			"Au"
 		]
 	},
-	{
+	"c49": {
 		"description": "Si_2 Zr & Cmcm & #63 & oC12 & C49                                              ",
 		"edges": [
 			[0, 3],
@@ -46207,7 +46207,7 @@
 			"Si"
 		]
 	},
-	{
+	"c4ring": {
 		"description": "C in (I4/mmm; #139) Peter Schultz's 4-fold coordinated 4 member rings          ",
 		"edges": [
 			[0, 9],
@@ -46737,7 +46737,7 @@
 			"C"
 		]
 	},
-	{
+	"c5": {
 		"description": "TiO_2   (Anatase) & I4_1/amd -- D_{4h}^{19} (#141) & tI6 & C5 & Horn et al., Z.",
 		"edges": [
 			[0, 1],
@@ -46859,7 +46859,7 @@
 			"O"
 		]
 	},
-	{
+	"c54": {
 		"description": "Si_2 Ti & Fddd & #70 & oF24 & C54                                              ",
 		"edges": [
 			[0, 1],
@@ -47261,7 +47261,7 @@
 			"Si"
 		]
 	},
-	{
+	"c7": {
 		"description": "MoS_2 & C7 & hP6 & P6_3/mmc-D_{6h}^4 #194 & Pearson's Handbook                 ",
 		"edges": [
 			[0, 5],
@@ -47631,7 +47631,7 @@
 			"S"
 		]
 	},
-	{
+	"c8h8": {
 		"description": "C_8 H_8 & R(-3)-C_{2i}^3 (#148) & cubane & hR16 & Fleischer, J. Am. Chem. Soc. 86, 3889 (1964)",
 		"edges": [
 			[0, 2],
@@ -48057,7 +48057,7 @@
 			"H"
 		]
 	},
-	{
+	"c9": {
 		"description": "Ideal beta-Cristobalite (SiO_2) & Fd(-3)m (#227, O^7_h) & cF24 & C9 & Wyckoff, Vol. I, pp. 318-19, Pearson's Handbook Vol. IV, p. 4759",
 		"edges": [
 			[0, 1],
@@ -48167,7 +48167,7 @@
 			"Si"
 		]
 	},
-	{
+	"c_e": {
 		"description": "Pd Sn_2 & Aba2 & C_{2v}^{17} & #41 & oC24 & C_e & Pearson's Handbook           ",
 		"edges": [
 			[0, 1],
@@ -48341,7 +48341,7 @@
 			"Sn"
 		]
 	},
-	{
+	"c_h": {
 		"description": "Cu_2 Te & P6/mmm & #191 & tP6 & C_h                                            ",
 		"edges": [
 			[0, 2],
@@ -48478,7 +48478,7 @@
 			"Te"
 		]
 	},
-	{
+	"ca7ge": {
 		"description": "Ca_7 Ge & Fm(-3)m-O_h^5 #225 & cF32 & Pearson's Handbook Vol. IV, p. 2057",
 		"edges": [
 			[0, 7],
@@ -48854,7 +48854,7 @@
 			"Ge"
 		]
 	},
-	{
+	"caco3": {
 		"description": "CaCO_3 & R(-3)c [D^6_{3d}] (#167) & hR10 & calcite & Rhombohedral Lattice      ",
 		"edges": [
 			[0, 5],
@@ -49488,7 +49488,7 @@
 			"O"
 		]
 	},
-	{
+	"coesite": {
 		"description": "SiO_2 & Coesite (1 atm) & C2/c-C_{2h}^6 [unique b] #15 (aef^5) & L. Levien and C. T. Prewitt, Am. Min. 66, 324-33 (1981)",
 		"edges": [
 			[1, 55],
@@ -50240,7 +50240,7 @@
 			"Si"
 		]
 	},
-	{
+	"csi9r": {
 		"description": "CSi  (Moissanite-9R) R3m (C^5_{3v}, #160) & hR18                               ",
 		"edges": [
 			[0, 2],
@@ -50723,7 +50723,7 @@
 			"C"
 		]
 	},
-	{
+	"d0_11": {
 		"description": "Fe_3 C (cementite) & Pnma (#62) & oP16 & D0_11                                 ",
 		"edges": [
 			[0, 5],
@@ -51597,7 +51597,7 @@
 			"Fe"
 		]
 	},
-	{
+	"d0_14": {
 		"description": "Al F_3 & R32-D_3^7 #155 & hR8 & D0_{14} & Strukturbericht III, pp. 40-1        ",
 		"edges": [
 			[0, 10],
@@ -51851,7 +51851,7 @@
 			"F"
 		]
 	},
-	{
+	"d0_15": {
 		"description": "Al Cl_3 & C2/m-C_{2h}^3 #12 & mC8 & D0_{15} & Wyckoff, Vol. II, pp. 55-57      ",
 		"edges": [
 			[1, 4],
@@ -52319,7 +52319,7 @@
 			"Cl"
 		]
 	},
-	{
+	"d0_17": {
 		"description": "BaS_3 & D0_{17} & P(-4)2_1m-D_{2d}^3 #113 (ace) & tP8 & Pearsons Handbook II 17",
 		"edges": [
 			[0, 2],
@@ -52402,7 +52402,7 @@
 			"Ba"
 		]
 	},
-	{
+	"d0_18": {
 		"description": "Na_3 As & P6_3/mmc     & #194 & hcp & hP8 & D0_18                              ",
 		"edges": [
 			[0, 2],
@@ -52548,7 +52548,7 @@
 			"Na"
 		]
 	},
-	{
+	"d0_19": {
 		"description": "Ni_3 Sn & P6_3/mmc     & #194 & hcp & hP8 & D0_19                              ",
 		"edges": [
 			[0, 3],
@@ -53218,7 +53218,7 @@
 			"Ni"
 		]
 	},
-	{
+	"d0_2": {
 		"description": "As_3 Co & Im(-3) -- T^5_h (#204) & cI32 & D0_3 & Skutterudite & Ni for Co      ",
 		"edges": [
 			[0, 1],
@@ -53382,7 +53382,7 @@
 			"As"
 		]
 	},
-	{
+	"d0_22": {
 		"description": "Al_3 Ti & I4/mmm-D_{4h}^{17} & tI8 & D0_22 & Pearson Alloys, p. 328            ",
 		"edges": [
 			[0, 13],
@@ -53482,7 +53482,7 @@
 			"Ti"
 		]
 	},
-	{
+	"d0_23": {
 		"description": "Al_3 Zr & I4/mmmm-D_{4h}^{17} #139 & tI16 & D0_{23} & Pearson's Handbook Vol. I p. 1038",
 		"edges": [
 			[0, 9],
@@ -53642,7 +53642,7 @@
 			"Zr"
 		]
 	},
-	{
+	"d0_3": {
 		"description": "D0_3 AlFe_3",
 		"edges": [
 			[0, 13],
@@ -53798,7 +53798,7 @@
 			"Fe"
 		]
 	},
-	{
+	"d0_4": {
 		"description": "Cr Cl_3 & P3_112 & D_3^3 & #51 & D0_4 & hP24 & Struk II 24 => findsym          ",
 		"edges": [
 			[0, 5],
@@ -54168,7 +54168,7 @@
 			"Cr"
 		]
 	},
-	{
+	"d0_5": {
 		"description": "Bi I_3 & R(-3)-C_{2i}^3 (#148) & D0_5 & hR8 & Strukturbericht Vol. II 25       ",
 		"edges": [
 			[0, 3],
@@ -54338,7 +54338,7 @@
 			"Bi"
 		]
 	},
-	{
+	"d0_9": {
 		"description": "alpha Re O_3 & Pm(-3)m (#221) & cP4 & D0_9                                     ",
 		"edges": [
 			[0, 1],
@@ -54412,7 +54412,7 @@
 			"Re"
 		]
 	},
-	{
+	"d0_a": {
 		"description": "Cu_3 Sb for Cu_3 Ti & Pmmn-D_{2h}^{13} #59 & oP8 & D0_a & Pearon's Handbook V. ",
 		"edges": [
 			[0, 3],
@@ -54523,7 +54523,7 @@
 			"Sb"
 		]
 	},
-	{
+	"d0c": {
 		"description": "SiU_3 & I4/mcm (#140) D_{4h}^{18} & tI16 & D0_c & Zachariasen, Am. Cryst. 2, 94 (1949)",
 		"edges": [
 			[0, 3],
@@ -54663,7 +54663,7 @@
 			"U"
 		]
 	},
-	{
+	"d0pc": {
 		"description": "Ir_3 Si & I4/mcm (#140) D_{4h}^{18} & tI16 & D0_c & Villars and Calvert, Pearson's Handbook IV 4125",
 		"edges": [
 			[0, 2],
@@ -54833,7 +54833,7 @@
 			"Si"
 		]
 	},
-	{
+	"d10_1": {
 		"description": "C_3 Cr_7 & Pnma (#62) & oP40 & D10_1                                           ",
 		"edges": [
 			[0, 4],
@@ -55326,7 +55326,7 @@
 			"Cr"
 		]
 	},
-	{
+	"d1_3": {
 		"description": "Al_4 Ba & I4/mmm-D_{4h}^17 #139 & tI10 & D2_e & Pearon's Alloys pp. 484-5      ",
 		"edges": [
 			[0, 2],
@@ -55466,7 +55466,7 @@
 			"Al"
 		]
 	},
-	{
+	"d1_a": {
 		"description": "Mo Ni_4 & I4/m-C_{2h}^5 #87 & tI10 & D1_a & Pearson's Handbook Vol. IV         ",
 		"edges": [
 			[0, 1],
@@ -55570,7 +55570,7 @@
 			"Ni"
 		]
 	},
-	{
+	"d1_c": {
 		"description": "Pt Sn_4 & Aba2 & C_{2v}^{17} & #41 & oC20 & D1_c (Pt Sn_4) & Pearson's Handbook Vol. IV",
 		"edges": [
 			[0, 7],
@@ -55686,7 +55686,7 @@
 			"Sn"
 		]
 	},
-	{
+	"d2_1": {
 		"description": "B_6 Ca & Pm(-3)m & #221 & cP7 & D2_1                                           ",
 		"edges": [
 			[1, 2],
@@ -55954,7 +55954,7 @@
 			"Ca"
 		]
 	},
-	{
+	"d2_b": {
 		"description": "Mn_{12} Th & I4/mmm & D_{4h}^{17} & #139 & tI26 & D2_b                         ",
 		"edges": [
 			[0, 1],
@@ -56548,7 +56548,7 @@
 			"Mn"
 		]
 	},
-	{
+	"d2_d": {
 		"description": "CaCu_5 & P6/mmm (#191) D_{6h}^1 & hR6 & D2_d                                   ",
 		"edges": [
 			[0, 1],
@@ -56784,7 +56784,7 @@
 			"Ca"
 		]
 	},
-	{
+	"d2_e": {
 		"description": "Ba Hg_{11} & Pm(-3)m-O_h^1 #221 & cP36 & D2_e & Pearon's Alloys pp. 751-3      ",
 		"edges": [
 			[0, 6],
@@ -57016,7 +57016,7 @@
 			"Hg"
 		]
 	},
-	{
+	"d2_f": {
 		"description": "U B_{12} & Fm(-3)m-O_h^5 #225 & cF52 & D2_f & Pearon's Alloys pp. 757-8        ",
 		"edges": [
 			[0, 1],
@@ -57474,7 +57474,7 @@
 			"U"
 		]
 	},
-	{
+	"d5_11": {
 		"description": "Sb_2 O_3 & Pccn-D_{2h}^{10} #56 & oP20 & Villars and Calvert, Pearson's Handbook v. IV, p. 4758",
 		"edges": [
 			[0, 7],
@@ -57856,7 +57856,7 @@
 			"Sb"
 		]
 	},
-	{
+	"d5_19": {
 		"description": "Al_3 Ni_2 & P(-3)m1-D_{3d}^3 #164 & hP5 & Al_3 Pd_2 from Villars and Calvert, Pearson's Handbook, Vol. I",
 		"edges": [
 			[0, 3],
@@ -57954,7 +57954,7 @@
 			"Al"
 		]
 	},
-	{
+	"d5_3": {
 		"description": "Mn_2 O_3 & Ia(-3)-T_h^7 #206 (bde) & D5_3 & cI80 & Dachs, Zf Kristall.  107, 37",
 		"edges": [
 			[1, 19],
@@ -58498,7 +58498,7 @@
 			"O"
 		]
 	},
-	{
+	"d5_8": {
 		"description": "Sb_2 S_3 & D5_8 & oP20 & Pnma-D_{2h}^{16} #62 & Strukturbereicht III, p. 49    ",
 		"edges": [
 			[0, 50],
@@ -58759,7 +58759,7 @@
 			"S"
 		]
 	},
-	{
+	"d5_a": {
 		"description": "Si_2 U_3 & P4/mbm-D_{4h}^5 #127 & tP10 & D5_a & Structure Reports, v. 11, p. 28",
 		"edges": [
 			[0, 8],
@@ -59013,7 +59013,7 @@
 			"Si"
 		]
 	},
-	{
+	"d5_c": {
 		"description": "C_3 Pu_2 & D5_c & I(-4)3d-T_d^6 #220 & cI40 & Pearson's Handbook               ",
 		"edges": [
 			[0, 14],
@@ -59316,7 +59316,7 @@
 			"C"
 		]
 	},
-	{
+	"d8_4": {
 		"description": "Cr_{23}C_6 & Fm(-3)m-O_h^5 #225 (acefh) & cF116 & D8_4                         ",
 		"edges": [
 			[0, 10],
@@ -60472,7 +60472,7 @@
 			"Cr"
 		]
 	},
-	{
+	"d8_5": {
 		"description": "Fe_7 W_6 & R(-3)m-D^5_{3d} #166 (ac^3h) & hR13 & D8_5 & mu phase               ",
 		"edges": [
 			[0, 1],
@@ -61332,7 +61332,7 @@
 			"W"
 		]
 	},
-	{
+	"d8_b": {
 		"description": "sigma CrFe (disordered) & P4_2/mnm - D_{4h}^{14} #136 & D8_b & tP30 & Pearson's",
 		"edges": [
 			[0, 9],
@@ -61827,7 +61827,7 @@
 			"Fe"
 		]
 	},
-	{
+	"d8_h": {
 		"description": "W_2 B_5 & P6_3/mmc-D_{6h}^4 #194 & D8_h & hP14 & Wyckoff, Vol. II, pp. 188-9   ",
 		"edges": [
 			[0, 4],
@@ -62405,7 +62405,7 @@
 			"B"
 		]
 	},
-	{
+	"d8_i": {
 		"description": "Mo_2 B_5 & R(-3)m-D_{3d}^5 #166 & hR7 & D8_i & Wyckoff, Crystal Structures, Vol II, pp. 189-90",
 		"edges": [
 			[0, 6],
@@ -62962,7 +62962,7 @@
 			"B"
 		]
 	},
-	{
+	"e1_1": {
 		"description": "CuFeS_2 & Chalcopyrite & I(-4)2d #122 D^{12}_{2d} & E1_1 & tI16                ",
 		"edges": [
 			[0, 27],
@@ -63290,7 +63290,7 @@
 			"S"
 		]
 	},
-	{
+	"e1_b": {
 		"description": "Ag Au Te_4 & P2/c-C_{2h}^4 #13 & mP12 & E1_b & Pearson's Handbook v. I, p. 501 ",
 		"edges": [
 			[0, 2],
@@ -63376,7 +63376,7 @@
 			"Te"
 		]
 	},
-	{
+	"e2_1": {
 		"description": "CaTiO_3 (Perovskite) -- E2_1 -- cP5 -- Pm-3m -- #221",
 		"edges": [
 			[0, 1],
@@ -63466,7 +63466,7 @@
 			"O"
 		]
 	},
-	{
+	"e3": {
 		"description": "Al_2 Cd S_4 & I(-4) #82 S^2_4 & E3 & tI14                                      ",
 		"edges": [
 			[0, 23],
@@ -63738,7 +63738,7 @@
 			"S"
 		]
 	},
-	{
+	"e9_3": {
 		"description": "Fe_3 W_3 C & E9_3 & Fd(-3)m-O_h^7 #227 & cF112 & Strukturbericht II pp. 71-2   ",
 		"edges": [
 			[0, 4],
@@ -64532,7 +64532,7 @@
 			"W"
 		]
 	},
-	{
+	"e9_4": {
 		"description": "Al_5 C_3 N & E9_4 & P6_3mc-C_{6v}^4 #186 & cP18 & Strukturbericht III pp. 73-4 ",
 		"edges": [
 			[0, 8],
@@ -64888,7 +64888,7 @@
 			"C"
 		]
 	},
-	{
+	"esseneite": {
 		"description": "(Ca_.58 Fe_.42)(Ca_.97 Fe_.03)(Si_.54 Al_.46) O_3 & C2/c & #15 & mC40 & Esseneite",
 		"edges": [
 			[0, 4],
@@ -65336,7 +65336,7 @@
 			"O"
 		]
 	},
-	{
+	"f5_1": {
 		"description": "CrNaS_2 & R(-3)m (D^5_{3d}, #166) & hR4 & F5_1                                 ",
 		"edges": [
 			[0, 3],
@@ -65578,7 +65578,7 @@
 			"S"
 		]
 	},
-	{
+	"f5_10": {
 		"description": "KAg(CN)_2 & P(-3)1c-D_{3d}^2 #163 & hP36 & F5_10 & Strukturbereicht III p. 82-3",
 		"edges": [
 			[0, 2],
@@ -66110,7 +66110,7 @@
 			"N"
 		]
 	},
-	{
+	"f5_6": {
 		"description": "CuSbS_2 & F5_6 & oP16 & Pnma-D_{2h}^{16} #62 & Strukturbereicht III, p. 75     ",
 		"edges": [
 			[0, 58],
@@ -66641,7 +66641,7 @@
 			"S"
 		]
 	},
-	{
+	"f5_9": {
 		"description": "KCNS & Pbcm-D_{2h}^{11} #57 & oP16 & F5_9 & Strukturbereicht III p. 80         ",
 		"edges": [
 			[0, 2],
@@ -66809,7 +66809,7 @@
 			"S"
 		]
 	},
-	{
+	"fscf128": {
 		"description": "32 atom bcc supercell of bcc with full symmetry & Fm(-3)m & O_h^5 & #225 & cF12",
 		"edges": [
 			[0, 1],
@@ -68129,7 +68129,7 @@
 			"Ni"
 		]
 	},
-	{
+	"fsci16": {
 		"description": "8 atom bcc supercell of bcc with full symmetry & Im(-3)m & O_h^9 & #229 & cI16 ",
 		"edges": [
 			[0, 1],
@@ -68339,7 +68339,7 @@
 			"Cr"
 		]
 	},
-	{
+	"fsci54": {
 		"description": "27 atom bcc supercell of bcc with full symmetry & Im(-3)m & O_h^9 & #229 & cI27",
 		"edges": [
 			[0, 1],
@@ -68921,7 +68921,7 @@
 			"Fe"
 		]
 	},
-	{
+	"fscp16": {
 		"description": "16 atom simple cubic supercell of bcc with full symmetry & Pm(-3)m & O_h^1 & #2",
 		"edges": [
 			[0, 1],
@@ -69131,7 +69131,7 @@
 			"Fe"
 		]
 	},
-	{
+	"g0_6": {
 		"description": "KClO_3 & mP10 & P2_1/m-C_{2h}^2 (#11) & G0_6 & Strukturbericht II, 64          ",
 		"edges": [
 			[0, 1],
@@ -69423,7 +69423,7 @@
 			"O"
 		]
 	},
-	{
+	"gBrass": {
 		"description": "gamma Brass Cu_5 Zn_8 & I(-4)3m - T_d^3 #217 (c^2eg) & cF52                    ",
 		"edges": [
 			[0, 1],
@@ -69819,7 +69819,7 @@
 			"Cu"
 		]
 	},
-	{
+	"gN2": {
 		"description": "N_2 (gamma) & P4_2/mnm-D_{4h}^{14} & tP4 & Donohue, pp. 287-9                  ",
 		"edges": [
 			[0, 1],
@@ -69874,7 +69874,7 @@
 			"N"
 		]
 	},
-	{
+	"gPu": {
 		"description": "gamma-Pu & Fddd-D_{2h}^{24} #70 & oF8 & Donohue, Elements, pp. 164-5",
 		"edges": [
 			[0, 1],
@@ -70050,7 +70050,7 @@
 			"Pu"
 		]
 	},
-	{
+	"h0_7": {
 		"description": "BPO_4 & I(-4)-S_4^2 #82 & tI12 & H0_7 & Strukturbericht III, 92-3              ",
 		"edges": [
 			[1, 2],
@@ -70118,7 +70118,7 @@
 			"O"
 		]
 	},
-	{
+	"h1_1": {
 		"description": "Al Mg_2 O_4 & Fd(-3m) (#227) & cF56 & H1_1 & Spinel & Pearson's Handbook v. I, p. 906",
 		"edges": [
 			[0, 15],
@@ -70374,7 +70374,7 @@
 			"O"
 		]
 	},
-	{
+	"h2_4": {
 		"description": "Cu_3S_4V & Sulvanite & P(-4)3m #215 T^1_d & H2_4 & cP8                         ",
 		"edges": [
 			[0, 1],
@@ -70472,7 +70472,7 @@
 			"V"
 		]
 	},
-	{
+	"h2_5": {
 		"description": "AsCu_3S_4 & Enargite & Pm2_1-C_{2v}^7 & H2_5 & oP16 & Pearson's Handbook       ",
 		"edges": [
 			[0, 7],
@@ -71094,7 +71094,7 @@
 			"S"
 		]
 	},
-	{
+	"h2_6": {
 		"description": "Cu_2 Fe S_4 Sn & I(-4)2m (#121) & tI16 & H2_6 & Stannite                       ",
 		"edges": [
 			[0, 25],
@@ -71422,7 +71422,7 @@
 			"Fe"
 		]
 	},
-	{
+	"hexdia": {
 		"description": "Hexagonal Diamond & C & P6_3/mmc #194 D_{6h}^4 & hP4                           ",
 		"edges": [
 			[0, 2],
@@ -71672,7 +71672,7 @@
 			"C"
 		]
 	},
-	{
+	"l1_0": {
 		"description": "AuCu    & P4/mmm (#123) & tP4 & L1_0                                           ",
 		"edges": [
 			[0, 1],
@@ -71746,7 +71746,7 @@
 			"Au"
 		]
 	},
-	{
+	"l1_1": {
 		"description": "CuPt    & R(-3)m (#167) & hR32 & L1_1                                          ",
 		"edges": [
 			[0, 1],
@@ -71820,7 +71820,7 @@
 			"Cu"
 		]
 	},
-	{
+	"l1_2": {
 		"description": "Cu_3 Au & Pm(-3)m-O_h^1 #221 & cP4 & L1_2 & Pearson's Alloys p. 322             ",
 		"edges": [
 			[0, 1],
@@ -71894,7 +71894,7 @@
 			"Au"
 		]
 	},
-	{
+	"l2_1": {
 		"description": "AlMnCu_2   cF16 Fm(-3)m (#225)  L2_1 (Heusler)                                 ",
 		"edges": [
 			[0, 1],
@@ -72104,7 +72104,7 @@
 			"Cu"
 		]
 	},
-	{
+	"l6_0": {
 		"description": "Cu Ti_3 & P4/mmm (#123) & tP4 & L6_0                                           ",
 		"edges": [
 			[0, 1],
@@ -72179,7 +72179,7 @@
 			"Cu"
 		]
 	},
-	{
+	"lamno3": {
 		"description": "LaMnO_3 & Pnma-D_{2h}^{16} #62 & oP20 & P. Norby et al.  Solid State Chem. 119, 191 (1995)",
 		"edges": [
 			[0, 1],
@@ -72410,7 +72410,7 @@
 			"O"
 		]
 	},
-	{
+	"lp2": {
 		"description": "Th H_2 & I4/mmm & #139 & D_{4h}^{17} & tI6 & L'2                               ",
 		"edges": [
 			[0, 1],
@@ -72494,7 +72494,7 @@
 			"Th"
 		]
 	},
-	{
+	"mgb2c2": {
 		"description": "Mg B_2 C_2 & Cmca D_{2h}^{18} #64 & oC80 & Worle&Nesper, J. Alloy&Compounds 216",
 		"edges": [
 			[0, 2],
@@ -72994,7 +72994,7 @@
 			"B"
 		]
 	},
-	{
+	"nbni8": {
 		"description": "NbNi_8 & I4/mmm-D_{4h}^{17} #139 (ahi) & tI18 & Pearson \"Metals and Alloys\" pp ",
 		"edges": [
 			[0, 2],
@@ -74412,7 +74412,7 @@
 			"Ni"
 		]
 	},
-	{
+	"nbo": {
 		"description": "NbO Pm(-3)m (O^1_{h}, #221) & cP6                                              ",
 		"edges": [
 			[0, 1],
@@ -74494,7 +74494,7 @@
 			"O"
 		]
 	},
-	{
+	"new4h": {
 		"description": "CSi (Moissanite-4H) & P6_3mc-C_{6v}^4 #186 & hP8 & Bauer et al., Acta Cryst A 57, 60 (2001)",
 		"edges": [
 			[0, 1],
@@ -74708,7 +74708,7 @@
 			"Si"
 		]
 	},
-	{
+	"omega": {
 		"description": "NbZr_2 & P(-3)m1 (#164) & hP3 & trigonal omega                                 ",
 		"edges": [
 			[0, 1],
@@ -74894,7 +74894,7 @@
 			"Nb"
 		]
 	},
-	{
+	"pdal": {
 		"description": "PdAl & R(-3) [C^2_{3i}] (#148) & hR26 & Rhombohedral Lattice                   ",
 		"edges": [
 			[0, 1],
@@ -76280,7 +76280,7 @@
 			"Pd"
 		]
 	},
-	{
+	"pzt_m": {
 		"description": "Pb Zr_{.52} Ti_{.48} O_3 & Cm-C_s^3 #8 & mC10 & Noheda et al., PRB 61, 8687 (20",
 		"edges": [
 			[0, 1],
@@ -76362,7 +76362,7 @@
 			"Pb"
 		]
 	},
-	{
+	"pzt_t": {
 		"description": "Pb Zr_{.52} Ti_{.48} O_3 & P4mm-C_{4v}^1 #99 & tP5 & Noheda et al., PRB 61, 868",
 		"edges": [
 			[0, 1],
@@ -76409,7 +76409,7 @@
 			"Pb"
 		]
 	},
-	{
+	"rgr": {
 		"description": "Graphite (rhombohedral) & R(-3)m & D_{3d}^5 & #166 & hR2 & Wyckoff Vol. I, p. 27",
 		"edges": [
 			[0, 3],
@@ -76667,7 +76667,7 @@
 			"C"
 		]
 	},
-	{
+	"sc16": {
 		"description": "SC16 AlSb & P2_13 - T^4 #198 & cP16                                            ",
 		"edges": [
 			[0, 8],
@@ -76779,7 +76779,7 @@
 			"Al"
 		]
 	},
-	{
+	"si34": {
 		"description": "Si(34) Clathrate & Fd(-3)m-O_h^7 #227 & cF136 & Adams et al. PRB 49, 8048 (1994)",
 		"edges": [
 			[0, 1],
@@ -77285,7 +77285,7 @@
 			"Si"
 		]
 	},
-	{
+	"si46": {
 		"description": "Si(46) Clathrate & Pm(-3)n-O_h^3 #223 & cP46 & Adams et al. PRB 49, 8048 (1994)",
 		"edges": [
 			[0, 151],
@@ -78275,7 +78275,7 @@
 			"Si"
 		]
 	},
-	{
+	"sio2a": {
 		"description": "alpha-SiO_2 (low quartz) & P3_221 (#154, D^6_3) & hP9",
 		"edges": [
 			[0, 2],
@@ -78419,7 +78419,7 @@
 			"O"
 		]
 	},
-	{
+	"sio2b": {
 		"description": "beta-SiO_2 (high quartz) & P6_222 (#180, D^4_6) & hP9                          ",
 		"edges": [
 			[0, 2],
@@ -78559,7 +78559,7 @@
 			"O"
 		]
 	},
-	{
+	"st12": {
 		"description": "ST12 Si & P 4_3 2_1 2 (D^8_4) #96 & tP12                                       ",
 		"edges": [
 			[0, 23],
@@ -78748,7 +78748,7 @@
 			"Si"
 		]
 	},
-	{
+	"te4ti5": {
 		"description": "Te_4 Ti_5 & I4/m-C_{4h}^5 #87 (ah^2) & tI18 & Pearson Handbook IV 5321, Alloys ",
 		"edges": [
 			[0, 1],
@@ -79124,4 +79124,4 @@
 			"Ti"
 		]
 	}
-]
+}
