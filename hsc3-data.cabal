@@ -1,16 +1,16 @@
 Cabal-Version:     2.4
 Name:              hsc3-data
-Version:           0.21
+Version:           0.22
 Synopsis:          haskell supercollider data
 Description:       Data related functions useful when working with SuperCollider.
 License:           GPL-3.0-only
 Category:          Sound
-Copyright:         (c) Rohan Drape, 2013-2023
+Copyright:         (c) Rohan Drape, 2013-2024
 Author:            Rohan Drape
 Maintainer:        rd@rohandrape.net
 Stability:         Experimental
 Homepage:          http://rohandrape.net/t/hsc3-data
-Tested-With:       GHC == 9.8.1
+Tested-With:       GHC == 9.12.1
 Build-Type:        Simple
 
 Data-files:        README.md
@@ -30,26 +30,26 @@ Library
                    Glob,
                    graphviz,
                    HCodecs,
-                   hcg-minus == 0.21.*,
-                   hmt-base == 0.21.*,
-                   hmt == 0.21.*,
-                   hosc == 0.21.*,
-                   hsc3 == 0.21.*,
-                   hsc3-lang == 0.21.*,
-                   hsc3-plot == 0.21.*,
-                   hsc3-sf == 0.21.*,
-                   hsc3-sf-hsndfile == 0.21.*,
-                   hsc3-ui == 0.21.*,
+                   hcg-minus == 0.22.*,
+                   hmt-base == 0.22.*,
+                   hmt == 0.22.*,
+                   hosc == 0.22.*,
+                   hsc3 == 0.22.*,
+                   hsc3-lang == 0.22.*,
+                   hsc3-plot == 0.22.*,
+                   hsc3-sf == 0.22.*,
+                   hsc3-sf-hsndfile == 0.22.*,
+                   hsc3-ui == 0.22.*,
                    JuicyPixels,
                    language-dot,
                    microaeson,
-                   midi-osc == 0.21.*,
+                   midi-osc == 0.22.*,
                    murmur-hash,
                    parsec,
                    pgm,
                    process,
                    safe,
-                   sc3-rdu == 0.21.*,
+                   sc3-rdu == 0.22.*,
                    split,
                    SVGPath >= 1.1.1,
                    text,
