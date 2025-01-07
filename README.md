@@ -31,7 +31,7 @@ related work in
 [x11-ptr-to-midi-osc](?t=hsc3-data&e=md/x11-ptr-to-midi-osc.md)
 
 © [rohan drape](http://rohandrape.net/),
-  2013-2024,
+  2013-2025,
   [gpl](http://gnu.org/copyleft/)
 
 * * *
