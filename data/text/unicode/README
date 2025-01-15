@@ -1,0 +1,9 @@
+https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+
+Selects only the fields:
+
+- 1 Code point
+- 2 Name
+- 3 General category
+- 13 Simple uppercase mapping
+- 14 Simple lowercase mapping
