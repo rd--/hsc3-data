@@ -103,7 +103,6 @@ Library
                    Sound.Sc3.Data.Math.Bourke
                    Sound.Sc3.Data.Math.Bouwkamp
                    Sound.Sc3.Data.Math.Easing
-                   Sound.Sc3.Data.Math.Hermite
                    Sound.Sc3.Data.Math.Ifs
                    Sound.Sc3.Data.Math.Loudness
                    Sound.Sc3.Data.Math.Sprott_1993a

@@ -1,8 +1,8 @@
 -- | IFSKit file format <http://larryriddle.agnesscott.org/ifskit/IFShelp/ifsfileformat.html>
 module Sound.Sc3.Data.Math.Ifs where
 
-import Music.Theory.Geometry.Matrix {- hmt-base -}
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import qualified Music.Theory.Geometry.Matrix as Matrix {- hmt-base -}
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
 -- | Is line NIL or a comment.
 ifs_nil_line :: String -> Bool
@@ -13,7 +13,7 @@ ifs_nil_line s =
     _ -> False
 
 -- | Parse data line, probablity entry is optional.
-ifs_parse_line :: Read t => String -> (M22 t, V2 t, Maybe t)
+ifs_parse_line :: Read t => String -> (Matrix.M22 t, Vector.V2 t, Maybe t)
 ifs_parse_line s =
   case map read (words s) of
     [a, b, c, d, e, f] -> (((a, b), (c, d)), (e, f), Nothing)
@@ -21,7 +21,7 @@ ifs_parse_line s =
     _ -> error "ifs_parse_line?"
 
 -- | Load IFS file with single entry.
-ifs_load_1 :: Read t => FilePath -> IO [(M22 t, V2 t, Maybe t)]
+ifs_load_1 :: Read t => FilePath -> IO [(Matrix.M22 t, Vector.V2 t, Maybe t)]
 ifs_load_1 fn = do
   l <- fmap (filter (not . ifs_nil_line) . lines) (readFile fn)
   let n = length l
@@ -30,9 +30,9 @@ ifs_load_1 fn = do
     _ -> error "ifs_load_1?"
 
 -- | Load IFS file with single entity having no probablity entry.
-ifs_load_1_np :: Read t => FilePath -> IO [(M22 t, V2 t)]
+ifs_load_1_np :: Read t => FilePath -> IO [(Matrix.M22 t, Vector.V2 t)]
 ifs_load_1_np = fmap (map (\(m, v, _) -> (m, v))) . ifs_load_1
 
 -- | Type specialised
-ifs_load_1_np_f64 :: FilePath -> IO [(M22 Double, V2 Double)]
+ifs_load_1_np_f64 :: FilePath -> IO [(Matrix.M22 Double, Vector.V2 Double)]
 ifs_load_1_np_f64 = ifs_load_1_np
