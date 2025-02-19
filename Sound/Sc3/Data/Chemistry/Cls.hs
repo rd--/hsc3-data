@@ -13,13 +13,13 @@ import System.FilePath {- filepath -}
 import Sound.Sc3.Data.Chemistry.Struct {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
 
--- | Lookup Cls_DIR, or default to local directory.
+-- | Lookup CLS_DIR, or default to local directory.
 cls_dir :: IO FilePath
 cls_dir = do
   r <- lookupEnv "CLS_DIR"
   return (fromMaybe "/home/rohan/sw/hsc3-data/data/chemistry/cls/" r)
 
--- | Make Cls xyz filename from ID.
+-- | Make Cls xyz filename from Id.
 cls_xyz_file :: String -> FilePath
 cls_xyz_file nm = "xyz" </> nm <.> "xyz"
 
