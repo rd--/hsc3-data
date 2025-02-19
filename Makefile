@@ -11,6 +11,7 @@ clean:
 
 push-all:
 	r.gitlab-push.sh hsc3-data
+	r.github-push.sh hsc3-data
 
 indent:
 	fourmolu -i Sound cmd
