@@ -1,2 +1,2 @@
 fmt:
-	deno fmt *.json
+	deno fmt --use-tabs --line-width 99999999 *.json
