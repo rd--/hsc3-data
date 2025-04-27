@@ -9,14 +9,13 @@ import Data.List {- base -}
 import Data.Maybe {- base -}
 
 import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
-import Music.Theory.Geometry.Vector {- hmt-base -}
-
-{- | The angstrom or ångström is a metric unit of length equal to 1×10−10 m,
+{- | The angstrom or ångström is a metric unit of length equal to 1×10^−10 m,
 or one ten-billionth of a metre, 0.1 nanometre, or 100 picometres.
 Its symbol is Å.
 
-The picometre (SI symbol: pm) is a metric unit of length equal to 1×10−12 m,
+The picometre (SI symbol: pm) is a metric unit of length equal to 1×10^−12 m,
 or one trillionth of a metre.
 -}
 data E_Length_Unit = Angstroms | Picometres
@@ -458,12 +457,12 @@ covalent_radius_csd k = lookup k covalent_radii_csd_table
 covalent_radius_csd_err :: Fractional n => Atomic_Number -> n
 covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radius_csd
 
-type Dist_Msr t = (((Int, Int), (V3 t, V3 t)), t, t, t, Bool, Bool)
+type Dist_Msr t = (((Int, Int), (Vector.V3 t, Vector.V3 t)), t, t, t, Bool, Bool)
 
 {- | /rad_f/ is the atomic symbol to covalent radius function.
 /(t_min,t_max)/ are the tolerance values, /t_min/ is ordinarily negative.
 -}
-calculate_distance_set :: (Ord t, Floating t) => (Atomic_Symbol -> t) -> (t, t) -> [(Atomic_Symbol, V3 t)] -> [Dist_Msr t]
+calculate_distance_set :: (Ord t, Floating t) => (Atomic_Symbol -> t) -> (t, t) -> [(Atomic_Symbol, Vector.V3 t)] -> [Dist_Msr t]
 calculate_distance_set rad_f (t_min, t_max) e =
   let f (k0, (a0, p0)) (k1, (a1, p1)) =
         if k0 < k1
@@ -471,7 +470,7 @@ calculate_distance_set rad_f (t_min, t_max) e =
             let r0 = rad_f a0
                 r1 = rad_f a1
                 r2 = r0 + r1
-                d = v3_distance p0 p1
+                d = Vector.v3_distance p0 p1
             in Just
                 ( ((k0, k1), (p0, p1))
                 , r1
@@ -491,7 +490,7 @@ The rule is: if the distance between two atoms is within a
 tolerance of the sum of their covalent radii, they are considered
 bonded.
 -}
-calculate_bonds :: (Floating n, Ord n) => (Atomic_Symbol -> n) -> (n, n) -> [(Atomic_Symbol, V3 n)] -> [((Int, Int), (V3 n, V3 n))]
+calculate_bonds :: (Floating n, Ord n) => (Atomic_Symbol -> n) -> (n, n) -> [(Atomic_Symbol, Vector.V3 n)] -> [((Int, Int), (Vector.V3 n, Vector.V3 n))]
 calculate_bonds rad_f th =
   let f (r, _, _, _, t0, t1) = if t0 && t1 then Just r else Nothing
   in mapMaybe f . calculate_distance_set rad_f th
