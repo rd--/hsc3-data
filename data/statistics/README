@@ -1,5 +1,10 @@
 - <https://www.itl.nist.gov/div898/handbook/>
 
+Notes:
+
+- Single column data is stored as a vector
+- Table data includes an initial column names row
+
 Data sets:
 
 - <https://www.itl.nist.gov/div898/handbook/datasets/AUTO79.DAT>

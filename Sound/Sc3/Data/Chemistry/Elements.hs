@@ -177,6 +177,37 @@ periodic_table =
   , (118, "Og", "Oganesson", 294)
   ]
 
+{- | List giving the period of each element.
+
+>>> length element_period
+118
+-}
+element_period :: [Int]
+element_period =
+  [1,1
+  ,2,2,2,2,2,2,2,2
+  ,3,3,3,3,3,3,3,3
+  ,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+  ,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5
+  ,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6
+  ,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]
+
+{- | List giving the group of each element.
+Values of 0 indicate no group (the F-block).
+
+>>> length element_group
+118
+-}
+element_group :: [Int]
+element_group =
+  [1,18
+  ,1,2,13,14,15,16,17,18
+  ,1,2,13,14,15,16,17,18
+  ,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+  ,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+  ,1,2,30,0,0,0,0,0,0,0,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+  ,1,2,30,0,0,0,0,0,0,0,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+
 {- | Lookup atomic symbol in 'periodic_table' and return atomic number.
 If /cs/ is False then match case-insensitively.
 
