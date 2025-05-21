@@ -15,14 +15,15 @@ import Data.Colour.SRGB {- colour -}
 import qualified Language.Dot as D {- language-dot -}
 import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
-import qualified Data.Cg.Minus as Cg {- hcg-minus -}
-import qualified Data.Cg.Minus.Colour.Ryb as Ryb {- hcg-minus -}
-import qualified Data.Cg.Minus.Picture as Picture {- hcg-minus -}
-
+import qualified Music.Theory.Geometry.Picture as Picture {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
+import Music.Theory.Geometry.Vector {- hmt-base -}
 
-type Pt = (Int, Int)
+import qualified Data.Cg.Minus.Colour.Ryb as Ryb {- hcg-minus -}
+
+type Pt = V2 Int
 type Sz = Int
+type Clr = Picture.Colour
 
 -- | (upper-left,size)
 type Sq = (Pt, Sz)
@@ -36,11 +37,11 @@ sq_lower_right ((x, y), sz) = (x + sz, y + sz)
 sq_corners_cw :: Sq -> [Pt]
 sq_corners_cw ((x, y), sz) = [(x, y), (x + sz, y), (x + sz, y + sz), (x, y + sz)]
 
-sq_ln :: Sq -> [Cg.Ln Int]
+sq_ln :: Sq -> [V2 (V2 Int)]
 sq_ln sq =
-  let f (x, y) = Cg.Pt (fromIntegral x) (fromIntegral y)
+  let f (x, y) = (fromIntegral x, fromIntegral y)
       [p0, p1, p2, p3] = map f (sq_corners_cw sq)
-  in zipWith Cg.Ln [p0, p1, p2, p3] [p1, p2, p3, p0]
+  in zip [p0, p1, p2, p3] [p1, p2, p3, p0]
 
 sq_ul_lr :: Sq -> (Pt, Pt)
 sq_ul_lr sq =
@@ -117,28 +118,28 @@ sq_ascii (w, h) sq =
 
 -- * Picture
 
-to_pt :: Int -> Pt -> Cg.Pt Double
-to_pt h (x, y) = Cg.Pt (fromIntegral x) (fromIntegral (h - y))
+to_pt :: Int -> Pt -> V2 Double
+to_pt h (x, y) = (fromIntegral x, fromIntegral (h - y))
 
-gen_poly :: Int -> [Sq] -> [[Cg.Pt Double]]
+gen_poly :: Int -> [Sq] -> [[V2 Double]]
 gen_poly h = let f = map (to_pt h) . sq_corners_cw in map f
 
-gen_clr :: Int -> [Cg.Ca]
-gen_clr = map (\(r, g, b) -> Cg.rgba_to_ca (r, g, b, 1)) . drop 2 . Ryb.rgb_colour_gen . (+ 2)
+gen_clr :: Int -> [Clr]
+gen_clr = map (\(r, g, b) -> (r, g, b, 1)) . drop 2 . Ryb.rgb_colour_gen . (+ 2)
 
-gen_pic :: Maybe [Cg.Ca] -> Int -> [Sq] -> Picture.Picture Double
+gen_pic :: Maybe [Clr] -> Int -> [Sq] -> Picture.Picture Double
 gen_pic m_clr sz sq = do
   let p = gen_poly sz sq
-      black_pen = Picture.Pen 0.1 (Cg.rgba_to_ca (0, 0, 0, 1)) Picture.no_dash
+      black_pen = Picture.Pen 0.1 (0, 0, 0, 1) Picture.no_dash
    in case m_clr of
         Just clr_seq -> zipWith Picture.polygon_f clr_seq p
         Nothing -> map (Picture.polygon_l black_pen) p
 
 -- * Csv
 
-ln_entry :: Show a => Cg.Ln a -> String
+ln_entry :: Show a => V2 (V2 a) -> String
 ln_entry ln =
-  let ((x0, y0), (x1, y1)) = Cg.ln_elem ln
+  let ((x0, y0), (x1, y1)) = ln
   in intercalate "," (map show [x0, y0, x1, y1])
 
 gen_csv :: FilePath -> [Sq] -> IO ()
