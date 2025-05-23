@@ -1,0 +1,9 @@
+lu-continents.json:
+
+Data originally from University of Latvia (http://lu.lv)
+
+<http://priede.bf.lu.lv/ftp/Kartes_un_Plani/Pasaule/Azimuth_LoRes_Continents.shp.zip>
+
+Translated to GeoJson using GDAL/ogr2ogr.
+
+<https://gdal.org/en/stable/programs/ogr2ogr.html>

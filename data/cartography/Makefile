@@ -1,0 +1,2 @@
+all:
+	deno fmt *.json
