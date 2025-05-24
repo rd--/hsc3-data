@@ -1,6 +1,6 @@
 {
   "type": "FeatureCollection",
-  "name": "LuContinents",
+  "name": "ContinentOutlines/LowResolution",
   "features": [
     {
       "type": "Feature",
@@ -1902,7 +1902,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "Continent": null },
+      "properties": { "Continent": "North America" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -3856,7 +3856,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "Continent": null },
+      "properties": { "Continent": "Asia" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -4574,7 +4574,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "Continent": null },
+      "properties": { "Continent": "Oceana" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -7174,7 +7174,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "Continent": null },
+      "properties": { "Continent": "Antarctica" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
