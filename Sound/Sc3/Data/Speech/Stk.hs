@@ -23,8 +23,9 @@ ph_parse w =
 
 {- | Load Ph from Csv file.
 
-> r <- ph_load "/home/rohan/sw/hsc3-data/data/speech/stk.csv"
-> length r == 32
+>>> r <- ph_load "/home/rohan/sw/hsc3-data/data/speech/stk.csv"
+>>> length r
+32
 -}
 ph_load :: FilePath -> IO [Ph]
 ph_load fn = do
@@ -33,14 +34,16 @@ ph_load fn = do
 
 {- | <https://ccrma.stanford.edu/~jos/filters/Resonator_Bandwidth_Terms_Pole.html>
 
-> bw_to_radius (1 / 48000) 1000 == 0.9366460212365959
+>>> bw_to_radius (1 / 48000) 1000
+0.9366460212365959
 -}
 bw_to_radius :: Floating a => a -> a -> a
 bw_to_radius t bw = exp (-pi * bw * t)
 
 {- | <https://ccrma.stanford.edu/~jos/filters/Resonator_Bandwidth_Terms_Pole.html>
 
-> radius_to_bw (1 / 48000) 0.9366460212365959 == 1000.0000000000002
+>>> radius_to_bw (1 / 48000) 0.9366460212365959
+1000.0000000000002
 -}
 radius_to_bw :: Floating a => a -> a -> a
 radius_to_bw t r = -(log r / (pi * t))

@@ -4,9 +4,10 @@ import System.Environment {- base -}
 import qualified Data.Vector.Storable as Vector {- vector -}
 
 import qualified Sound.File.HSndFile as Sf.SndFile {- hsc3-sf-hsndfile -}
-{- hsc3 -}
+
 import qualified Sound.Sc3.Common.Buffer.Vector as Buffer.Vector {- hsc3 -}
-import qualified Sound.Sc3.Common.Math as M
+import qualified Sound.Sc3.Common.Math as M {- hsc3 -}
+
 import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 
 vec_normalise_1 :: (Fractional b, Ord b, Vector.Storable b) => Vector.Vector b -> Vector.Vector b

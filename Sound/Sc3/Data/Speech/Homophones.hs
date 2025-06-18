@@ -8,14 +8,14 @@ import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.List as List {- hmt-base -}
 
--- | Case-insenstive string comparison.
+-- | Case-insensitive string comparison.
 str_cmp_ci :: String -> String -> Ordering
 str_cmp_ci p q = compare (map toLower p) (map toLower q)
 
 -- | Homophone data.
 type Hmph = [[String]]
 
--- | The original list has each word as an initial word, this uniqifies the list.
+-- | The original list has each word as an initial word, this uniqueifies the list.
 hmph_uniq :: Hmph -> Hmph
 hmph_uniq = nub . sortOn (map toLower . List.head_err) . map (sortBy str_cmp_ci)
 
@@ -27,16 +27,21 @@ hmph_parse k = map (Split.splitOn ",") . drop k . lines
 hmph_pp :: Hmph -> String
 hmph_pp = let f = intercalate "," in unlines . map f
 
--- | 'hmph_parse' of 'readFile'.
+{- | 'hmph_parse' of 'readFile'.
+
+>>> h <- hmph_load 78 "/home/rohan/sw/hsc3-data/data/speech/homophones-1.01.txt"
+>>> length h
+1539
+
+>>> let u = hmph_uniq h
+>>> length u
+710
+-}
 hmph_load :: Int -> FilePath -> IO [[String]]
 hmph_load k = fmap (hmph_parse k) . readFile
 
 {-
 
-h <- hmph_load 78 "/home/rohan/sw/hsc3-data/data/speech/homophones-1.01.txt"
-length h == 1539
-u = hmph_uniq h
-length u == 710
 writeFile "/home/rohan/sw/hsc3-data/data/speech/homophones.text" (hmph_pp u)
 
 -}

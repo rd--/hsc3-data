@@ -25,7 +25,9 @@ pb_parse l =
 
 {- | Load Csv and parse run pb_parse over rows.
 
-> pb_load "/home/rohan/sw/hsc3-data/data/speech/pb.csv"
+>>> e <- pb_load "/home/rohan/sw/hsc3-data/data/speech/pb.csv"
+>>> length e
+1520
 -}
 pb_load :: FilePath -> IO [Pb_Ent]
 pb_load fn = do
