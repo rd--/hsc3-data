@@ -90,7 +90,8 @@ sfz_is_header s = not (null s) && List.head_err s == '<' && last s == '>'
 
 {- | Sfz tokenizer, white space is allowed in the right hand sides of opcodes, ie. in file-names.
 
-> sfz_tokenize "<region> sample=a.wav <region> sample=b c.wav"
+>>> sfz_tokenize "<region> sample=a.wav <region> sample=b c.wav"
+["<region>","sample=a.wav","<region>","sample=b c.wav"]
 -}
 sfz_tokenize :: String -> [String]
 sfz_tokenize =
@@ -100,12 +101,13 @@ sfz_tokenize =
             then recur (unwords [x1, x2] : r)
             else x1 : recur (x2 : r)
         _ -> l
-  in recur . words -- INCORRECT IMPLEMENTATION, WORKS FOR NON-CONSECUTIVE SPACES ONLY...
+  in recur . words -- NB. Incorrect implementation, works for non-consecutive spaces only...
 
 {- | Pitch values, ie. for pitch_keycenter, may be either numbers or strings.
   Returned as midi-note numbers (ie. 0 - 127)
 
-> map sfz_parse_pitch ["B3","60","C#4"] == [59,60,61]
+>>> map sfz_parse_pitch ["B3","60","C#4"]
+[59,60,61]
 -}
 sfz_parse_pitch :: String -> Key
 sfz_parse_pitch s =
@@ -115,7 +117,8 @@ sfz_parse_pitch s =
 
 {- | An opcode is written key=value.
 
-> sfz_parse_opcode "pitch_keycenter=C4"
+>>> sfz_parse_opcode "pitch_keycenter=C4"
+("pitch_keycenter","C4")
 -}
 sfz_parse_opcode :: String -> Sfz_Opcode
 sfz_parse_opcode s =
@@ -294,11 +297,17 @@ sfz_region_loop_data r =
 {- | Resolve sample file-name of <region>.
   Requires Sfz file name (for directory) and <control> data for default_path.
 
-> sfz_region_sample_resolve "x/x.sfz" [] ([],[("sample","y.z")]) == "x/y.z"
-> sfz_region_sample_resolve "x.sfz" [("default_path","x")] ([],[("sample","y.z")]) == "./x/y.z"
+>>> sfz_region_sample_resolve "x/x.sfz" [] ([],[("sample","y.z")])
+"x/y.z"
 
-> "x" </> "" </> "y.z" == "x/y.z"
-> splitFileName "x.sfz" == ("./","x.sfz")
+>>> sfz_region_sample_resolve "x.sfz" [("default_path","x")] ([],[("sample","y.z")])
+"./x/y.z"
+
+>>> "x" </> "" </> "y.z"
+"x/y.z"
+
+>>> splitFileName "x.sfz"
+("./","x.sfz")
 -}
 sfz_region_sample_resolve :: FilePath -> Sfz_Control -> Sfz_Region -> FilePath
 sfz_region_sample_resolve sfz_fn ctl rgn =

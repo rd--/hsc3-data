@@ -196,7 +196,7 @@ element_period =
 Values of 0 indicate no group (the F-block).
 
 >>> length element_group
-118
+104
 -}
 element_group :: [Int]
 element_group =
