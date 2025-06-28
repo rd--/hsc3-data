@@ -28,7 +28,7 @@ obxd_fxb_load_xml fxb_fn = do
 
 -- * Xml / Io
 
--- | Scan FXP or FXB file for Obxd Xml data, ie. ignore FXB or FXP container.
+-- | Scan Fxp or Fxb file for Obxd Xml data, ie. ignore Fxb or Fxp container.
 obxd_load_xml_lax :: FilePath -> IO B.ByteString
 obxd_load_xml_lax fn = do
   b <- B.readFile fn
@@ -71,9 +71,9 @@ obd_fxb_xml_parse = map obxd_attr_parse . obxd_fxb_xml_programs . Xml.xml_parse_
 obxd_fxb_load_lax :: FilePath -> IO [Obxd_Program]
 obxd_fxb_load_lax = fmap obd_fxb_xml_parse . obxd_load_xml_lax
 
--- * CSV
+-- * Csv
 
--- | Encode 'Obxd_Program' as CSV entry, /k/ is the precision to print to.
+-- | Encode 'Obxd_Program' as Csv entry, /k/ is the precision to print to.
 obxd_program_to_csv :: Int -> Obxd_Program -> String
 obxd_program_to_csv k (nm, dat) =
   if ',' `elem` nm
@@ -84,7 +84,7 @@ obxd_program_to_csv k (nm, dat) =
 obxd_write_csv :: Int -> FilePath -> [Obxd_Program] -> IO ()
 obxd_write_csv k fn = writeFile fn . unlines . map (obxd_program_to_csv k)
 
--- | Parse CSV entry to 'Obxd_Program'.
+-- | Parse Csv entry to 'Obxd_Program'.
 obxd_parse_csv :: String -> Obxd_Program
 obxd_parse_csv s =
   case Split.splitOn "," s of
@@ -117,11 +117,19 @@ obxd_load_programs fn = do
   when (n /= genericLength p) (print ("obxd_load_programs?", n, length p))
   return p
 
--- > length obxd_def == 80
+{- | Obxd default parameters
+
+>>> length obxd_param_def
+80
+-}
 obxd_param_def :: [Double]
 obxd_param_def = [0, 0, 0.5, 1, 0.5, 0.5, 0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0.2, 0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.3, 0.3, 0.3, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 1, 0, 0, 0, 0, 0, 0, 0.3, 0]
 
--- > length obxd_param_nm == 80
+{- | Obxd parameter names
+
+>>> length obxd_param_nm
+80
+-}
 obxd_param_nm :: [String]
 obxd_param_nm =
   [ "UNDEFINED" -- 0
