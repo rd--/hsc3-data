@@ -641,7 +641,7 @@ pdb_rec_parse_set nm = parse_txt_ix (\z -> if z `elem` nm then lookup z pdb_rec_
 
 -- * Dat
 
--- | Pdb Data
+-- | Pdb Data, a list of unparsed bytestring records.
 type Dat = [Txt]
 
 -- | Find first instance of /ty/ record.
@@ -721,6 +721,7 @@ dat_title = map title_unpack . pdb_dat_rec (txt "TITLE ")
 
 -- * Composite
 
+-- | Dat to Pdb
 dat_parse :: Dat -> Pdb
 dat_parse x =
   ( dat_header x

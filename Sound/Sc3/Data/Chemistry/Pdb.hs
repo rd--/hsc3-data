@@ -21,6 +21,8 @@ import qualified Music.Theory.List as List {- hmt-base -}
 
 import qualified Sound.Sc3.Data.Chemistry.Elements as Elements {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Iupac as Iupac {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Pdb.Parse {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb.Types {- hsc3-data -}
 
 -- * Amino Acid and Nucleotide Nomenclature
 
@@ -331,3 +333,13 @@ amino_acid_monoisotopic_mass_tbl =
   , ("Tyr", 163.06333)
   , ("Trp", 186.07931)
   ]
+
+-- * Io
+
+-- | Load Pdb file as Pdb.
+pdb_load :: FilePath -> IO Pdb.Types.Pdb
+pdb_load = fmap Pdb.Parse.dat_parse . Pdb.Parse.pdb_load_dat
+
+-- | Load directory of Pdb files as list of Pdb.
+pdb_load_dir :: FilePath -> IO [Pdb.Types.Pdb]
+pdb_load_dir = fmap (map Pdb.Parse.dat_parse) . Pdb.Parse.pdb_load_dat_dir
