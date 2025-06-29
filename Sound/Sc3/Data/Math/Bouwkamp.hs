@@ -101,7 +101,7 @@ place_square_f pl pt sq =
           pt' = next_slot pl'
       in place_square_f pl' pt' sq'
 
-{- | Place square. -}
+-- | Place square.
 place_square :: [[Sz]] -> [Sq]
 place_square = place_square_f [] (0, 0)
 
