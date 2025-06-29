@@ -23,7 +23,7 @@ mp_poscar_file nm = mp_dir </> "poscar" </> nm <.> "poscar"
 {- | Load an Mp Poscar file as a Struct.
 
 >>> s <- mp_load "mp-541848_B"
->>> struct_degree s
+>>> Struct.struct_degree s
 (324,0)
 -}
 mp_load :: String -> IO Struct.Struct

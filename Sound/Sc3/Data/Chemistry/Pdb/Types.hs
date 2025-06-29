@@ -88,7 +88,13 @@ type Conect = [(Int, Int)]
 
 Non-Crystallography = ((1,1,1),(90,90,90),P1,1)
 -}
-type Cryst1 = ((Double, Double, Double), (Double, Double, Double), String, Int)
+type Cryst1 = (Vector.V3 Double, Vector.V3 Double, String, Int)
+
+-- | (((O11,O12,O13),T1),((O21,O22,O23),T2),((O31,O32,O33),T3))
+type OrigX = Vector.V3 (Vector.V3 Double, Double)
+
+-- | (((S11,S12,S13),U1),((S21,S22,S23),U2),((S31,S32,S33),U3))
+type Scale = Vector.V3 (Vector.V3 Double, Double)
 
 -- | (Classification,Dep-Date,Id-Code)
 type Header = (String, String, String)

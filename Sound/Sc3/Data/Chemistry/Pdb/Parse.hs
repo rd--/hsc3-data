@@ -12,7 +12,7 @@ import qualified Music.Theory.Directory as Directory {- hmt-base -}
 
 import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}
 
--- * Records-Se
+-- * Records-Se (Se=Start-end)
 
 {- | Atom/Hetatm
 
@@ -169,7 +169,7 @@ helix_se =
   , [6, 10, 14, 18, 20, 25, 26, 30, 32, 37, 38, 40, 70, 76]
   )
 
-{- | Het
+{- | HET
 
 COLUMNS       DatA  TYPE     FIELD         DEFINITION
 ---------------------------------------------------------------------------------
@@ -212,7 +212,7 @@ link_se =
   , [6, 16, 17, 20, 22, 26, 27, 46, 47, 50, 52, 56, 57, 65, 72, 78]
   )
 
-{- | Master
+{- | MASTER
 
 COLUMNS         DatA TYPE     FIELD          DEFINITION
 ----------------------------------------------------------------------------------
@@ -449,10 +449,10 @@ title_se = ([1, 9, 11], [6, 10, 80])
 
 -- * Txt
 
--- | Alias for CHAR8-BYTESTRING
+-- | Alias for Char8.Bytestring
 type Txt = ByteString.Char8.ByteString
 
--- | ZERO-INDEXED [(START,LENGTH)] -> [SUB-STR]
+-- | Zero-indexed [(start,length)] -> [sub-str]
 txt_parts :: Txt -> [(Int, Int)] -> [Txt]
 txt_parts s ix = let f (i, j) = ByteString.Char8.take j (ByteString.Char8.drop i s) in map f ix
 
@@ -461,14 +461,16 @@ txt_parts_spl = let spl x = (head x, tail x) in fmap spl . txt_parts
 
 {- | Plain text string (ie. as written)
 
-> txt_pln (txt " a b c ") == " a b c "
+>>> txt_pln (txt " a b c ")
+" a b c "
 -}
 txt_pln :: Txt -> String
 txt_pln = ByteString.Char8.unpack
 
 {- | Unpack and trim Txt.
 
-> txt_str (txt " a b c ") == "a b c"
+>>> txt_str (txt " a b c ")
+"a b c"
 -}
 txt_str :: Txt -> String
 txt_str = ByteString.Char8.unpack . fst . ByteString.Char8.spanEnd isSpace . ByteString.Char8.dropWhile isSpace
