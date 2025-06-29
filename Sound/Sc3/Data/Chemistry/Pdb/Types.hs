@@ -4,20 +4,20 @@ module Sound.Sc3.Data.Chemistry.Pdb.Types where
 import Data.Function {- base -}
 import Data.List {- base -}
 
-import Music.Theory.Geometry.Matrix {- hmt-base -}
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import qualified Music.Theory.Geometry.Matrix as Matrix {- hmt-base -}
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.List as List {- hmt -}
 
 -- * Matrix
 
-type Mtrx x = (M33 x, V3 x)
+type Mtrx x = (Matrix.M33 x, Vector.V3 x)
 
 mtrx_identity :: Num n => Mtrx n
 mtrx_identity = (((1, 0, 0), (0, 1, 0), (0, 0, 1)), (0, 0, 0))
 
-mtrx_apply :: Num n => Mtrx n -> V3 n -> V3 n
-mtrx_apply (m, v) x = v3_add (m33_apply m x) v
+mtrx_apply :: Num n => Mtrx n -> Vector.V3 n -> Vector.V3 n
+mtrx_apply (m, v) x = Vector.v3_add (Matrix.m33_apply m x) v
 
 -- * Residue-Id
 
@@ -177,7 +177,7 @@ type Pdb =
 
 -- | Group atoms by chain and ensure sequence
 atom_group :: [Atom] -> [(Char, [Atom])]
-atom_group = map (fmap (sortOn atom_serial)) . T.collate_on atom_chain_id id
+atom_group = map (fmap (sortOn atom_serial)) . List.collate_on atom_chain_id id
 
 -- | Merge Conect records, sort and remove (i,j)-(j,i) duplicates.
 conect_group :: [Conect] -> [(Int, Int)]
@@ -187,7 +187,7 @@ conect_group =
 
 -- | Group helices by chain and ensure sequence
 helix_group :: [Helix] -> [(Char, [Helix])]
-helix_group = map (fmap (sortOn helix_serial)) . T.collate_on helix_chain_id id
+helix_group = map (fmap (sortOn helix_serial)) . List.collate_on helix_chain_id id
 
 mdltyp_group :: [MdlTyp] -> String
 mdltyp_group = unwords . map snd . sort
@@ -203,7 +203,7 @@ seqres_group =
 
 -- | Group helices by chain
 sheet_group :: [Sheet] -> [(Char, [Sheet])]
-sheet_group = T.collate_on sheet_chain_id id
+sheet_group = List.collate_on sheet_chain_id id
 
 title_group :: [Title] -> String
 title_group = unwords . map snd . sort

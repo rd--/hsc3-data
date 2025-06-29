@@ -11,35 +11,38 @@ import Data.Char {- base -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
+
+-- | Coordinate
+type Coordinate = Vector.V3 Double
 
 -- | Parse three-element real-valued vector.
-poscar_parse_r3 :: String -> V3 Double
+poscar_parse_r3 :: String -> Coordinate
 poscar_parse_r3 s =
   case words s of
     [i, j, k] -> (read i, read j, read k)
     _ -> error "poscar_parse_r3"
 
 -- | Parse co-ordinate and atomic-symbol, ignore remainder of line.
-poscar_parse_atom :: String -> (V3 Double, String)
+poscar_parse_atom :: String -> (Coordinate, String)
 poscar_parse_atom s =
   case words s of
     i : j : k : sym : _ -> ((read i, read j, read k), sym)
     _ -> error "poscar_parse_atom"
 
 -- | 3×3 lattice.
-type Lattice = V3 (V3 Double)
+type Lattice = Vector.V3 Coordinate
 
 -- | Convert direct coordinate to cartesian.
-poscar_direct_to_cartesian :: Lattice -> V3 Double -> V3 Double
+poscar_direct_to_cartesian :: Lattice -> Coordinate -> Coordinate
 poscar_direct_to_cartesian (a1, a2, a3) (i, j, k) =
-  v3_scale i a1 `v3_add` v3_scale j a2 `v3_add` v3_scale k a3
+  Vector.v3_scale i a1 `Vector.v3_add` Vector.v3_scale j a2 `Vector.v3_add` Vector.v3_scale k a3
 
 -- | Direct or cartesian co-ordinates.
 data Poscar_Ty = Poscar_D | Poscar_C deriving (Eq, Enum, Show)
 
 -- | (Description,U,Lattice,Atom-Histogram,Atom-Data)
-type Poscar = (String, Double, Lattice, [(String, Int)], Poscar_Ty, [(V3 Double, String)])
+type Poscar = (String, Double, Lattice, [(String, Int)], Poscar_Ty, [(Coordinate, String)])
 
 poscar_description :: Poscar -> String
 poscar_description (dsc, _, _, _, _, _) = dsc
@@ -47,22 +50,22 @@ poscar_description (dsc, _, _, _, _, _) = dsc
 poscar_degree :: Poscar -> Int
 poscar_degree (_, _, _, h, _, _) = sum (map snd h)
 
-poscar_atom_data :: Poscar -> [(V3 Double, String)]
+poscar_atom_data :: Poscar -> [(Coordinate, String)]
 poscar_atom_data (_, _, _, _, _, a) = a
 
-poscar_atoms_cartesian :: Poscar -> [(V3 Double, String)]
+poscar_atoms_cartesian :: Poscar -> [(Coordinate, String)]
 poscar_atoms_cartesian (_, _, l, _, ty, a) =
   case ty of
     Poscar_D -> map (first (poscar_direct_to_cartesian l)) a
     Poscar_C -> error "poscar_atoms_cartestian"
 
-poscar_atoms_direct :: Poscar -> [(V3 Double, String)]
+poscar_atoms_direct :: Poscar -> [(Coordinate, String)]
 poscar_atoms_direct (_, _, _, _, ty, a) =
   case ty of
     Poscar_D -> a
     Poscar_C -> error "poscar_atoms_direct"
 
-poscar_atoms :: Poscar_Ty -> Poscar -> [(V3 Double, String)]
+poscar_atoms :: Poscar_Ty -> Poscar -> [(Coordinate, String)]
 poscar_atoms ty =
   case ty of
     Poscar_D -> poscar_atoms_direct
@@ -84,11 +87,11 @@ poscar_parse s =
     _ -> error "poscar_parse"
 
 -- | (minima,maxima) of atoms.
-poscar_bounds :: Poscar -> V2 (V3 Double)
+poscar_bounds :: Poscar -> Vector.V2 Coordinate
 poscar_bounds p =
   let c = map fst (poscar_atoms_cartesian p)
       r = unzip3 c
-  in (v3_map minimum r, v3_map maximum r)
+  in (Vector.v3_map minimum r, Vector.v3_map maximum r)
 
 {- | Load ".poscar" file.
 

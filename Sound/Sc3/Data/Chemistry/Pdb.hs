@@ -14,13 +14,13 @@ import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 import System.Process {- process -}
 
-import qualified Data.ByteString.Char8 as B {- bytestring -}
+import qualified Data.ByteString.Char8 as ByteString.Char8 {- bytestring -}
 
-import qualified Music.Theory.Directory as T {- hmt-base -}
-import qualified Music.Theory.List as T {- hmt-base -}
+import qualified Music.Theory.Directory as Directory {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
 
-import qualified Sound.Sc3.Data.Chemistry.Elements as C {- hsc3-data -}
-import qualified Sound.Sc3.Data.Chemistry.Iupac as C {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Elements as Elements {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Iupac as Iupac {- hsc3-data -}
 
 -- * Amino Acid and Nucleotide Nomenclature
 
@@ -60,11 +60,11 @@ pdb_ribonucleotides = let (_, _, r) = pdb_std_codes in r
 pdb_nucleotides :: [String]
 pdb_nucleotides = let (_, d, r) = pdb_std_codes in d ++ r
 
--- | (Pdb-CODE,IUPAC-CODE)
+-- | (Pdb-Code,Iupac-Code)
 pdb_code_tbl :: [(String, Char)]
 pdb_code_tbl =
   concat
-    [ map (\(c1, c3, _) -> (map toUpper c3, c1)) C.iupac_amino_acid_tbl
+    [ map (\(c1, c3, _) -> (map toUpper c3, c1)) Iupac.iupac_amino_acid_tbl
     , map (\x -> (x, last x)) pdb_nucleotides
     ]
 
@@ -74,28 +74,30 @@ pdb_seqres_code_lookup = flip lookup pdb_code_tbl
 
 {- | Erroring variant.
 
-> pdb_seqres_code_lookup_err "GLY" == 'G'
+>>> pdb_seqres_code_lookup_err "GLY"
+'G'
 
-> map pdb_seqres_code_lookup_err pdb_amino_acids == "ACDEFGHIKLMNPQRSTVWY"
+>>> map pdb_seqres_code_lookup_err pdb_amino_acids
+"ACDEFGHIKLMNPQRSTVWY"
 -}
 pdb_seqres_code_lookup_err :: String -> Char
 pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_seqres_code_lookup
 
 -- * Convert
 
-{- | Run obabel process to convert Pdb file to MOL file.
+{- | Run obabel process to convert Pdb file to Mol file.
 
-Pdb files are converted to MOL files using obabel,
+Pdb files are converted to Mol files using obabel,
 <https://packages.debian.org/stable/openbabel>
 -}
 pdb_to_mol :: FilePath -> FilePath -> IO ()
 pdb_to_mol pdb_fn mol_fn = callProcess "obabel" ["-ipdb", pdb_fn, "-omol", "-O", mol_fn]
 
--- | Variant that only runs if the MOL file does not already exist.
+-- | Variant that only runs if the Mol file does not already exist.
 pdb_to_mol_x :: FilePath -> FilePath -> IO ()
 pdb_to_mol_x pdb_fn mol_fn = do
   createDirectoryIfMissing True (takeDirectory mol_fn)
-  T.if_file_exists (mol_fn, return (), pdb_to_mol pdb_fn mol_fn)
+  Directory.if_file_exists (mol_fn, return (), pdb_to_mol pdb_fn mol_fn)
 
 -- * Monomer-Het
 
@@ -105,38 +107,40 @@ het_dictionary_uri = "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/het_dictionary.t
 
 {- | Uri for monomer RESIDUE file.
 
-> het_residue_uri "GLY" == "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/GLY"
+>>> het_residue_uri "GLY"
+"ftp://ftp.wwpdb.org/pub/pdb/data/monomers/GLY"
 -}
 het_residue_uri :: String -> String
 het_residue_uri = (++) "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/"
 
 {- | Uri for monomer CIF file.
 
-> het_cif_uri "GLY" == "https://files.rcsb.org/ligands/download/GLY.cif"
+>>> het_cif_uri "GLY"
+"https://files.rcsb.org/ligands/download/GLY.cif"
 -}
 het_cif_uri :: String -> String
 het_cif_uri k = "https://files.rcsb.org/ligands/download/" ++ k ++ ".cif"
 
 -- | Type for RECORD in 'het_dictionary'
-type HET_RECORD = [B.ByteString]
+type Het_Record = [ByteString.Char8.ByteString]
 
 -- | Get (NAME,N-ATOMS) for residue at record.
-het_parse_residue :: HET_RECORD -> (String, Int)
+het_parse_residue :: Het_Record -> (String, Int)
 het_parse_residue r =
   case r of
-    e : _ -> case words (B.unpack e) of
+    e : _ -> case words (ByteString.Char8.unpack e) of
       ["RESIDUE", nm, sz] -> (nm, read sz)
       x -> error (show ("het_parse_residue", x))
     _ -> error (show ("het_parse_residue", r))
 
 -- | Select fields of type /k/ at record.
-het_field_sel :: String -> HET_RECORD -> [B.ByteString]
-het_field_sel k = filter (B.isPrefixOf (B.pack k))
+het_field_sel :: String -> Het_Record -> [ByteString.Char8.ByteString]
+het_field_sel k = filter (ByteString.Char8.isPrefixOf (ByteString.Char8.pack k))
 
 -- | Parse CONECT fields at record, which are of the form (lhs,[rhs])
-het_parse_conect :: HET_RECORD -> [(String, [String])]
+het_parse_conect :: Het_Record -> [(String, [String])]
 het_parse_conect r =
-  let f s = case words (B.unpack s) of
+  let f s = case words (ByteString.Char8.unpack s) of
         "CONECT" : lhs : cnt : rhs ->
           if length rhs == read cnt
             then (lhs, rhs)
@@ -145,12 +149,12 @@ het_parse_conect r =
   in map f (het_field_sel "CONECT" r)
 
 -- | Parse HETNAM field at record.
-het_parse_hetnam :: HET_RECORD -> String
-het_parse_hetnam = unwords . map (B.unpack . B.drop 15) . het_field_sel "HETNAM"
+het_parse_hetnam :: Het_Record -> String
+het_parse_hetnam = unwords . map (ByteString.Char8.unpack . ByteString.Char8.drop 15) . het_field_sel "HETNAM"
 
 -- | Parse FORMUL field at record.
-het_parse_formul :: HET_RECORD -> String
-het_parse_formul = unwords . map (B.unpack . B.drop 19) . het_field_sel "FORMUL"
+het_parse_formul :: Het_Record -> String
+het_parse_formul = unwords . map (ByteString.Char8.unpack . ByteString.Char8.drop 19) . het_field_sel "FORMUL"
 
 -- | Convert CONECT fields to edge set.
 het_edge_set :: [(String, [String])] -> [(String, String)]
@@ -164,30 +168,30 @@ het_vertex_set :: [(String, [String])] -> [String]
 het_vertex_set = let f (lhs, rhs) = lhs : rhs in nub . sort . concatMap f
 
 -- | Load records from local copy of 'het_dictionary'.
-het_load_records :: FilePath -> IO [HET_RECORD]
+het_load_records :: FilePath -> IO [Het_Record]
 het_load_records fn = do
-  s <- B.readFile fn
-  let l = B.lines s
-      r = T.split_when_keeping_left (B.isPrefixOf (B.pack "RESIDUE")) l
+  s <- ByteString.Char8.readFile fn
+  let l = ByteString.Char8.lines s
+      r = List.split_when_keeping_left (ByteString.Char8.isPrefixOf (ByteString.Char8.pack "RESIDUE")) l
   return (filter (not . null) r)
 
 -- | ((ID3,N-ATOMS),NAME,FORMUL,GRAPH)
-type HET_ENTRY = ((String, Int), String, String, ([String], [(String, String)]))
+type Het_Entry = ((String, Int), String, String, ([String], [(String, String)]))
 
 -- | ID3 field.
-het_entry_id3 :: HET_ENTRY -> String
+het_entry_id3 :: Het_Entry -> String
 het_entry_id3 ((nm, _), _, _, _) = nm
 
 -- | N-ATOMS field.
-het_entry_n_atoms :: HET_ENTRY -> Int
+het_entry_n_atoms :: Het_Entry -> Int
 het_entry_n_atoms ((_, k), _, _, _) = k
 
 -- | FORMULA field.
-het_entry_formula :: HET_ENTRY -> String
+het_entry_formula :: Het_Entry -> String
 het_entry_formula (_, _, x, _) = x
 
 -- | Parse record to entry.
-het_parse_entry :: HET_RECORD -> HET_ENTRY
+het_parse_entry :: Het_Record -> Het_Entry
 het_parse_entry r =
   let c = het_parse_conect r
   in ( het_parse_residue r
@@ -196,27 +200,31 @@ het_parse_entry r =
      , (het_vertex_set c, het_edge_set c)
      )
 
--- | Lookup HET_ENTRY by name.
-het_entry_lookup :: String -> [HET_ENTRY] -> Maybe HET_ENTRY
+-- | Lookup Het_Entry by name.
+het_entry_lookup :: String -> [Het_Entry] -> Maybe Het_Entry
 het_entry_lookup k = find (\((nm, _), _, _, _) -> nm == k)
 
-{- | Load HET_ENTRY from local copy of 'het_dictionary'.
+{- | Load Het_Entry from local copy of 'het_dictionary'.
 
-> fn = "/home/rohan/data/pdb/monomers/het_dictionary.txt"
-> e <- het_load_entries fn
-> length e == 31253
-> het_entry_lookup "GLY" e
+>>> fn = "/home/rohan/data/pdb/monomers/het_dictionary.txt"
+>>> e <- het_load_entries fn
+>>> length e
+31253
+
+>>> het_entry_lookup "GLY" e
+Just (("GLY",10),"GLYCINE","C2 H5 N1 O2",(["C","CA","H","H2","HA2","HA3","HXT","N","O","OXT"],[("CA","N"),("H","N"),("H2","N"),("CA","N"),("C","CA"),("CA","HA2"),("CA","HA3"),("C","CA"),("C","O"),("C","OXT"),("C","O"),("C","OXT"),("HXT","OXT"),("H","N"),("H2","N"),("CA","HA2"),("CA","HA3"),("HXT","OXT")]))
+
 > map (flip het_entry_lookup e . map toUpper . \(_,x,_) -> x) proteinogenic_amino_acid_tbl
 -}
-het_load_entries :: FilePath -> IO [HET_ENTRY]
+het_load_entries :: FilePath -> IO [Het_Entry]
 het_load_entries = fmap (map het_parse_entry) . het_load_records
 
 -- | Histogram of elememts derived from FORMULA field.
-het_entry_formula_hist :: HET_ENTRY -> [(String, Int)]
-het_entry_formula_hist = sort . fst . C.formula_ch_parse . het_entry_formula
+het_entry_formula_hist :: Het_Entry -> [(String, Int)]
+het_entry_formula_hist = sort . fst . Elements.formula_ch_parse . het_entry_formula
 
 -- | Does the N-ATOMS field correlate with the FORMULA field?
-het_entry_formula_validate :: HET_ENTRY -> Bool
+het_entry_formula_validate :: Het_Entry -> Bool
 het_entry_formula_validate e =
   let k = sum (map snd (het_entry_formula_hist e))
   in k == het_entry_n_atoms e
@@ -225,14 +233,16 @@ het_entry_formula_validate e =
 
 {- | Pdb filenames are lower case, with a .pdb extension. Identifiers are upper-case.
 
-> pdb_file_name_to_id "rscb/1poc.pdb" == "1POC"
+>>> pdb_file_name_to_id "rscb/1poc.pdb"
+"1POC"
 -}
 pdb_file_name_to_id :: FilePath -> String
 pdb_file_name_to_id = map toUpper . dropExtension . takeFileName
 
 {- | Filename for ligand /k/, /ty/ is "ideal" or "model"
 
-> pdb_ligand_sdf_filename "ideal" "GLY" == "GLY_ideal.sdf"
+>>> pdb_ligand_sdf_filename "ideal" "GLY"
+"GLY_ideal.sdf"
 -}
 pdb_ligand_sdf_filename :: String -> String -> String
 pdb_ligand_sdf_filename ty k = concat [k, "_", ty, ".sdf"]
@@ -257,7 +267,8 @@ pdb_ligand_summary_uri = (++) "http://www.rcsb.org/ligand/"
 
 {- | Uri for ligand Sdf file.
 
-> pdb_ligand_sdf_uri "ideal" "ALA" == "http://files.rcsb.org/ligands/view/ALA_ideal.sdf"
+>>> pdb_ligand_sdf_uri "ideal" "ALA"
+"http://files.rcsb.org/ligands/view/ALA_ideal.sdf"
 -}
 pdb_ligand_sdf_uri :: String -> String -> String
 pdb_ligand_sdf_uri ty k = "http://files.rcsb.org/ligands/view/" ++ pdb_ligand_sdf_filename ty k

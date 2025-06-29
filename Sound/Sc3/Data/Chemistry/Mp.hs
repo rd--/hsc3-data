@@ -9,8 +9,8 @@ module Sound.Sc3.Data.Chemistry.Mp where
 
 import System.FilePath {- filepath -}
 
-import Sound.Sc3.Data.Chemistry.Poscar {- hsc3-data -}
-import Sound.Sc3.Data.Chemistry.Struct {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Poscar as Poscar {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Struct as Struct {- hsc3-data -}
 
 -- | Local Mp directory
 mp_dir :: FilePath
@@ -26,10 +26,10 @@ mp_poscar_file nm = mp_dir </> "poscar" </> nm <.> "poscar"
 >>> struct_degree s
 (324,0)
 -}
-mp_load :: String -> IO Struct
+mp_load :: String -> IO Struct.Struct
 mp_load nm = do
-  p <- poscar_load (mp_poscar_file nm)
-  return (poscar_to_struct Poscar_C (nm, p))
+  p <- Poscar.poscar_load (mp_poscar_file nm)
+  return (Struct.poscar_to_struct Poscar.Poscar_C (nm, p))
 
 -- | Separate at first occurence of /e/ in /l/.
 sep1 :: Eq t => t -> [t] -> ([t], [t])

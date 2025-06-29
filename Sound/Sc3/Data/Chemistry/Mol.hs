@@ -18,7 +18,7 @@ import Safe {- safe -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import Music.Theory.Geometry.Vector (V2, V3) {- hmt-base -}
 
 -- * Types
 
@@ -239,7 +239,18 @@ mol_adi_pp =
 
 -- * Load
 
--- | 'mol_v20_parse' or 'mol_v30_parse' of 'readFile'.
+{- | 'mol_v20_parse' or 'mol_v30_parse' of 'readFile'.
+
+>>> let fn = "/home/rohan/rd/j/2019-10-08/sdf/5288826.sdf"
+>>> m <- mol_load fn
+>>> mol_degree m
+(40,44)
+
+>>> let fn = "/home/rohan/rd/j/2020-03-30/mol/1poc.mol"
+>>> m <- mol_load fn
+>>> mol_degree m
+(1177,1135)
+-}
 mol_load :: FilePath -> IO Mol
 mol_load fn = do
   s <- readFile fn
@@ -255,7 +266,9 @@ mol_load_adi = fmap mol_adi . readFile
 
 {- | List of all .ext files at /dir/.  Sdf is a superset of Mol, extensions are ".mol" and ".sdf".
 
-> mol_dir_entries ".mol" "/home/rohan/rd/j/2020-03-30/mol/"
+>>> m <- mol_dir_entries ".mol" "/home/rohan/rd/j/2020-03-30/mol/"
+>>> length m
+80
 -}
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
 mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
@@ -282,15 +295,3 @@ mol_load_dir_adi :: String -> FilePath -> IO [[Mol_Adi]]
 mol_load_dir_adi ext dir = do
   fn <- mol_dir_filenames ext dir
   mapM mol_load_adi fn
-
-{-
-
-let fn = "/home/rohan/rd/j/2019-10-08/sdf/5288826.sdf"
-m <- mol_load fn
-mol_degree m == (40,44)
-
-let fn = "/home/rohan/rd/j/2020-03-30/mol/1poc.mol"
-m <- mol_load fn
-mol_degree m == (1177,1135)
-
--}

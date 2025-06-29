@@ -4,7 +4,7 @@ import Data.Function {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import Music.Theory.Geometry.Vector (V3) {- hmt-base -}
 
 import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Parse {- hsc3-data -}
 import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}

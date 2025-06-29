@@ -8,25 +8,14 @@ module Sound.Sc3.Data.Chemistry.Xyz where
 import Data.List {- base -}
 import System.FilePath {- filepath -}
 
-import qualified Music.Theory.Directory as T {- hmt-base -}
-import qualified Music.Theory.Show as T {- hmt-base -}
+import qualified Music.Theory.Directory as Directory {- hmt-base -}
+import qualified Music.Theory.Read as Read {- hmt-base -}
+import qualified Music.Theory.Show as Show {- hmt-base -}
 
-import Music.Theory.Geometry.Vector {- hmt-base -}
-
-{- | Allow elided 0 before decimal place.
-
->>> map read_r ["-.5",".5"]
-[-0.5,0.5]
--}
-read_r :: String -> Double
-read_r s =
-  case s of
-    '-' : '.' : s' -> read ('-' : '0' : '.' : s')
-    '.' : _ -> read ('0' : s)
-    _ -> read s
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
 -- | (atomic-symbol,xyz-coordinate)
-type Xyz_ATOM = (String, V3 Double)
+type Xyz_ATOM = (String, Vector.V3 Double)
 
 -- | (k = n-atoms,d = description,e = [atom]
 type Xyz = (Int, String, [Xyz_ATOM])
@@ -58,9 +47,10 @@ Z positions.
 -}
 xyz_parse_entry :: String -> String -> Xyz_ATOM
 xyz_parse_entry fn s =
-  case words s of
-    a : x : y : z : _ -> (a, (read_r x, read_r y, read_r z))
-    _ -> error ("xyz_parse_entry: " ++ fn)
+  let rd = Read.read_fractional_allow_trailing_point_err
+  in case words s of
+      a : x : y : z : _ -> (a, (rd x, rd y, rd z))
+      _ -> error ("xyz_parse_entry: " ++ fn)
 
 -- | Parse ".xyz" file.
 xyz_parse :: FilePath -> String -> Xyz
@@ -77,15 +67,14 @@ xyz_parse fn s =
 xyz_pp :: Int -> Xyz -> [String]
 xyz_pp k (n_a, dsc, a) =
   let e_pp x = if length x == 2 then x else x ++ " "
-      a_pp (e, (x, y, z)) = unwords (e_pp e : map (T.double_pp k) [x, y, z])
+      a_pp (e, (x, y, z)) = unwords (e_pp e : map (Show.double_pp k) [x, y, z])
   in [show n_a, dsc] ++ map a_pp a
 
 -- | (minima,maxima) of atoms.
-xyz_bounds :: Xyz -> V2 (V3 Double)
+xyz_bounds :: Xyz -> Vector.V2 (Vector.V3 Double)
 xyz_bounds (_, _, a) =
   let c = map snd a
-      r = unzip3 c
-  in (v3_map minimum r, v3_map maximum r)
+  in Vector.v3_bounds c
 
 {- | Load ".xyz" file.
 
@@ -106,7 +95,7 @@ xyz_store k fn = writeFile fn . unlines . xyz_pp k
 
 -- | List of all ".xyz" files at /dir/.
 xyz_dir_entries :: FilePath -> IO [FilePath]
-xyz_dir_entries = T.dir_subset [".xyz"]
+xyz_dir_entries = Directory.dir_subset [".xyz"]
 
 -- | Load all ".xyz" files at /dir/.
 xyz_load_dir :: FilePath -> IO [(String, Xyz)]

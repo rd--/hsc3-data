@@ -6,9 +6,9 @@ import Data.Char {- base -}
 import Data.List {- base -}
 import Data.Maybe {- base -}
 
-import qualified Data.ByteString.Char8 as T {- bytestring -}
+import qualified Data.ByteString.Char8 as ByteString.Char8 {- bytestring -}
 
-import qualified Music.Theory.Directory as T {- hmt -}
+import qualified Music.Theory.Directory as Directory {- hmt-base -}
 
 import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}
 
@@ -133,8 +133,8 @@ COLUMNS       DatA  TYPE     FIELD             DEFINITION
  1 -  6       Record name    "HEADER"
 11 - 50       String(40)     classification    Classifies the molecule(s).
 51 - 59       Date           depDate           Deposition date. This is the date the
-                                               coordinates  were received at the PDT.
-63 - 66       IDcode         idCode            This identifier is unique within the PDT.
+                                               coordinates  were received at the PDByteString.Char8.
+63 - 66       IDcode         idCode            This identifier is unique within the PDByteString.Char8.
 -}
 header_se :: Num i => ([i], [i])
 header_se = ([1, 11, 51, 63], [6, 50, 59, 66])
@@ -450,11 +450,11 @@ title_se = ([1, 9, 11], [6, 10, 80])
 -- * Txt
 
 -- | Alias for CHAR8-BYTESTRING
-type Txt = T.ByteString
+type Txt = ByteString.Char8.ByteString
 
 -- | ZERO-INDEXED [(START,LENGTH)] -> [SUB-STR]
 txt_parts :: Txt -> [(Int, Int)] -> [Txt]
-txt_parts s ix = let f (i, j) = T.take j (T.drop i s) in map f ix
+txt_parts s ix = let f (i, j) = ByteString.Char8.take j (ByteString.Char8.drop i s) in map f ix
 
 txt_parts_spl :: Txt -> [(Int, Int)] -> (Txt, [Txt])
 txt_parts_spl = let spl x = (head x, tail x) in fmap spl . txt_parts
@@ -464,14 +464,14 @@ txt_parts_spl = let spl x = (head x, tail x) in fmap spl . txt_parts
 > txt_pln (txt " a b c ") == " a b c "
 -}
 txt_pln :: Txt -> String
-txt_pln = T.unpack
+txt_pln = ByteString.Char8.unpack
 
 {- | Unpack and trim Txt.
 
 > txt_str (txt " a b c ") == "a b c"
 -}
 txt_str :: Txt -> String
-txt_str = T.unpack . fst . T.spanEnd isSpace . T.dropWhile isSpace
+txt_str = ByteString.Char8.unpack . fst . ByteString.Char8.spanEnd isSpace . ByteString.Char8.dropWhile isSpace
 
 -- | 'read' of 'txt_str'
 txt_int :: Txt -> Int
@@ -484,13 +484,13 @@ txt_flt = read . txt_str
 -- | Unpack single element Txt.
 txt_chr :: Txt -> Char
 txt_chr x =
-  case T.unpack x of
+  case ByteString.Char8.unpack x of
     [c] -> c
     _ -> error "txt_chr?"
 
 -- | Is Txt nil (ie. empty or all whitespace)
 txt_nil :: Txt -> Bool
-txt_nil = T.all isSpace
+txt_nil = ByteString.Char8.all isSpace
 
 -- | Readers for 'Char', 'String', 'Int' and 'Double'.
 txt_readers :: [Txt] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
@@ -498,7 +498,7 @@ txt_readers x = (txt_chr . (x !!), txt_str . (x !!), txt_int . (x !!), txt_flt .
 
 -- | Pack Txt.
 txt :: String -> Txt
-txt = T.pack
+txt = ByteString.Char8.pack
 
 -- * Rec
 
@@ -507,7 +507,7 @@ type Rec = (Txt, [Txt])
 
 -- | Record names are the initial six-characters, ie. "HET   " and "ATOM  " and "HETATM"
 txt_rec_name :: Txt -> Txt
-txt_rec_name = T.take 6
+txt_rec_name = ByteString.Char8.take 6
 
 txt_rec_match :: Txt -> Txt -> Bool
 txt_rec_match x = (==) x . txt_rec_name
@@ -630,7 +630,7 @@ parse_txt_ix f s = fmap (txt_parts_spl s) (f (txt_rec_name s))
 pdb_rec_parse :: Txt -> Txt -> Maybe Rec
 pdb_rec_parse nm =
   let ix = fromMaybe (error (show ("pdb_rec_parse", nm))) (lookup nm pdb_rec_txt_ix)
-  in if T.length nm /= 6
+  in if ByteString.Char8.length nm /= 6
       then error "pdb_rec_parse?"
       else parse_txt_ix (\z -> if z == nm then Just ix else Nothing)
 
@@ -737,7 +737,7 @@ dat_parse x =
 -- * Io
 
 pdb_load_dat :: FilePath -> IO Dat
-pdb_load_dat = fmap T.lines . T.readFile
+pdb_load_dat = fmap ByteString.Char8.lines . ByteString.Char8.readFile
 
 pdb_load_dat_dir :: FilePath -> IO [Dat]
-pdb_load_dat_dir dir = T.dir_subset [".pdb"] dir >>= mapM pdb_load_dat
+pdb_load_dat_dir dir = Directory.dir_subset [".pdb"] dir >>= mapM pdb_load_dat

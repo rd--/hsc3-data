@@ -10,7 +10,7 @@ import Data.Maybe {- base -}
 import System.Environment {- base -}
 import System.FilePath {- filepath -}
 
-import Sound.Sc3.Data.Chemistry.Struct {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Struct as Struct {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
 
 -- | Lookup CLS_DIR, or default to local directory.
@@ -26,14 +26,14 @@ cls_xyz_file nm = "xyz" </> nm <.> "xyz"
 {- | Load a Cls Xyz file as a Struct.
 
 >>> s <- cls_load "Bergman"
->>> struct_bounds s
+>>> Struct.struct_bounds s
 ((-7.08,-7.08,-7.08),(7.08,7.08,7.08))
 -}
-cls_load :: String -> IO Struct
+cls_load :: String -> IO Struct.Struct
 cls_load nm = do
   d <- cls_dir
   x <- Xyz.xyz_load (d </> cls_xyz_file nm)
-  return (xyz_to_struct (nm, x))
+  return (Struct.xyz_to_struct (nm, x))
 
 {- | Load all Cls Xyz files as Structs.
 
@@ -41,8 +41,8 @@ cls_load nm = do
 >>> length sq
 268
 -}
-cls_load_dir :: IO [Struct]
+cls_load_dir :: IO [Struct.Struct]
 cls_load_dir = do
   d <- cls_dir
   s <- Xyz.xyz_load_dir (d </> "xyz")
-  return (map xyz_to_struct s)
+  return (map Struct.xyz_to_struct s)
