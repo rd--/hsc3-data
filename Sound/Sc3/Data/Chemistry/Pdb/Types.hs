@@ -162,7 +162,7 @@ type Ter = (Int, Residue_Id)
 -- | (Continuation,Title)
 type Title = (String, String)
 
--- * Composite
+-- * Pdb (Composite)
 
 -- | (Header,Title,NumMdl,Cryst1,(Atom,HetAtm),Conect,SeqRes,Helix,Sheet,Link,SsBond)
 type Pdb =
@@ -178,6 +178,21 @@ type Pdb =
   , [Link]
   , [SsBond]
   )
+
+pdb_header :: Pdb -> Header
+pdb_header (h,_,_,_,_,_,_,_,_,_,_) = h
+
+pdb_title :: Pdb -> String
+pdb_title (_,t,_,_,_,_,_,_,_,_,_) = t
+
+pdb_cryst1 :: Pdb -> Cryst1
+pdb_cryst1 (_,_,_,c,_,_,_,_,_,_,_) = c
+
+pdb_atom :: Pdb -> [Atom]
+pdb_atom (_,_,_,_,(a,_),_,_,_,_,_,_) = a
+
+pdb_hetatom :: Pdb -> [Atom]
+pdb_hetatom (_,_,_,_,(_,a),_,_,_,_,_,_) = a
 
 -- * Group
 

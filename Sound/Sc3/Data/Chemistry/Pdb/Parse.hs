@@ -88,11 +88,12 @@ COLUMNS       DatA  TYPE    FIELD          DEFINITION
 34 - 40       Real(7.2)     alpha          alpha (degrees).
 41 - 47       Real(7.2)     beta           beta (degrees).
 48 - 54       Real(7.2)     gamma          gamma (degrees).
-56 - 66       LString       sGroup         Space  group.
+56 - 66       LString       sGroup         Space  group.        NB. 56=>55
 67 - 70       Integer       z              Z value.
 -}
 cryst1_se :: Num i => ([i], [i])
-cryst1_se = ([1, 7, 16, 25, 34, 41, 48, 56, 67], [6, 15, 24, 33, 40, 47, 54, 66, 70])
+cryst1_se = ( [1, 7, 16, 25, 34, 41, 48, 55, 67]
+            , [6, 15, 24, 33, 40, 47, 54, 66, 70] )
 
 {- | END
 
@@ -564,7 +565,7 @@ conect_unpack :: Rec -> Conect
 conect_unpack (_, x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
 
 cryst1_unpack :: Rec -> Cryst1
-cryst1_unpack (_, x) = let (_, s, i, f) = txt_readers x in ((f 0, f 1, f 2), (f 3, f 4, f 5), s 7, i 8)
+cryst1_unpack (_, x) = let (_, s, i, f) = txt_readers x in ((f 0, f 1, f 2), (f 3, f 4, f 5), s 6, i 7)
 
 header_unpack :: Rec -> Header
 header_unpack (_, x) = let s = txt_str . (x !!) in (s 0, s 1, s 2)
@@ -739,8 +740,10 @@ dat_parse x =
 
 -- * Io
 
+-- | Load Pdb file as Dat.
 pdb_load_dat :: FilePath -> IO Dat
 pdb_load_dat = fmap ByteString.Char8.lines . ByteString.Char8.readFile
 
+-- | Load directory of Pdb files as list of Dat.
 pdb_load_dat_dir :: FilePath -> IO [Dat]
 pdb_load_dat_dir dir = Directory.dir_subset [".pdb"] dir >>= mapM pdb_load_dat
