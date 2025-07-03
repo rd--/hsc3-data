@@ -260,15 +260,22 @@ struct_load_ext fn =
 {- | List of all Struct, Mol/Sdf, Poscar and Xyz files at /dir/.
      Names are relative.
 
-> struct_dir_entries "/home/rohan/rd/j/2018-09-26/xyz/"
-> struct_dir_entries "/home/rohan/rd/j/2020-03-30/mol/"
+>>> fn <- struct_dir_entries "/home/rohan/rd/j/2018-09-26/xyz/"
+>>> length fn
+268
+
+>>> fn <- struct_dir_entries "/home/rohan/rd/j/2020-03-30/mol/"
+>>> length fn
+80
 -}
 struct_dir_entries :: FilePath -> IO [FilePath]
 struct_dir_entries =
   let ext = words ".mol .poscar .sdf .struct .xyz"
   in Directory.dir_subset ext
 
-{- | 'struct_load_ext' of 'struct_dir_entries'
+{- | 'struct_load_ext',
+which consults the file extension to determine the file type,
+of 'struct_dir_entries'.
 
 >>> s <- struct_load_dir "/home/rohan/rd/j/2018-09-26/xyz/"
 >>> length s

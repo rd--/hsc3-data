@@ -47,7 +47,7 @@ Z positions.
 -}
 xyz_parse_entry :: String -> String -> Xyz_ATOM
 xyz_parse_entry fn s =
-  let rd = Read.read_fractional_allow_trailing_point_err
+  let rd = Read.read_fractional_allow_elided_zero_err
   in case words s of
       a : x : y : z : _ -> (a, (rd x, rd y, rd z))
       _ -> error ("xyz_parse_entry: " ++ fn)
