@@ -12,8 +12,9 @@ module Sound.Sc3.Data.Chemistry.Mol where
 
 import Data.Char {- base -}
 import Data.List {- base -}
-import Data.List.Split {- split -}
 import Data.Maybe {- base -}
+
+import Data.List.Split {- split -}
 import Safe {- safe -}
 import System.Directory {- directory -}
 import System.FilePath {- filepath -}
@@ -26,8 +27,8 @@ import Music.Theory.Geometry.Vector (V2, V3) {- hmt-base -}
 type Mol_Atom = (V3 Double, String)
 
 {- | ((i,j),bond-type)
-  Mol files include BOND data.
-  Mol bond atom-id data is ONE-INDEXED.
+  Mol files include bond data.
+  Mol bond atom-id data is one-indexed.
 -}
 type Mol_Bond = (V2 Int, Int)
 
