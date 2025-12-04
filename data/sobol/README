@@ -1,0 +1,10 @@
+https://web.maths.unsw.edu.au/~fkuo/sobol/
+
+https://web.maths.unsw.edu.au/~fkuo/sobol/new-joe-kuo-6.21201
+
+The columns are d, s, a, m, where
+
+- d is the dimension
+- s is the degree of the primitive polynomial
+- a is the number representing the coefficients
+- m is the list of initial direction numbers
