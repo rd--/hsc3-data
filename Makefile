@@ -1,13 +1,16 @@
 all:
 	echo "hsc3-data"
 
-mk-cmd:
-	(cd cmd ; make all install)
+install:
+	cabal v1-install --allow-newer
 
 clean:
 	rm -Rf dist dist-newstyle *~
 	(cd cmd ; make clean)
 	(cd data/roland/d50 ; make clean)
+
+mk-cmd:
+	(cd cmd ; make all install)
 
 push-all:
 	r.gitlab-push.sh hsc3-data

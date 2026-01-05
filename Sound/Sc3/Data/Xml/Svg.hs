@@ -11,9 +11,6 @@ import qualified Graphics.SVG.ReadPath as P {- SvgPath -}
 
 import Music.Theory.Geometry.Vector {- hmt-base -}
 
-import Data.Cg.Minus.Core {- hcg-minus -}
-import Data.Cg.Minus.Types {- hcg-minus -}
-
 import qualified Music.Theory.Tuple as Tuple {- hmt -}
 
 import qualified Sound.Sc3.Plot as Plot {- hsc3-plot -}
@@ -91,19 +88,38 @@ svg_load_paths = fmap svg_read_path_d . readFile
 {- | 'Ls' variant of 'P.commandsToPoints'.
   (dx,dy) is the size of a pixel and is used for rasterisation.
 -}
-subpaths_to_ls :: (R, R) -> [P.PathCommand] -> [Ls R]
-subpaths_to_ls (dx, dy) r =
+subpaths :: (R, R) -> [P.PathCommand] -> [[(R, R)]]
+subpaths (dx, dy) r =
   case P.commandsToPoints r (dx, dy) (0, 0) of
     [] -> error "subpaths_to_ls: no sub-paths"
-    p -> map (Ls . map mk_pt) p
+    p -> p
+
+-- | 'subpaths' of 'svg_load_paths'
+svg_load_subpaths :: (R, R) -> FilePath -> IO [[(R, R)]]
+svg_load_subpaths rs = fmap (concatMap (subpaths rs)) . svg_load_paths
+
+-- | 'plot_p2_ln'
+plot_subpaths :: [[(R, R)]] -> IO ()
+plot_subpaths = Plot.plot_p2_ln
+
+{-
+import Data.Cg.Minus.Core {- hcg-minus -}
+import Data.Cg.Minus.Types {- hcg-minus -}
+
+{- | 'Ls' variant of 'P.commandsToPoints'.
+  (dx,dy) is the size of a pixel and is used for rasterisation.
+-}
+subpaths_to_ls :: (R, R) -> [P.PathCommand] -> [Ls R]
+subpaths_to_ls d = map (Ls . map mk_pt) . subpaths d
 
 -- | 'subpaths_to_ls' of 'svg_load_paths'
 svg_load_ls :: (R, R) -> FilePath -> IO [Ls R]
-svg_load_ls rs = fmap (concatMap (subpaths_to_ls rs)) . svg_load_paths
+svg_load_ls rs = subpaths_to_ls . svg_load_subpaths rs
 
 -- | 'plot_p2_ln' of 'pt_xy'.
 plot_ls :: Plot.PNum t => [Ls t] -> IO ()
 plot_ls = Plot.plot_p2_ln . map (map pt_xy . ls_elem)
+-}
 
 {- | Convert a relative 'P.PathCommand' to the absolute form, giving also the absolute end point.
 

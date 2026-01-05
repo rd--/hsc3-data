@@ -11,12 +11,11 @@ import qualified Data.Vector.Storable as Vector {- vector -}
 import qualified Codec.Picture as I {- JuicyPixels -}
 import qualified Codec.Picture.Types as I {- JuicyPixels -}
 
+import qualified Music.Theory.Colour.Grey as Colour.Grey {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
 
 import qualified Sound.File.HSndFile as Sf.SndFile {- hsc3-sf-hsndfile -}
 import qualified Sound.File.Next as Sf.Au {- hsc3-sf -}
-
-import qualified Data.Cg.Minus.Colour.Grey as Colour.Grey {- hcg-minus -}
 
 import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as Bitmap {- hsc3-data -}

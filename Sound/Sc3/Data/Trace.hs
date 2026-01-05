@@ -10,9 +10,6 @@ import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.FilePath.Glob as Glob {- glob -}
 
-import Data.Cg.Minus.Core {- hcg-minus -}
-import Data.Cg.Minus.Types {- hcg-minus -}
-
 import qualified Music.Theory.Array.Csv as Array.Csv {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
 import qualified Music.Theory.Tuple as Tuple {- hmt-base -}
@@ -312,11 +309,16 @@ lerpd = lerp_pw lerpn
 
 -- * Geometry
 
+{-
+import Data.Cg.Minus.Core {- hcg-minus -}
+import Data.Cg.Minus.Types {- hcg-minus -}
+
 -- | Transform 'Ls' to 'Trace', /t/ is distance along line.
 ls_with_distance :: Floating t => Ls t -> Trace t (Pt t)
 ls_with_distance (Ls p) =
   let d = List.dx_d 0 (zipWith pt_distance p (List.tail_err p))
   in zip d p
+-}
 
 -- * List
 

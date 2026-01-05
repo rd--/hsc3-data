@@ -15,11 +15,10 @@ import Data.Colour.SRGB {- colour -}
 import qualified Language.Dot as D {- language-dot -}
 import qualified Text.ParserCombinators.Parsec as P {- parsec -}
 
+import qualified Music.Theory.Colour.Ryb as Ryb {- hmt-base -}
 import qualified Music.Theory.Geometry.Picture as Picture {- hmt-base -}
 import Music.Theory.Geometry.Vector {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
-
-import qualified Data.Cg.Minus.Colour.Ryb as Ryb {- hcg-minus -}
 
 type Pt = V2 Int
 type Sz = Int
