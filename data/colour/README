@@ -25,3 +25,4 @@ Ncs
 - <https://github.com/5monkeys/python-ncs>
 - `grep "u'S [0-9][0-9][0-9][0-9]-[RYGB][0-9][0-9][RYGB]" db.py`
 - `grep "u'S [0-9][0-9][0-9][0-9]-N'" db.py`
+- `grep "u'[0-9][0-9][0-9][0-9]-[RYGB][0-9][0-9][RYGB]', '[0-9]" db.py`
