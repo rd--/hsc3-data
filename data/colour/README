@@ -19,3 +19,9 @@ Crayola
 
 - <https://en.wikipedia.org/wiki/List_of_Crayola_crayon_colors>
 - hmt-base: `Music.Theory.Colour.Crayola`
+
+Ncs
+
+- <https://github.com/5monkeys/python-ncs>
+- `grep "u'S [0-9][0-9][0-9][0-9]-[RYGB][0-9][0-9][RYGB]" db.py`
+- `grep "u'S [0-9][0-9][0-9][0-9]-N'" db.py`
