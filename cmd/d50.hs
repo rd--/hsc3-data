@@ -2,6 +2,8 @@ import Control.Monad {- base -}
 import System.Environment {- base -}
 import Text.Printf {- base -}
 
+import qualified Music.Theory.Time as Time {- hmt-base -}
+
 import qualified Sound.Osc.Core as Osc {- hosc -}
 
 import qualified Sound.Midi.Pm as Pm {- midi-osc -}
@@ -15,12 +17,8 @@ import qualified Sound.Sc3.Data.Roland.D50.Pp as D50.Pp {- hsc3-data -}
 
 -- * Common
 
--- > map ms_to_sec [1,10,50,100,1000] == [0.001,0.01,0.05,0.1,1]
-ms_to_sec :: Int -> Double
-ms_to_sec n = fromIntegral n / 1000
-
 sleep_ms :: Int -> IO ()
-sleep_ms = Osc.pauseThread . ms_to_sec
+sleep_ms = Osc.pauseThread . Time.ms_to_sec
 
 -- > send_sysex_def [D50.d50_ack_gen 0]
 send_sysex_def :: [[U8]] -> IO ()
