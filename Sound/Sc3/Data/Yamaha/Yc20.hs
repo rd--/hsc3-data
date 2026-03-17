@@ -1,9 +1,10 @@
 -- | Foo-Yc20 <https://github.com/sampov2/foo-yc20>
 module Sound.Sc3.Data.Yamaha.Yc20 where
 
-{- | FOO-YC20 controls, left-to-right sequence.
+{- | Foo-Yc20 controls, left-to-right sequence.
 
-> length foo_yc20_cc_control_table == 23
+>>> length foo_yc20_cc_control_table
+23
 -}
 foo_yc20_cc_control_table :: Num n => [(n, String)]
 foo_yc20_cc_control_table =

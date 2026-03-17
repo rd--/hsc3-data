@@ -3,7 +3,7 @@ module Sound.Sc3.Data.Korg.Minilogue where
 
 import Data.Word {- base -}
 
--- | (AREA-NAME,[(CTL-NAME,CTL-CC,CTL-N)])
+-- | (Area-Name,[(Ctl-Name,Ctl-Cc,Ctl-N)])
 ml_cc_tbl :: [(String, [(String, Word8, Word8)])]
 ml_cc_tbl =
   [
@@ -66,9 +66,10 @@ ml_cc_tbl =
     )
   ]
 
-{- | Enumerate data-values given CTL-N.
+{- | Enumerate data-values given Ctl-N.
 
-> map ml_ctl_enum [2,3,4,128] == [[0,127],[0,64,127],[0,42,84,127],[0 .. 127]]
+>>> map ml_ctl_enum [2,3,4,128] == [[0,127],[0,64,127],[0,42,84,127],[0 .. 127]]
+True
 -}
 ml_ctl_enum :: Int -> [Word8]
 ml_ctl_enum n =
@@ -79,6 +80,7 @@ ml_ctl_enum n =
     0x80 -> [0x00 .. 0x7F]
     _ -> error "ml_ctl_enum?"
 
+-- | Cc sequence groups
 ml_cc_seq_grp :: [[[Word8]]]
 ml_cc_seq_grp =
   [ [[34, 36], [39], [43], [16 .. 19], [29 .. 31], []]
@@ -86,12 +88,22 @@ ml_cc_seq_grp =
   , [[41, 42], [33], [24, 26], [], [], []]
   ]
 
--- > map length ml_cc_seq_ln == [11,10,5]
+{- | `map` `concat` `ml_cc_seq_grp`
+
+>>> map length ml_cc_seq_ln
+[11,10,5]
+-}
 ml_cc_seq_ln :: [[Word8]]
 ml_cc_seq_ln = map concat ml_cc_seq_grp
 
--- > length mk_cc_seq == 26
--- > import Data.List {- base -}
--- > nub (sort mk_cc_seq) == concat [[16 .. 24],[26 .. 27],[29 .. 31],[33 .. 37],[39 .. 45]]
+{- | `concat` `ml_cc_seq_ln`
+
+>>> length mk_cc_seq
+26
+
+>>> import Data.List
+>>> nub (sort mk_cc_seq) == concat [[16 .. 24],[26 .. 27],[29 .. 31],[33 .. 37],[39 .. 45]]
+True
+-}
 mk_cc_seq :: [Word8]
 mk_cc_seq = concat ml_cc_seq_ln
