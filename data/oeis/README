@@ -1,43 +1,16 @@
-annotations:
+b = Binary = 0,1
+d = Decimal = 0,1,2,3,4,5,6,7,8,9
+o = Octal = 0,1,2,3,4,5,6,7
+q = Quaternary = 0,1,2,3
+t = Ternary = 0,1,2
+u = Balanced Ternary = -1,0,1
 
-a=Non-Standard Alphabet
-b=Binary=0,1
-d=Decimal=0,1,2,3,4,5,6,7,8,9
-f=Few
-g=Group
-m=Many
-o=Octal=0,1,2,3,4,5,6,7
-p=Two (Pair)
-q=Quaternary=0,1,2,3
-s=Signed
-t=Ternary=0,1,2
-u=Balanced Ternary=-1,0,1
+c = Set = Collection
 
-A=Ascending (Increasing)
-B=Blocks
-C=Curved
-D=Descending (Decreasing)
-E=Even (Regular)
-F=Sparse (Few)
-G=Gaps (Steps)
-H=Horizontal
-I=Interleaved
-J=Jagged
-K=Delayed (Kept Back)
-L=Lopsided (Leaning)
-M=Dense (Many)
-N=Noise
-O=Ornamented (Decorated)
-P=Patterned
-Q=Quasi-
-R=Restarting
-S=Symmetrical
-T=Terraced (Ruler)
-U=Uneven (Irregular)
-V=Varying Density
-W=Weighted
-X=Crossing
-Y=Oscillatory
-Z=
+E = Regular = Even
+F = Sparse = Few
+K = Delayed = Kept Back
+M = Dense = Many
+U = Irregular = Uneven
 
 <https://oeis.org/wiki/Keywords>
