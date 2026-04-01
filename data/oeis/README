@@ -1,9 +1,38 @@
-bina = Binary = 0,1
-deci = Decimal = 0,1,2,3,4,5,6,7,8,9
-octa = Octal = 0,1,2,3,4,5,6,7
-quat = Quaternary = 0,1,2,3
-terb = Ternary = 0,1,2
+# data/oeis
 
-tern,sign = Balanced Ternary = -1,0,1
+## B-files
 
-<https://oeis.org/wiki/Keywords>
+A directory contains a small number of OEIS B-files.
+
+## OeisAnnotationTable.json
+
+A table of Oeis sequence annotations.
+Annotations are written using four letter codes.
+The codes are listed in the table `OeisAnnotationCodeTable.json`.
+
+## OeisAnnotationCodeTable.json
+
+A record giving expansions of the codes used at `OeisAnnotationTable.json`.
+The annotations that are also Oeis keywords are marked with an asterisk,
+see <https://oeis.org/wiki/Keywords>.
+Additional notes:
+
+- Binary = 0,1
+- Decimal = 0,1,2,3,4,5,6,7,8,9
+- Octal = 0,1,2,3,4,5,6,7
+- Quaternary = 0,1,2,3
+- Ternary = 0,1,2
+- Balanced Ternary (bina,sign) = -1,1
+- Balanced Ternary (tern,sign) = -1,0,1
+
+## OeisBFileData.json
+
+A record containing the B-file data for a small number of OEIS entries.
+Only the sequence data is present,
+not the index data,
+which can be inferred from the offset field of the OEIS entry proper.
+
+## SplOeisData.json
+
+A concise subset of the Oeis sequence files for Oeis entries that have definitions in the Spl help files.
+See the `OeisSequenceFile` help file for the program that generates this file.
