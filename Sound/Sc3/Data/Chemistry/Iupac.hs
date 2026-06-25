@@ -2,35 +2,35 @@
 module Sound.Sc3.Data.Chemistry.Iupac where
 
 import Data.Char {- base -}
-import Data.List {- base -}
+import qualified Data.List {- base -}
 
-{- | (Iupac-Code,Bases-Represented)
+{- | (Iupac-Nucleotide-Code,Bases-Represented)
 
 <https://www.bioinformatics.org/sms/iupac.html>
 -}
 iupac_nucleotide_tbl :: [(Char, [Char])]
 iupac_nucleotide_tbl =
-  [ ('A', "A")
-  , ('C', "C")
-  , ('G', "G")
-  , ('T', "T")
-  , ('U', "U")
-  , ('R', "AG")
-  , ('Y', "CT")
+  [ ('A', "A") -- Adenine
+  , ('C', "C") -- Cytosine
+  , ('G', "G") -- Guanine
+  , ('T', "T") -- Thymine, or
+  , ('U', "U") -- Uracil
+  , ('R', "AG") -- A or G
+  , ('Y', "CT") -- &etc.
   , ('S', "GC")
   , ('W', "AT")
   , ('K', "GT")
   , ('M', "AC")
-  , ('B', "CGT")
-  , ('D', "AGT")
+  , ('B', "CGT") -- C or G or T
+  , ('D', "AGT") -- &etc.
   , ('H', "ACT")
   , ('V', "ACG")
-  , ('N', "ACGT")
-  , ('-', "")
-  , ('.', "")
+  , ('N', "ACGT") -- Any base
+  , ('-', "") -- Gap
+  , ('.', "") -- Gap
   ]
 
-{- | (Iupac-Code,Three-Letter-Code,Description)
+{- | (Iupac-Amino-Acid-Code,Three-Letter-Code,Description)
 
 <https://www.bioinformatics.org/sms/iupac.html>
 
@@ -69,7 +69,7 @@ iupac_one_letter_code_to_three_letter_code :: Char -> Maybe String
 iupac_one_letter_code_to_three_letter_code x =
   let f (c1, _, _) = x == c1
       g (_, c3, _) = c3
-  in fmap g (find f iupac_amino_acid_tbl)
+  in fmap g (Data.List.find f iupac_amino_acid_tbl)
 
 {- | Translate from 3-letter Iupac code (case insensitive) to 1-letter Iupac code.
 
@@ -81,4 +81,4 @@ iupac_three_letter_code_to_one_letter_code x =
   let ci p q = map toUpper p == map toUpper q
       f (_, c3, _) = ci x c3
       g (c1, _, _) = c1
-  in fmap g (find f iupac_amino_acid_tbl)
+  in fmap g (Data.List.find f iupac_amino_acid_tbl)

@@ -1,7 +1,7 @@
 -- | Fasta <https://www.ncbi.nlm.nih.gov/BLAST/fasta.shtml>
 module Sound.Sc3.Data.Chemistry.Fasta where
 
--- | (Iupac-Code,Bases-Represented,Description)
+-- | (Iupac-Nucleotide-Code,Bases-Represented,Description)
 fasta_nucleic_acid_tbl :: [(Char, [Char], String)]
 fasta_nucleic_acid_tbl =
   [ ('A', "A", "adenosine")
