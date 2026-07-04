@@ -17,7 +17,11 @@ import qualified Sound.Midi.Type as M {- midi-osc -}
 
 {- | Translate pulses per minute to micro seconds per quarter note.
 
-> map ppm_to_mspqn [60,120,240] == [10^6,5*10^5,25*10^4]
+>>> map ppm_to_mspqn [60,120,240]
+[1000000,500000,250000]
+
+>>> [10^6,5*10^5,25*10^4]
+[1000000,500000,250000]
 -}
 ppm_to_mspqn :: Integral t => t -> t
 ppm_to_mspqn ppm =
@@ -33,14 +37,16 @@ mk_denominator d = T.lookup_err d ts_denominator_tbl
 
 {- | Tempo change, given in pulses per minute.
 
-> mk_tempo_change 60 == C.TempoChange (10^6)
+>>> mk_tempo_change 60
+TempoChange 1000000
 -}
 mk_tempo_change :: C.Tempo -> C.Message
 mk_tempo_change = C.TempoChange . ppm_to_mspqn
 
 {- | Make time signature with default values for ticks-per-pulse and 1/32-per-1/4.
 
-> mk_time_signature (4,4) == C.TimeSignature 4 2 24 8
+>>> mk_time_signature (4,4)
+TimeSignature 4 2 24 8
 -}
 mk_time_signature :: (Int, Int) -> C.Message
 mk_time_signature (nn, d) =
@@ -73,7 +79,7 @@ c_write_midi0_opt m_tc m_ts fn sq =
 
 {- | Erroring variant of 'C.importFile'.
 
-> fn = "/home/rohan/sw/hsc3-data/data/midi/BWV-1080-1.midi"
+> let fn = "/home/rohan/sw/hsc3-data/data/midi/BWV-1080-1.midi"
 > m <- c_load_midi fn
 -}
 c_load_midi :: FilePath -> IO C.Midi

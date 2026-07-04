@@ -1,7 +1,7 @@
 -- | Printers and parsers for timestamps.
 module Sound.Sc3.Data.Timestamp where
 
-import qualified Data.Time as T {- time -}
+import qualified Data.Time as Time {- time -}
 
 -- * Gen
 
@@ -12,8 +12,8 @@ import qualified Data.Time as T {- time -}
 gen_iso8601_time_stamp :: Bool -> IO String
 gen_iso8601_time_stamp ext =
   fmap
-    (T.formatTime T.defaultTimeLocale (if ext then "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S"))
-    T.getZonedTime
+    (Time.formatTime Time.defaultTimeLocale (if ext then "%Y-%m-%dT%H:%M:%S" else "%Y%m%dT%H%M%S"))
+    Time.getZonedTime
 
 -- | Variant useful for forming portable file-names, with @:@ re-written as @-@.
 gen_iso8601_time_stamp_fn :: IO String
@@ -23,9 +23,9 @@ gen_iso8601_time_stamp_fn =
 
 -- * Parse
 
--- | 'T.parseTimeOrError' of 'T.defaultTimeLocale'.
-parse_time_fmt :: String -> String -> T.LocalTime
-parse_time_fmt = T.parseTimeOrError True T.defaultTimeLocale
+-- | 'Time.parseTimeOrError' of 'Time.defaultTimeLocale'.
+parse_time_fmt :: String -> String -> Time.LocalTime
+parse_time_fmt = Time.parseTimeOrError True Time.defaultTimeLocale
 
 {- | Strict RFC822 format.
 
@@ -53,7 +53,7 @@ rfc822_fmt_infix_named_tz = "%a, %_d %b %Y %_H:%M:%S %Z%z"
 
 {- | Timezone name as parenthesised postfix of offset.
 
->>> parse_time_fmt rfc822_fmt_postfix_named_tz "Fri, 11 Nov 2016 12:39:09 +0100 (CET)"
+>>> parse_time_fmt rfc822_fmt_postfix_named_tz "Fri, 11 Nov 2016 12:39:09 +0100 (GMT)"
 2016-11-11 12:39:09
 -}
 rfc822_fmt_postfix_named_tz :: String
@@ -109,9 +109,9 @@ locate f l =
       Nothing -> locate f l'
 
 -- | Attempt to parse time-stamp using a sequence of format strings.
-parse_timestamp_fmt_seq :: T.ParseTime t => [String] -> String -> Maybe t
+parse_timestamp_fmt_seq :: Time.ParseTime t => [String] -> String -> Maybe t
 parse_timestamp_fmt_seq fmt s =
-  let ptm = T.parseTimeM True T.defaultTimeLocale
+  let ptm = Time.parseTimeM True Time.defaultTimeLocale
       try x = ptm x s
   in locate try fmt
 
@@ -126,7 +126,7 @@ Just 2008-09-20 09:18:14
 >>> parse_timestamp "Sat, 12 Dec 09 16:05:55 GMT-0700"
 Just 0009-12-12 16:05:55
 
->>> parse_timestamp "Fri, 11 Nov 2016 12:39:09 +0100 (CET)"
+>>> parse_timestamp "Fri, 11 Nov 2016 12:39:09 +0100 (GMT)"
 Just 2016-11-11 12:39:09
 
 >>> parse_timestamp "11 Aug 2008 21:29:30 -0700"
@@ -147,7 +147,7 @@ Just 2014-11-18 19:45:44
 >>> parse_timestamp "Wed, 22 Feb 2006 09:39:30 +1100 (AUS Eastern Standard Time)"
 Nothing
 -}
-parse_timestamp :: String -> Maybe T.LocalTime
+parse_timestamp :: String -> Maybe Time.LocalTime
 parse_timestamp =
   parse_timestamp_fmt_seq
     [ rfc822_fmt_lenient

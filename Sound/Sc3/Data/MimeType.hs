@@ -1,28 +1,28 @@
 {- | Parse "mime.types" file
 
-Read mime.types:
+Read mime.types (Debian 13.5):
 
 >>> db <- loadMimeTypes "/etc/mime.types"
 >>> length db
-2250
+2391
 
 Get list of extensions:
 
 >>> ext = mimeTypesExtensions db
 >>> length ext
-1533
+1591
 
 Find extensions that have multiple mime types:
 
 >>> let mm = filter ((> 1) . length . snd) (zip ext (map (lookupMimeTypes db) ext))
 >>> length mm
-19
+15
 
 Find types that don't have extensions:
 
 >>> noExt = filter ((== 0) . length . snd) db
 >>> length noExt
-1050
+1141
 
 Lookup mime type for extension:
 

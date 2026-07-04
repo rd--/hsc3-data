@@ -1,6 +1,5 @@
-{- base -}
 import Control.Exception {- base -}
-import Control.Monad
+import Control.Monad {- base -}
 
 import UI.HSCurses.Curses {- hscurses -}
 
