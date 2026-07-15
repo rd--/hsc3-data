@@ -22,12 +22,14 @@ type Dx7_Syx_Dat = (String, FilePath, [(Int, Dx7_Voice)])
 -- | Set of Dx7_Syx_Dat
 type Dx7_Syx_Db_Tree = [Dx7_Syx_Dat]
 
-{- | Scan /dir/ for ".syx" files and make DB tree.
+{- | Scan /dir/ for ".syx" files and make Db tree.
   Ignore files that are not 4104-BYTES.
 
-> dir = "/home/rohan/sw/hsc3-data/data/yamaha/"
-> db <- dx7_syx_db_tree dir
-> length db == 213
+>>> dir = "/home/rohan/sw/hsc3-data/data/yamaha/"
+>>> db <- dx7_syx_db_tree dir
+>>> length db
+217
+
 > map (\(nm,_,_) -> nm) db
 -}
 dx7_syx_db_tree :: FilePath -> IO Dx7_Syx_Db_Tree
@@ -80,7 +82,7 @@ dx7_syx_dat_seq (nm, fn, vc) =
       r = map dx7_voice_param v
   in zip7 (repeat nm) (repeat fn) ix v n h r
 
--- | Scan /dir/ for ".syx" files and make DB.
+-- | Scan /dir/ for ".syx" files and make Db.
 dx7_syx_db :: FilePath -> IO Dx7_Syx_Db
 dx7_syx_db dir = do
   t <- dx7_syx_db_tree dir
@@ -120,16 +122,16 @@ dx7_hash_db_store db dir = do
 -- * Hash-Db
 
 -- | Hash-Db
-type Dx7_Hash_DB = ([(Dx7_Hash, String)], [(Dx7_Hash, Dx7_Param)])
+type Dx7_Hash_Db = ([(Dx7_Hash, String)], [(Dx7_Hash, Dx7_Param)])
 
 {- | Load Hash-Db from /dir/.
-The DB is permitted to have unnamed parameters.
+The Db is permitted to have unnamed parameters.
 
 > dir = "/home/rohan/rd/j/2019-04-07"
 > db <- dx7_hash_db_load dir
 > (length (fst db),length (snd db)) == (38041,30270)
 -}
-dx7_hash_db_load :: FilePath -> IO Dx7_Hash_DB
+dx7_hash_db_load :: FilePath -> IO Dx7_Hash_Db
 dx7_hash_db_load dir = do
   nm <- T.csv_table_read_def id (dir </> "dx7-names.csv")
   pr <- T.csv_table_read_def id (dir </> "dx7-param.csv")
@@ -140,14 +142,14 @@ dx7_hash_db_load dir = do
   return (map nm_f nm, map pr_f pr)
 
 -- | Get NAMES (perhaps empty) and PARAM given HASH.
-dx7_hash_db_get :: Dx7_Hash_DB -> Dx7_Hash -> ([String], Dx7_Param)
+dx7_hash_db_get :: Dx7_Hash_Db -> Dx7_Hash -> ([String], Dx7_Param)
 dx7_hash_db_get (nm, pr) h =
   ( map snd (filter ((== h) . fst) nm)
   , T.lookup_err h pr
   )
 
 -- | Extract voices from DB.  First name is applied. Un-named voices are given default.
-dx7_hash_db_vc :: String -> Dx7_Hash_DB -> [Dx7_Voice]
+dx7_hash_db_vc :: String -> Dx7_Hash_Db -> [Dx7_Voice]
 dx7_hash_db_vc df (nm, pr) =
   let f (h, p) = dx7_param_to_dx7_voice (T.lookup_def h df nm) p
   in map f pr
@@ -159,7 +161,7 @@ cf_f could be 'id' or 'toLower'
 > lc = dx7_hash_db_locate (isInfixOf,Data.Char.toLower) db "FAIR"
 > vc = dx7_hash_db_vc "----------" lc
 -}
-dx7_hash_db_locate :: (String -> String -> Bool, Char -> Char) -> Dx7_Hash_DB -> String -> Dx7_Hash_DB
+dx7_hash_db_locate :: (String -> String -> Bool, Char -> Char) -> Dx7_Hash_Db -> String -> Dx7_Hash_Db
 dx7_hash_db_locate (eq_f, cf_f) (nm, pr) x =
   let f p q = map cf_f p `eq_f` map cf_f q
       nm' = filter (f x . snd) nm
@@ -167,7 +169,7 @@ dx7_hash_db_locate (eq_f, cf_f) (nm, pr) x =
   in (nm', pr')
 
 -- | Get all param having name.
-dx7_hash_db_search :: Dx7_Hash_DB -> String -> [Dx7_Voice]
+dx7_hash_db_search :: Dx7_Hash_Db -> String -> [Dx7_Voice]
 dx7_hash_db_search (nm, pr) x =
   let h = map fst (filter ((== x) . snd) nm)
   in map (dx7_param_to_dx7_voice x . snd) (filter ((`elem` h) . fst) pr)
