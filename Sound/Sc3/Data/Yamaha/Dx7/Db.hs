@@ -1,15 +1,15 @@
 -- | Dx7 / Db
 module Sound.Sc3.Data.Yamaha.Dx7.Db where
 
-import Control.Monad {- base-}
-import Data.List {- base-}
-import System.Directory {- directory -}
+import qualified Control.Monad {- base-}
+import qualified Data.List {- base-}
+import qualified System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import qualified Music.Theory.Array.Csv as T {- hmt -}
-import qualified Music.Theory.Byte as T {- hmt -}
-import qualified Music.Theory.Directory.Find as T {- hmt -}
-import qualified Music.Theory.List as T {- hmt -}
+import qualified Music.Theory.Array.Csv as Csv {- hmt -}
+import qualified Music.Theory.Byte as Byte {- hmt -}
+import qualified Music.Theory.Directory.Find as Directory.Find {- hmt -}
+import qualified Music.Theory.List as List {- hmt -}
 
 import Sound.Sc3.Data.Yamaha.Dx7 {- hsc3-data -}
 import Sound.Sc3.Data.Yamaha.Dx7.Hash {- hsc3-data -}
@@ -23,7 +23,7 @@ type Dx7_Syx_Dat = (String, FilePath, [(Int, Dx7_Voice)])
 type Dx7_Syx_Db_Tree = [Dx7_Syx_Dat]
 
 {- | Scan /dir/ for ".syx" files and make Db tree.
-  Ignore files that are not 4104-BYTES.
+  Ignore files that are not 4104-bytes.
 
 >>> dir = "/home/rohan/sw/hsc3-data/data/yamaha/"
 >>> db <- dx7_syx_db_tree dir
@@ -34,8 +34,10 @@ type Dx7_Syx_Db_Tree = [Dx7_Syx_Dat]
 -}
 dx7_syx_db_tree :: FilePath -> IO Dx7_Syx_Db_Tree
 dx7_syx_db_tree dir = do
-  fn <- fmap sort . filterM (fmap (== 4104) . getFileSize) =<< T.dir_find_ext ".syx" dir
-  let nm = map takeBaseName fn
+  fn <- fmap Data.List.sort
+        . Control.Monad.filterM (fmap (== 4104) . System.Directory.getFileSize)
+        =<< Directory.Find.dir_find_ext ".syx" dir
+  let nm = map System.FilePath.takeBaseName fn
   p <- mapM dx7_load_fmt9_sysex_err fn
   return (zip3 nm fn (map (zip [1 ..]) p))
 
@@ -62,11 +64,11 @@ dx7_syx_vc_name (_, _, _, _, nm, _, _) = nm
 dx7_syx_vc_hash :: Dx7_Syx_Vc -> Dx7_Hash
 dx7_syx_vc_hash (_, _, _, _, _, h, _) = h
 
--- | CSV entry for (HASH,PARAM)
+-- | CSV entry for (Hash,Param)
 vc_hash_param_csv :: Dx7_Syx_Vc -> [String]
-vc_hash_param_csv (_, _, _, _, _, h, r) = [dx7_hash_pp h, T.byte_seq_hex_pp False r]
+vc_hash_param_csv (_, _, _, _, _, h, r) = [dx7_hash_pp h, Byte.byte_seq_hex_pp False r]
 
--- | CSV entry for (HASH,NAME)
+-- | CSV entry for (Hash,Name)
 vc_hash_name_csv :: Dx7_Syx_Vc -> [String]
 vc_hash_name_csv (_, _, _, _, n, h, _) = [dx7_hash_pp h, n]
 
@@ -80,7 +82,7 @@ dx7_syx_dat_seq (nm, fn, vc) =
       n = map (dx7_voice_name '?') v
       h = map dx7_voice_hash v
       r = map dx7_voice_param v
-  in zip7 (repeat nm) (repeat fn) ix v n h r
+  in Data.List.zip7 (repeat nm) (repeat fn) ix v n h r
 
 -- | Scan /dir/ for ".syx" files and make Db.
 dx7_syx_db :: FilePath -> IO Dx7_Syx_Db
@@ -101,7 +103,7 @@ dx7_hash_vc v =
 
 -- | Make Csv data of (Hash,Param).
 dx7_hash_vc_param_csv :: Dx7_Hash_Vc -> [String]
-dx7_hash_vc_param_csv (h, p, _) = [dx7_hash_pp h, T.byte_seq_hex_pp False p]
+dx7_hash_vc_param_csv (h, p, _) = [dx7_hash_pp h, Byte.byte_seq_hex_pp False p]
 
 -- | Make Csv data of (Hash,Name)
 dx7_hash_vc_name_csv :: Dx7_Hash_Vc -> [String]
@@ -111,13 +113,13 @@ dx7_hash_vc_name_csv (h, _, n) = [dx7_hash_pp h, n]
 Files are not sorted or uniqed.
 
 > db <- dx7_load_hex "/home/rohan/Dx7/dexed.uniq.text"
-> dx7_hash_db db "/home/rohan/rd/j/2019-04-07"
+> dx7_hash_db_store db "/home/rohan/rd/j/2019-04-07"
 -}
 dx7_hash_db_store :: [Dx7_Voice] -> FilePath -> IO ()
 dx7_hash_db_store db dir = do
   let u = map dx7_hash_vc db
-  T.csv_table_write_def id (dir </> "dx7-names.csv") (map dx7_hash_vc_name_csv u)
-  T.csv_table_write_def id (dir </> "dx7-param.csv") (map dx7_hash_vc_param_csv u)
+  Csv.csv_table_write_def id (dir </> "dx7-names.csv") (map dx7_hash_vc_name_csv u)
+  Csv.csv_table_write_def id (dir </> "dx7-param.csv") (map dx7_hash_vc_param_csv u)
 
 -- * Hash-Db
 
@@ -127,34 +129,35 @@ type Dx7_Hash_Db = ([(Dx7_Hash, String)], [(Dx7_Hash, Dx7_Param)])
 {- | Load Hash-Db from /dir/.
 The Db is permitted to have unnamed parameters.
 
-> dir = "/home/rohan/rd/j/2019-04-07"
-> db <- dx7_hash_db_load dir
-> (length (fst db),length (snd db)) == (38041,30270)
+>>> dir = "/home/rohan/rd/j/2019-04-07"
+>>> db <- dx7_hash_db_load dir
+>>> (length (fst db),length (snd db))
+(38041,30270)
 -}
 dx7_hash_db_load :: FilePath -> IO Dx7_Hash_Db
 dx7_hash_db_load dir = do
-  nm <- T.csv_table_read_def id (dir </> "dx7-names.csv")
-  pr <- T.csv_table_read_def id (dir </> "dx7-param.csv")
+  nm <- Csv.csv_table_read_def id (dir </> "dx7-names.csv")
+  pr <- Csv.csv_table_read_def id (dir </> "dx7-param.csv")
   let nm_f [h, n] = (dx7_hash_parse h, n)
       nm_f _ = error "dx7_hash_db_load: nm_f?"
-      pr_f [h, r] = (dx7_hash_parse h, T.read_hex_byte_seq r)
+      pr_f [h, r] = (dx7_hash_parse h, Byte.read_hex_byte_seq r)
       pr_f _ = error "dx7_hash_db_load: pr_f?"
   return (map nm_f nm, map pr_f pr)
 
--- | Get NAMES (perhaps empty) and PARAM given HASH.
+-- | Get names (perhaps empty) and param given hash.
 dx7_hash_db_get :: Dx7_Hash_Db -> Dx7_Hash -> ([String], Dx7_Param)
 dx7_hash_db_get (nm, pr) h =
   ( map snd (filter ((== h) . fst) nm)
-  , T.lookup_err h pr
+  , List.lookup_err h pr
   )
 
--- | Extract voices from DB.  First name is applied. Un-named voices are given default.
+-- | Extract voices from Db.  First name is applied. Un-named voices are given default.
 dx7_hash_db_vc :: String -> Dx7_Hash_Db -> [Dx7_Voice]
 dx7_hash_db_vc df (nm, pr) =
-  let f (h, p) = dx7_param_to_dx7_voice (T.lookup_def h df nm) p
+  let f (h, p) = dx7_param_to_dx7_voice (List.lookup_def h df nm) p
   in map f pr
 
-{- | Get subset of DB matching NAME using given equality function and case-fold function.
+{- | Get subset of Db matching name using given equality function and case-fold function.
 ie. eq_f could be (==), 'isInfixOf', 'isPrefixOf' &etc.
 cf_f could be 'id' or 'toLower'
 
