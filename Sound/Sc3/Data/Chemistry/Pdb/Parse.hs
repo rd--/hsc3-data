@@ -92,8 +92,10 @@ COLUMNS       DatA  TYPE    FIELD          DEFINITION
 67 - 70       Integer       z              Z value.
 -}
 cryst1_se :: Num i => ([i], [i])
-cryst1_se = ( [1, 7, 16, 25, 34, 41, 48, 55, 67]
-            , [6, 15, 24, 33, 40, 47, 54, 66, 70] )
+cryst1_se =
+  ( [1, 7, 16, 25, 34, 41, 48, 55, 67]
+  , [6, 15, 24, 33, 40, 47, 54, 66, 70]
+  )
 
 {- | END
 

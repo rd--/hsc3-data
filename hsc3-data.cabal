@@ -84,6 +84,7 @@ Library
                    Sound.Sc3.Data.Chemistry.Pdb.Remark
                    Sound.Sc3.Data.Chemistry.Pdb.Types
                    Sound.Sc3.Data.Chemistry.Poscar
+                   Sound.Sc3.Data.Chemistry.Sdf
                    Sound.Sc3.Data.Chemistry.Struct
                    Sound.Sc3.Data.Chemistry.Xyz
                    Sound.Sc3.Data.CmuDict

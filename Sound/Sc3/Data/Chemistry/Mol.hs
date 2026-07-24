@@ -10,39 +10,41 @@ Mol fields are fixed length.
 -}
 module Sound.Sc3.Data.Chemistry.Mol where
 
-import Data.Char {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
+import qualified Data.Char {- base -}
+import qualified Data.List {- base -}
 
-import Data.List.Split {- split -}
-import Safe {- safe -}
-import System.Directory {- directory -}
+import qualified Data.List.Split {- split -}
+import qualified Safe {- safe -}
+import qualified System.Directory {- directory -}
 import System.FilePath {- filepath -}
 
-import Music.Theory.Geometry.Vector (V2, V3) {- hmt-base -}
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
 -- * Types
 
--- | (xyz-coordinate, atomic-symbol)
-type Mol_Atom = (V3 Double, String)
+-- | Mol Atom.  (xyz-coordinate, atomic-symbol)
+type Mol_Atom = (Vector.V3 Double, String)
 
-{- | ((i,j),bond-type)
+{- | Mol Bond.  ((i,j),bond-type)
   Mol files include bond data.
   Mol bond atom-id data is one-indexed.
 -}
-type Mol_Bond = (V2 Int, Int)
+type Mol_Bond = (Vector.V2 Int, Int)
 
--- | (name,description,atom-count,bond-count,atoms,bonds,version)
+-- | Mol record. (name,description,atom-count,bond-count,atoms,bonds,version)
 type Mol = (String, String, Int, Int, [Mol_Atom], [Mol_Bond], Int)
 
+-- | Atom and bond counts
 mol_degree :: Mol -> (Int, Int)
 mol_degree (_, _, a, b, _, _, _) = (a, b)
 
+-- | Empty Mol record
 mol_empty :: Mol
 mol_empty = ("", "", 0, 0, [], [], 2000)
 
 -- * Genera
 
+-- | Parse version
 mol_version :: String -> Int
 mol_version x =
   case x of
@@ -87,7 +89,7 @@ mol_v20_counts_flen = replicate 11 3 ++ [6]
 -}
 mol_v20_read_counts :: String -> (Int, Int, Int)
 mol_v20_read_counts s =
-  case splitPlaces mol_v20_counts_flen s of
+  case Data.List.Split.splitPlaces mol_v20_counts_flen s of
     [a, b, _, _, _, _, _, _, _, _, _, v] -> (read a, read b, mol_version v)
     a : b : _ -> (read a, read b, mol_version " V2000") -- ALLOW OMITTED FIELDS
     r -> error (show ("mol_v20_read_counts", s, r))
@@ -110,9 +112,9 @@ mol_v20_atom_flen = [10, 10, 10, 1, 3, 2, 3] ++ replicate 10 3
 -}
 mol_v20_read_atom :: String -> Mol_Atom
 mol_v20_read_atom s =
-  case splitPlaces mol_v20_atom_flen s of
-    [x, y, z, " ", a, _, _, _, _, _, _, _, _, _, _, _, _] -> ((read x, read y, read z), takeWhile (not . isSpace) a)
-    x : y : z : " " : a : _ -> ((read x, read y, read z), takeWhile (not . isSpace) a) -- ALLOW OMITTED FIELDS
+  case Data.List.Split.splitPlaces mol_v20_atom_flen s of
+    [x, y, z, " ", a, _, _, _, _, _, _, _, _, _, _, _, _] -> ((read x, read y, read z), takeWhile (not . Data.Char.isSpace) a)
+    x : y : z : " " : a : _ -> ((read x, read y, read z), takeWhile (not . Data.Char.isSpace) a) -- ALLOW OMITTED FIELDS
     r -> error (show ("mol_v20_read_atom", s, r))
 
 {- | Bond flen
@@ -133,7 +135,7 @@ mol_v20_bond_flen = replicate 7 3
 -}
 mol_v20_read_bond :: String -> Mol_Bond
 mol_v20_read_bond s =
-  case splitPlaces mol_v20_bond_flen s of
+  case Data.List.Split.splitPlaces mol_v20_bond_flen s of
     [a0, a1, ty, _, _, _, _] -> ((read a0, read a1), read ty)
     a0 : a1 : ty : _ -> ((read a0, read a1), read ty) -- allow omitted fields
     r -> error (show ("mol_v20_read_bond", s, r))
@@ -192,7 +194,7 @@ mol_v30_bond s =
 
 mol_v30_parse :: (String, String) -> [String] -> Mol
 mol_v30_parse (nm, dsc) l =
-  let ix = atNote "mol_v30_parse"
+  let ix = Safe.atNote "mol_v30_parse"
       verify k s = (ix l k == s) || error (show ("mol_v30_parse", k, l !! k, s))
       (a, b) = mol_v30_counts (ix l 1)
   in if verify 0 "M  V30 BEGIN CTAB"
@@ -210,37 +212,12 @@ mol_v30_parse (nm, dsc) l =
       else error "mol_v30_parse?"
 
 mol_v30_ent :: [String] -> [String]
-mol_v30_ent = filter ("M  V30 " `isPrefixOf`)
-
--- * Associated Data Items
-
--- | (Key,[Value])
-type Mol_Adi = (String, [String])
-
-{- | Read the associated data items entries from Mol/Sdf file.
-
-> txt <- readFile "/home/rohan/rd/j/2020-02-22/sdf/DB01452.sdf"
-> putStrLn $ mol_adi_pp $ mol_adi txt
--}
-mol_adi :: String -> [Mol_Adi]
-mol_adi =
-  let un_key = takeWhile (/= '>') . fromMaybe (error "mol_adi: non-key?") . stripPrefix "> <"
-      not_term = (/=) "$$$$"
-      not_end = (/=) "M  END"
-      rem_null = filter (not . null)
-      f ln = case ln of
-        k : v -> (un_key k, v)
-        _ -> error "mol_adi: no-key?"
-  in map f . rem_null . splitWhen null . takeWhile not_term . tail . dropWhile not_end . lines
-
-mol_adi_pp :: [Mol_Adi] -> String
-mol_adi_pp =
-  let f (k, v) = concat [k, ": ", intercalate "\\n" v]
-  in unlines . map f
+mol_v30_ent = filter ("M  V30 " `Data.List.isPrefixOf`)
 
 -- * Load
 
 {- | 'mol_v20_parse' or 'mol_v30_parse' of 'readFile'.
+Can read the initial entry of an .sdf file.
 
 >>> let fn = "/home/rohan/rd/j/2019-10-08/sdf/5288826.sdf"
 >>> m <- mol_load fn
@@ -251,6 +228,11 @@ mol_adi_pp =
 >>> m <- mol_load fn
 >>> mol_degree m
 (1177,1135)
+
+>>> let fn = "/home/rohan/rd/j/2026-07-24/sdf/73415757.sdf"
+>>> m <- mol_load fn
+>>> mol_degree m
+(40,21)
 -}
 mol_load :: FilePath -> IO Mol
 mol_load fn = do
@@ -261,10 +243,6 @@ mol_load fn = do
     (nm, dsc, 0, 0, [], [], 3000) -> return (mol_v30_parse (nm, dsc) (mol_v30_ent l))
     _ -> return r
 
--- | 'mol_adi' of 'readFile'.
-mol_load_adi :: FilePath -> IO [Mol_Adi]
-mol_load_adi = fmap mol_adi . readFile
-
 {- | List of all .ext files at /dir/.  Sdf is a superset of Mol, extensions are ".mol" and ".sdf".
 
 >>> m <- mol_dir_entries ".mol" "/home/rohan/rd/j/2020-03-30/mol/"
@@ -272,7 +250,7 @@ mol_load_adi = fmap mol_adi . readFile
 80
 -}
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
-mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . listDirectory
+mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . System.Directory.listDirectory
 
 mol_dir_filenames :: String -> FilePath -> IO [FilePath]
 mol_dir_filenames ext dir = do
@@ -286,13 +264,3 @@ mol_load_dir ext dir = do
   let nm = map takeBaseName fn
   dat <- mapM (mol_load . (</>) dir) fn
   return (zip nm dat)
-
-{- | 'mol_load_adi' of 'mol_dir_filenames'.
-
-> adi <- mol_load_dir_adi ".sdf" "/home/rohan/rd/j/2020-02-22/sdf/"
-> mapM_ (putStrLn . mol_adi_pp) adi
--}
-mol_load_dir_adi :: String -> FilePath -> IO [[Mol_Adi]]
-mol_load_dir_adi ext dir = do
-  fn <- mol_dir_filenames ext dir
-  mapM mol_load_adi fn

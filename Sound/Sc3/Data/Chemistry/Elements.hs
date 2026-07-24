@@ -3,13 +3,14 @@
 -}
 module Sound.Sc3.Data.Chemistry.Elements where
 
-import Data.Char {- base -}
-import Data.Either {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
+import qualified Data.Char {- base -}
+import qualified Data.Either {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
 
-import qualified Music.Theory.List as List {- hmt-base -}
 import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Maybe as Maybe {- hmt-base -}
 
 {- | The angstrom or ångström is a metric unit of length equal to 1×10^−10 m,
 or one ten-billionth of a metre, 0.1 nanometre, or 100 picometres.
@@ -184,13 +185,125 @@ periodic_table =
 -}
 element_period :: [Int]
 element_period =
-  [1,1
-  ,2,2,2,2,2,2,2,2
-  ,3,3,3,3,3,3,3,3
-  ,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
-  ,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5
-  ,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6
-  ,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]
+  [ 1
+  , 1
+  , 2
+  , 2
+  , 2
+  , 2
+  , 2
+  , 2
+  , 2
+  , 2
+  , 3
+  , 3
+  , 3
+  , 3
+  , 3
+  , 3
+  , 3
+  , 3
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 4
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 5
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 6
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  , 7
+  ]
 
 {- | List giving the group of each element.
 Values of 0 indicate no group (the F-block).
@@ -200,13 +313,111 @@ Values of 0 indicate no group (the F-block).
 -}
 element_group :: [Int]
 element_group =
-  [1,18
-  ,1,2,13,14,15,16,17,18
-  ,1,2,13,14,15,16,17,18
-  ,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
-  ,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
-  ,1,2,30,0,0,0,0,0,0,0,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
-  ,1,2,30,0,0,0,0,0,0,0,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+  [ 1
+  , 18
+  , 1
+  , 2
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 18
+  , 1
+  , 2
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 18
+  , 1
+  , 2
+  , 3
+  , 4
+  , 5
+  , 6
+  , 7
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 18
+  , 1
+  , 2
+  , 3
+  , 4
+  , 5
+  , 6
+  , 7
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 18
+  , 1
+  , 2
+  , 30
+  , 0
+  , 0
+  , 0
+  , 0
+  , 0
+  , 0
+  , 0
+  , 4
+  , 5
+  , 6
+  , 7
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 18
+  , 1
+  , 2
+  , 30
+  , 0
+  , 0
+  , 0
+  , 0
+  , 0
+  , 0
+  , 0
+  , 4
+  , 5
+  , 6
+  , 7
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 18
+  ]
 
 {- | Lookup atomic symbol in 'periodic_table' and return atomic number.
 If /cs/ is False then match case-insensitively.
@@ -216,7 +427,7 @@ If /cs/ is False then match case-insensitively.
 -}
 atomic_number :: Bool -> Atomic_Symbol -> Maybe Atomic_Number
 atomic_number cs x =
-  let u = if cs then id else map toUpper
+  let u = if cs then id else map Data.Char.toUpper
   in lookup (u x) (map (\(k, sym, _, _) -> (u sym, k)) periodic_table)
 
 {- | Erroring variant.
@@ -231,7 +442,7 @@ atomic_number cs x =
 26
 -}
 atomic_number_err :: Bool -> Atomic_Symbol -> Atomic_Number
-atomic_number_err cs sym = fromMaybe (error ("atomic_number: " ++ sym)) (atomic_number cs sym)
+atomic_number_err cs sym = Maybe.from_just ("atomic_number: " ++ sym) (atomic_number cs sym)
 
 -- | Lookup atomic number in 'periodic_table' and return atomic weight.
 atomic_weight :: Atomic_Number -> Maybe Dalton
@@ -239,7 +450,7 @@ atomic_weight x = lookup x (map (\(k, _, _, w) -> (k, w)) periodic_table)
 
 -- | Erroring variant.
 atomic_weight_err :: Atomic_Number -> Dalton
-atomic_weight_err x = fromMaybe (error ("atomic_weight: " ++ show x)) (atomic_weight x)
+atomic_weight_err x = Maybe.from_just ("atomic_weight: " ++ show x) (atomic_weight x)
 
 {- | (atomic-number,covalent-radius:picometres)
 
@@ -355,7 +566,7 @@ covalent_radius k = lookup k covalent_radii_table
 
 -- | Erroring variant.
 covalent_radius_err :: Num n => Atomic_Number -> n
-covalent_radius_err = fromMaybe (error "covalent_radii") . covalent_radius
+covalent_radius_err = Maybe.from_just "covalent_radii" . covalent_radius
 
 {- | (atomic-number,covalent-radius:angstroms)
 
@@ -486,7 +697,7 @@ covalent_radius_csd k = lookup k covalent_radii_csd_table
 
 -- | Erroring variant.
 covalent_radius_csd_err :: Fractional n => Atomic_Number -> n
-covalent_radius_csd_err = fromMaybe (error "covalent_radii_csd") . covalent_radius_csd
+covalent_radius_csd_err = Maybe.from_just "covalent_radii_csd" . covalent_radius_csd
 
 type Dist_Msr t = (((Int, Int), (Vector.V3 t, Vector.V3 t)), t, t, t, Bool, Bool)
 
@@ -512,7 +723,7 @@ calculate_distance_set rad_f (t_min, t_max) e =
                 )
           else Nothing
       e_ix = zip [0 ..] e
-  in catMaybes [f i j | i <- e_ix, j <- e_ix]
+  in Data.Maybe.catMaybes [f i j | i <- e_ix, j <- e_ix]
 
 {- | Given a radius function (atomic-symbol -> covalent radius)
 calculate bonds for a set of atoms.
@@ -524,7 +735,7 @@ bonded.
 calculate_bonds :: (Floating n, Ord n) => (Atomic_Symbol -> n) -> (n, n) -> [(Atomic_Symbol, Vector.V3 n)] -> [((Int, Int), (Vector.V3 n, Vector.V3 n))]
 calculate_bonds rad_f th =
   let f (r, _, _, _, t0, t1) = if t0 && t1 then Just r else Nothing
-  in mapMaybe f . calculate_distance_set rad_f th
+  in Data.Maybe.mapMaybe f . calculate_distance_set rad_f th
 
 -- | (atomic-number,cpk-colour:rgb24)
 cpk_color_table :: Num n => [(Atomic_Number, n)]
@@ -646,7 +857,7 @@ cpk_color k = lookup k cpk_color_table
 
 -- | Erroring variant.
 cpk_color_err :: Num n => Atomic_Number -> n
-cpk_color_err = fromMaybe (error "cpk_color") . cpk_color
+cpk_color_err = Maybe.from_just "cpk_color" . cpk_color
 
 -- | (atomic-number,atomic-radius,ion-radius,van-del-waals-radius)
 atomic_ion_vdw_radii_table :: Fractional n => [(Atomic_Number, n, n, n)]
@@ -814,15 +1025,15 @@ formula_ch_pp (e, c) =
 -}
 formula_ch_parse :: String -> Formula_Ch
 formula_ch_parse txt =
-  let f x = case span isDigit x of
-        ([], _) -> case span isAlpha x of
+  let f x = case span Data.Char.isDigit x of
+        ([], _) -> case span Data.Char.isAlpha x of
           ("", _) -> error ("formula_ch_parse: " ++ x)
           (e, "") -> Left (e, 1)
           (e, n) -> Left (e, read n)
         (k, ['-']) -> Right (negate (read k))
         (k, ['+']) -> Right (read k)
         _ -> error "formula_ch_parse?"
-  in case partitionEithers (map f (words txt)) of
+  in case Data.Either.partitionEithers (map f (words txt)) of
       (e, []) -> (e, Nothing)
       (e, [c]) -> (e, Just c)
       _ -> error ("formula_ch_parse: " ++ txt)
@@ -846,7 +1057,7 @@ formula_sort_hill :: Formula -> Formula
 formula_sort_hill e =
   case lookup "C" e of
     Nothing -> e
-    Just _ -> let (p, q) = partition (flip elem ["C", "H"] . fst) e in p ++ q
+    Just _ -> let (p, q) = Data.List.partition (flip elem ["C", "H"] . fst) e in p ++ q
 
 {- | 'formula_sort_hill' of 'List.histogram'.
 
@@ -879,4 +1090,4 @@ formula_diff x y =
         Nothing -> Just (e, m)
         Just n -> if n == m then Nothing else Just (e, m - n)
       g (e1, _) (e2, _) = e1 == e2
-  in mapMaybe f x ++ deleteFirstsBy g y x
+  in Data.Maybe.mapMaybe f x ++ Data.List.deleteFirstsBy g y x

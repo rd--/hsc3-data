@@ -180,19 +180,19 @@ type Pdb =
   )
 
 pdb_header :: Pdb -> Header
-pdb_header (h,_,_,_,_,_,_,_,_,_,_) = h
+pdb_header (h, _, _, _, _, _, _, _, _, _, _) = h
 
 pdb_title :: Pdb -> String
-pdb_title (_,t,_,_,_,_,_,_,_,_,_) = t
+pdb_title (_, t, _, _, _, _, _, _, _, _, _) = t
 
 pdb_cryst1 :: Pdb -> Cryst1
-pdb_cryst1 (_,_,_,c,_,_,_,_,_,_,_) = c
+pdb_cryst1 (_, _, _, c, _, _, _, _, _, _, _) = c
 
 pdb_atom :: Pdb -> [Atom]
-pdb_atom (_,_,_,_,(a,_),_,_,_,_,_,_) = a
+pdb_atom (_, _, _, _, (a, _), _, _, _, _, _, _) = a
 
 pdb_hetatom :: Pdb -> [Atom]
-pdb_hetatom (_,_,_,_,(_,a),_,_,_,_,_,_) = a
+pdb_hetatom (_, _, _, _, (_, a), _, _, _, _, _, _) = a
 
 -- * Group
 

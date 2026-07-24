@@ -34,9 +34,10 @@ type Dx7_Syx_Db_Tree = [Dx7_Syx_Dat]
 -}
 dx7_syx_db_tree :: FilePath -> IO Dx7_Syx_Db_Tree
 dx7_syx_db_tree dir = do
-  fn <- fmap Data.List.sort
-        . Control.Monad.filterM (fmap (== 4104) . System.Directory.getFileSize)
-        =<< Directory.Find.dir_find_ext ".syx" dir
+  fn <-
+    fmap Data.List.sort
+      . Control.Monad.filterM (fmap (== 4104) . System.Directory.getFileSize)
+      =<< Directory.Find.dir_find_ext ".syx" dir
   let nm = map System.FilePath.takeBaseName fn
   p <- mapM dx7_load_fmt9_sysex_err fn
   return (zip3 nm fn (map (zip [1 ..]) p))
