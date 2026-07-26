@@ -37,7 +37,8 @@ pdb_std_codes =
 
 {- | Is /x/ a standard Pdb code?
 
-> all pdb_is_std_code (words "LEU DT U") == True
+>>> all pdb_is_std_code (words "LEU DT U")
+True
 -}
 pdb_is_std_code :: String -> Bool
 pdb_is_std_code x =
@@ -245,7 +246,10 @@ het_entry_formula_validate e =
 "1POC"
 -}
 pdb_file_name_to_id :: FilePath -> String
-pdb_file_name_to_id = map Data.Char.toUpper . System.FilePath.dropExtension . System.FilePath.takeFileName
+pdb_file_name_to_id =
+  map Data.Char.toUpper
+  . System.FilePath.dropExtension
+  . System.FilePath.takeFileName
 
 {- | Filename for ligand /k/, /ty/ is "ideal" or "model"
 

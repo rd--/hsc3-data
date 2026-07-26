@@ -1,28 +1,33 @@
--- | Pdb-Remark <https://www.wwpdb.org/documentation/file-format-content/format33/remarks.html>
+{- | Pdb-Remark
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/remarks.html>
+-}
 module Sound.Sc3.Data.Chemistry.Pdb.Remark where
 
-import Data.List {- base -}
-import Data.List.Split {- split -}
-import Data.Maybe {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
 
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import qualified Data.List.Split {- split -}
+
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
 import qualified Music.Theory.List as List {- hmt-base -}
 
-import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Parse {- hsc3-data -}
-import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Pdb.Parse {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
 
 -- * Remark 350 - Biomt
 
 -- | (N,Seq,Mx-n,Vec-n)
-type Remark_350_Biomt = (Int, Int, V3 Double, Double)
+type Remark_350_Biomt = (Int, Int, Vector.V3 Double, Double)
 
 {- | Parse Remark 350 - BIOMT
 
-x = (350,"  BIOMT2   2  0.866025 -0.500000  0.000000     -237.03981")
-parse_remark_350_biomt x == Just (2,2,(0.866025,-0.5,0.0),-237.03981)
+>>> let x = (350,"  BIOMT2   2  0.866025 -0.500000  0.000000     -237.03981")
+>>> parse_remark_350_biomt x
+Just (2,2,(0.866025,-0.5,0.0),-237.03981)
 -}
-parse_remark_350_biomt :: Remark -> Maybe Remark_350_Biomt
+parse_remark_350_biomt :: Pdb.Remark -> Maybe Remark_350_Biomt
 parse_remark_350_biomt (n, s) =
   if n == 350 && take 7 s == "  BIOMT"
     then
@@ -31,7 +36,7 @@ parse_remark_350_biomt (n, s) =
       in Just (i 0, i 1, (f 2, f 3, f 4), f 5)
     else Nothing
 
-remark_350_biomt_group :: [Remark_350_Biomt] -> [[Mtrx Double]]
+remark_350_biomt_group :: [Remark_350_Biomt] -> [[Pdb.Mtrx Double]]
 remark_350_biomt_group =
   let err x = error (show ("remark_350_biomt_group?", x))
       f1 (i, j, p, q) = (i, j, (p, q))
@@ -42,11 +47,15 @@ remark_350_biomt_group =
             else err (n1, n2, n3)
         e -> err e
       f3 x = if null (head x) then tail x else err x
-      f4 x = let (p, q) = unzip x in if p `isPrefixOf` [1 ..] then q else err p
-  in map f4 . f3 . List.split_when_keeping_left ((== 1) . fst) . map (f2 . map f1) . chunksOf 3
+      f4 x = let (p, q) = unzip x in if p `Data.List.isPrefixOf` [1 ..] then q else err p
+  in map f4
+     . f3
+     . List.split_when_keeping_left ((== 1) . fst)
+     . map (f2 . map f1)
+     . Data.List.Split.chunksOf 3
 
-dat_remark_350_biomt :: Parse.Dat -> [[Mtrx Double]]
+dat_remark_350_biomt :: Pdb.Parse.Dat -> [[Pdb.Mtrx Double]]
 dat_remark_350_biomt d =
-  let r = Parse.dat_remark d
-      m = mapMaybe parse_remark_350_biomt r
+  let r = Pdb.Parse.dat_remark d
+      m = Data.Maybe.mapMaybe parse_remark_350_biomt r
   in remark_350_biomt_group m

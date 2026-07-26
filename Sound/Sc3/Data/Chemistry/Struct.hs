@@ -31,7 +31,7 @@ type Atom = (String, Vector.V3 Double)
 atom_sym :: Atom -> String
 atom_sym (e, _) = e
 
--- | (i,j), indicies into Atom sequence (zero indexed)
+-- | (i,j), indices into Atom sequence (zero indexed)
 type Bond = (Int, Int)
 
 -- | (name,degree=(n-atoms,n-bonds),description,atoms,bonds)

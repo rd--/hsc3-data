@@ -1,8 +1,8 @@
 -- | Pdb types.  <https://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html>
 module Sound.Sc3.Data.Chemistry.Pdb.Types where
 
-import Data.Function {- base -}
-import Data.List {- base -}
+import qualified Data.Function {- base -}
+import qualified Data.List {- base -}
 
 import qualified Music.Theory.Geometry.Matrix as Matrix {- hmt-base -}
 import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
@@ -47,7 +47,7 @@ type Atom = (Bool, Int, String, Char, Residue_Id, (Double, Double, Double), Stri
 
 altloc_id_set :: [Char] -> [Char]
 altloc_id_set x =
-  case nub (sort x) of
+  case List.nub_sort x of
     " " -> "NIL"
     ' ' : y -> y
     _ -> error "alt_id_set?"
@@ -198,20 +198,20 @@ pdb_hetatom (_, _, _, _, (_, a), _, _, _, _, _, _) = a
 
 -- | Group atoms by chain and ensure sequence
 atom_group :: [Atom] -> [(Char, [Atom])]
-atom_group = map (fmap (sortOn atom_serial)) . List.collate_on atom_chain_id id
+atom_group = map (fmap (Data.List.sortOn atom_serial)) . List.collate_on atom_chain_id id
 
 -- | Merge Conect records, sort and remove (i,j)-(j,i) duplicates.
 conect_group :: [Conect] -> [(Int, Int)]
 conect_group =
   let o (i, j) = (min i j, max i j)
-  in nub . sort . map o . concat
+  in List.nub_sort . map o . concat
 
 -- | Group helices by chain and ensure sequence
 helix_group :: [Helix] -> [(Char, [Helix])]
-helix_group = map (fmap (sortOn helix_serial)) . List.collate_on helix_chain_id id
+helix_group = map (fmap (Data.List.sortOn helix_serial)) . List.collate_on helix_chain_id id
 
 mdltyp_group :: [MdlTyp] -> String
-mdltyp_group = unwords . map snd . sort
+mdltyp_group = unwords . map snd . Data.List.sort
 
 -- | Group residues by Chain.
 seqres_group :: [SeqRes] -> [(Char, [String])]
@@ -220,20 +220,20 @@ seqres_group =
       g (_, c, _, _) = c
       h (_, c, _, r) = (c, r)
       i j = let (c, r) = unzip j in (head c, concat r)
-  in map (i . map h) . groupBy ((==) `on` g) . sortOn f
+  in map (i . map h) . Data.List.groupBy ((==) `Data.Function.on` g) . Data.List.sortOn f
 
 -- | Group helices by chain
 sheet_group :: [Sheet] -> [(Char, [Sheet])]
 sheet_group = List.collate_on sheet_chain_id id
 
 title_group :: [Title] -> String
-title_group = unwords . map snd . sort
+title_group = unwords . map snd . Data.List.sort
 
 -- * Ter
 
 -- | Remove 'Atom's that are located past any 'Ter' entry for the chain.
 atom_apply_ter :: [Ter] -> (Char, [Atom]) -> (Char, [Atom])
 atom_apply_ter ter (ch, a) =
-  case find (\(_, (_, x, _, _)) -> x == ch) ter of
+  case Data.List.find (\(_, (_, x, _, _)) -> x == ch) ter of
     Just (k, _) -> (ch, filter ((< k) . atom_serial) a)
     _ -> (ch, a)
