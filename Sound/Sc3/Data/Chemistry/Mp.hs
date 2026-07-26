@@ -7,7 +7,7 @@ APL Materials, 2013, 1(1), 011002.
 -}
 module Sound.Sc3.Data.Chemistry.Mp where
 
-import System.FilePath {- filepath -}
+import qualified System.FilePath {- filepath -}
 
 import qualified Sound.Sc3.Data.Chemistry.Poscar as Poscar {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Struct as Struct {- hsc3-data -}
@@ -18,7 +18,14 @@ mp_dir = "/home/rohan/sw/hsc3-data/data/chemistry/mp"
 
 -- | Local Mp Poscar file
 mp_poscar_file :: String -> FilePath
-mp_poscar_file nm = mp_dir </> "poscar" </> nm <.> "poscar"
+mp_poscar_file nm =
+  mp_dir
+  System.FilePath.</>
+  "poscar"
+  System.FilePath.</>
+  nm
+  System.FilePath.<.>
+  "poscar"
 
 {- | Load an Mp Poscar file as a Struct.
 

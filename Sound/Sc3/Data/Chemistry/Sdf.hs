@@ -6,13 +6,12 @@ The Sdf file format is a superset of the Mol file format.
 -}
 module Sound.Sc3.Data.Chemistry.Sdf where
 
-{- base -}
 import qualified Data.List {- base -}
-import qualified Data.Maybe
+import qualified Data.Maybe {- base -}
 
 import qualified Data.List.Split {- split -}
 
-import Sound.Sc3.Data.Chemistry.Mol
+import qualified Sound.Sc3.Data.Chemistry.Mol as Mol {- hsc3-data -}
 
 -- * Associated Data Items
 
@@ -63,5 +62,5 @@ sdf_load_adi = fmap sdf_adi . readFile
 -}
 sdf_load_dir_adi :: String -> FilePath -> IO [[Sdf_Adi]]
 sdf_load_dir_adi ext dir = do
-  fn <- mol_dir_filenames ext dir
+  fn <- Mol.mol_dir_filenames ext dir
   mapM sdf_load_adi fn

@@ -1,7 +1,7 @@
 -- | International Union of Pure and Applied Chemistry <https://iupac.org/>
 module Sound.Sc3.Data.Chemistry.Iupac where
 
-import Data.Char {- base -}
+import qualified Data.Char {- base -}
 import qualified Data.List {- base -}
 
 {- | (Iupac-Nucleotide-Code,Bases-Represented)
@@ -78,7 +78,7 @@ Just 'G'
 -}
 iupac_three_letter_code_to_one_letter_code :: String -> Maybe Char
 iupac_three_letter_code_to_one_letter_code x =
-  let ci p q = map toUpper p == map toUpper q
+  let ci p q = map Data.Char.toUpper p == map Data.Char.toUpper q
       f (_, c3, _) = ci x c3
       g (c1, _, _) = c1
   in fmap g (Data.List.find f iupac_amino_acid_tbl)

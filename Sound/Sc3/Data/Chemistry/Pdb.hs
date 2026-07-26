@@ -7,17 +7,18 @@ Biological Magnetic Resonance Data Bank = <http://www.bmrb.wisc.edu/>
 -}
 module Sound.Sc3.Data.Chemistry.Pdb where
 
-import Data.Char {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
-import System.Directory {- directory -}
-import System.FilePath {- filepath -}
-import System.Process {- process -}
+import qualified Data.Char {- base -}
+import qualified Data.List {- base -}
+
+import qualified System.Directory {- directory -}
+import qualified System.FilePath {- filepath -}
+import qualified System.Process {- process -}
 
 import qualified Data.ByteString.Char8 as ByteString.Char8 {- bytestring -}
 
 import qualified Music.Theory.Directory as Directory {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Maybe as Maybe {- hmt-base -}
 
 import qualified Sound.Sc3.Data.Chemistry.Elements as Elements {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Iupac as Iupac {- hsc3-data -}
@@ -66,7 +67,7 @@ pdb_nucleotides = let (_, d, r) = pdb_std_codes in d ++ r
 pdb_code_tbl :: [(String, Char)]
 pdb_code_tbl =
   concat
-    [ map (\(c1, c3, _) -> (map toUpper c3, c1)) Iupac.iupac_amino_acid_tbl
+    [ map (\(c1, c3, _) -> (map Data.Char.toUpper c3, c1)) Iupac.iupac_amino_acid_tbl
     , map (\x -> (x, last x)) pdb_nucleotides
     ]
 
@@ -83,7 +84,9 @@ pdb_seqres_code_lookup = flip lookup pdb_code_tbl
 "ACDEFGHIKLMNPQRSTVWY"
 -}
 pdb_seqres_code_lookup_err :: String -> Char
-pdb_seqres_code_lookup_err = fromMaybe (error "pdb_seqres_code_lookup?") . pdb_seqres_code_lookup
+pdb_seqres_code_lookup_err =
+  Maybe.from_just "pdb_seqres_code_lookup"
+  . pdb_seqres_code_lookup
 
 -- * Convert
 
@@ -93,12 +96,15 @@ Pdb files are converted to Mol files using obabel,
 <https://packages.debian.org/stable/openbabel>
 -}
 pdb_to_mol :: FilePath -> FilePath -> IO ()
-pdb_to_mol pdb_fn mol_fn = callProcess "obabel" ["-ipdb", pdb_fn, "-omol", "-O", mol_fn]
+pdb_to_mol pdb_fn mol_fn =
+  System.Process.callProcess
+  "obabel"
+  ["-ipdb", pdb_fn, "-omol", "-O", mol_fn]
 
 -- | Variant that only runs if the Mol file does not already exist.
 pdb_to_mol_x :: FilePath -> FilePath -> IO ()
 pdb_to_mol_x pdb_fn mol_fn = do
-  createDirectoryIfMissing True (takeDirectory mol_fn)
+  System.Directory.createDirectoryIfMissing True (System.FilePath.takeDirectory mol_fn)
   Directory.if_file_exists (mol_fn, return (), pdb_to_mol pdb_fn mol_fn)
 
 -- * Monomer-Het
@@ -167,7 +173,7 @@ het_edge_set =
 
 -- | Convert CONECT fields to vertex set.
 het_vertex_set :: [(String, [String])] -> [String]
-het_vertex_set = let f (lhs, rhs) = lhs : rhs in nub . sort . concatMap f
+het_vertex_set = let f (lhs, rhs) = lhs : rhs in List.nub_sort . concatMap f
 
 -- | Load records from local copy of 'het_dictionary'.
 het_load_records :: FilePath -> IO [Het_Record]
@@ -177,7 +183,7 @@ het_load_records fn = do
       r = List.split_when_keeping_left (ByteString.Char8.isPrefixOf (ByteString.Char8.pack "RESIDUE")) l
   return (filter (not . null) r)
 
--- | ((ID3,N-ATOMS),NAME,FORMUL,GRAPH)
+-- | ((Id3,N-Atoms),Name,Formul,Graph)
 type Het_Entry = ((String, Int), String, String, ([String], [(String, String)]))
 
 -- | ID3 field.
@@ -204,7 +210,7 @@ het_parse_entry r =
 
 -- | Lookup Het_Entry by name.
 het_entry_lookup :: String -> [Het_Entry] -> Maybe Het_Entry
-het_entry_lookup k = find (\((nm, _), _, _, _) -> nm == k)
+het_entry_lookup k = Data.List.find (\((nm, _), _, _, _) -> nm == k)
 
 {- | Load Het_Entry from local copy of 'het_dictionary'.
 
@@ -223,7 +229,7 @@ het_load_entries = fmap (map het_parse_entry) . het_load_records
 
 -- | Histogram of elememts derived from FORMULA field.
 het_entry_formula_hist :: Het_Entry -> [(String, Int)]
-het_entry_formula_hist = sort . fst . Elements.formula_ch_parse . het_entry_formula
+het_entry_formula_hist = Data.List.sort . fst . Elements.formula_ch_parse . het_entry_formula
 
 -- | Does the N-ATOMS field correlate with the FORMULA field?
 het_entry_formula_validate :: Het_Entry -> Bool
@@ -239,7 +245,7 @@ het_entry_formula_validate e =
 "1POC"
 -}
 pdb_file_name_to_id :: FilePath -> String
-pdb_file_name_to_id = map toUpper . dropExtension . takeFileName
+pdb_file_name_to_id = map Data.Char.toUpper . System.FilePath.dropExtension . System.FilePath.takeFileName
 
 {- | Filename for ligand /k/, /ty/ is "ideal" or "model"
 

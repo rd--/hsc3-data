@@ -6,10 +6,11 @@ Connection data is not present.
 -}
 module Sound.Sc3.Data.Chemistry.Poscar where
 
-import Data.Bifunctor {- base -}
-import Data.Char {- base -}
-import System.Directory {- directory -}
-import System.FilePath {- filepath -}
+import qualified Data.Bifunctor {- base -}
+import qualified Data.Char {- base -}
+
+import qualified System.Directory {- directory -}
+import qualified System.FilePath {- filepath -}
 
 import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
@@ -56,7 +57,7 @@ poscar_atom_data (_, _, _, _, _, a) = a
 poscar_atoms_cartesian :: Poscar -> [(Coordinate, String)]
 poscar_atoms_cartesian (_, _, l, _, ty, a) =
   case ty of
-    Poscar_D -> map (first (poscar_direct_to_cartesian l)) a
+    Poscar_D -> map (Data.Bifunctor.first (poscar_direct_to_cartesian l)) a
     Poscar_C -> error "poscar_atoms_cartestian"
 
 poscar_atoms_direct :: Poscar -> [(Coordinate, String)]
@@ -76,7 +77,7 @@ poscar_parse s =
   case lines s of
     dsc : u : l0 : l1 : l2 : a_nm : a_cnt : ty : dat ->
       let a_cnt' = map read (words a_cnt)
-          ty' = if map toLower ty == "direct" then Poscar_D else error "poscar_parse"
+          ty' = if map Data.Char.toLower ty == "direct" then Poscar_D else error "poscar_parse"
       in ( dsc
          , read u
          , (poscar_parse_r3 l0, poscar_parse_r3 l1, poscar_parse_r3 l2)
@@ -104,12 +105,14 @@ poscar_load = fmap poscar_parse . readFile
 
 -- | List of all ".poscar" files at /dir/.
 poscar_dir_entries :: FilePath -> IO [FilePath]
-poscar_dir_entries = fmap (filter ((==) ".poscar" . takeExtension)) . listDirectory
+poscar_dir_entries =
+  fmap (filter ((==) ".poscar" . System.FilePath.takeExtension))
+  . System.Directory.listDirectory
 
 -- | Load all ".poscar" files at directory.
 poscar_load_dir :: FilePath -> IO [(String, Poscar)]
 poscar_load_dir dir = do
   fn <- poscar_dir_entries dir
-  let nm = map takeBaseName fn
-  dat <- mapM (poscar_load . (</>) dir) fn
+  let nm = map System.FilePath.takeBaseName fn
+  dat <- mapM (poscar_load . (System.FilePath.</>) dir) fn
   return (zip nm dat)

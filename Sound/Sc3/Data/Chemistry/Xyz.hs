@@ -5,10 +5,10 @@ Coordinates are ordinarily Angstroms.
 -}
 module Sound.Sc3.Data.Chemistry.Xyz where
 
-import Data.List {- base -}
-import System.FilePath {- filepath -}
+import qualified System.FilePath {- filepath -}
 
 import qualified Music.Theory.Directory as Directory {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
 import qualified Music.Theory.Read as Read {- hmt-base -}
 import qualified Music.Theory.Show as Show {- hmt-base -}
 
@@ -30,7 +30,7 @@ xyz_is_valid (k, _dsc, ent) = k == length ent
 
 -- | Set of atoms present.
 xyz_atom_set :: Xyz -> [String]
-xyz_atom_set (_, _, ent) = nub (sort (map fst ent))
+xyz_atom_set (_, _, ent) = List.nub_sort (map fst ent)
 
 {- | The first line is the number of atoms.  This may be preceded by
 whitespace and anything following is ignored.
@@ -101,8 +101,8 @@ xyz_dir_entries = Directory.dir_subset [".xyz"]
 xyz_load_dir :: FilePath -> IO [(String, Xyz)]
 xyz_load_dir dir = do
   fn <- xyz_dir_entries dir
-  let nm = map takeBaseName fn
-  dat <- mapM (xyz_load . (</>) dir) fn
+  let nm = map System.FilePath.takeBaseName fn
+  dat <- mapM (xyz_load . (System.FilePath.</>) dir) fn
   return (zip nm dat)
 
 {-

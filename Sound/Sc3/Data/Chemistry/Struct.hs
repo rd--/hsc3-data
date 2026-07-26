@@ -6,14 +6,13 @@ There is also a simle plain text format for storing Struct data.
 -}
 module Sound.Sc3.Data.Chemistry.Struct where
 
-import Data.List {- base -}
-import Data.Maybe {- base -}
-import System.FilePath {- filepath -}
-
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
+import qualified System.FilePath {- filepath -}
 
 import qualified Music.Theory.Directory as Directory {- hmt-base -}
-import qualified Music.Theory.Geometry.Obj as Obj {- hmt -}
+import qualified Music.Theory.Geometry.Obj as Obj {- hmt-base -}
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 import qualified Music.Theory.Graph.Type as Graph {- hmt-base -}
 import qualified Music.Theory.Json as Json {- hmt-base -}
 import qualified Music.Theory.Show as Show {- hmt-base -}
@@ -27,7 +26,7 @@ import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
 -- * Types
 
 -- | (atomic-symbol,xyz-coordinate)
-type Atom = (String, V3 Double)
+type Atom = (String, Vector.V3 Double)
 
 atom_sym :: Atom -> String
 atom_sym (e, _) = e
@@ -100,7 +99,7 @@ struct_is_empty s =
 sym_radius :: Fractional n => String -> n
 sym_radius sym =
   let r = Elements.covalent_radius (Elements.atomic_number_err False sym)
-  in Elements.picometres_to_angstroms (fromMaybe 250 r)
+  in Elements.picometres_to_angstroms (Data.Maybe.fromMaybe 250 r)
 
 -- | (-0.8,+0.4)
 type Tolerance = (Double, Double)
@@ -115,23 +114,23 @@ struct_calculate_bonds tol (nm, (n_a, _), dsc, a, _b) =
 -- * Query/Edit
 
 -- | (minima,maxima) of atoms.
-struct_bounds :: Struct -> V2 (V3 Double)
+struct_bounds :: Struct -> Vector.V2 (Vector.V3 Double)
 struct_bounds (_, _, _, atm, _) =
   let c = map snd atm
       r = unzip3 c
-  in (v3_map minimum r, v3_map maximum r)
+  in (Vector.v3_map minimum r, Vector.v3_map maximum r)
 
 -- | Apply /f/ at all atom positions.
-struct_v3_map :: (V3 Double -> V3 Double) -> Struct -> Struct
+struct_v3_map :: (Vector.V3 Double -> Vector.V3 Double) -> Struct -> Struct
 struct_v3_map f (nm, k, dsc, a, b) =
   let (sym, pt) = unzip a
   in (nm, k, dsc, zip sym (map f pt), b)
 
 -- | Translate atom positions so structure is centered at /c/.
-struct_center :: V3 Double -> Struct -> Struct
+struct_center :: Vector.V3 Double -> Struct -> Struct
 struct_center c (nm, k, dsc, a, b) =
   let (sym, pt) = unzip a
-  in (nm, k, dsc, zip sym (v3_center_at c pt), b)
+  in (nm, k, dsc, zip sym (Vector.v3_center_at c pt), b)
 
 -- * Convert - Mod/Sdf, Poscar, Xyz, Pdb
 
@@ -172,8 +171,8 @@ pdb_atom_to_struct tol nm = struct_calculate_bonds tol . xyz_to_struct . (,) nm 
 struct_stat :: Struct -> [String]
 struct_stat s =
   let (nm, (n_a, n_b), dsc, a, _) = s
-      e = sort (map atom_sym a)
-      u = nub e
+      e = Data.List.sort (map atom_sym a)
+      u = Data.List.nub e
       f (i, j) = concat [i, ": ", j]
       q =
         [ ("Name", nm)
@@ -248,8 +247,8 @@ struct_store_txt k fn = writeFile fn . unlines . struct_pp k
 -- | Load Struct based on file-extension (mol/sdf,poscar,struct,xyz)
 struct_load_ext :: FilePath -> IO Struct
 struct_load_ext fn =
-  let f x = (takeBaseName fn, x)
-  in case takeExtension fn of
+  let f x = (System.FilePath.takeBaseName fn, x)
+  in case System.FilePath.takeExtension fn of
       ".mol" -> fmap (mol_to_struct . f) (Mol.mol_load fn)
       ".poscar" -> fmap (poscar_to_struct Poscar.Poscar_C . f) (Poscar.poscar_load fn)
       ".sdf" -> fmap (mol_to_struct . f) (Mol.mol_load fn)
@@ -285,7 +284,7 @@ of 'struct_dir_entries'.
 272
 -}
 struct_load_dir :: FilePath -> IO [Struct]
-struct_load_dir dir = struct_dir_entries dir >>= mapM (struct_load_ext . (dir </>))
+struct_load_dir dir = struct_dir_entries dir >>= mapM (struct_load_ext . (dir System.FilePath.</>))
 
 -- * Io - Type
 
@@ -315,7 +314,7 @@ ext_to_obj k tol xyz_fn obj_fn = do
 ext_to_obj_dir :: String -> Int -> Maybe Tolerance -> FilePath -> FilePath -> IO ()
 ext_to_obj_dir ext k tol ext_dir obj_dir = do
   fn <- Directory.dir_subset [ext] ext_dir
-  let rw x = obj_dir </> replaceExtension (takeFileName x) ".obj"
+  let rw x = obj_dir System.FilePath.</> System.FilePath.replaceExtension (System.FilePath.takeFileName x) ".obj"
       cv x = ext_to_obj k tol x (rw x)
   mapM_ cv fn
 

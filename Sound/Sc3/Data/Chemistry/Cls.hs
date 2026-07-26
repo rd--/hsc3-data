@@ -6,9 +6,10 @@ Center for Computational Materials Science
 -}
 module Sound.Sc3.Data.Chemistry.Cls where
 
-import Data.Maybe {- base -}
-import System.Environment {- base -}
-import System.FilePath {- filepath -}
+import qualified Data.Maybe {- base -}
+import qualified System.Environment {- base -}
+
+import qualified System.FilePath {- filepath -}
 
 import qualified Sound.Sc3.Data.Chemistry.Struct as Struct {- hsc3-data -}
 import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
@@ -16,12 +17,12 @@ import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
 -- | Lookup CLS_DIR, or default to local directory.
 cls_dir :: IO FilePath
 cls_dir = do
-  r <- lookupEnv "CLS_DIR"
-  return (fromMaybe "/home/rohan/sw/hsc3-data/data/chemistry/cls/" r)
+  r <- System.Environment.lookupEnv "CLS_DIR"
+  return (Data.Maybe.fromMaybe "/home/rohan/sw/hsc3-data/data/chemistry/cls/" r)
 
 -- | Make Cls xyz filename from Id.
 cls_xyz_file :: String -> FilePath
-cls_xyz_file nm = "xyz" </> nm <.> "xyz"
+cls_xyz_file nm = "xyz" System.FilePath.</> nm System.FilePath.<.> "xyz"
 
 {- | Load a Cls Xyz file as a Struct.
 
@@ -32,7 +33,7 @@ cls_xyz_file nm = "xyz" </> nm <.> "xyz"
 cls_load :: String -> IO Struct.Struct
 cls_load nm = do
   d <- cls_dir
-  x <- Xyz.xyz_load (d </> cls_xyz_file nm)
+  x <- Xyz.xyz_load (d System.FilePath.</> cls_xyz_file nm)
   return (Struct.xyz_to_struct (nm, x))
 
 {- | Load all Cls Xyz files as Structs.
@@ -44,5 +45,5 @@ cls_load nm = do
 cls_load_dir :: IO [Struct.Struct]
 cls_load_dir = do
   d <- cls_dir
-  s <- Xyz.xyz_load_dir (d </> "xyz")
+  s <- Xyz.xyz_load_dir (d System.FilePath.</> "xyz")
   return (map Struct.xyz_to_struct s)

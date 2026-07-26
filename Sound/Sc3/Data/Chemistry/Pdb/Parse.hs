@@ -1,10 +1,13 @@
--- | Minimal Pdb parser.  <https://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html>
+{- | Minimal Pdb parser.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html>
+-}
 module Sound.Sc3.Data.Chemistry.Pdb.Parse where
 
-import Control.Monad {- base -}
-import Data.Char {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
+import qualified Control.Monad {- base -}
+import qualified Data.Char {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
 
 import qualified Data.ByteString.Char8 as ByteString.Char8 {- bytestring -}
 
@@ -476,7 +479,11 @@ txt_pln = ByteString.Char8.unpack
 "a b c"
 -}
 txt_str :: Txt -> String
-txt_str = ByteString.Char8.unpack . fst . ByteString.Char8.spanEnd isSpace . ByteString.Char8.dropWhile isSpace
+txt_str =
+  ByteString.Char8.unpack
+  . fst
+  . ByteString.Char8.spanEnd Data.Char.isSpace
+  . ByteString.Char8.dropWhile Data.Char.isSpace
 
 -- | 'read' of 'txt_str'
 txt_int :: Txt -> Int
@@ -495,7 +502,7 @@ txt_chr x =
 
 -- | Is Txt nil (ie. empty or all whitespace)
 txt_nil :: Txt -> Bool
-txt_nil = ByteString.Char8.all isSpace
+txt_nil = ByteString.Char8.all Data.Char.isSpace
 
 -- | Readers for 'Char', 'String', 'Int' and 'Double'.
 txt_readers :: [Txt] -> (Int -> Char, Int -> String, Int -> Int, Int -> Double)
@@ -634,7 +641,7 @@ parse_txt_ix f s = fmap (txt_parts_spl s) (f (txt_rec_name s))
 
 pdb_rec_parse :: Txt -> Txt -> Maybe Rec
 pdb_rec_parse nm =
-  let ix = fromMaybe (error (show ("pdb_rec_parse", nm))) (lookup nm pdb_rec_txt_ix)
+  let ix = Data.Maybe.fromMaybe (error (show ("pdb_rec_parse", nm))) (lookup nm pdb_rec_txt_ix)
   in if ByteString.Char8.length nm /= 6
       then error "pdb_rec_parse?"
       else parse_txt_ix (\z -> if z == nm then Just ix else Nothing)
@@ -649,15 +656,18 @@ type Dat = [Txt]
 
 -- | Find first instance of /ty/ record.
 pdb_dat_rec_1 :: Txt -> Dat -> Maybe Rec
-pdb_dat_rec_1 ty = pdb_rec_parse ty <=< find (txt_rec_match ty)
+pdb_dat_rec_1 ty =
+  pdb_rec_parse ty
+  Control.Monad.<=<
+  Data.List.find (txt_rec_match ty)
 
 -- | Collect all instances of /ty/ record.
 pdb_dat_rec :: Txt -> Dat -> [Rec]
-pdb_dat_rec ty = mapMaybe (pdb_rec_parse ty)
+pdb_dat_rec ty = Data.Maybe.mapMaybe (pdb_rec_parse ty)
 
 -- | Collect all instances of /ty-set/ records.
 pdb_dat_rec_set :: [Txt] -> Dat -> [Rec]
-pdb_dat_rec_set ty_set = mapMaybe (pdb_rec_parse_set ty_set)
+pdb_dat_rec_set ty_set = Data.Maybe.mapMaybe (pdb_rec_parse_set ty_set)
 
 -- * Records
 
@@ -667,7 +677,7 @@ dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ", "HETATM"])
 
 -- | (Atom,Hetatm)
 dat_atom :: Dat -> ([Atom], [Atom])
-dat_atom = partition (not . atom_het) . dat_atom_all
+dat_atom = Data.List.partition (not . atom_het) . dat_atom_all
 
 -- | Atom
 dat_atom__ :: Dat -> [Atom]
@@ -681,10 +691,16 @@ dat_conect :: Dat -> [Conect]
 dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
 
 dat_cryst1 :: Dat -> Cryst1
-dat_cryst1 = cryst1_unpack . fromMaybe (error "dat_cryst1?") . pdb_dat_rec_1 (txt "CRYST1")
+dat_cryst1 =
+  cryst1_unpack
+  . Data.Maybe.fromMaybe (error "dat_cryst1?")
+  . pdb_dat_rec_1 (txt "CRYST1")
 
 dat_header :: Dat -> Header
-dat_header = header_unpack . fromMaybe (error "dat_header?") . pdb_dat_rec_1 (txt "HEADER")
+dat_header =
+  header_unpack
+  . Data.Maybe.fromMaybe (error "dat_header?")
+  . pdb_dat_rec_1 (txt "HEADER")
 
 dat_helix :: Dat -> [Helix]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")

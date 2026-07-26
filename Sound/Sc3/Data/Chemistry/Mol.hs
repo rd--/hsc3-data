@@ -16,7 +16,7 @@ import qualified Data.List {- base -}
 import qualified Data.List.Split {- split -}
 import qualified Safe {- safe -}
 import qualified System.Directory {- directory -}
-import System.FilePath {- filepath -}
+import qualified System.FilePath {- filepath -}
 
 import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
@@ -250,17 +250,19 @@ mol_load fn = do
 80
 -}
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
-mol_dir_entries ext = fmap (filter ((==) ext . takeExtension)) . System.Directory.listDirectory
+mol_dir_entries ext =
+  fmap (filter ((==) ext . System.FilePath.takeExtension))
+  . System.Directory.listDirectory
 
 mol_dir_filenames :: String -> FilePath -> IO [FilePath]
 mol_dir_filenames ext dir = do
   fn <- mol_dir_entries ext dir
-  return (map (dir </>) fn)
+  return (map (dir System.FilePath.</>) fn)
 
 -- | Load all .ext files at directory, extensions are ".mol" or ".sdf"
 mol_load_dir :: String -> FilePath -> IO [(String, Mol)]
 mol_load_dir ext dir = do
   fn <- mol_dir_entries ext dir
-  let nm = map takeBaseName fn
-  dat <- mapM (mol_load . (</>) dir) fn
+  let nm = map System.FilePath.takeBaseName fn
+  dat <- mapM (mol_load . (System.FilePath.</>) dir) fn
   return (zip nm dat)

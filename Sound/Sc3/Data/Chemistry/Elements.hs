@@ -44,7 +44,7 @@ type Dalton = Double
 {- | (atomic-number,atomic-symbol,name,standard-atomic-weight)
 
 >>> let f (_,sym,_,_) = if length sym == 1 then Just (List.head_err sym) else Nothing
->>> Data.List.sort (mapMaybe f periodic_table)
+>>> Data.List.sort (Data.Maybe.mapMaybe f periodic_table)
 "BCFHIKNOPSUVWY"
 
 >>> Data.List.nub (map (\(_,sym,_,_) -> length sym) periodic_table)
@@ -422,7 +422,7 @@ element_group =
 {- | Lookup atomic symbol in 'periodic_table' and return atomic number.
 If /cs/ is False then match case-insensitively.
 
->>> mapMaybe (atomic_number True) (map return ['A' .. 'Z'])
+>>> Data.Maybe.mapMaybe (atomic_number True) (map return ['A' .. 'Z'])
 [5,6,9,1,53,19,7,8,15,16,92,23,74,39]
 -}
 atomic_number :: Bool -> Atomic_Symbol -> Maybe Atomic_Number
