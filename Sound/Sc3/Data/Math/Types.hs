@@ -6,44 +6,44 @@ To use actual sized types see "Data.Int" and "Data.Word".
 -}
 module Sound.Sc3.Data.Math.Types where
 
--- | 4-bit unsigned integer (0 - 15)
+-- | Type synonym for 4-bit unsigned integer (0 - 15)
 type U4 = Int
 
--- | 7-bit unsigned integer (0 - 127)
+-- | Type synonym for 7-bit unsigned integer (0 - 127)
 type U7 = Int
 
--- | 8-bit unsigned integer (0 - 255)
+-- | Type synonym for 8-bit unsigned integer (0 - 255)
 type U8 = Int
 
--- | 12-bit unsigned integer (0 - 4095)
+-- | Type synonym for 12-bit unsigned integer (0 - 4095)
 type U12 = Int
 
--- | 16-bit unsigned integer (0 - 65,535)
+-- | Type synonym for 16-bit unsigned integer (0 - 65,535)
 type U16 = Int
 
--- | 24-bit unsigned integer (0 - 16,777,215)
+-- | Type synonym for 24-bit unsigned integer (0 - 16,777,215)
 type U24 = Int
 
 -- | 2^24 - 1
 u24_max :: Num n => n
 u24_max = 16777215
 
--- | 32-bit unsigned integer (0 - 4,294,967,295)
+-- | Type synonym for 32-bit unsigned integer (0 - 4,294,967,295)
 type U32 = Int
 
--- | 8-bit signed integer (-128 - 127).
+-- | Type synonym for 8-bit signed integer (-128 - 127).
 type I8 = Int
 
--- | 12-bit signed integer (-4096 - 4095).
+-- | Type synonym for 12-bit signed integer (-4096 - 4095).
 type I12 = Int
 
--- | 16-bit signed integer (-32,768 - 32,767).
+-- | Type synonym for 16-bit signed integer (-32,768 - 32,767).
 type I16 = Int
 
--- | 32-bit floating point
+-- | Type synonym for 32-bit floating point
 type F32 = Double
 
--- | 64-bit floating point
+-- | Type synonym for 64-bit floating point
 type F64 = Double
 
 u4_to_u12 :: U4 -> U12
@@ -90,10 +90,13 @@ u12_to_i12_err x = u12_to_i12_def (error ("u12_to_i12: " ++ show x)) x
 
 {- | U12 as I12, ie. two's complement bit-pattern.
 
-> map u12_as_i12 [0,1,2047,2048,2049,4095] == [0,1,2047,-2048,-2047,-1]
+>>> map u12_as_i12 [0,1,2047,2048,2049,4095]
+[0,1,2047,-2048,-2047,-1]
 -}
 u12_as_i12 :: U12 -> I12
-u12_as_i12 x = let y = u12_to_i12_err x in if y >= 2048 then y - 2048 * 2 else y
+u12_as_i12 x =
+  let y = u12_to_i12_err x
+  in if y >= 2048 then y - 2048 * 2 else y
 
 u12_to_int :: U12 -> Int
 u12_to_int = id

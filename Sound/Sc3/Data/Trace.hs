@@ -1,10 +1,10 @@
 -- | Traces are sequences of (key,value) pairs where key is in Ord and the sequence is ascending.
 module Sound.Sc3.Data.Trace where
 
-import Control.Monad {- base -}
-import Data.Bifunctor {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
+import qualified Control.Monad {- base -}
+import qualified Data.Bifunctor {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 import qualified Safe {- safe -}
@@ -70,7 +70,7 @@ type Time = Double
 -- * Io
 
 trace_assert_nc :: Eq a => Maybe a -> a -> IO ()
-trace_assert_nc nc n = when (maybe False (/= n) nc) (error "trace_load_sf: incorrect nc")
+trace_assert_nc nc n = Control.Monad.when (maybe False (/= n) nc) (error "trace_load_sf: incorrect nc")
 
 {- | Load real valued trace stored as a sound file.
 
@@ -83,11 +83,11 @@ trace_load_sf :: Maybe Int -> FilePath -> IO (Trace Time [Double])
 trace_load_sf nc fn = do
   (h, t : d) <- SndFile.read fn
   trace_assert_nc nc (SndFile.channelCount h - 1)
-  return (zip t (transpose d))
+  return (zip t (Data.List.transpose d))
 
--- | Require trace be of dogree two and translate to tuple form.
+-- | Require trace be of degree two and translate to tuple form.
 trace_to_t2 :: Trace t [n] -> Trace t (n, n)
-trace_to_t2 = map (second Tuple.t2_from_list)
+trace_to_t2 = map (Data.Bifunctor.second Tuple.t2_from_list)
 
 -- | Variant for loading two-channel trace file.
 trace_load_sf2 :: FilePath -> IO (Trace Time (Double, Double))
@@ -107,10 +107,10 @@ trace_load_sf2_dir p = do
 trace_load_csv :: Maybe Int -> FilePath -> IO (Trace Time [Double])
 trace_load_csv nc fn = do
   (_, tbl) <- Array.Csv.csv_table_read (True, ',', False, Array.Csv.Csv_No_Align) read fn
-  when (null tbl) (error "trace_load_csv: empty tbl")
-  let (t, d) = List.headTail (transpose tbl)
+  Control.Monad.when (null tbl) (error "trace_load_csv: empty tbl")
+  let (t, d) = List.headTail (Data.List.transpose tbl)
   trace_assert_nc nc (length (List.head_err tbl) - 1)
-  return (zip t (transpose d))
+  return (zip t (Data.List.transpose d))
 
 {- | Load degree two Trace from Csv file.
 
@@ -130,11 +130,11 @@ trace_load_csv2_dir p = do
 
 -- | Map over trace times.
 trace_map_t :: (t -> t') -> Trace t a -> Trace t' a
-trace_map_t f = map (first f)
+trace_map_t f = map (Data.Bifunctor.first f)
 
 -- | Map over trace values.
 trace_map :: (a -> b) -> Trace t a -> Trace t b
-trace_map f = map (second f)
+trace_map f = map (Data.Bifunctor.second f)
 
 -- * Lookup
 
@@ -166,7 +166,7 @@ trace_neighbours = either (const Nothing) (Just . fst) Lang..: trace_locate
 
 -- | 'fromJust' of 'trace_neighbours'.
 trace_neighbours_err :: (Fractional t, Ord t) => Trace t a -> t -> ((t, a), (t, a))
-trace_neighbours_err = fromJust Lang..: trace_neighbours
+trace_neighbours_err = Data.Maybe.fromJust Lang..: trace_neighbours
 
 -- | Interpolate between to trace points using given interpolation function.
 trace_lerp :: Fractional t => Lerp_f t a b -> t -> (t, a) -> (t, a) -> (t, b)
@@ -187,11 +187,11 @@ trace_lookup lerp_f t n =
 
 -- | 'trace_lookup' with default value.
 trace_lookup_def :: (Ord t, Fractional t) => b -> Lerp_f t a b -> Trace t a -> t -> (t, b)
-trace_lookup_def def lerp_f t n = fromMaybe (n, def) (trace_lookup lerp_f t n)
+trace_lookup_def def lerp_f t n = Data.Maybe.fromMaybe (n, def) (trace_lookup lerp_f t n)
 
 -- | 'fromJust' of 'trace_lookup'.
 trace_lookup_err :: (Ord t, Fractional t) => Lerp_f t a b -> Trace t a -> t -> (t, b)
-trace_lookup_err = fromJust Lang..:: trace_lookup
+trace_lookup_err = Data.Maybe.fromJust Lang..:: trace_lookup
 
 trace_lookup_seq_asc :: (Ord t, Fractional t) => Lerp_f t a b -> Trace t a -> [t] -> Trace t b
 trace_lookup_seq_asc lerp_f =
@@ -353,7 +353,7 @@ iota a b n = iota_incr a b ((b - a) / fromIntegral (n - 1)) n
 "lsohnogrt"
 -}
 interleave2 :: ([t], [t]) -> [t]
-interleave2 = concat . transpose . Tuple.t2_to_list
+interleave2 = concat . Data.List.transpose . Tuple.t2_to_list
 
 {- | Inverse of 'interleave2'.
 
@@ -364,7 +364,7 @@ interleave2 = concat . transpose . Tuple.t2_to_list
 ("abcd","ABCD")
 -}
 deinterleave2 :: [a] -> ([a], [a])
-deinterleave2 = Tuple.t2_from_list . transpose . Split.chunksOf 2
+deinterleave2 = Tuple.t2_from_list . Data.List.transpose . Split.chunksOf 2
 
 -- * Plotting
 
@@ -393,7 +393,7 @@ trace2_plot_tbl =
 
 trace_write_csv :: (n -> String, a -> [String]) -> FilePath -> [(n, a)] -> IO ()
 trace_write_csv (n_pp, a_pp) fn =
-  let f (n, a) = intercalate "," (n_pp n : a_pp a)
+  let f (n, a) = Data.List.intercalate "," (n_pp n : a_pp a)
   in writeFile fn . unlines . map f
 
 trace_read_csv :: Read n => (String -> n, [String] -> a) -> FilePath -> IO [(n, a)]

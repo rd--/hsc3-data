@@ -45,7 +45,7 @@ Read local mime.types:
 -}
 module Sound.Sc3.Data.MimeType where
 
-import Data.List {- base -}
+import qualified Data.List {- base -}
 
 type FileExtension = String
 type MimeType = String
@@ -75,7 +75,7 @@ lookupMimeType db ext =
     _ -> error "lookupMimeType?"
 
 mimeTypesExtensions :: MimeTypes -> [FileExtension]
-mimeTypesExtensions = nub . sort . concatMap snd
+mimeTypesExtensions = Data.List.nub . Data.List.sort . concatMap snd
 
 lookupExtensions :: MimeTypes -> MimeType -> [FileExtension]
 lookupExtensions db typ = concatMap snd (filter (\(t, _) -> t == typ) db)

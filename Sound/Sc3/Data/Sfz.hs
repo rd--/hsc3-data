@@ -21,22 +21,24 @@ ampeg_release : float : seconds : 0 : 0 100
 -}
 module Sound.Sc3.Data.Sfz where
 
-import Data.List {- base -}
-import Data.Maybe {- base -}
-import System.FilePath {- filepath -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
+
+import qualified System.FilePath {- filepath -}
 
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Maybe as Maybe {- hmt-base -}
 import qualified Music.Theory.Read as Read {- hmt-base -}
 
 import qualified Music.Theory.Pitch as Pitch {- hmt -}
 
-import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
+import qualified Sound.File.HSndFile as SndFile {- hsc3-sf-hsndfile -}
 
-import Sound.Midi.Type {- midi-osc -}
+import qualified Sound.Midi.Type as Midi {- midi-osc -}
 
-import Sound.Sc3.Data.Math.Types {- hsc3-data -}
+import qualified Sound.Sc3.Data.Math.Types as Math {- hsc3-data -}
 
 -- * Types
 
@@ -109,7 +111,7 @@ sfz_tokenize =
 >>> map sfz_parse_pitch ["B3","60","C#4"]
 [59,60,61]
 -}
-sfz_parse_pitch :: String -> Key
+sfz_parse_pitch :: String -> Midi.Key
 sfz_parse_pitch s =
   case Read.read_maybe s of
     Just n -> n
@@ -150,7 +152,7 @@ sfz_collate gl =
 -- | Collect <control> and <global> opcodes, and collate <region>s.
 sfz_get_data :: [Sfz_Section] -> Sfz_Data
 sfz_get_data gr =
-  let (lhs, rhs) = partition ((`elem` ["<control>", "<global>"]) . fst) gr
+  let (lhs, rhs) = Data.List.partition ((`elem` ["<control>", "<global>"]) . fst) gr
   in case lhs of
       [] -> ([], [], sfz_collate [] rhs)
       [("<control>", c)] -> (c, [], sfz_collate [] rhs)
@@ -181,7 +183,7 @@ sfz_region_lookup (gr, c) k =
 
 -- | Erroring variant.
 sfz_region_lookup_err :: Sfz_Region -> String -> String
-sfz_region_lookup_err r = fromMaybe (error "sfz_region_lookup?") . sfz_region_lookup r
+sfz_region_lookup_err r = Maybe.from_just "sfz_region_lookup" . sfz_region_lookup r
 
 -- | Lookup with default value and parser.
 sfz_region_lookup_f :: t -> (String -> t) -> Sfz_Region -> String -> t
@@ -202,19 +204,19 @@ sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 sfz_region_sample :: Sfz_Region -> FilePath
 sfz_region_sample r = sfz_region_lookup_err r "sample"
 
-sfz_region_tune :: Sfz_Region -> I8
+sfz_region_tune :: Sfz_Region -> Math.I8
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
 
-sfz_region_lochan :: Sfz_Region -> Channel
+sfz_region_lochan :: Sfz_Region -> Midi.Channel
 sfz_region_lochan r = sfz_region_lookup_read 1 r "lochan"
 
-sfz_region_hichan :: Sfz_Region -> Channel
+sfz_region_hichan :: Sfz_Region -> Midi.Channel
 sfz_region_hichan r = sfz_region_lookup_read 16 r "hichan"
 
-sfz_region_lovel :: Sfz_Region -> Velocity
+sfz_region_lovel :: Sfz_Region -> Midi.Velocity
 sfz_region_lovel r = sfz_region_lookup_read 0 r "lovel"
 
-sfz_region_hivel :: Sfz_Region -> Velocity
+sfz_region_hivel :: Sfz_Region -> Midi.Velocity
 sfz_region_hivel r = sfz_region_lookup_read 127 r "hivel"
 
 sfz_region_loop_mode :: Sfz_Region -> Maybe String
@@ -229,10 +231,10 @@ sfz_loop_mode_sym = flip List.lookup_err sfz_loop_mode_sym_tbl
 sfz_region_loop_mode_sym :: Sfz_Region -> Maybe Char
 sfz_region_loop_mode_sym = fmap sfz_loop_mode_sym . sfz_region_loop_mode
 
-sfz_region_loop_start :: Sfz_Region -> U32
+sfz_region_loop_start :: Sfz_Region -> Math.U32
 sfz_region_loop_start r = sfz_region_lookup_read 0 r "loop_start"
 
-sfz_region_loop_end :: Sfz_Region -> U32
+sfz_region_loop_end :: Sfz_Region -> Math.U32
 sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
 sfz_region_ampeg_attack :: Sfz_Region -> Double
@@ -268,7 +270,7 @@ sfz_region_key_validate r =
 {- | If opcode @key@ exists it defines the triple (pitch_keycenter,lokey,hikey).
   Else read these opcodes individually, with defaults.
 -}
-sfz_region_key :: Sfz_Region -> (Key, Key, Key)
+sfz_region_key :: Sfz_Region -> (Midi.Key, Midi.Key, Midi.Key)
 sfz_region_key r =
   case sfz_region_lookup r "key" of
     Just x -> let n = sfz_parse_pitch x in (n, n, n)
@@ -283,7 +285,7 @@ sfz_region_key r =
      else return Nothing and mode (defaulting to no_loop).
      Does not read loop data from sample file.
 -}
-sfz_region_loop_data :: Sfz_Region -> (String, Maybe (U32, U32))
+sfz_region_loop_data :: Sfz_Region -> (String, Maybe (Math.U32, Math.U32))
 sfz_region_loop_data r =
   case (sfz_region_lookup r "loop_start", sfz_region_lookup r "loop_end") of
     (Just st, Just en) ->
@@ -311,22 +313,22 @@ sfz_region_loop_data r =
 -}
 sfz_region_sample_resolve :: FilePath -> Sfz_Control -> Sfz_Region -> FilePath
 sfz_region_sample_resolve sfz_fn ctl rgn =
-  let (dir, _) = splitFileName sfz_fn
-      path = dir </> fromMaybe "" (lookup "default_path" ctl)
-  in path </> sfz_region_sample rgn
+  let (dir, _) = System.FilePath.splitFileName sfz_fn
+      path = dir System.FilePath.</> Data.Maybe.fromMaybe "" (lookup "default_path" ctl)
+  in path System.FilePath.</> sfz_region_sample rgn
 
--- | Get number-of-channels of sample of region, requires reading Sf header.
+-- | Get number-of-channels of sample of region, requires reading sound-file header.
 sfz_region_get_nc :: FilePath -> Sfz_Control -> Sfz_Region -> IO Int
 sfz_region_get_nc sfz_fn ctl rgn = do
-  hdr <- Sf.sf_header (sfz_region_sample_resolve sfz_fn ctl rgn)
-  return (Sf.channelCount hdr)
+  hdr <- SndFile.sf_header (sfz_region_sample_resolve sfz_fn ctl rgn)
+  return (SndFile.channelCount hdr)
 
 -- | Run 'sfz_region_get_nc' at each region in sequence.
 sfz_data_get_nc :: FilePath -> Sfz_Data -> IO [Int]
 sfz_data_get_nc sfz_fn (ctl, _, rgn) = mapM (sfz_region_get_nc sfz_fn ctl) rgn
 
 -- | Sfz note range (lo,hi), inclusive
-sfz_data_rng :: Sfz_Data -> (Key, Key)
+sfz_data_rng :: Sfz_Data -> (Midi.Key, Midi.Key)
 sfz_data_rng (_, _, rgn) =
   let (_, l, r) = unzip3 (map sfz_region_key rgn)
   in (minimum l, maximum r)

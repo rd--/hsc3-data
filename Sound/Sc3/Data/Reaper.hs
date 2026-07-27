@@ -1,7 +1,7 @@
 -- | Reaper utilities
 module Sound.Sc3.Data.Reaper where
 
-import Text.Printf {- base -}
+import qualified Text.Printf {- base -}
 
 -- * Reaper Channel Map File
 
@@ -20,8 +20,8 @@ type ChannelMap = [ChannelMapping]
 -- | Print ChannelMapping
 channelMappingPp :: ChannelMapping -> [String]
 channelMappingPp (user, name, system) =
-  [ printf "ch%d=%d" (user - 1) (system - 1)
-  , printf "name%d=%s" (user - 1) name
+  [ Text.Printf.printf "ch%d=%d" (user - 1) (system - 1)
+  , Text.Printf.printf "name%d=%s" (user - 1) name
   ]
 
 {- | Print ChannelMap
@@ -41,6 +41,6 @@ name2=Right
 channelMapPp :: ChannelMap -> String
 channelMapPp l =
   let header = "[reaper_chanmap]"
-      meta = printf "map_hwnch=%d\nmap_size=%d" (length l) (length l)
+      meta = Text.Printf.printf "map_hwnch=%d\nmap_size=%d" (length l) (length l)
       entries = unlines (concatMap channelMappingPp l)
   in unlines [header, meta, entries]

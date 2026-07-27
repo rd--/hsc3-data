@@ -1,7 +1,7 @@
 -- | <http://www.csounds.com/manual/html/pvanal.html>
 module Sound.Sc3.Data.Pvoc where
 
-import Data.Word {- base -}
+import qualified Data.Word {- base -}
 
 import qualified Data.ByteString.Lazy as ByteString {- bytestring -}
 import qualified Data.Vector.Unboxed as Vector {- vector -}
@@ -24,7 +24,7 @@ pvx_guid_text = "8312B9C2-2E6E-11D4-A824-DE5B96C3AB21"
 >>> map (show_hex_uc 2) pvx_guid_u8
 ["C2","B9","12","83","6E","2E","D4","11","A8","24","DE","5B","96","C3","AB","21"]
 -}
-pvx_guid_u8 :: [Word8]
+pvx_guid_u8 :: [Data.Word.Word8]
 pvx_guid_u8 = [194, 185, 18, 131, 110, 46, 212, 17, 168, 36, 222, 91, 150, 195, 171, 33]
 
 data Pvoc_WordFormat
@@ -60,20 +60,20 @@ data Pvoc_SampleType
 <https://docs.microsoft.com/en-us/windows/desktop/api/mmreg/ns-mmreg-waveformatextensible>
 -}
 data Wave_Fmt_Pvoc_80 = Wave_Fmt_Pvoc_80
-  { cbSize :: Word16
-  , wValidBitsPerSample :: Word16
-  , dwChannelMask :: Word32
+  { cbSize :: Data.Word.Word16
+  , wValidBitsPerSample :: Data.Word.Word16
+  , dwChannelMask :: Data.Word.Word32
   , subFormat :: String
-  , dwVersion :: Word32
-  , dwDataSize :: Word32
+  , dwVersion :: Data.Word.Word32
+  , dwDataSize :: Data.Word.Word32
   , wWordFormat :: Pvoc_WordFormat
   , wAnalFormat :: Pvoc_FrameType
   , wSourceFormat :: Wave.Wave_Format
   , wWindowType :: Pvoc_WindowType
-  , nAnalysisBins :: Word32
-  , dwWinlen :: Word32
-  , dwOverlap :: Word32
-  , dwFrameAlign :: Word32
+  , nAnalysisBins :: Data.Word.Word32
+  , dwWinlen :: Data.Word.Word32
+  , dwOverlap :: Data.Word.Word32
+  , dwFrameAlign :: Data.Word.Word32
   , fAnalysisRate :: Float
   , fWindowParam :: Float
   }
@@ -195,7 +195,7 @@ data Pv_Header = Pv_Header
   , pv_minFreq :: Double -- 0.0
   , pv_maxFreq :: Double
   , pv_freqFormat :: Int -- 1 (LINEAR)
-  , pv_Info :: [Word8] -- 4 BYTES
+  , pv_Info :: [Data.Word.Word8] -- 4 BYTES
   }
 
 -- | Endianess is determined by reading the magic number.
