@@ -37,6 +37,7 @@ type Bond = (Int, Int)
 -- | (name,degree=(n-atoms,n-bonds),description,atoms,bonds)
 type Struct = (String, (Int, Int), String, [Atom], [Bond])
 
+-- | Json object representing structure.
 struct_json :: Struct -> Json.Value
 struct_json (nm, _, dsc, atm, bnd) =
   let e (i, j) = Json.array (map Json.int [i, j])
@@ -67,6 +68,7 @@ struct_description (_, _, dsc, _, _) = dsc
 struct_atoms :: Struct -> [Atom]
 struct_atoms (_, _, _, atm, _) = atm
 
+-- | Apply /f/ to the description.
 struct_description_edit :: (String -> String) -> Struct -> Struct
 struct_description_edit f (nm, k, dsc, a, b) = (nm, k, f dsc, a, b)
 
@@ -101,7 +103,7 @@ sym_radius sym =
   let r = Elements.covalent_radius (Elements.atomic_number_err False sym)
   in Elements.picometres_to_angstroms (Data.Maybe.fromMaybe 250 r)
 
--- | (-0.8,+0.4)
+-- | Tolerance values (min,max). min is ordinarily negative. (-0.8,+0.4)
 type Tolerance = (Double, Double)
 
 -- | Replaces existing bonds, if any, with calculated bonds.

@@ -35,6 +35,9 @@ type Atomic_Number = Int
 -- | Atomic symbol (1-2 char)
 type Atomic_Symbol = String
 
+-- | Atomic name (3-13 char)
+type Atomic_Name = String
+
 {- | The dalton (Da) or unified atomic mass unit (u) is defined as
 1/12 of the mass of an unbound neutral atom of carbon-12 in its
 nuclear and electronic ground state and at rest.
@@ -50,13 +53,16 @@ type Dalton = Double
 >>> Data.List.nub (map (\(_,sym,_,_) -> length sym) periodic_table)
 [1,2]
 
+>>> List.nub_sort (map (\(_,_,nm,_) -> length nm) periodic_table)
+[3,4,5,6,7,8,9,10,11,12,13]
+
 Commission on Isotopic Abundances and Atomic Weights,
 The International Union of Pure and Applied Chemistry,
 <https://ciaaw.org/atomic-weights.htm>
 
 <https://www.qmul.ac.uk/sbcs/iupac/AtWt/>
 -}
-periodic_table :: [(Atomic_Number, Atomic_Symbol, String, Dalton)]
+periodic_table :: [(Atomic_Number, Atomic_Symbol, Atomic_Name, Dalton)]
 periodic_table =
   [ (1, "H", "Hydrogen", 1.00794)
   , (2, "He", "Helium", 4.002602)
@@ -443,6 +449,21 @@ atomic_number cs x =
 -}
 atomic_number_err :: Bool -> Atomic_Symbol -> Atomic_Number
 atomic_number_err cs sym = Maybe.from_just ("atomic_number: " ++ sym) (atomic_number cs sym)
+
+{- | Lookup atomic symbol in 'periodic_table' and return atomic name.
+If /cs/ is False then match case-insensitively.
+
+>>> Data.Maybe.mapMaybe (atomic_name True) (map return ['A' .. 'Z'])
+["Boron","Carbon","Fluorine","Hydrogen","Iodine","Potassium","Nitrogen","Oxygen","Phosphorus","Sulfur","Uranium","Vanadium","Tungsten","Yttrium"]
+-}
+atomic_name :: Bool -> Atomic_Symbol -> Maybe Atomic_Name
+atomic_name cs x =
+  let u = if cs then id else map Data.Char.toUpper
+  in lookup (u x) (map (\(_, sym, nm, _) -> (u sym, nm)) periodic_table)
+
+-- | Erroring variant.
+atomic_name_err :: Bool -> Atomic_Symbol -> Atomic_Name
+atomic_name_err cs sym = Maybe.from_just ("atomic_name: " ++ sym) (atomic_name cs sym)
 
 -- | Lookup atomic number in 'periodic_table' and return atomic weight.
 atomic_weight :: Atomic_Number -> Maybe Dalton
