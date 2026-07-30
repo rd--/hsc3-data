@@ -25,11 +25,17 @@ import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
 
 -- * Types
 
--- | (atomic-symbol,xyz-coordinate)
-type Atom = (String, Vector.V3 Double)
+-- | XYZ-coordinates
+type Coord = Vector.V3 Double
+
+  -- | (atomic-symbol,xyz-coordinates)
+type Atom = (String, Coord)
 
 atom_sym :: Atom -> String
 atom_sym (e, _) = e
+
+atom_coord :: Atom -> Coord
+atom_coord (_, c) = c
 
 -- | (i,j), indices into Atom sequence (zero indexed)
 type Bond = (Int, Int)
@@ -116,20 +122,20 @@ struct_calculate_bonds tol (nm, (n_a, _), dsc, a, _b) =
 -- * Query/Edit
 
 -- | (minima,maxima) of atoms.
-struct_bounds :: Struct -> Vector.V2 (Vector.V3 Double)
+struct_bounds :: Struct -> Vector.V2 Coord
 struct_bounds (_, _, _, atm, _) =
   let c = map snd atm
       r = unzip3 c
   in (Vector.v3_map minimum r, Vector.v3_map maximum r)
 
 -- | Apply /f/ at all atom positions.
-struct_v3_map :: (Vector.V3 Double -> Vector.V3 Double) -> Struct -> Struct
+struct_v3_map :: (Coord -> Coord) -> Struct -> Struct
 struct_v3_map f (nm, k, dsc, a, b) =
   let (sym, pt) = unzip a
   in (nm, k, dsc, zip sym (map f pt), b)
 
 -- | Translate atom positions so structure is centered at /c/.
-struct_center :: Vector.V3 Double -> Struct -> Struct
+struct_center :: Coord -> Struct -> Struct
 struct_center c (nm, k, dsc, a, b) =
   let (sym, pt) = unzip a
   in (nm, k, dsc, zip sym (Vector.v3_center_at c pt), b)

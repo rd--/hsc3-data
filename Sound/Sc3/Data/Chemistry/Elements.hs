@@ -185,245 +185,52 @@ periodic_table =
   ]
 
 {- | List giving the period of each element.
+There are seven periods, given by the integers 1-7.
+
+>>> List.nub_sort element_period
+[1,2,3,4,5,6,7]
+
+>>> map length (Data.List.group element_period)
+[2,8,8,18,18,32,32]
 
 >>> length element_period
 118
 -}
 element_period :: [Int]
-element_period =
-  [ 1
-  , 1
-  , 2
-  , 2
-  , 2
-  , 2
-  , 2
-  , 2
-  , 2
-  , 2
-  , 3
-  , 3
-  , 3
-  , 3
-  , 3
-  , 3
-  , 3
-  , 3
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 4
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 5
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 6
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  , 7
-  ]
+element_period = concat (zipWith replicate [2,8,8,18,18,32,32] [1 .. 7])
 
 {- | List giving the group of each element.
 Values of 0 indicate no group (the F-block).
+There are eighteen groups, given by the integers 1-18.
+
+>>> List.nub_sort element_group
+[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
 
 >>> length element_group
-104
+118
+
+>>> map (+ 1) (Data.List.elemIndices 3 element_group)
+[21,39,71,103]
 -}
 element_group :: [Int]
 element_group =
-  [ 1
-  , 18
-  , 1
-  , 2
-  , 13
-  , 14
-  , 15
-  , 16
-  , 17
-  , 18
-  , 1
-  , 2
-  , 13
-  , 14
-  , 15
-  , 16
-  , 17
-  , 18
-  , 1
-  , 2
-  , 3
-  , 4
-  , 5
-  , 6
-  , 7
-  , 8
-  , 9
-  , 10
-  , 11
-  , 12
-  , 13
-  , 14
-  , 15
-  , 16
-  , 17
-  , 18
-  , 1
-  , 2
-  , 3
-  , 4
-  , 5
-  , 6
-  , 7
-  , 8
-  , 9
-  , 10
-  , 11
-  , 12
-  , 13
-  , 14
-  , 15
-  , 16
-  , 17
-  , 18
-  , 1
-  , 2
-  , 30
-  , 0
-  , 0
-  , 0
-  , 0
-  , 0
-  , 0
-  , 0
-  , 4
-  , 5
-  , 6
-  , 7
-  , 8
-  , 9
-  , 10
-  , 11
-  , 12
-  , 13
-  , 14
-  , 15
-  , 16
-  , 17
-  , 18
-  , 1
-  , 2
-  , 30
-  , 0
-  , 0
-  , 0
-  , 0
-  , 0
-  , 0
-  , 0
-  , 4
-  , 5
-  , 6
-  , 7
-  , 8
-  , 9
-  , 10
-  , 11
-  , 12
-  , 13
-  , 14
-  , 15
-  , 16
-  , 17
-  , 18
+  concat
+  [ [1, 18]
+  , [1 .. 2] ++ [13 .. 18]
+  , [1 .. 2] ++ [13 .. 18]
+  , [1 .. 18]
+  , [1 .. 18]
+  , [1, 2] ++ replicate 14 0 ++ [3 .. 18]
+  , [1, 2] ++ replicate 14 0 ++ [3 .. 18]
   ]
+
+{- | The atomic numbers of the synthetic elements.
+
+>>> length synthetic_elements
+24
+-}
+synthetic_elements :: [Int]
+synthetic_elements = [95 .. 118]
 
 {- | Lookup atomic symbol in 'periodic_table' and return atomic number.
 If /cs/ is False then match case-insensitively.

@@ -13,7 +13,7 @@ import qualified Data.ByteString.Char8 as ByteString.Char8 {- bytestring -}
 
 import qualified Music.Theory.Directory as Directory {- hmt-base -}
 
-import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
 
 -- * Records-Se (Se=Start-end)
 
@@ -565,73 +565,73 @@ pdb_rec_txt_ix = let f (nm, se) = (txt nm, se_to_ix se) in map f pdb_rec_str_se
 
 -- * Unpack
 
-atom_unpack :: Rec -> Atom
+atom_unpack :: Rec -> Pdb.Atom
 atom_unpack (r, x) =
   let (c, s, i, f) = txt_readers x
   in (r == txt "HETATM", i 0, s 1, c 2, (s 3, c 4, i 5, c 6), (f 7, f 8, f 9), s 12)
 
-conect_unpack :: Rec -> Conect
+conect_unpack :: Rec -> Pdb.Conect
 conect_unpack (_, x) = zip (repeat (txt_int (x !! 0))) (map txt_int (filter (not . txt_nil) (tail x)))
 
-cryst1_unpack :: Rec -> Cryst1
+cryst1_unpack :: Rec -> Pdb.Cryst1
 cryst1_unpack (_, x) = let (_, s, i, f) = txt_readers x in ((f 0, f 1, f 2), (f 3, f 4, f 5), s 6, i 7)
 
-header_unpack :: Rec -> Header
+header_unpack :: Rec -> Pdb.Header
 header_unpack (_, x) = let s = txt_str . (x !!) in (s 0, s 1, s 2)
 
-helix_unpack :: Rec -> Helix
+helix_unpack :: Rec -> Pdb.Helix
 helix_unpack (_, x) =
   let (c, s, i, _) = txt_readers x
   in ((i 0, s 1), (s 2, c 3, i 4, c 5), (s 6, c 7, i 8, c 9), i 10, i 12)
 
-het_unpack :: Rec -> Het
+het_unpack :: Rec -> Pdb.Het
 het_unpack (_, x) = let (c, s, i, _) = txt_readers x in ((s 0, c 1, i 2, c 3), i 4, s 5)
 
-link_unpack :: Rec -> Link
+link_unpack :: Rec -> Pdb.Link
 link_unpack (_, x) =
   let (c, s, i, f) = txt_readers x
   in (s 0, c 1, (s 2, c 3, i 4, c 5), s 6, c 7, (s 8, c 9, i 10, c 11), i 12, i 13, f 14)
 
-master_unpack :: Rec -> Master
+master_unpack :: Rec -> Pdb.Master
 master_unpack (_, x) = let i = txt_int . (x !!) in (i 0, i 2, i 3, i 4, i 6, i 7, i 8, i 9, i 10, i 11)
 
-mdltyp_unpack :: Rec -> MdlTyp
+mdltyp_unpack :: Rec -> Pdb.MdlTyp
 mdltyp_unpack (_, x) = (txt_pln (x !! 0), txt_str (x !! 1))
 
 -- | Serial
 model_unpack :: Rec -> Int
 model_unpack (_, x) = txt_int (x !! 0)
 
-modres_unpack :: Rec -> ModRes
+modres_unpack :: Rec -> Pdb.ModRes
 modres_unpack (_, x) = let (c, s, i, _) = txt_readers x in (s 0, (s 1, c 2, i 3, c 4), s 5, s 6)
 
 nummdl_unpack :: Rec -> Int
 nummdl_unpack (_, x) = txt_int (x !! 0)
 
-remark_unpack :: Rec -> Remark
+remark_unpack :: Rec -> Pdb.Remark
 remark_unpack (_, x) = (txt_int (x !! 0), txt_pln (x !! 1))
 
 -- | Removes nil entries.
-seqres_unpack :: Rec -> SeqRes
+seqres_unpack :: Rec -> Pdb.SeqRes
 seqres_unpack (_, x) =
   let (c, s, i, _) = txt_readers x
   in (i 0, c 1, i 2, filter (not . null) (map s [3 .. 15]))
 
-sheet_unpack :: Rec -> Sheet
+sheet_unpack :: Rec -> Pdb.Sheet
 sheet_unpack (_, x) =
   let (c, s, i, _) = txt_readers x
   in (i 0, s 1, i 2, (s 3, c 4, i 5, c 6), (s 7, c 8, i 9, c 10))
 
-ssbond_unpack :: Rec -> SsBond
+ssbond_unpack :: Rec -> Pdb.SsBond
 ssbond_unpack (_, x) =
   let (c, s, i, f) = txt_readers x
       cys n = if s n /= "CYS" then error "ssbond_unpack?" else "CYS"
   in (i 0, (cys 1, c 2, i 3, c 4), (cys 5, c 6, i 7, c 8), i 9, i 10, f 11)
 
-ter_unpack :: Rec -> Ter
+ter_unpack :: Rec -> Pdb.Ter
 ter_unpack (_, x) = let (c, s, i, _) = txt_readers x in (i 0, (s 1, c 2, i 3, c 4))
 
-title_unpack :: Rec -> Title
+title_unpack :: Rec -> Pdb.Title
 title_unpack (_, x) = (txt_pln (x !! 0), txt_str (x !! 1))
 
 -- * Parse
@@ -651,7 +651,7 @@ pdb_rec_parse_set nm = parse_txt_ix (\z -> if z `elem` nm then lookup z pdb_rec_
 
 -- * Dat
 
--- | Pdb Data, a list of unparsed bytestring records.
+-- | Pdb.Pdb Data, a list of unparsed bytestring records.
 type Dat = [Txt]
 
 -- | Find first instance of /ty/ record.
@@ -672,84 +672,84 @@ pdb_dat_rec_set ty_set = Data.Maybe.mapMaybe (pdb_rec_parse_set ty_set)
 -- * Records
 
 -- | Atom and Hetatm records
-dat_atom_all :: Dat -> [Atom]
+dat_atom_all :: Dat -> [Pdb.Atom]
 dat_atom_all = map atom_unpack . pdb_dat_rec_set (map txt ["ATOM  ", "HETATM"])
 
 -- | (Atom,Hetatm)
-dat_atom :: Dat -> ([Atom], [Atom])
-dat_atom = Data.List.partition (not . atom_het) . dat_atom_all
+dat_atom :: Dat -> ([Pdb.Atom], [Pdb.Atom])
+dat_atom = Data.List.partition (not . Pdb.atom_het) . dat_atom_all
 
 -- | Atom
-dat_atom__ :: Dat -> [Atom]
+dat_atom__ :: Dat -> [Pdb.Atom]
 dat_atom__ = map atom_unpack . pdb_dat_rec (txt "ATOM  ")
 
 -- | Hetatm
-dat_hetatm :: Dat -> [Atom]
+dat_hetatm :: Dat -> [Pdb.Atom]
 dat_hetatm = map atom_unpack . pdb_dat_rec (txt "HETATM")
 
-dat_conect :: Dat -> [Conect]
+dat_conect :: Dat -> [Pdb.Conect]
 dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
 
-dat_cryst1 :: Dat -> Cryst1
+dat_cryst1 :: Dat -> Pdb.Cryst1
 dat_cryst1 =
   cryst1_unpack
   . Data.Maybe.fromMaybe (error "dat_cryst1?")
   . pdb_dat_rec_1 (txt "CRYST1")
 
-dat_header :: Dat -> Header
+dat_header :: Dat -> Pdb.Header
 dat_header =
   header_unpack
   . Data.Maybe.fromMaybe (error "dat_header?")
   . pdb_dat_rec_1 (txt "HEADER")
 
-dat_helix :: Dat -> [Helix]
+dat_helix :: Dat -> [Pdb.Helix]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")
 
-dat_het :: Dat -> [Het]
+dat_het :: Dat -> [Pdb.Het]
 dat_het = map het_unpack . pdb_dat_rec (txt "HET   ")
 
-dat_link :: Dat -> [Link]
+dat_link :: Dat -> [Pdb.Link]
 dat_link = map link_unpack . pdb_dat_rec (txt "LINK  ")
 
-dat_master :: Dat -> Maybe Master
+dat_master :: Dat -> Maybe Pdb.Master
 dat_master = fmap master_unpack . pdb_dat_rec_1 (txt "MASTER")
 
-dat_modres :: Dat -> [ModRes]
+dat_modres :: Dat -> [Pdb.ModRes]
 dat_modres = map modres_unpack . pdb_dat_rec (txt "MODRES")
 
 dat_nummdl :: Dat -> Maybe Int
 dat_nummdl = fmap nummdl_unpack . pdb_dat_rec_1 (txt "NUMMDL")
 
-dat_remark :: Dat -> [Remark]
+dat_remark :: Dat -> [Pdb.Remark]
 dat_remark = map remark_unpack . pdb_dat_rec (txt "REMARK")
 
-dat_seqres :: Dat -> [SeqRes]
+dat_seqres :: Dat -> [Pdb.SeqRes]
 dat_seqres = map seqres_unpack . pdb_dat_rec (txt "SEQRES")
 
-dat_sheet :: Dat -> [Sheet]
+dat_sheet :: Dat -> [Pdb.Sheet]
 dat_sheet = map sheet_unpack . pdb_dat_rec (txt "SHEET ")
 
-dat_ssbond :: Dat -> [SsBond]
+dat_ssbond :: Dat -> [Pdb.SsBond]
 dat_ssbond = map ssbond_unpack . pdb_dat_rec (txt "SSBOND")
 
-dat_ter :: Dat -> [Ter]
+dat_ter :: Dat -> [Pdb.Ter]
 dat_ter = map ter_unpack . pdb_dat_rec (txt "TER   ")
 
-dat_title :: Dat -> [Title]
+dat_title :: Dat -> [Pdb.Title]
 dat_title = map title_unpack . pdb_dat_rec (txt "TITLE ")
 
 -- * Composite
 
--- | Dat to Pdb
-dat_parse :: Dat -> Pdb
+-- | Dat to Pdb.Pdb
+dat_parse :: Dat -> Pdb.Pdb
 dat_parse x =
   ( dat_header x
-  , title_group (dat_title x)
+  , Pdb.title_group (dat_title x)
   , dat_nummdl x
   , dat_cryst1 x
   , dat_atom x
-  , conect_group (dat_conect x)
-  , seqres_group (dat_seqres x)
+  , Pdb.conect_group (dat_conect x)
+  , Pdb.seqres_group (dat_seqres x)
   , dat_helix x
   , dat_sheet x
   , dat_link x
@@ -758,10 +758,10 @@ dat_parse x =
 
 -- * Io
 
--- | Load Pdb file as Dat.
+-- | Load Pdb.Pdb file as Dat.
 pdb_load_dat :: FilePath -> IO Dat
 pdb_load_dat = fmap ByteString.Char8.lines . ByteString.Char8.readFile
 
--- | Load directory of Pdb files as list of Dat.
+-- | Load directory of Pdb.Pdb files as list of Dat.
 pdb_load_dat_dir :: FilePath -> IO [Dat]
 pdb_load_dat_dir dir = Directory.dir_subset [".pdb"] dir >>= mapM pdb_load_dat

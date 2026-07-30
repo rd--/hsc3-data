@@ -6,18 +6,18 @@ import qualified Data.Maybe {- base -}
 
 import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 
-import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Parse {- hsc3-data -}
-import Sound.Sc3.Data.Chemistry.Pdb.Types {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Parse as Pdb.Parse {- hsc3-data -}
+import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
 
 -- * Stat
 
-pdb_stat :: Pdb -> [(String, String)]
+pdb_stat :: Pdb.Pdb -> [(String, String)]
 pdb_stat ((h1, h2, h3), t, m, _, (a, h), c, sq, hlx, sht, lnk, ssb) =
-  let e = Data.List.nub (Data.List.sort (map atom_element (a ++ h)))
+  let e = Data.List.nub (Data.List.sort (map Pdb.atom_element (a ++ h)))
       uniq_ch = map fst . Data.List.nubBy ((==) `Data.Function.on` snd)
       u = uniq_ch sq
-      alt = map atom_altloc (a ++ h)
-      res = Data.List.nub (Data.List.sort (map atom_residue_id (a ++ h)))
+      alt = map Pdb.atom_altloc (a ++ h)
+      res = Data.List.nub (Data.List.sort (map Pdb.atom_residue_id (a ++ h)))
       hoh = filter (\(nm, _, _, _) -> nm == "HOH") res
   in [ ("ID", h3)
      , ("CLASSIFICATION", h1)
@@ -29,7 +29,7 @@ pdb_stat ((h1, h2, h3), t, m, _, (a, h), c, sq, hlx, sht, lnk, ssb) =
         then
           [ ("N-ATOM", show (length a))
           , ("N-HETATM", show (length h))
-          , ("ATOM-ALT-ID", altloc_id_set alt)
+          , ("ATOM-ALT-ID", Pdb.altloc_id_set alt)
           , ("N-ATOM-ALT", show (length (filter (/= ' ') alt)))
           , ("N-CHAIN", show (length sq))
           , ("N-UNIQ-CHAIN", show (length u))
@@ -48,8 +48,8 @@ pdb_stat ((h1, h2, h3), t, m, _, (a, h), c, sq, hlx, sht, lnk, ssb) =
           ]
         else []
 
-dat_stat :: Parse.Dat -> [(String, String)]
-dat_stat = pdb_stat . Parse.dat_parse
+dat_stat :: Pdb.Parse.Dat -> [(String, String)]
+dat_stat = pdb_stat . Pdb.Parse.dat_parse
 
 -- * Alpha Carbon
 
@@ -58,20 +58,20 @@ dat_stat = pdb_stat . Parse.dat_parse
      Atoms that are located past a Ter record are deleted.
      Nucleotide chains are not given as null entries.
 -}
-dat_to_alpha_carbon_chains :: Bool -> Parse.Dat -> Maybe [(Char, [Vector.V3 Double])]
+dat_to_alpha_carbon_chains :: Bool -> Pdb.Parse.Dat -> Maybe [(Char, [Vector.V3 Double])]
 dat_to_alpha_carbon_chains uniq dat =
-  if Data.Maybe.isJust (Parse.dat_nummdl dat)
+  if Data.Maybe.isJust (Pdb.Parse.dat_nummdl dat)
     then Nothing
     else
-      let t = Parse.dat_ter dat
-          a = map (atom_apply_ter t) (atom_group (filter atom_sel_altloc_A (Parse.dat_atom_all dat)))
+      let t = Pdb.Parse.dat_ter dat
+          a = map (Pdb.atom_apply_ter t) (Pdb.atom_group (filter Pdb.atom_sel_altloc_A (Pdb.Parse.dat_atom_all dat)))
           uniq_ch = map fst . Data.List.nubBy ((==) `Data.Function.on` snd)
-          u = uniq_ch (seqres_group (Parse.dat_seqres dat))
+          u = uniq_ch (Pdb.seqres_group (Pdb.Parse.dat_seqres dat))
           c = if uniq then filter (flip elem u . fst) a else a
-          p = map (map atom_coord . filter ((==) "CA" . atom_name) . snd) c
+          p = map (map Pdb.atom_coord . filter ((==) "CA" . Pdb.atom_name) . snd) c
       in Just (filter (not . null . snd) (zip (map fst c) p))
 
-dat_to_alpha_carbon_chains_err :: Bool -> Parse.Dat -> [(Char, [Vector.V3 Double])]
+dat_to_alpha_carbon_chains_err :: Bool -> Pdb.Parse.Dat -> [(Char, [Vector.V3 Double])]
 dat_to_alpha_carbon_chains_err uniq =
   Data.Maybe.fromMaybe (error "dat_to_alpha_carbon_chains")
   . dat_to_alpha_carbon_chains uniq
@@ -79,43 +79,43 @@ dat_to_alpha_carbon_chains_err uniq =
 -- * Residues
 
 -- | Set of all residue names at Atom records.
-atom_residue_set :: Parse.Dat -> [String]
+atom_residue_set :: Pdb.Parse.Dat -> [String]
 atom_residue_set =
   Data.List.nub .
   Data.List.sort .
-  map (residue_id_name . atom_residue_id) .
-  Parse.dat_atom__
+  map (Pdb.residue_id_name . Pdb.atom_residue_id) .
+  Pdb.Parse.dat_atom__
 
 -- | Set of all residue names at Hetatm records.
-hetatm_residue_set :: Parse.Dat -> [String]
+hetatm_residue_set :: Pdb.Parse.Dat -> [String]
 hetatm_residue_set =
   Data.List.nub
   . Data.List.sort
-  . Data.List.map (residue_id_name . atom_residue_id)
-  . Parse.dat_hetatm
+  . Data.List.map (Pdb.residue_id_name . Pdb.atom_residue_id)
+  . Pdb.Parse.dat_hetatm
 
 -- | Set of all residue names at Seqres records.
-seqres_residue_set :: Parse.Dat -> [String]
+seqres_residue_set :: Pdb.Parse.Dat -> [String]
 seqres_residue_set =
   Data.List.nub
   . Data.List.sort
-  . concatMap seqres_residue_names
-  . Parse.dat_seqres
+  . concatMap Pdb.seqres_residue_names
+  . Pdb.Parse.dat_seqres
 
 -- | Set of all residue names at Modres records.
-modres_residue_set :: Parse.Dat -> [String]
+modres_residue_set :: Pdb.Parse.Dat -> [String]
 modres_residue_set =
   Data.List.nub
   . Data.List.sort
-  . concatMap ((\(i, j) -> [i, j]) . modres_names)
-  . Parse.dat_modres
+  . concatMap ((\(i, j) -> [i, j]) . Pdb.modres_names)
+  . Pdb.Parse.dat_modres
 
 -- | Residue sets (Atom,Hetatm,Seqres,Modres).
-residue_sets :: Parse.Dat -> ([String], [String], [String], [String])
+residue_sets :: Pdb.Parse.Dat -> ([String], [String], [String], [String])
 residue_sets x = (atom_residue_set x, hetatm_residue_set x, seqres_residue_set x, modres_residue_set x)
 
 -- | Set of 'residue_sets'
-residue_sets_concat :: Parse.Dat -> [String]
+residue_sets_concat :: Pdb.Parse.Dat -> [String]
 residue_sets_concat =
   Data.List.nub
   . Data.List.sort
@@ -124,14 +124,14 @@ residue_sets_concat =
   . residue_sets
 
 -- | Atom/residue stat for selector predicate.
-atom_residue_stat_of :: (Atom -> Bool) -> FilePath -> IO ()
+atom_residue_stat_of :: (Pdb.Atom -> Bool) -> FilePath -> IO ()
 atom_residue_stat_of predicate pdb_fn = do
-  d <- Parse.pdb_load_dat pdb_fn
-  let a = filter predicate (filter atom_sel_altloc_A (Parse.dat_atom_all d))
+  d <- Pdb.Parse.pdb_load_dat pdb_fn
+  let a = filter predicate (filter Pdb.atom_sel_altloc_A (Pdb.Parse.dat_atom_all d))
   print ("N-ATOM", length a)
-  print ("N-RESIDUES", length (Data.List.nub (Data.List.sort (map atom_residue_id a))))
+  print ("N-RESIDUES", length (Data.List.nub (Data.List.sort (map Pdb.atom_residue_id a))))
 
 -- * Water
 
-is_water :: Atom -> Bool
-is_water = (==) "HOH" . residue_id_name . atom_residue_id
+is_water :: Pdb.Atom -> Bool
+is_water = (==) "HOH" . Pdb.residue_id_name . Pdb.atom_residue_id
