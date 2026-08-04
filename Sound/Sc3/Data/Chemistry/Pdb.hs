@@ -27,7 +27,12 @@ import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb.Types {- hsc3-data -}
 
 -- * Amino Acid and Nucleotide Nomenclature
 
--- | The standard Pdb codes for amino acids, deoxyribonucleotides and ribonucleotides.
+{- | The standard Pdb codes for amino acids, deoxyribonucleotides and ribonucleotides.
+
+- <https://en.wikipedia.org/wiki/Amino_acid>
+- <https://en.wikipedia.org/wiki/Deoxyribonucleotide>
+- <https://en.wikipedia.org/wiki/Ribonucleotide>
+-}
 pdb_std_codes :: ([String], [String], [String])
 pdb_std_codes =
   ( words "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR"
@@ -61,6 +66,7 @@ pdb_deoxyribonucleotides = let (_, d, _) = pdb_std_codes in d
 pdb_ribonucleotides :: [String]
 pdb_ribonucleotides = let (_, _, r) = pdb_std_codes in r
 
+-- | The standard 2- and 1-character codes for nucleotides.
 pdb_nucleotides :: [String]
 pdb_nucleotides = let (_, d, r) = pdb_std_codes in d ++ r
 
@@ -72,7 +78,11 @@ pdb_code_tbl =
     , map (\x -> (x, last x)) pdb_nucleotides
     ]
 
--- | Translate Pdb SEQRES code (upper case 3-letter code) to IUPAC code.
+{- | Translate Pdb SEQRES code (upper case 3-letter code) to IUPAC code.
+
+>>> pdb_seqres_code_lookup "LEU"
+Just 'L'
+-}
 pdb_seqres_code_lookup :: String -> Maybe Char
 pdb_seqres_code_lookup = flip lookup pdb_code_tbl
 
@@ -110,19 +120,34 @@ pdb_to_mol_x pdb_fn mol_fn = do
 
 -- * Monomer-Het
 
--- | Uri for het_dictionary (52,082,480 BYTES)
+-- | Uri for het_dictionary (Ftp)
+het_dictionary_uri_ftp :: String
+het_dictionary_uri_ftp = "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/het_dictionary.txt"
+
+{- | Uri for het_dictionary (87,380,975 bytes, 2026-08-04)
+
+<https://www.wwpdb.org/data/ccd>
+-}
 het_dictionary_uri :: String
-het_dictionary_uri = "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/het_dictionary.txt"
+het_dictionary_uri = "https://files.wwpdb.org/pub/pdb/data/monomers/het_dictionary.txt"
 
-{- | Uri for monomer RESIDUE file.
+{- | Uri for monomer Residue file (invidual entry from het dictionary).
 
->>> het_residue_uri "GLY"
+>>> het_residue_uri_ftp "GLY"
 "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/GLY"
 -}
-het_residue_uri :: String -> String
-het_residue_uri = (++) "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/"
+het_residue_uri_ftp :: String -> String
+het_residue_uri_ftp = (++) "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/"
 
-{- | Uri for monomer CIF file.
+{- | Uri for invidual entry from het dictionary
+
+>>> het_residue_uri "ATP"
+"https://files.wwpdb.org/pub/pdb/data/monomers/ATP"
+-}
+het_residue_uri :: String -> String
+het_residue_uri nm = "https://files.wwpdb.org/pub/pdb/data/monomers/" ++ nm
+
+{- | Uri for monomer Cif file.
 
 >>> het_cif_uri "GLY"
 "https://files.rcsb.org/ligands/download/GLY.cif"
@@ -130,7 +155,7 @@ het_residue_uri = (++) "ftp://ftp.wwpdb.org/pub/pdb/data/monomers/"
 het_cif_uri :: String -> String
 het_cif_uri k = "https://files.rcsb.org/ligands/download/" ++ k ++ ".cif"
 
--- | Type for RECORD in 'het_dictionary'
+-- | Type for each record in 'het_dictionary'
 type Het_Record = [ByteString.Char8.ByteString]
 
 -- | Get (NAME,N-ATOMS) for residue at record.
@@ -218,12 +243,12 @@ het_entry_lookup k = Data.List.find (\((nm, _), _, _, _) -> nm == k)
 >>> fn = "/home/rohan/data/pdb/monomers/het_dictionary.txt"
 >>> e <- het_load_entries fn
 >>> length e
-31253
+50782
 
 >>> het_entry_lookup "GLY" e
-Just (("GLY",10),"GLYCINE","C2 H5 N1 O2",(["C","CA","H","H2","HA2","HA3","HXT","N","O","OXT"],[("CA","N"),("H","N"),("H2","N"),("CA","N"),("C","CA"),("CA","HA2"),("CA","HA3"),("C","CA"),("C","O"),("C","OXT"),("C","O"),("C","OXT"),("HXT","OXT"),("H","N"),("H2","N"),("CA","HA2"),("CA","HA3"),("HXT","OXT")]))
+Just (("GLY",10),"GLYCINE","C2 H5 N O2",(["C","CA","H","H2","HA2","HA3","HXT","N","O","OXT"],[("CA","N"),("H","N"),("H2","N"),("CA","N"),("C","CA"),("CA","HA2"),("CA","HA3"),("C","CA"),("C","O"),("C","OXT"),("C","O"),("C","OXT"),("HXT","OXT"),("H","N"),("H2","N"),("CA","HA2"),("CA","HA3"),("HXT","OXT")]))
 
-> map (flip het_entry_lookup e . map toUpper . \(_,x,_) -> x) proteinogenic_amino_acid_tbl
+> map (flip het_entry_lookup e . map Data.Char.toUpper . \(x,_) -> x) amino_acid_average_mass_table
 -}
 het_load_entries :: FilePath -> IO [Het_Entry]
 het_load_entries = fmap (map het_parse_entry) . het_load_records
@@ -281,6 +306,9 @@ pdb_ligand_summary_uri = (++) "http://www.rcsb.org/ligand/"
 
 >>> pdb_ligand_sdf_uri "ideal" "ALA"
 "http://files.rcsb.org/ligands/view/ALA_ideal.sdf"
+
+>>> pdb_ligand_sdf_uri "model" "ALA"
+"http://files.rcsb.org/ligands/view/ALA_model.sdf"
 -}
 pdb_ligand_sdf_uri :: String -> String -> String
 pdb_ligand_sdf_uri ty k = "http://files.rcsb.org/ligands/view/" ++ pdb_ligand_sdf_filename ty k
@@ -319,7 +347,11 @@ amino_acid_hydropathy_tbl =
   , ("Arginine", 'R', -4.5)
   ]
 
--- | <http://education.expasy.org/student_projects/isotopident/htdocs/aa-list.html>
+{- | <http://education.expasy.org/student_projects/isotopident/htdocs/aa-list.html>
+
+>>> length amino_acid_monoisotopic_mass_tbl
+20
+-}
 amino_acid_monoisotopic_mass_tbl :: [(String, Double)]
 amino_acid_monoisotopic_mass_tbl =
   [ ("Gly", 57.021464)
@@ -342,6 +374,37 @@ amino_acid_monoisotopic_mass_tbl =
   , ("Arg", 156.10111)
   , ("Tyr", 163.06333)
   , ("Trp", 186.07931)
+  ]
+
+{- | The masses listed (in daltons) are based on weighted averages of the elemental isotopes at their natural abundances.
+
+>>> length amino_acid_average_mass_table
+22
+-}
+amino_acid_average_mass_table :: [(String, Double)]
+amino_acid_average_mass_table =
+  [("Ala", 89.09404)
+  ,("Cys", 121.15404)
+  ,("Asp", 133.10384)
+  ,("Glu", 147.13074)
+  ,("Phe", 165.19184)
+  ,("Gly", 75.06714)
+  ,("His", 155.15634)
+  ,("Ile", 131.17464)
+  ,("Lys", 146.18934)
+  ,("Leu", 131.17464)
+  ,("Met", 149.20784)
+  ,("Asn", 132.11904)
+  ,("Pyl", 255.31)
+  ,("Pro", 115.13194)
+  ,("Gln", 146.14594)
+  ,("Arg", 174.20274)
+  ,("Ser", 105.09344)
+  ,("Thr", 119.12034)
+  ,("Sec", 168.053)
+  ,("Val", 117.14784)
+  ,("Trp", 204.22844)
+  ,("Tyr", 181.19124)
   ]
 
 -- * Io

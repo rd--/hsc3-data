@@ -34,6 +34,10 @@ type Mol_Bond = (Vector.V2 Int, Int)
 -- | Mol record. (name,description,atom-count,bond-count,atoms,bonds,version)
 type Mol = (String, String, Int, Int, [Mol_Atom], [Mol_Bond], Int)
 
+-- | Name.
+mol_name :: Mol -> String
+mol_name (nm, _, _, _, _, _, _) = nm
+
 -- | Atom and bond counts
 mol_degree :: Mol -> (Int, Int)
 mol_degree (_, _, a, b, _, _, _) = (a, b)
@@ -216,6 +220,14 @@ mol_v30_ent = filter ("M  V30 " `Data.List.isPrefixOf`)
 
 -- * Load
 
+-- | Parse V20 or V30 Mol text.
+mol_parse :: [String] -> Mol
+mol_parse l =
+  let r = mol_v20_parse l
+  in case r of
+       (nm, dsc, 0, 0, [], [], 3000) -> mol_v30_parse (nm, dsc) (mol_v30_ent l)
+       _ -> r
+
 {- | 'mol_v20_parse' or 'mol_v30_parse' of 'readFile'.
 Can read the initial entry of an .sdf file.
 
@@ -233,15 +245,17 @@ Can read the initial entry of an .sdf file.
 >>> m <- mol_load fn
 >>> mol_degree m
 (40,21)
+
+>>> let fn = "/home/rohan/rd/j/2020-02-22/sdf/DB01452.sdf"
+>>>> m <- mol_load fn
+>>> mol_degree m
+(50,54)
 -}
 mol_load :: FilePath -> IO Mol
 mol_load fn = do
   s <- readFile fn
   let l = lines s
-      r = mol_v20_parse l
-  case r of
-    (nm, dsc, 0, 0, [], [], 3000) -> return (mol_v30_parse (nm, dsc) (mol_v30_ent l))
-    _ -> return r
+  return (mol_parse l)
 
 {- | List of all .ext files at /dir/.  Sdf is a superset of Mol, extensions are ".mol" and ".sdf".
 

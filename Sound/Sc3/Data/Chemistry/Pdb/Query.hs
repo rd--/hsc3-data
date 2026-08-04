@@ -1,3 +1,4 @@
+-- | Pdb (Protein Data Bank) Query Functions
 module Sound.Sc3.Data.Chemistry.Pdb.Query where
 
 import qualified Data.Function {- base -}
@@ -11,6 +12,7 @@ import qualified Sound.Sc3.Data.Chemistry.Pdb.Types as Pdb {- hsc3-data -}
 
 -- * Stat
 
+-- | Answer a list of (key,value) pairs giving an overview of the given Pdb structure.
 pdb_stat :: Pdb.Pdb -> [(String, String)]
 pdb_stat ((h1, h2, h3), t, m, _, (a, h), c, sq, hlx, sht, lnk, ssb) =
   let e = Data.List.nub (Data.List.sort (map Pdb.atom_element (a ++ h)))

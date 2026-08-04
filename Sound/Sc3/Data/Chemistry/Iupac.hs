@@ -82,3 +82,27 @@ iupac_three_letter_code_to_one_letter_code x =
       f (_, c3, _) = ci x c3
       g (c1, _, _) = c1
   in fmap g (Data.List.find f iupac_amino_acid_tbl)
+
+{- | The codes for the nine essential amino acids.
+
+>>> length iupac_essential_amino_acids
+9
+-}
+iupac_essential_amino_acids :: [Char]
+iupac_essential_amino_acids = "HILKMFTWV"
+
+{- | The codes for the six conditionally essential amino acids.
+
+>>> length iupac_conditionally_essential_amino_acids
+6
+-}
+iupac_conditionally_essential_amino_acids :: [Char]
+iupac_conditionally_essential_amino_acids = "RCQGPY"
+
+{- | The codes for the seven non-essential amino acids.
+
+>>> length iupac_non_essential_amino_acids
+7
+-}
+iupac_non_essential_amino_acids :: [Char]
+iupac_non_essential_amino_acids = "ADNESUO"
