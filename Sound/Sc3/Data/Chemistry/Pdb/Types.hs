@@ -47,6 +47,10 @@ residue_id_in_range ((_, c1, k1, i1), (_, c3, k3, i3)) (_, c2, k2, i2) =
 The ATOM records present the atomic coordinates for standard amino acids and nucleotides.
 
 <https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM>
+
+Non-polymer or other “non-standard” chemical coordinates, such as water molecules or atoms presented in HET groups use the HETATM record type.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#HETATM>
 -}
 type Atom = (Bool, Int, String, Char, Residue_Id, (Double, Double, Double), String)
 
@@ -87,6 +91,12 @@ atom_element (_, _, _, _, _, _, e) = e
 atom_element_or_name :: Atom -> String
 atom_element_or_name (_, _, nm, _, _, _, el) = if null el then nm else el
 
+{- | CONECT
+
+The CONECT records specify connectivity between atoms for which coordinates are supplied.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect10.html#CONECT>
+-}
 type Conect = [(Int, Int)]
 
 {- | ((A,B,C),(Alpha,Beta,Gamma),Space-Group,Z)
@@ -112,7 +122,12 @@ type Header = (String, String, String)
 header_id4 :: Header -> String
 header_id4 (_, _, x) = x
 
--- | ((Serial,Id),Init-Residue,End-Residue,Class,Length)
+{- | ((Serial,Id),Init-Residue,End-Residue,Class,Length)
+
+HELIX records are used to identify the position of helices in the molecule.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#HELIX>
+-}
 type Helix = ((Int, String), Residue_Id, Residue_Id, Int, Int)
 
 helix_serial :: Helix -> Int
@@ -121,6 +136,12 @@ helix_serial ((k, _), _, _, _, _) = k
 helix_chain_id :: Helix -> Char
 helix_chain_id (_, (_, c1, _, _), (_, c2, _, _), _, _) = if c1 /= c2 then error "helix_chain_id?" else c1
 
+{- | (Residue-Id,Number-Het-Atoms,Description)
+
+HET records are used to describe non-standard residues, such as prosthetic groups, inhibitors, solvent molecules, and ions for which coordinates are supplied.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HET>
+-}
 type Het = (Residue_Id, Int, String)
 
 het_id :: Het -> String
@@ -141,7 +162,12 @@ type Master = (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)
 -- | (Continuation,Text)
 type MdlTyp = (String, String)
 
--- | (Id,Residue-Id,Std-Res,Comment)
+{- | (Id,Residue-Id,Std-Res,Comment)
+
+The MODRES record provides descriptions of modifications to protein and nucleic acid residues.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#MODRES>
+-}
 type ModRes = (String, Residue_Id, String, String)
 
 -- | (ResName,StdRes) fields of ModRes record.
@@ -184,7 +210,12 @@ The SSBOND record identifies each disulfide bond in protein and polypeptide stru
 -}
 type SsBond = (Int, Residue_Id, Residue_Id, Int, Int, Double)
 
--- | (Serial,Residue-Id)
+{- | (Serial,Residue-Id)
+
+The TER record indicates the end of a list of ATOM/HETATM records for a chain.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#TER>
+-}
 type Ter = (Int, Residue_Id)
 
 -- | (Continuation,Title)
@@ -192,14 +223,22 @@ type Title = (String, String)
 
 -- * Pdb (Composite)
 
+{- | NumMdl
+
+The NUMMDL record indicates total number of models in a PDB entry.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#NUMMDL>
+-}
+type NumMdl = Int
+
 -- | (Header,Title,NumMdl,Cryst1,(Atom,HetAtm),Conect,SeqRes,Helix,Sheet,Link,SsBond)
 type Pdb =
   ( Header
   , String
-  , Maybe Int
+  , Maybe NumMdl
   , Cryst1
   , ([Atom], [Atom])
-  , [(Int, Int)]
+  , Conect
   , [(Char, [String])]
   , [Helix]
   , [Sheet]
@@ -229,7 +268,7 @@ atom_group :: [Atom] -> [(Char, [Atom])]
 atom_group = map (fmap (Data.List.sortOn atom_serial)) . List.collate_on atom_chain_id id
 
 -- | Merge Conect records, sort and remove (i,j)-(j,i) duplicates.
-conect_group :: [Conect] -> [(Int, Int)]
+conect_group :: [Conect] -> Conect
 conect_group =
   let o (i, j) = (min i j, max i j)
   in List.nub_sort . map o . concat

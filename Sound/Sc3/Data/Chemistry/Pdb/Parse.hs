@@ -608,7 +608,7 @@ modres_unpack :: Rec -> Pdb.ModRes
 modres_unpack (_, x) = let (c, s, i, _) = txt_readers x in (s 0, (s 1, c 2, i 3, c 4), s 5, s 6)
 
 -- | Unpack NUMMDL record, tells model count.
-nummdl_unpack :: Rec -> Int
+nummdl_unpack :: Rec -> Pdb.NumMdl
 nummdl_unpack (_, x) = txt_int (x !! 0)
 
 -- | Unpack REMARK record.

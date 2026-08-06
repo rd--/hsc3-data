@@ -135,5 +135,6 @@ atom_residue_stat_of predicate pdb_fn = do
 
 -- * Water
 
+-- | Is the residue id name HOH?
 is_water :: Pdb.Atom -> Bool
 is_water = (==) "HOH" . Pdb.residue_id_name . Pdb.atom_residue_id
