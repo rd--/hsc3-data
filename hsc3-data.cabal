@@ -79,6 +79,7 @@ Library
                    Sound.Sc3.Data.Chemistry.Mol
                    Sound.Sc3.Data.Chemistry.Mp
                    Sound.Sc3.Data.Chemistry.Pdb
+                   Sound.Sc3.Data.Chemistry.Pdb.Het
                    Sound.Sc3.Data.Chemistry.Pdb.Parse
                    Sound.Sc3.Data.Chemistry.Pdb.Query
                    Sound.Sc3.Data.Chemistry.Pdb.Remark
