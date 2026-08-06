@@ -4,7 +4,10 @@ import qualified Text.ParserCombinators.Parsec as Parsec {- parsec -}
 
 -- * Types
 
--- | Degree, minutes, seconds.
+{- | Degree, minutes, seconds.
+One degree (°) equals 60 minutes ('), and one minute (') equals 60 seconds (").
+A full circle has 360 degrees.
+-}
 type Dms = (Int, Int, Int)
 
 -- | Quadrant, degree, minutes, seconds.
@@ -21,6 +24,11 @@ type P a = Parsec.GenParser Char () a
 
 -- * Core
 
+{- | Dms to fractional degree
+
+>>> dms_to_degree (90, 30, 45)
+90.5125
+-}
 dms_to_degree :: Dms -> Double
 dms_to_degree (d, m, s) =
   let i = fromIntegral
@@ -44,6 +52,11 @@ quadrant_f q =
 qdms_to_degree :: Qdms -> Double
 qdms_to_degree (q, d, m, s) = quadrant_f q (dms_to_degree (d, m, s))
 
+{- | Fractional degree to Dms.
+
+>>> degree_to_dms 90.5125
+(90,30,45)
+-}
 degree_to_dms :: Double -> Dms
 degree_to_dms dgr =
   let i = fromIntegral
@@ -182,9 +195,11 @@ parse_coord_unicode = Parsec.parse (p_coord_by p_qdms_unicode) "parse_coord_unic
 
 -- * Pretty print (Pp)
 
+-- | Pretty print Qdms
 qdms_pp :: Qdms -> String
 qdms_pp (q, d, m, s) = q : ' ' : unwords (map show [d, m, s])
 
+-- | Pretty print Coord
 coord_pp :: Coord -> String
 coord_pp (phi, lambda) =
   let phi' = latitude_to_qdms phi

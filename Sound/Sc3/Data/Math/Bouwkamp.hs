@@ -8,9 +8,9 @@ are sequentially placed in the highest (and leftmost) possible slots.
 module Sound.Sc3.Data.Math.Bouwkamp where
 
 import qualified Data.List {- base -}
-import Text.Printf {- base -}
+import qualified Text.Printf {- base -}
 
-import Data.Colour.SRGB {- colour -}
+import qualified Data.Colour.SRGB as Srgb {- colour -}
 
 import qualified Language.Dot as Dot {- language-dot -}
 import qualified Text.ParserCombinators.Parsec as Parsec {- parsec -}
@@ -192,9 +192,12 @@ p_bouwkamp = do
   l <- Parsec.many1 p_int_paren_list
   return (n, w, h, l)
 
-bouwkamp_parse_err :: String -> Bouwkamp_Code
-bouwkamp_parse_err s =
-  case Parsec.parse p_bouwkamp "p_bouwkamp" s of
+parse_bouwkamp :: String -> Either Parsec.ParseError Bouwkamp_Code
+parse_bouwkamp s = Parsec.parse p_bouwkamp "parse_bouwkamp" s
+
+parse_bouwkamp_err :: String -> Bouwkamp_Code
+parse_bouwkamp_err s =
+  case parse_bouwkamp s of
     Left err -> error (show err)
     Right r -> r
 
@@ -227,7 +230,7 @@ bc_connection_graph sq =
 -- * Dot
 
 gen_hex_clr :: Int -> [String]
-gen_hex_clr = map sRGB24show . drop 2 . Ryb.colour_gen . (+ 2)
+gen_hex_clr = map Srgb.sRGB24show . drop 2 . Ryb.colour_gen . (+ 2)
 
 dot_attr_str :: String -> String -> Dot.Attribute
 dot_attr_str k v = Dot.AttributeSetValue (Dot.NameId k) (Dot.StringId v)
@@ -247,10 +250,10 @@ dot_uedge p q =
 bc_connection_graph_dot :: Bool -> [Sq] -> ([Dot.Statement], [Dot.Statement])
 bc_connection_graph_dot opt sq_set =
   let sq_nm, sq_txt :: Sq -> String
-      sq_nm ((x, y), sz) = printf "sq_%d_%d_%d" x y sz
-      sq_txt (pt, sz) = if opt then printf "%s□%d" (pt_pp pt) sz else show sz
+      sq_nm ((x, y), sz) = Text.Printf.printf "sq_%d_%d_%d" x y sz
+      sq_txt (pt, sz) = if opt then Text.Printf.printf "%s□%d" (pt_pp pt) sz else show sz
       pt_pp :: Pt -> String
-      pt_pp (x, y) = printf "%d,%d" x y
+      pt_pp (x, y) = Text.Printf.printf "%d,%d" x y
       clr_tbl = zip sq_set (gen_hex_clr (length sq_set))
       n_pp sq =
         dot_node
