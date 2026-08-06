@@ -42,7 +42,12 @@ residue_id_in_range ((_, c1, k1, i1), (_, c3, k3, i3)) (_, c2, k2, i2) =
 
 -- * Record-Types
 
--- | (Hetatm,Serial,Name,Alt-Loc,Residue-Id,Coordinate,Element)
+{- | (Hetatm,Serial,Name,Alt-Loc,Residue-Id,Coordinate,Element)
+
+The ATOM records present the atomic coordinates for standard amino acids and nucleotides.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM>
+-}
 type Atom = (Bool, Int, String, Char, Residue_Id, (Double, Double, Double), String)
 
 altloc_id_set :: [Char] -> [Char]
@@ -86,11 +91,16 @@ type Conect = [(Int, Int)]
 
 {- | ((A,B,C),(Alpha,Beta,Gamma),Space-Group,Z)
 
+The CRYST1 record presents the unit cell parameters, space group, and Z value.
+
 Non-Crystallography = ((1,1,1),(90,90,90),P1,1)
 -}
 type Cryst1 = (Vector.V3 Double, Vector.V3 Double, String, Int)
 
--- | (((O11,O12,O13),T1),((O21,O22,O23),T2),((O31,O32,O33),T3))
+{- | (((O11,O12,O13),T1),((O21,O22,O23),T2),((O31,O32,O33),T3))
+
+The ORIGXn (n = 1, 2, or 3) records present the transformation from the orthogonal coordinates contained in the entry to the submitted coordinates.
+-}
 type OrigX = Vector.V3 (Vector.V3 Double, Double)
 
 -- | (((S11,S12,S13),U1),((S21,S22,S23),U2),((S31,S32,S33),U3))
@@ -138,22 +148,40 @@ type ModRes = (String, Residue_Id, String, String)
 modres_names :: ModRes -> (String, String)
 modres_names (_, (r1, _, _, _), r2, _) = (r1, r2)
 
--- | (Type,Text)
+{- | (Type,Text)
+
+REMARK records present experimental details, annotations, comments, and information not included in other records.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/remarks.html>
+-}
 type Remark = (Int, String)
 
--- | (Serial,Chain-Id,Num-Res,[Res])
+{- | (Serial,Chain-Id,Num-Res,[Res])
+
+SEQRES records contain a listing of the consecutive chemical components covalently linked in a linear fashion to form a polymer.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES>
+-}
 type SeqRes = (Int, Char, Int, [String])
 
 seqres_residue_names :: SeqRes -> [String]
 seqres_residue_names (_, _, _, x) = x
 
--- | (Strand,Id,Num-Strands,Init-Residue,End-Residue)
+{- | (Strand,Id,Num-Strands,Init-Residue,End-Residue)
+
+SHEET records are used to identify the position of sheets in the molecule.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#SHEET>
+-}
 type Sheet = (Int, String, Int, Residue_Id, Residue_Id)
 
 sheet_chain_id :: Sheet -> Char
 sheet_chain_id (_, _, _, (_, c1, _, _), (_, c2, _, _)) = if c1 /= c2 then error "sheet_chain_id?" else c1
 
--- | (Serial,Residue-Id-1,Residue-Id-2,Sym-1,Sym-2,Distance)
+{- | (Serial,Residue-Id-1,Residue-Id-2,Sym-1,Sym-2,Distance)
+
+The SSBOND record identifies each disulfide bond in protein and polypeptide structures by identifying the two residues involved in the bond.
+-}
 type SsBond = (Int, Residue_Id, Residue_Id, Int, Int, Double)
 
 -- | (Serial,Residue-Id)

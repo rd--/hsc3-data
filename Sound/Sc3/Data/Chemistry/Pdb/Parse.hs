@@ -521,6 +521,7 @@ type Rec = (Txt, [Txt])
 txt_rec_name :: Txt -> Txt
 txt_rec_name = ByteString.Char8.take 6
 
+-- | Does the record name match x?
 txt_rec_match :: Txt -> Txt -> Bool
 txt_rec_match x = (==) x . txt_rec_name
 
@@ -598,25 +599,29 @@ master_unpack (_, x) = let i = txt_int . (x !!) in (i 0, i 2, i 3, i 4, i 6, i 7
 mdltyp_unpack :: Rec -> Pdb.MdlTyp
 mdltyp_unpack (_, x) = (txt_pln (x !! 0), txt_str (x !! 1))
 
--- | Serial
+-- | Unpack MODEL record, tells serial number.
 model_unpack :: Rec -> Int
 model_unpack (_, x) = txt_int (x !! 0)
 
+-- | Unpack MODRES record.
 modres_unpack :: Rec -> Pdb.ModRes
 modres_unpack (_, x) = let (c, s, i, _) = txt_readers x in (s 0, (s 1, c 2, i 3, c 4), s 5, s 6)
 
+-- | Unpack NUMMDL record, tells model count.
 nummdl_unpack :: Rec -> Int
 nummdl_unpack (_, x) = txt_int (x !! 0)
 
+-- | Unpack REMARK record.
 remark_unpack :: Rec -> Pdb.Remark
 remark_unpack (_, x) = (txt_int (x !! 0), txt_pln (x !! 1))
 
--- | Removes nil entries.
+-- | Unpack SEQRES record, removes nil entries.
 seqres_unpack :: Rec -> Pdb.SeqRes
 seqres_unpack (_, x) =
   let (c, s, i, _) = txt_readers x
   in (i 0, c 1, i 2, filter (not . null) (map s [3 .. 15]))
 
+-- | Unpack SHEET record.
 sheet_unpack :: Rec -> Pdb.Sheet
 sheet_unpack (_, x) =
   let (c, s, i, _) = txt_readers x

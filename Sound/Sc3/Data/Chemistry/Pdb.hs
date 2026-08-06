@@ -171,13 +171,16 @@ het_parse_residue r =
 het_field_sel :: String -> Het_Record -> [ByteString.Char8.ByteString]
 het_field_sel k = filter (ByteString.Char8.isPrefixOf (ByteString.Char8.pack k))
 
+-- | Type for CONECT record in HET file.
+type Het_Conect = (String, Int, [String])
+
 -- | Parse CONECT fields at record, which are of the form (lhs,[rhs])
-het_parse_conect :: Het_Record -> [(String, [String])]
+het_parse_conect :: Het_Record -> [Het_Conect]
 het_parse_conect r =
   let f s = case words (ByteString.Char8.unpack s) of
         "CONECT" : lhs : cnt : rhs ->
           if length rhs == read cnt
-            then (lhs, rhs)
+            then (lhs, read cnt, rhs)
             else error (show ("het_parse_conect", lhs, cnt, rhs))
         x -> error (show ("het_parse_conect", x))
   in map f (het_field_sel "CONECT" r)
@@ -191,15 +194,15 @@ het_parse_formul :: Het_Record -> String
 het_parse_formul = unwords . map (ByteString.Char8.unpack . ByteString.Char8.drop 19) . het_field_sel "FORMUL"
 
 -- | Convert CONECT fields to edge set.
-het_edge_set :: [(String, [String])] -> [(String, String)]
+het_edge_set :: [Het_Conect] -> [(String, String)]
 het_edge_set =
-  let f (lhs, rhs) = zip (repeat lhs) rhs
+  let f (lhs, _cnt, rhs) = zip (repeat lhs) rhs
       g (i, j) = (min i j, max i j)
   in map g . concatMap f
 
 -- | Convert CONECT fields to vertex set.
-het_vertex_set :: [(String, [String])] -> [String]
-het_vertex_set = let f (lhs, rhs) = lhs : rhs in List.nub_sort . concatMap f
+het_vertex_set :: [Het_Conect] -> [String]
+het_vertex_set = let f (lhs, _cnt, rhs) = lhs : rhs in List.nub_sort . concatMap f
 
 -- | Load records from local copy of 'het_dictionary'.
 het_load_records :: FilePath -> IO [Het_Record]
