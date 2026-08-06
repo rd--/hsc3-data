@@ -73,6 +73,7 @@ atom_name (_, _, nm, _, _, _, _) = nm
 atom_altloc :: Atom -> Char
 atom_altloc (_, _, _, alt, _, _, _) = alt
 
+-- | Is altloc either equal to A or empty (space character)?
 atom_sel_altloc_A :: Atom -> Bool
 atom_sel_altloc_A = flip elem " A" . atom_altloc
 
@@ -153,7 +154,12 @@ het_chain ((_, x, _, _), _, _) = x
 het_n_atom :: Het -> Int
 het_n_atom (_, x, _) = x
 
--- | (Atom-Name-1,Alt-Loc-1,Residue-Id-1,Atom-Name-2,Alt-Loc-2,Residue-Id-2,Sym-1,Sym-2,Distance)
+{- | (Atom-Name-1,Alt-Loc-1,Residue-Id-1,Atom-Name-2,Alt-Loc-2,Residue-Id-2,Sym-1,Sym-2,Distance)
+
+The LINK records specify connectivity between residues that is not implied by the primary structure.
+
+<https://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#LINK>
+-}
 type Link = (String, Char, Residue_Id, String, Char, Residue_Id, Int, Int, Double)
 
 -- | (Remark,Het,Helix,Sheet,Site,Xform,Coord,Ter,Conect,Seq)
