@@ -7,24 +7,29 @@ are sequentially placed in the highest (and leftmost) possible slots.
 -}
 module Sound.Sc3.Data.Math.Bouwkamp where
 
-import Data.List {- base -}
+import qualified Data.List {- base -}
 import Text.Printf {- base -}
 
 import Data.Colour.SRGB {- colour -}
 
-import qualified Language.Dot as D {- language-dot -}
-import qualified Text.ParserCombinators.Parsec as P {- parsec -}
+import qualified Language.Dot as Dot {- language-dot -}
+import qualified Text.ParserCombinators.Parsec as Parsec {- parsec -}
 
 import qualified Music.Theory.Colour.Ryb as Ryb {- hmt-base -}
 import qualified Music.Theory.Geometry.Picture as Picture {- hmt-base -}
-import Music.Theory.Geometry.Vector {- hmt-base -}
+import qualified Music.Theory.Geometry.Vector as Vector {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
 
-type Pt = V2 Int
+-- | Pr = Point
+type Pt = Vector.V2 Int
+
+-- | Sz = Size
 type Sz = Int
+
+-- | Clr = Colour
 type Clr = Picture.Colour
 
--- | (upper-left,size)
+-- | Sq = Square. (upper-left,size)
 type Sq = (Pt, Sz)
 
 sq_lower_left :: Sq -> Pt
@@ -36,7 +41,7 @@ sq_lower_right ((x, y), sz) = (x + sz, y + sz)
 sq_corners_cw :: Sq -> [Pt]
 sq_corners_cw ((x, y), sz) = [(x, y), (x + sz, y), (x + sz, y + sz), (x, y + sz)]
 
-sq_ln :: Sq -> [V2 (V2 Int)]
+sq_ln :: Sq -> [(Pt, Pt)]
 sq_ln sq =
   let f (x, y) = (fromIntegral x, fromIntegral y)
       [p0, p1, p2, p3] = map f (sq_corners_cw sq)
@@ -75,7 +80,7 @@ uppermost_leftmost (x0, y0) (x1, y1) =
 next_slot :: [Sq] -> Pt
 next_slot sq =
   let f =
-        minimumBy uppermost_leftmost
+        Data.List.minimumBy uppermost_leftmost
           . filter (\p -> not (any (`sq_contains_xlr` p) sq))
           . map sq_lower_left
   in f sq
@@ -114,10 +119,10 @@ sq_ascii (w, h) sq =
 
 -- * Picture
 
-to_pt :: Int -> Pt -> V2 Double
+to_pt :: Int -> Pt -> Vector.V2 Double
 to_pt h (x, y) = (fromIntegral x, fromIntegral (h - y))
 
-gen_poly :: Int -> [Sq] -> [[V2 Double]]
+gen_poly :: Int -> [Sq] -> [[Vector.V2 Double]]
 gen_poly h = let f = map (to_pt h) . sq_corners_cw in map f
 
 gen_clr :: Int -> [Clr]
@@ -133,10 +138,10 @@ gen_pic m_clr sz sq = do
 
 -- * Csv
 
-ln_entry :: Show a => V2 (V2 a) -> String
+ln_entry :: Show a => Vector.V2 (Vector.V2 a) -> String
 ln_entry ln =
   let ((x0, y0), (x1, y1)) = ln
-  in intercalate "," (map show [x0, y0, x1, y1])
+  in Data.List.intercalate "," (map show [x0, y0, x1, y1])
 
 gen_csv :: FilePath -> [Sq] -> IO ()
 gen_csv nm = writeFile nm . unlines . concatMap (map ln_entry . sq_ln)
@@ -154,26 +159,27 @@ bc_to_sq (_, _, _, sz) = place_square sz
 
 -- * Parser
 
-type P a = P.GenParser Char () a
+-- | P = Parser
+type P a = Parsec.GenParser Char () a
 
 p_comma :: P Char
-p_comma = P.char ','
+p_comma = Parsec.char ','
 
 p_int :: P Int
-p_int = fmap read (P.many1 P.digit)
+p_int = fmap read (Parsec.many1 Parsec.digit)
 
 p_int_list :: P [Int]
-p_int_list = P.sepEndBy1 p_int p_comma
+p_int_list = Parsec.sepEndBy1 p_int p_comma
 
 p_int_paren_list :: P [Int]
 p_int_paren_list = do
-  _ <- P.char '('
+  _ <- Parsec.char '('
   r <- p_int_list
-  _ <- P.char ')'
+  _ <- Parsec.char ')'
   return r
 
 p_space :: P Char
-p_space = P.char ' '
+p_space = Parsec.char ' '
 
 p_bouwkamp :: P Bouwkamp_Code
 p_bouwkamp = do
@@ -183,19 +189,19 @@ p_bouwkamp = do
   _ <- p_space
   h <- p_int
   _ <- p_space
-  l <- P.many1 p_int_paren_list
+  l <- Parsec.many1 p_int_paren_list
   return (n, w, h, l)
 
 bouwkamp_parse_err :: String -> Bouwkamp_Code
 bouwkamp_parse_err s =
-  case P.parse p_bouwkamp "p_bouwkamp" s of
+  case Parsec.parse p_bouwkamp "p_bouwkamp" s of
     Left err -> error (show err)
     Right r -> r
 
 -- * Analysis
 
 bc_vertices :: [Sq] -> [Pt]
-bc_vertices = nub . sort . concatMap sq_corners_cw
+bc_vertices = List.nub_sort . concatMap sq_corners_cw
 
 bc_pt_connects :: Pt -> [Sq] -> [Sq]
 bc_pt_connects pt =
@@ -215,7 +221,7 @@ bc_connection_graph sq =
   let v = bc_vertices sq
       f pt = bc_pt_connects pt sq
       g (pt, ls) = map (\(p, q) -> ((p, q), pt)) (all_pairs_asc ls)
-      e = sort (concatMap g (zip v (map f v)))
+      e = Data.List.sort (concatMap g (zip v (map f v)))
   in List.collate_adjacent e
 
 -- * Dot
@@ -223,22 +229,22 @@ bc_connection_graph sq =
 gen_hex_clr :: Int -> [String]
 gen_hex_clr = map sRGB24show . drop 2 . Ryb.colour_gen . (+ 2)
 
-dot_attr_str :: String -> String -> D.Attribute
-dot_attr_str k v = D.AttributeSetValue (D.NameId k) (D.StringId v)
+dot_attr_str :: String -> String -> Dot.Attribute
+dot_attr_str k v = Dot.AttributeSetValue (Dot.NameId k) (Dot.StringId v)
 
-str_to_node_id :: String -> D.NodeId
-str_to_node_id k = D.NodeId (D.NameId k) Nothing
+str_to_node_id :: String -> Dot.NodeId
+str_to_node_id k = Dot.NodeId (Dot.NameId k) Nothing
 
-dot_node :: String -> [D.Attribute] -> D.Statement
-dot_node k = D.NodeStatement (str_to_node_id k)
+dot_node :: String -> [Dot.Attribute] -> Dot.Statement
+dot_node k = Dot.NodeStatement (str_to_node_id k)
 
-dot_uedge :: String -> String -> [D.Attribute] -> D.Statement
+dot_uedge :: String -> String -> [Dot.Attribute] -> Dot.Statement
 dot_uedge p q =
-  let p' = D.ENodeId D.NoEdge (str_to_node_id p)
-      q' = D.ENodeId D.UndirectedEdge (str_to_node_id q)
-  in D.EdgeStatement [p', q']
+  let p' = Dot.ENodeId Dot.NoEdge (str_to_node_id p)
+      q' = Dot.ENodeId Dot.UndirectedEdge (str_to_node_id q)
+  in Dot.EdgeStatement [p', q']
 
-bc_connection_graph_dot :: Bool -> [Sq] -> ([D.Statement], [D.Statement])
+bc_connection_graph_dot :: Bool -> [Sq] -> ([Dot.Statement], [Dot.Statement])
 bc_connection_graph_dot opt sq_set =
   let sq_nm, sq_txt :: Sq -> String
       sq_nm ((x, y), sz) = printf "sq_%d_%d_%d" x y sz
@@ -254,20 +260,20 @@ bc_connection_graph_dot opt sq_set =
           , dot_attr_str "fillcolor" (List.lookup_err sq clr_tbl)
           ]
       embrace s = "{" ++ s ++ "}"
-      pt_set_pp = if opt then embrace . intercalate "∘" . map pt_pp else const ""
+      pt_set_pp = if opt then embrace . Data.List.intercalate "∘" . map pt_pp else const ""
       e_pp ((p, q), e) = dot_uedge (sq_nm p) (sq_nm q) [dot_attr_str "label" (pt_set_pp e)]
   in (map n_pp sq_set, map e_pp (bc_connection_graph sq_set))
 
-dot_ugraph :: [D.Statement] -> D.Graph
-dot_ugraph = D.Graph D.StrictGraph D.UndirectedGraph Nothing
+dot_ugraph :: [Dot.Statement] -> Dot.Graph
+dot_ugraph = Dot.Graph Dot.StrictGraph Dot.UndirectedGraph Nothing
 
-dot_graph_attr :: [D.Attribute] -> D.Statement
-dot_graph_attr = D.AttributeStatement D.GraphAttributeStatement
+dot_graph_attr :: [Dot.Attribute] -> Dot.Statement
+dot_graph_attr = Dot.AttributeStatement Dot.GraphAttributeStatement
 
-dot_node_attr :: [D.Attribute] -> D.Statement
-dot_node_attr = D.AttributeStatement D.NodeAttributeStatement
+dot_node_attr :: [Dot.Attribute] -> Dot.Statement
+dot_node_attr = Dot.AttributeStatement Dot.NodeAttributeStatement
 
-bc_connection_graph_dot_wr :: Bool -> [D.Statement] -> FilePath -> [Sq] -> IO ()
+bc_connection_graph_dot_wr :: Bool -> [Dot.Statement] -> FilePath -> [Sq] -> IO ()
 bc_connection_graph_dot_wr opt x fn sq = do
   let (n, e) = bc_connection_graph_dot opt sq
-  writeFile fn (D.renderDot (dot_ugraph (x ++ n ++ e)))
+  writeFile fn (Dot.renderDot (dot_ugraph (x ++ n ++ e)))

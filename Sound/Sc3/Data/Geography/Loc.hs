@@ -1,53 +1,56 @@
 -- | Geographical location
 module Sound.Sc3.Data.Geography.Loc where
 
-import Data.List {- base -}
+import qualified Data.List {- base -}
 
-import qualified Text.ParserCombinators.Parsec as C {- parsec -}
+import qualified Text.ParserCombinators.Parsec as Parsec {- parsec -}
 
 import qualified Music.Theory.Io as Io {- hmt-base -}
 
-import Sound.Sc3.Data.Geography.Core {- hsc3-data -}
+import qualified Sound.Sc3.Data.Geography.Core as Geography {- hsc3-data -}
+
+-- | Parser.
+type P a = Parsec.GenParser Char () a
 
 -- | Geographical location.
-type Geo_Loc = (Coord, [String])
+type Geo_Loc = (Geography.Coord, [String])
 
-p_geography_by :: P Qdms -> P Geo_Loc
+p_geography_by :: P Geography.Qdms -> P Geo_Loc
 p_geography_by p = do
-  nm <- p_location
-  _ <- C.char ':'
-  _ <- C.char ' '
-  (lambda, phi) <- p_coord_by p
+  nm <- Geography.p_location
+  _ <- Parsec.char ':'
+  _ <- Parsec.char ' '
+  (lambda, phi) <- Geography.p_coord_by p
   return ((lambda, phi), map unwords nm)
 
 p_geography :: P Geo_Loc
-p_geography = p_geography_by p_qdms_ws
+p_geography = p_geography_by Geography.p_qdms_ws
 
 p_geographies :: P [Geo_Loc]
 p_geographies = do
-  xs <- C.sepEndBy1 p_geography C.newline
-  _ <- C.eof
+  xs <- Parsec.sepEndBy1 p_geography Parsec.newline
+  _ <- Parsec.eof
   return xs
 
 g_pp :: Geo_Loc -> String
-g_pp (coord, name) = intercalate ", " name ++ coord_pp coord
+g_pp (coord, name) = Data.List.intercalate ", " name ++ Geography.coord_pp coord
 
 {- | Parse geography
 
 >>> parse_geography "_" "Melbourne, Victoria, AU: S 37 48 50 E 144 57 47"
 Right ((-37.81388888888889,144.96305555555554),["Melbourne","Victoria","AU"])
 -}
-parse_geography :: C.SourceName -> String -> Either C.ParseError Geo_Loc
-parse_geography = C.parse p_geography
+parse_geography :: Parsec.SourceName -> String -> Either Parsec.ParseError Geo_Loc
+parse_geography = Parsec.parse p_geography
 
-parse_geographies :: C.SourceName -> String -> Either C.ParseError [Geo_Loc]
-parse_geographies = C.parse p_geographies
+parse_geographies :: Parsec.SourceName -> String -> Either Parsec.ParseError [Geo_Loc]
+parse_geographies = Parsec.parse p_geographies
 
 -- * Eq
 
 g_match :: [String] -> Geo_Loc -> Bool
 g_match q (_, l) =
-  let f a = any (\x -> a `isInfixOf` x) l
+  let f a = any (\x -> a `Data.List.isInfixOf` x) l
   in all f q
 
 -- * Io

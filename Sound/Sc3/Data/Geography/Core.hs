@@ -1,6 +1,6 @@
 module Sound.Sc3.Data.Geography.Core where
 
-import qualified Text.ParserCombinators.Parsec as C {- parsec -}
+import qualified Text.ParserCombinators.Parsec as Parsec {- parsec -}
 
 -- * Types
 
@@ -17,7 +17,7 @@ type Qdeg = (Char, Double)
 type Coord = (Double, Double)
 
 -- | Parser.
-type P a = C.GenParser Char () a
+type P a = Parsec.GenParser Char () a
 
 -- * Core
 
@@ -75,8 +75,8 @@ longitude_to_qdms = degree_to_qdms ('W', 'E')
 
 p_int_str :: P String
 p_int_str = do
-  s <- C.optionMaybe (C.try (C.char '-'))
-  n <- C.many1 C.digit
+  s <- Parsec.optionMaybe (Parsec.try (Parsec.char '-'))
+  n <- Parsec.many1 Parsec.digit
   case s of
     Nothing -> return n
     (Just c) -> return (c : n)
@@ -85,45 +85,45 @@ p_int :: P Int
 p_int = fmap read p_int_str
 
 p_word :: P String
-p_word = C.many1 (C.letter C.<|> C.oneOf "-'") C.<?> "word"
+p_word = Parsec.many1 (Parsec.letter Parsec.<|> Parsec.oneOf "-'") Parsec.<?> "word"
 
 p_phrase :: P [String]
-p_phrase = C.sepEndBy1 p_word (C.char ' ')
+p_phrase = Parsec.sepEndBy1 p_word (Parsec.char ' ')
 
 p_location :: P [[String]]
 p_location = do
-  let skp = C.skipMany1 (C.char ',' >> C.char ' ')
-  C.optional (C.char ' ')
-  C.sepEndBy1 p_phrase skp
+  let skp = Parsec.skipMany1 (Parsec.char ',' >> Parsec.char ' ')
+  Parsec.optional (Parsec.char ' ')
+  Parsec.sepEndBy1 p_phrase skp
 
 -- | Parser for 'Qdms' with unicode characters @°@, @′@ and @″@.
 p_qdms_unicode :: P Qdms
 p_qdms_unicode = do
   d <- p_int
-  _ <- C.char '°'
+  _ <- Parsec.char '°'
   m <- p_int
-  _ <- C.char '′'
+  _ <- Parsec.char '′'
   s <- p_int
-  _ <- C.char '″'
-  q <- C.oneOf "NSEW"
+  _ <- Parsec.char '″'
+  q <- Parsec.oneOf "NSEW"
   return (q, d, m, s)
 
 -- | Parser for 'Qdms' with leading direction and whitespace.
 p_qdms_ws :: P Qdms
 p_qdms_ws = do
-  q <- C.oneOf "NSEW"
-  _ <- C.char ' '
+  q <- Parsec.oneOf "NSEW"
+  _ <- Parsec.char ' '
   d <- p_int
-  _ <- C.char ' '
+  _ <- Parsec.char ' '
   m <- p_int
-  _ <- C.char ' '
+  _ <- Parsec.char ' '
   s <- p_int
   return (q, d, m, s)
 
 p_coord_by :: P Qdms -> P Coord
 p_coord_by p = do
   phi <- fmap qdms_to_degree p
-  _ <- C.char ' '
+  _ <- Parsec.char ' '
   lambda <- fmap qdms_to_degree p
   return (phi, lambda)
 
@@ -138,17 +138,17 @@ Right ('N',34,16,32)
 >>> parse_qdms_unicode "132°18′28″E"
 Right ('E',132,18,28)
 -}
-parse_qdms_unicode :: String -> Either C.ParseError Qdms
-parse_qdms_unicode = C.parse p_qdms_unicode "parse_qdms_unicode"
+parse_qdms_unicode :: String -> Either Parsec.ParseError Qdms
+parse_qdms_unicode = Parsec.parse p_qdms_unicode "parse_qdms_unicode"
 
 {- | Run 'p_qdms_ws'.
 
 >>> parse_qdms_ws "N 34 16 32"
 Right ('N',34,16,32)
 -}
-parse_qdms_ws :: String -> Either C.ParseError Qdms
+parse_qdms_ws :: String -> Either Parsec.ParseError Qdms
 parse_qdms_ws s =
-  case C.parse p_qdms_ws "parse_qdms_ws" s of
+  case Parsec.parse p_qdms_ws "parse_qdms_ws" s of
     Left err -> error (show err)
     Right g -> return g
 
@@ -163,8 +163,8 @@ parse_qdms_ws_err s =
 >>> parse_coord "N 34 16 32 E 132 18 28"
 Right (34.275555555555556,132.30777777777777)
 -}
-parse_coord :: String -> Either C.ParseError Coord
-parse_coord = C.parse p_coord "parse_coord"
+parse_coord :: String -> Either Parsec.ParseError Coord
+parse_coord = Parsec.parse p_coord "parse_coord"
 
 parse_coord_err :: String -> Coord
 parse_coord_err s =
@@ -177,8 +177,8 @@ parse_coord_err s =
 >>> parse_coord_unicode "34°16′32″N 132°18′28″E"
 Right (34.275555555555556,132.30777777777777)
 -}
-parse_coord_unicode :: String -> Either C.ParseError Coord
-parse_coord_unicode = C.parse (p_coord_by p_qdms_unicode) "parse_coord_unicode"
+parse_coord_unicode :: String -> Either Parsec.ParseError Coord
+parse_coord_unicode = Parsec.parse (p_coord_by p_qdms_unicode) "parse_coord_unicode"
 
 -- * Pretty print (Pp)
 
