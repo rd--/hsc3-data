@@ -92,7 +92,7 @@ pdb_seqres_code_lookup = flip lookup pdb_code_tbl
 pdb_seqres_code_lookup_err :: String -> Char
 pdb_seqres_code_lookup_err =
   Maybe.from_just "pdb_seqres_code_lookup"
-  . pdb_seqres_code_lookup
+    . pdb_seqres_code_lookup
 
 -- * Convert
 
@@ -104,8 +104,8 @@ Pdb files are converted to Mol files using obabel,
 pdb_to_mol :: FilePath -> FilePath -> IO ()
 pdb_to_mol pdb_fn mol_fn =
   System.Process.callProcess
-  "obabel"
-  ["-ipdb", pdb_fn, "-omol", "-O", mol_fn]
+    "obabel"
+    ["-ipdb", pdb_fn, "-omol", "-O", mol_fn]
 
 -- | Variant that only runs if the Mol file does not already exist.
 pdb_to_mol_x :: FilePath -> FilePath -> IO ()
@@ -123,8 +123,8 @@ pdb_to_mol_x pdb_fn mol_fn = do
 pdb_file_name_to_id :: FilePath -> String
 pdb_file_name_to_id =
   map Data.Char.toUpper
-  . System.FilePath.dropExtension
-  . System.FilePath.takeFileName
+    . System.FilePath.dropExtension
+    . System.FilePath.takeFileName
 
 {- | Filename for ligand /k/, /ty/ is "ideal" or "model"
 
@@ -233,28 +233,28 @@ amino_acid_monoisotopic_mass_tbl =
 -}
 amino_acid_average_mass_table :: [(String, Double)]
 amino_acid_average_mass_table =
-  [("Ala", 89.09404)
-  ,("Cys", 121.15404)
-  ,("Asp", 133.10384)
-  ,("Glu", 147.13074)
-  ,("Phe", 165.19184)
-  ,("Gly", 75.06714)
-  ,("His", 155.15634)
-  ,("Ile", 131.17464)
-  ,("Lys", 146.18934)
-  ,("Leu", 131.17464)
-  ,("Met", 149.20784)
-  ,("Asn", 132.11904)
-  ,("Pyl", 255.31)
-  ,("Pro", 115.13194)
-  ,("Gln", 146.14594)
-  ,("Arg", 174.20274)
-  ,("Ser", 105.09344)
-  ,("Thr", 119.12034)
-  ,("Sec", 168.053)
-  ,("Val", 117.14784)
-  ,("Trp", 204.22844)
-  ,("Tyr", 181.19124)
+  [ ("Ala", 89.09404)
+  , ("Cys", 121.15404)
+  , ("Asp", 133.10384)
+  , ("Glu", 147.13074)
+  , ("Phe", 165.19184)
+  , ("Gly", 75.06714)
+  , ("His", 155.15634)
+  , ("Ile", 131.17464)
+  , ("Lys", 146.18934)
+  , ("Leu", 131.17464)
+  , ("Met", 149.20784)
+  , ("Asn", 132.11904)
+  , ("Pyl", 255.31)
+  , ("Pro", 115.13194)
+  , ("Gln", 146.14594)
+  , ("Arg", 174.20274)
+  , ("Ser", 105.09344)
+  , ("Thr", 119.12034)
+  , ("Sec", 168.053)
+  , ("Val", 117.14784)
+  , ("Trp", 204.22844)
+  , ("Tyr", 181.19124)
   ]
 
 -- * Io

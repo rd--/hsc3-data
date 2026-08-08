@@ -94,7 +94,7 @@ data Lpc = Lpc
 read_f32_text :: String -> Float
 read_f32_text =
   Data.Maybe.fromMaybe (error "read_f32_text")
-  . Data.Numbers.FloatingHex.readHFloat
+    . Data.Numbers.FloatingHex.readHFloat
 
 read_i32_text :: String -> Int
 read_i32_text = read

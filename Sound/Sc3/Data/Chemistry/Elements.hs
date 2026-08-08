@@ -197,7 +197,7 @@ There are seven periods, given by the integers 1-7.
 118
 -}
 element_period :: [Int]
-element_period = concat (zipWith replicate [2,8,8,18,18,32,32] [1 .. 7])
+element_period = concat (zipWith replicate [2, 8, 8, 18, 18, 32, 32] [1 .. 7])
 
 {- | List giving the group of each element.
 Values of 0 indicate no group (the F-block).
@@ -215,14 +215,14 @@ There are eighteen groups, given by the integers 1-18.
 element_group :: [Int]
 element_group =
   concat
-  [ [1, 18]
-  , [1 .. 2] ++ [13 .. 18]
-  , [1 .. 2] ++ [13 .. 18]
-  , [1 .. 18]
-  , [1 .. 18]
-  , [1, 2] ++ replicate 14 0 ++ [3 .. 18]
-  , [1, 2] ++ replicate 14 0 ++ [3 .. 18]
-  ]
+    [ [1, 18]
+    , [1 .. 2] ++ [13 .. 18]
+    , [1 .. 2] ++ [13 .. 18]
+    , [1 .. 18]
+    , [1 .. 18]
+    , [1, 2] ++ replicate 14 0 ++ [3 .. 18]
+    , [1, 2] ++ replicate 14 0 ++ [3 .. 18]
+    ]
 
 {- | The atomic numbers of the synthetic elements.
 

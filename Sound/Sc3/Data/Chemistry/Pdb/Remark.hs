@@ -49,10 +49,10 @@ remark_350_biomt_group =
       f3 x = if null (head x) then tail x else err x
       f4 x = let (p, q) = unzip x in if p `Data.List.isPrefixOf` [1 ..] then q else err p
   in map f4
-     . f3
-     . List.split_when_keeping_left ((== 1) . fst)
-     . map (f2 . map f1)
-     . Data.List.Split.chunksOf 3
+      . f3
+      . List.split_when_keeping_left ((== 1) . fst)
+      . map (f2 . map f1)
+      . Data.List.Split.chunksOf 3
 
 dat_remark_350_biomt :: Pdb.Parse.Dat -> [[Pdb.Mtrx Double]]
 dat_remark_350_biomt d =

@@ -481,9 +481,9 @@ txt_pln = ByteString.Char8.unpack
 txt_str :: Txt -> String
 txt_str =
   ByteString.Char8.unpack
-  . fst
-  . ByteString.Char8.spanEnd Data.Char.isSpace
-  . ByteString.Char8.dropWhile Data.Char.isSpace
+    . fst
+    . ByteString.Char8.spanEnd Data.Char.isSpace
+    . ByteString.Char8.dropWhile Data.Char.isSpace
 
 -- | 'read' of 'txt_str'
 txt_int :: Txt -> Int
@@ -663,8 +663,7 @@ type Dat = [Txt]
 pdb_dat_rec_1 :: Txt -> Dat -> Maybe Rec
 pdb_dat_rec_1 ty =
   pdb_rec_parse ty
-  Control.Monad.<=<
-  Data.List.find (txt_rec_match ty)
+    Control.Monad.<=< Data.List.find (txt_rec_match ty)
 
 -- | Collect all instances of /ty/ record.
 pdb_dat_rec :: Txt -> Dat -> [Rec]
@@ -698,14 +697,14 @@ dat_conect = map conect_unpack . pdb_dat_rec (txt "CONECT")
 dat_cryst1 :: Dat -> Pdb.Cryst1
 dat_cryst1 =
   cryst1_unpack
-  . Data.Maybe.fromMaybe (error "dat_cryst1?")
-  . pdb_dat_rec_1 (txt "CRYST1")
+    . Data.Maybe.fromMaybe (error "dat_cryst1?")
+    . pdb_dat_rec_1 (txt "CRYST1")
 
 dat_header :: Dat -> Pdb.Header
 dat_header =
   header_unpack
-  . Data.Maybe.fromMaybe (error "dat_header?")
-  . pdb_dat_rec_1 (txt "HEADER")
+    . Data.Maybe.fromMaybe (error "dat_header?")
+    . pdb_dat_rec_1 (txt "HEADER")
 
 dat_helix :: Dat -> [Pdb.Helix]
 dat_helix = map helix_unpack . pdb_dat_rec (txt "HELIX ")

@@ -154,4 +154,3 @@ het_entry_formula_validate :: Het_Entry -> Bool
 het_entry_formula_validate e =
   let k = sum (map snd (het_entry_formula_hist e))
   in k == het_entry_n_atoms e
-

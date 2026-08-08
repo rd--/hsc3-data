@@ -107,7 +107,7 @@ poscar_load = fmap poscar_parse . readFile
 poscar_dir_entries :: FilePath -> IO [FilePath]
 poscar_dir_entries =
   fmap (filter ((==) ".poscar" . System.FilePath.takeExtension))
-  . System.Directory.listDirectory
+    . System.Directory.listDirectory
 
 -- | Load all ".poscar" files at directory.
 poscar_load_dir :: FilePath -> IO [(String, Poscar)]

@@ -305,10 +305,10 @@ sfz_region_loop_data r =
 >>> sfz_region_sample_resolve "x.sfz" [("default_path","x")] ([],[("sample","y.z")])
 "./x/y.z"
 
->>> "x" </> "" </> "y.z"
+>>> "x" System.FilePath.</> "" System.FilePath.</> "y.z"
 "x/y.z"
 
->>> splitFileName "x.sfz"
+>>> System.FilePath.splitFileName "x.sfz"
 ("./","x.sfz")
 -}
 sfz_region_sample_resolve :: FilePath -> Sfz_Control -> Sfz_Region -> FilePath

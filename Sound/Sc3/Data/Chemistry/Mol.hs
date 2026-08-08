@@ -225,8 +225,8 @@ mol_parse :: [String] -> Mol
 mol_parse l =
   let r = mol_v20_parse l
   in case r of
-       (nm, dsc, 0, 0, [], [], 3000) -> mol_v30_parse (nm, dsc) (mol_v30_ent l)
-       _ -> r
+      (nm, dsc, 0, 0, [], [], 3000) -> mol_v30_parse (nm, dsc) (mol_v30_ent l)
+      _ -> r
 
 {- | 'mol_v20_parse' or 'mol_v30_parse' of 'readFile'.
 Can read the initial entry of an .sdf file.
@@ -247,7 +247,7 @@ Can read the initial entry of an .sdf file.
 (40,21)
 
 >>> let fn = "/home/rohan/rd/j/2020-02-22/sdf/DB01452.sdf"
->>>> m <- mol_load fn
+>>> m <- mol_load fn
 >>> mol_degree m
 (50,54)
 -}
@@ -266,7 +266,7 @@ mol_load fn = do
 mol_dir_entries :: String -> FilePath -> IO [FilePath]
 mol_dir_entries ext =
   fmap (filter ((==) ext . System.FilePath.takeExtension))
-  . System.Directory.listDirectory
+    . System.Directory.listDirectory
 
 mol_dir_filenames :: String -> FilePath -> IO [FilePath]
 mol_dir_filenames ext dir = do

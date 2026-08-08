@@ -20,12 +20,9 @@ mp_dir = "/home/rohan/sw/hsc3-data/data/chemistry/mp"
 mp_poscar_file :: String -> FilePath
 mp_poscar_file nm =
   mp_dir
-  System.FilePath.</>
-  "poscar"
-  System.FilePath.</>
-  nm
-  System.FilePath.<.>
-  "poscar"
+    System.FilePath.</> "poscar"
+    System.FilePath.</> nm
+      System.FilePath.<.> "poscar"
 
 {- | Load an Mp Poscar file as a Struct.
 

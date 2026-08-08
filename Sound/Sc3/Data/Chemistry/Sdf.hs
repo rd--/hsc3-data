@@ -22,13 +22,13 @@ type Sdf_Adi = (String, [String])
 
 {- | Read the associated data items entries from an Sdf file.
 
->>> sdf_entry_adi []
+> sdf_entry_adi [] -- error
 
 > txt <- readFile "/home/rohan/rd/j/2020-02-22/sdf/DB01452.sdf"
-> putStrLn $ sdf_adi_pp $ sdf_entry_adi (lines txt)
+> putStr $ sdf_adi_pp $ sdf_entry_adi (lines txt)
 
 > txt <- readFile "/home/rohan/rd/j/2026-07-24/sdf/73415757.sdf"
-> putStrLn $ sdf_adi_pp $ sdf_entry_adi (lines txt)
+> putStr $ sdf_adi_pp $ sdf_entry_adi (lines txt)
 -}
 sdf_entry_adi :: [String] -> [Sdf_Adi]
 sdf_entry_adi =
@@ -37,6 +37,7 @@ sdf_entry_adi =
           . Data.Maybe.fromMaybe (error "sdf_adi: non-key?")
           . Data.List.stripPrefix "> <"
       not_end = (/=) "M  END"
+      not_term = (/=) "$$$$"
       rem_null = filter (not . null)
       f ln = case ln of
         k : v -> (un_key k, v)
@@ -44,6 +45,7 @@ sdf_entry_adi =
   in map f
       . rem_null
       . Data.List.Split.splitWhen null
+      . takeWhile not_term
       . tail
       . dropWhile not_end
 
@@ -81,7 +83,7 @@ sdf_load fn = do
   let ln = lines txt
       prt = Data.List.Split.splitWhen (== "$$$$") ln
       -- prt' = if null (last prt) then take (length prt - 1) prt else prt
-      f x = (Mol.mol_parse x,sdf_entry_adi x)
+      f x = (Mol.mol_parse x, sdf_entry_adi x)
   return (map f prt)
 
 {- | Split .sdf file into seperate .sdf files each written to the specified directory.
@@ -93,7 +95,8 @@ sdf_split fn dir = do
   txt <- readFile fn
   let ln = lines txt
       prt = Data.List.Split.splitWhen (== "$$$$") ln
-      f x = if null x
-            then return ()
-            else writeFile (dir </> head x <.> "sdf") (unlines x)
+      f x =
+        if null x
+          then return ()
+          else writeFile (dir </> head x <.> "sdf") (unlines x)
   mapM_ f prt

@@ -28,7 +28,7 @@ import qualified Sound.Sc3.Data.Chemistry.Xyz as Xyz {- hsc3-data -}
 -- | XYZ-coordinates
 type Coord = Vector.V3 Double
 
-  -- | (atomic-symbol,xyz-coordinates)
+-- \| (atomic-symbol,xyz-coordinates)
 type Atom = (String, Coord)
 
 atom_sym :: Atom -> String

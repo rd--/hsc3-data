@@ -76,41 +76,41 @@ dat_to_alpha_carbon_chains uniq dat =
 dat_to_alpha_carbon_chains_err :: Bool -> Pdb.Parse.Dat -> [(Char, [Vector.V3 Double])]
 dat_to_alpha_carbon_chains_err uniq =
   Data.Maybe.fromMaybe (error "dat_to_alpha_carbon_chains")
-  . dat_to_alpha_carbon_chains uniq
+    . dat_to_alpha_carbon_chains uniq
 
 -- * Residues
 
 -- | Set of all residue names at Atom records.
 atom_residue_set :: Pdb.Parse.Dat -> [String]
 atom_residue_set =
-  Data.List.nub .
-  Data.List.sort .
-  map (Pdb.residue_id_name . Pdb.atom_residue_id) .
-  Pdb.Parse.dat_atom__
+  Data.List.nub
+    . Data.List.sort
+    . map (Pdb.residue_id_name . Pdb.atom_residue_id)
+    . Pdb.Parse.dat_atom__
 
 -- | Set of all residue names at Hetatm records.
 hetatm_residue_set :: Pdb.Parse.Dat -> [String]
 hetatm_residue_set =
   Data.List.nub
-  . Data.List.sort
-  . Data.List.map (Pdb.residue_id_name . Pdb.atom_residue_id)
-  . Pdb.Parse.dat_hetatm
+    . Data.List.sort
+    . Data.List.map (Pdb.residue_id_name . Pdb.atom_residue_id)
+    . Pdb.Parse.dat_hetatm
 
 -- | Set of all residue names at Seqres records.
 seqres_residue_set :: Pdb.Parse.Dat -> [String]
 seqres_residue_set =
   Data.List.nub
-  . Data.List.sort
-  . concatMap Pdb.seqres_residue_names
-  . Pdb.Parse.dat_seqres
+    . Data.List.sort
+    . concatMap Pdb.seqres_residue_names
+    . Pdb.Parse.dat_seqres
 
 -- | Set of all residue names at Modres records.
 modres_residue_set :: Pdb.Parse.Dat -> [String]
 modres_residue_set =
   Data.List.nub
-  . Data.List.sort
-  . concatMap ((\(i, j) -> [i, j]) . Pdb.modres_names)
-  . Pdb.Parse.dat_modres
+    . Data.List.sort
+    . concatMap ((\(i, j) -> [i, j]) . Pdb.modres_names)
+    . Pdb.Parse.dat_modres
 
 -- | Residue sets (Atom,Hetatm,Seqres,Modres).
 residue_sets :: Pdb.Parse.Dat -> ([String], [String], [String], [String])
@@ -120,10 +120,10 @@ residue_sets x = (atom_residue_set x, hetatm_residue_set x, seqres_residue_set x
 residue_sets_concat :: Pdb.Parse.Dat -> [String]
 residue_sets_concat =
   Data.List.nub
-  . Data.List.sort
-  . concat
-  . (\(a, b, c, d) -> [a, b, c, d])
-  . residue_sets
+    . Data.List.sort
+    . concat
+    . (\(a, b, c, d) -> [a, b, c, d])
+    . residue_sets
 
 -- | Atom/residue stat for selector predicate.
 atom_residue_stat_of :: (Pdb.Atom -> Bool) -> FilePath -> IO ()
