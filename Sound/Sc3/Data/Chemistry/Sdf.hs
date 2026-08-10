@@ -88,7 +88,7 @@ sdf_load fn = do
 
 {- | Split .sdf file into seperate .sdf files each written to the specified directory.
 
-> sdf_split "/home/rohan/data/pdb/components.sdf" "/home/rohan/data/pdb/components/"
+> sdf_split "/home/rohan/data/pdb/components.sdf" "/home/rohan/data/pdb/components/sdf/"
 -}
 sdf_split :: FilePath -> FilePath -> IO ()
 sdf_split fn dir = do
