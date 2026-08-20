@@ -4,12 +4,14 @@ True/1 indicates presence (black) and False/0 absence (white).
 -}
 module Sound.Sc3.Data.Bitmap.Type where
 
-import Data.Bits {- base -}
-import Data.Char {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
+import qualified Data.Bits {- base -}
+import qualified Data.Char {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
 
 import qualified Data.Map as Map {- containers -}
+import qualified Safe {- safe -}
+
 
 import qualified Music.Theory.List as List {- hmt-base -}
 
@@ -145,7 +147,7 @@ neighbour_indices n_fn (nr, nc) (r, c) =
         in if r' >= 0 && r' < nr && c' >= 0 && c' < nc
             then Just (r', c')
             else Nothing
-  in mapMaybe f n_fn
+  in Data.Maybe.mapMaybe f n_fn
 
 {- | Predicate to decide if indices neighbours by at most /distance/ moves.
 
@@ -177,27 +179,27 @@ bitseq_show :: Bitseq -> String
 bitseq_show = map (bit_to_char ('@', '.'))
 
 -- | Given 'Bits' test the /i/th _least_ significant bit.
-bitenc_test_lsb :: Bits b => b -> Int -> Bool
-bitenc_test_lsb = testBit
+bitenc_test_lsb :: Data.Bits.Bits b => b -> Int -> Bool
+bitenc_test_lsb = Data.Bits.testBit
 
 -- | Given 'Bits' value of size /sz/ test the /i/th _most_ significant bit.
-bitenc_test_msb :: Bits b => Int -> b -> Int -> Bool
-bitenc_test_msb sz x i = testBit x (sz - 1 - i)
+bitenc_test_msb :: Data.Bits.Bits b => Int -> b -> Int -> Bool
+bitenc_test_msb sz x i = Data.Bits.testBit x (sz - 1 - i)
 
 {- | Unpack the /n/ _most_ significant elements of a 'FiniteBits' value.
 
 >>> bitseq_show (bitseq_msb 4 (0xA0::Data.Word.Word8))
 "@.@."
 -}
-bitseq_msb :: FiniteBits b => Int -> b -> Bitseq
-bitseq_msb n x = let sz = finiteBitSize x in map (bitenc_test_msb sz x) [0 .. n - 1]
+bitseq_msb :: Data.Bits.FiniteBits b => Int -> b -> Bitseq
+bitseq_msb n x = let sz = Data.Bits.finiteBitSize x in map (bitenc_test_msb sz x) [0 .. n - 1]
 
 {- | Unpack the /n/ _least_ significant elements of a 'FiniteBits' value.
 
 >>> bitseq_show (bitseq_lsb 4 (0x05::Data.Word.Word8))
 "@.@."
 -}
-bitseq_lsb :: FiniteBits b => Int -> b -> Bitseq
+bitseq_lsb :: Data.Bits.FiniteBits b => Int -> b -> Bitseq
 bitseq_lsb n x = map (bitenc_test_lsb x) [0 .. n - 1]
 
 {- | Bit sequence elements.
@@ -206,7 +208,9 @@ bitseq_lsb n x = map (bitenc_test_lsb x) [0 .. n - 1]
 [0,2]
 -}
 bitseq_elem :: (Num n, Enum n) => Bitseq -> [n]
-bitseq_elem = mapMaybe (\(ix, b) -> if b then Just ix else Nothing) . zip [0 ..]
+bitseq_elem =
+  Data.Maybe.mapMaybe (\(ix, b) -> if b then Just ix else Nothing)
+  . zip [0 ..]
 
 -- | List of rows, each a 'Bitseq', the first is the uppermost.
 type Bitarray = (Dimensions, [Bitseq])
@@ -215,7 +219,7 @@ bitarray_to_bitindices :: Bitarray -> Bitindices
 bitarray_to_bitindices (dm, v) =
   let v' = zip [0 ..] (map (zip [0 ..]) v)
       f i (j, b) = if b then Just (i, j) else Nothing
-      g (i, r) = mapMaybe (f i) r
+      g (i, r) = Data.Maybe.mapMaybe (f i) r
   in (dm, concatMap g v')
 
 -- | Show 'Bitarray' using 'bitseq_show'.
@@ -238,8 +242,10 @@ bitindices_row (_, d) r = map ix_column (filter ((== r) . ix_row) d)
 
 indices_by_row :: [Ix] -> [(Row, [Column])]
 indices_by_row =
-  let f x = (ix_row (head x), map ix_column x)
-  in map f . List.group_on ix_row . sortOn ix_row
+  let f x = (ix_row (Safe.headErr x), map ix_column x)
+  in map f
+     . List.group_on ix_row
+     . Data.List.sortOn ix_row
 
 bitindices_rows :: Bitindices -> [[Column]]
 bitindices_rows ((nr, _), ix) =
@@ -254,8 +260,10 @@ bitindices_column b c = map fst (filter ((== c) . snd) (snd b))
 
 indices_by_column :: [Ix] -> [(Column, [Row])]
 indices_by_column =
-  let f x = (ix_column (head x), map ix_row x)
-  in map f . List.group_on ix_column . sortOn ix_column
+  let f x = (ix_column (Safe.headErr x), map ix_row x)
+  in map f
+     . List.group_on ix_column
+     . Data.List.sortOn ix_column
 
 bitindices_columns :: Bitindices -> [[Row]]
 bitindices_columns ((_, nc), ix) =
@@ -296,14 +304,14 @@ significant bit of each line represents the leftmost pixel.
 -}
 type BitPattern b = (Dimensions, [b])
 
-bitpattern_to_bitarray :: FiniteBits b => BitPattern b -> Bitarray
+bitpattern_to_bitarray :: Data.Bits.FiniteBits b => BitPattern b -> Bitarray
 bitpattern_to_bitarray ((h, w), m) = ((h, w), map (bitseq_msb w) m)
 
 -- | Index into 'BitPattern' at (row,column).
-bitpattern_ix :: Bits b => BitPattern b -> (Int, Int) -> Bit
+bitpattern_ix :: Data.Bits.Bits b => BitPattern b -> (Int, Int) -> Bit
 bitpattern_ix (_, m) (i, j) = bitenc_test_msb 8 (m !! i) j
 
-bitpattern_show :: FiniteBits b => BitPattern b -> String
+bitpattern_show :: Data.Bits.FiniteBits b => BitPattern b -> String
 bitpattern_show = bitarray_show . bitpattern_to_bitarray
 
 -- | * BitMap
@@ -343,7 +351,7 @@ bitindices_to_bitmap (dm, ix) = (dm, Map.fromList (zip ix (repeat True)))
 data Direction = Dir_Right | Dir_Left | Dir_Down | Dir_Up deriving (Eq, Show)
 
 direction_pp :: Direction -> String
-direction_pp = map toLower . show
+direction_pp = map Data.Char.toLower . show
 
 {- | Direction to character code.
 
@@ -351,11 +359,11 @@ direction_pp = map toLower . show
 "rldu"
 -}
 direction_char :: Direction -> Char
-direction_char = head . drop 4 . direction_pp
+direction_char = Safe.headErr . drop 4 . direction_pp
 
 {- | Character code to direction.
 
->>> mapMaybe parse_dir_char "rldu"
+>>> Data.Maybe.mapMaybe parse_dir_char "rldu"
 [Dir_Right,Dir_Left,Dir_Down,Dir_Up]
 -}
 parse_dir_char :: Char -> Maybe Direction
@@ -363,7 +371,7 @@ parse_dir_char c = lookup c (zip "rldu" [Dir_Right, Dir_Left, Dir_Down, Dir_Up])
 
 parse_dir_char' :: Char -> Direction
 parse_dir_char' =
-  fromMaybe (error "parse_dir_char: not 'r','l','d' or 'u'")
+  Data.Maybe.fromMaybe (error "parse_dir_char: not 'r','l','d' or 'u'")
     . parse_dir_char
 
 leading_edge_f :: Direction -> Dimensions -> (Ix -> Bool) -> Ix -> Bool

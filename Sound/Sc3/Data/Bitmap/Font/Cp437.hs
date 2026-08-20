@@ -2,8 +2,8 @@
 module Sound.Sc3.Data.Bitmap.Font.Cp437 where
 
 import Data.Bits {- base -}
-import Data.Maybe {- base -}
-import Data.Word {- base -}
+import qualified Data.Maybe {- base -}
+import qualified Data.Word {- base -}
 
 import qualified Sound.Sc3.Data.Bitmap.Pbm as Pbm {- hsc3-data -}
 import qualified Sound.Sc3.Data.Bitmap.Type as Bitmap {- hsc3-data -}
@@ -14,14 +14,12 @@ t8_list :: T8 t -> [t]
 t8_list (p, q, r, s, t, u, v, w) = [p, q, r, s, t, u, v, w]
 
 -- | Glyphs are stored as 8-tuples of 'Word8' values in column order.
-type Cp437_Glyph = T8 Word8
+type Cp437_Glyph = T8 Data.Word.Word8
 
 {- | Translate 'Cp437_Glyph' to 'Bitindices'.
 
-> let b = cp437_glyph_to_bitindices (cp437_font !! fromEnum 'O')
-> putStrLn $ Bitmap.bitindices_show b
-
-@
+>>> let b = cp437_glyph_to_bitindices (cp437_font !! fromEnum 'O')
+>>> putStr $ Bitmap.bitindices_show b
 ..@@@...
 .@@.@@..
 @@...@@.
@@ -30,19 +28,21 @@ type Cp437_Glyph = T8 Word8
 .@@.@@..
 ..@@@...
 ........
-@
 -}
 cp437_glyph_to_bitindices :: Cp437_Glyph -> Bitmap.Bitindices
 cp437_glyph_to_bitindices =
-  let col c x = mapMaybe (\r -> if testBit x r then Just (r, c) else Nothing) [0 .. 7]
-  in (,) (8, 8) . concat . zipWith col [0 .. 7] . t8_list
+  let col c x =
+        Data.Maybe.mapMaybe
+        (\r -> if testBit x r then Just (r, c) else Nothing)
+        [0 .. 7]
+  in (,) (8, 8)
+     . concat
+     . zipWith col [0 .. 7]
+     . t8_list
 
 {- | 'bitindices_show' of 'cp437_glyph_to_bitindices'.
 
-> let f = putStrLn . ('\n' :) . cp437_glyph_show
-> f (cp437_font !! fromEnum 'A')
-
-@
+>>> putStr $ cp437_glyph_show (cp437_font !! fromEnum 'A')
 ..@@....
 .@@@@...
 @@..@@..
@@ -51,8 +51,8 @@ cp437_glyph_to_bitindices =
 @@..@@..
 @@..@@..
 ........
-@
 
+> let f = putStr . ('\n' :) . cp437_glyph_show
 > mapM_ f cp437_font
 -}
 cp437_glyph_show :: Cp437_Glyph -> String
@@ -329,8 +329,8 @@ cp437_font =
 
 {-
 
-import Text.Printf {- base -}
-wr (k,g) = writeFile (printf "/tmp/cp437-%02X.pbm" k) (cp437_glyph_pbm1 g)
+import qualified Text.Printf {- base -}
+wr (k,g) = writeFile (Text.Printf.printf "/tmp/cp437-%02X.pbm" k) (cp437_glyph_pbm1 g)
 mapM_ wr (zip [0..] cp437_font)
 
 -}
