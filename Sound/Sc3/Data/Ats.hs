@@ -5,10 +5,10 @@ In Proc. ICMC, 1999.
 -}
 module Sound.Sc3.Data.Ats where
 
-import Data.Int {- base -}
-import Data.List {- base -}
+import qualified Data.Int {- base -}
+import qualified Data.List {- base -}
 
-import qualified Data.ByteString.Lazy as B {- bytestring -}
+import qualified Data.ByteString.Lazy as ByteString {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
 
 import qualified Music.Theory.List as List {- hmt-base -}
@@ -78,30 +78,30 @@ ats_header_fields = record_fields
 ats_header_pp :: Ats_Header -> String
 ats_header_pp = record_fields_pp
 
-{- | Split 'B.ByteString' into /i/ parts each of /n/ bytes.
+{- | Split 'ByteString.ByteString' into /i/ parts each of /n/ bytes.
 
-> bs_sep 3 4 (B.pack [1..12]) == map B.pack [[1..4],[5..8],[9..12]]
+> bs_sep 3 4 (ByteString.pack [1..12]) == map ByteString.pack [[1..4],[5..8],[9..12]]
 -}
-bs_sep :: Int64 -> Int64 -> B.ByteString -> [B.ByteString]
+bs_sep :: Data.Int.Int64 -> Data.Int.Int64 -> ByteString.ByteString -> [ByteString.ByteString]
 bs_sep i n d =
   if i == 1
-    then if B.length d == n then [d] else error "bs_sep"
-    else let (p, q) = B.splitAt n d in p : bs_sep (i - 1) n q
+    then if ByteString.length d == n then [d] else error "bs_sep"
+    else let (p, q) = ByteString.splitAt n d in p : bs_sep (i - 1) n q
 
 -- | The first eight bytes of the file determine endianess, and hence the decoder.
-ats_get_decoder :: B.ByteString -> B.ByteString -> Double
+ats_get_decoder :: ByteString.ByteString -> ByteString.ByteString -> Double
 ats_get_decoder v =
   let f_be = Osc.decode_f64
-      f_le = f_be . B.reverse
+      f_le = f_be . ByteString.reverse
       err = error "ats_get_decoder: not Ats file?"
   in if f_be v == 123.0 then f_be else if f_le v == 123.0 then f_le else err
 
 -- | Ats files are sequences of 64-bit Ieee doubles.
 ats_read_f64 :: FilePath -> IO [Double]
 ats_read_f64 fn = do
-  d <- B.readFile fn
-  let n = B.length d `div` 8
-      f = ats_get_decoder (B.take 8 d)
+  d <- ByteString.readFile fn
+  let n = ByteString.length d `div` 8
+      f = ats_get_decoder (ByteString.take 8 d)
   return (map f (bs_sep n 8 d))
 
 -- | Parse Ats header.
@@ -197,10 +197,10 @@ ats_param_ch :: Ats_Param -> Ats -> (Int, [[Double]])
 ats_param_ch sel (Ats hdr frm) =
   case ats_param_ix sel hdr of
     Nothing -> error "ats_param_ch"
-    Just ix -> let ch = transpose frm in (length ix, map (ch !!) ix)
+    Just ix -> let ch = Data.List.transpose frm in (length ix, map (ch !!) ix)
 
 ats_time :: Ats -> [Double]
-ats_time (Ats _ frm) = let ch = transpose frm in ch !! 0
+ats_time (Ats _ frm) = let ch = Data.List.transpose frm in ch !! 0
 
 ats_freq :: Ats -> [[Double]]
 ats_freq = snd . ats_param_ch Ats_Frequency

@@ -1,14 +1,16 @@
 -- | <https://github.com/2DaT/Obxd>
 module Sound.Sc3.Data.Vst.Obxd where
 
-import Control.Monad {- base -}
-import Data.List {- base -}
-import Data.Word {- base -}
+import qualified Control.Monad {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Word {- base -}
 
-import qualified Data.ByteString as B {- bytestring -}
+import qualified Data.ByteString as ByteString {- bytestring -}
 import qualified Data.List.Split as Split {- split -}
-import qualified Text.XML.Light as X {- xml -}
-import qualified Text.XML.Light.Lexer as X {- xml -}
+import qualified Text.XML.Light as Xml {- xml -}
+import qualified Text.XML.Light.Lexer as Xml.Lexer {- xml -}
+
+import qualified Music.Theory.Byte as Byte {- hmt-base -}
 
 import qualified Sound.Sc3.Common.Math as Sc3 {- hsc3 -}
 
@@ -18,26 +20,30 @@ import qualified Sound.Sc3.Data.Xml as Xml {- hsc3-data -}
 -- * Fxb / Io
 
 -- | Load Obxd Fxb file, returns the number of progams and the Xml data.
-obxd_fxb_load_xml :: FilePath -> IO (Word32, String)
+obxd_fxb_load_xml :: FilePath -> IO (Data.Word.Word32, String)
 obxd_fxb_load_xml fxb_fn = do
   (fx_id, fx_v, fx_sz, dat) <- Vst.fx_load_CcnK_FBCh fxb_fn
-  when (Vst.word32_to_str fx_id /= "Obxd") (error "obxd_load_fxb: fx-id?")
-  when (fx_v /= 100) (print ("obxd_load_fxb: fx-version?", fx_v))
+  Control.Monad.when
+    (Vst.word32_to_str fx_id /= "Obxd")
+    (error "obxd_load_fxb: fx-id?")
+  Control.Monad.when
+    (fx_v /= 100)
+    (print ("obxd_load_fxb: fx-version?", fx_v))
   let xml_n = Vst.pack_word32 (reverse (take 4 (drop 4 dat)))
-  return (fx_sz, map Vst.word8_to_char (genericTake xml_n (drop 8 dat)))
+  return (fx_sz, map Byte.word8_to_char (Data.List.genericTake xml_n (drop 8 dat)))
 
 -- * Xml / Io
 
 -- | Scan Fxp or Fxb file for Obxd Xml data, ie. ignore Fxb or Fxp container.
-obxd_load_xml_lax :: FilePath -> IO B.ByteString
+obxd_load_xml_lax :: FilePath -> IO ByteString.ByteString
 obxd_load_xml_lax fn = do
-  b <- B.readFile fn
-  let str_pack :: String -> B.ByteString
-      str_pack = B.pack . map (fromIntegral . fromEnum)
-      is_ascii_print :: Word8 -> Bool
+  b <- ByteString.readFile fn
+  let str_pack :: String -> ByteString.ByteString
+      str_pack = ByteString.pack . map (fromIntegral . fromEnum)
+      is_ascii_print :: Data.Word.Word8 -> Bool
       is_ascii_print c = c >= 32 && c <= 126
-      (_, r) = B.breakSubstring (str_pack "<Datsounds") b
-  return (B.takeWhile is_ascii_print r)
+      (_, r) = ByteString.breakSubstring (str_pack "<Datsounds") b
+  return (ByteString.takeWhile is_ascii_print r)
 
 -- * Xml / Parse
 
@@ -45,14 +51,14 @@ obxd_load_xml_lax fn = do
 type Obxd_Program = (String, [Double])
 
 -- | Parse attributes from program element (for fxb) or Datsounds element (for fxp).
-obxd_attr_parse :: X.Element -> Obxd_Program
+obxd_attr_parse :: Xml.Element -> Obxd_Program
 obxd_attr_parse e =
   ( Xml.x_get_attr "programName" e
   , map (\x -> read (Xml.x_get_attr (show x) e)) [0 :: Int .. 70]
   )
 
 -- | Parse Fxp Xml data.
-obd_fxp_xml_parse :: X.XmlSource x => x -> Obxd_Program
+obd_fxp_xml_parse :: Xml.Lexer.XmlSource x => x -> Obxd_Program
 obd_fxp_xml_parse = obxd_attr_parse . Xml.xml_parse_err
 
 -- | 'obd_fxp_xml_parse' of 'obxd_load_xml_lax'
@@ -60,11 +66,11 @@ obxd_fxp_load_lax :: FilePath -> IO Obxd_Program
 obxd_fxp_load_lax = fmap obd_fxp_xml_parse . obxd_load_xml_lax
 
 -- | Get list of program from programs element of Datsounds element.
-obxd_fxb_xml_programs :: X.Element -> [X.Element]
-obxd_fxb_xml_programs = X.elChildren . Xml.x_get_elem "programs"
+obxd_fxb_xml_programs :: Xml.Element -> [Xml.Element]
+obxd_fxb_xml_programs = Xml.elChildren . Xml.x_get_elem "programs"
 
 -- | Parse Fxb Xml data, run 'obxd_attr_parse'.
-obd_fxb_xml_parse :: X.XmlSource x => x -> [Obxd_Program]
+obd_fxb_xml_parse :: Xml.Lexer.XmlSource x => x -> [Obxd_Program]
 obd_fxb_xml_parse = map obxd_attr_parse . obxd_fxb_xml_programs . Xml.xml_parse_err
 
 -- | 'obd_xml_parse' of 'obxd_load_xml_lax'
@@ -78,7 +84,7 @@ obxd_program_to_csv :: Int -> Obxd_Program -> String
 obxd_program_to_csv k (nm, dat) =
   if ',' `elem` nm
     then error "obxd_program_to_csv: name comma?"
-    else intercalate "," (nm : map (Sc3.real_pp k) dat)
+    else Data.List.intercalate "," (nm : map (Sc3.real_pp k) dat)
 
 -- | 'writeFile' of 'obxd_program_to_csv'.
 obxd_write_csv :: Int -> FilePath -> [Obxd_Program] -> IO ()
@@ -114,7 +120,9 @@ obxd_load_programs :: FilePath -> IO [Obxd_Program]
 obxd_load_programs fn = do
   (n, x) <- obxd_fxb_load_xml fn
   let p = obd_fxb_xml_parse x
-  when (n /= genericLength p) (print ("obxd_load_programs?", n, length p))
+  Control.Monad.when
+    (n /= Data.List.genericLength p)
+    (print ("obxd_load_programs?", n, length p))
   return p
 
 {- | Obxd default parameters

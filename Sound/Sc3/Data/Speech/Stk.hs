@@ -1,7 +1,7 @@
 -- | <https://github.com/thestk/stk/blob/master/src/Phonemes.cpp>
 module Sound.Sc3.Data.Speech.Stk where
 
-import Data.List.Split {- split -}
+import qualified Data.List.Split {- split -}
 
 -- | Real
 type R = Double
@@ -30,7 +30,7 @@ ph_parse w =
 ph_load :: FilePath -> IO [Ph]
 ph_load fn = do
   s <- readFile fn
-  return (map (ph_parse . splitOn ",") (lines s))
+  return (map (ph_parse . Data.List.Split.splitOn ",") (lines s))
 
 {- | <https://ccrma.stanford.edu/~jos/filters/Resonator_Bandwidth_Terms_Pole.html>
 

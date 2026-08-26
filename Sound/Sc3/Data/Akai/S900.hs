@@ -5,21 +5,21 @@
 -}
 module Sound.Sc3.Data.Akai.S900 where
 
-import Control.Monad {- base -}
-import Data.Maybe {- base -}
-import System.FilePath {- filepath -}
+import qualified Control.Monad {- base -}
+import qualified Data.Maybe {- base -}
+import qualified System.FilePath {- filepath -}
 
 import qualified Data.List.Split as Split {- split -}
 
-import qualified Music.Theory.List as T {- hmt-base -}
-import qualified Music.Theory.Tuple as T {- hmt-base -}
+import qualified Music.Theory.List as List {- hmt-base -}
+import qualified Music.Theory.Tuple as Tuple {- hmt-base -}
 
-import qualified Sound.Midi.Common as M {- midi-osc -}
+import qualified Sound.Midi.Common as Midi {- midi-osc -}
 
-import qualified Sound.File.Header as Sf {- hsc3-sf -}
-import qualified Sound.File.Wave as Sf {- hsc3-sf -}
+import qualified Sound.File.Header as Sf.Header {- hsc3-sf -}
+import qualified Sound.File.Wave as Sf.Wave {- hsc3-sf -}
 
-import Sound.Sc3.Data.Byte {- hsc3-data -}
+import qualified Sound.Sc3.Data.Byte as Byte {- hsc3-data -}
 import Sound.Sc3.Data.Math.Types {- hsc3-data -}
 
 {- * 2. S900/S950 disk format (.IMG)
@@ -58,7 +58,7 @@ s900_high_density_n = s900_low_density_n * 2
 
 -- | Load U8 IMG data.
 s900_load_img :: FilePath -> IO [U8]
-s900_load_img = M.bytes_load
+s900_load_img = Midi.bytes_load
 
 -- | Predicate to test if data is a nil entry.
 s900_disk_ent_is_nil :: [U8] -> Bool
@@ -74,22 +74,25 @@ s900_disk_ent_parse d =
   if s900_disk_ent_is_nil d
     then Nothing
     else
-      let (nm, unused, ty, len, blk, s900_id) = T.t6_from_list (s900_segment [10, 6, 1, 3, 2, 2] d)
-          (len1, len2, len3) = T.t3_from_list len
-          (blk1, blk2) = T.t2_from_list blk
+      let (nm, unused, ty, len, blk, s900_id) = Tuple.t6_from_list (s900_segment [10, 6, 1, 3, 2, 2] d)
+          (len1, len2, len3) = Tuple.t3_from_list len
+          (blk1, blk2) = Tuple.t2_from_list blk
       in if unused /= [0, 0, 0, 0, 0, 0] || s900_id /= [0, 0]
           then error "s900_disk_ent_parse?"
           else
             Just
               ( map toEnum nm
               , toEnum (ty !! 0)
-              , u24_pack_le (len1, len2, len3)
-              , u16_pack_le (blk1, blk2)
+              , Byte.u24_pack_le (len1, len2, len3)
+              , Byte.u16_pack_le (blk1, blk2)
               )
 
 -- | Read the non-NIL instances of the 64 possible 24-byte S900_DISK_ENT fields.
 s900_disk_ent :: [U8] -> [S900_DISK_ENT]
-s900_disk_ent = mapMaybe s900_disk_ent_parse . Split.chunksOf 24 . take 1536
+s900_disk_ent =
+  Data.Maybe.mapMaybe s900_disk_ent_parse
+  . Split.chunksOf 24
+  . take 1536
 
 {- | BLOCK-MAP.
 
@@ -111,7 +114,7 @@ s900_img_blk_map_parse d =
   let n = length d
       z = drop 1536 d
       m = if n == s900_low_density_n then take 1600 z else take 3200 z
-  in map (u16_pack_le . T.t2_from_list) (Split.chunksOf 2 m)
+  in map (Byte.u16_pack_le . Tuple.t2_from_list) (Split.chunksOf 2 m)
 
 {- | The marker at the block map to indicate there are no further blocks.
 
@@ -147,7 +150,7 @@ s900_read_img fn = do
   let m = s900_img_blk_map_parse d
       e = s900_disk_ent d
       f = map (s900_get_file (d, m)) e
-  when (length e /= length f) (error "s900_read_img?")
+  Control.Monad.when (length e /= length f) (error "s900_read_img?")
   return (zip e f)
 
 {- * 3. S900/S950 sample format (60-bytes)
@@ -182,21 +185,21 @@ type S900_Sf_HDR = (String, U32, U16, U16, Char, U32, U32, U32)
 s900_sf_hdr :: [U8] -> S900_Sf_HDR
 s900_sf_hdr d =
   let pl = [10, 6, 4, 2, 2, 2, 1, 1, 4, 4, 4, 20]
-      (fn, _u1, ns, sr, tn, _u2, lp, _u3, em, sm, ll, _u4) = T.t12_from_list (s900_segment pl d)
-      (sr1, sr2) = T.t2_from_list sr
-      (tn1, tn2) = T.t2_from_list tn
-      (ns1, ns2, ns3, ns4) = T.t4_from_list ns
-      (em1, em2, em3, em4) = T.t4_from_list em
-      (sm1, sm2, sm3, sm4) = T.t4_from_list sm
-      (ll1, ll2, ll3, ll4) = T.t4_from_list ll
+      (fn, _u1, ns, sr, tn, _u2, lp, _u3, em, sm, ll, _u4) = Tuple.t12_from_list (s900_segment pl d)
+      (sr1, sr2) = Tuple.t2_from_list sr
+      (tn1, tn2) = Tuple.t2_from_list tn
+      (ns1, ns2, ns3, ns4) = Tuple.t4_from_list ns
+      (em1, em2, em3, em4) = Tuple.t4_from_list em
+      (sm1, sm2, sm3, sm4) = Tuple.t4_from_list sm
+      (ll1, ll2, ll3, ll4) = Tuple.t4_from_list ll
   in ( map toEnum fn
-     , u32_pack_le (ns1, ns2, ns3, ns4)
-     , u16_pack_le (sr1, sr2)
-     , u16_pack_le (tn1, tn2)
+     , Byte.u32_pack_le (ns1, ns2, ns3, ns4)
+     , Byte.u16_pack_le (sr1, sr2)
+     , Byte.u16_pack_le (tn1, tn2)
      , toEnum (lp !! 0)
-     , u32_pack_le (em1, em2, em3, em4)
-     , u32_pack_le (sm1, sm2, sm3, sm4)
-     , u32_pack_le (ll1, ll2, ll3, ll4)
+     , Byte.u32_pack_le (em1, em2, em3, em4)
+     , Byte.u32_pack_le (sm1, sm2, sm3, sm4)
+     , Byte.u32_pack_le (ll1, ll2, ll3, ll4)
      )
 
 {- | Unpack N + N/2 bytes of 12-bit signed sample data.
@@ -209,10 +212,10 @@ Then there are N/2 bytes containing the upper 8-bits of the last N/2 words.
 -}
 s900_sf_data_unpack :: U32 -> [U8] -> [I12]
 s900_sf_data_unpack n d =
-  let (p, q) = unzip (T.adj2 2 (u32_take n d))
-      (p0, p1) = (map M.bits8_hi p, map M.bits8_lo p)
+  let (p, q) = unzip (List.adj2 2 (u32_take n d))
+      (p0, p1) = (map Midi.bits8_hi p, map Midi.bits8_lo p)
       r = u32_drop n d
-      f = curry u12_pack_le
+      f = curry Byte.u12_pack_le
   in map u12_as_i12 (zipWith f p0 q ++ zipWith f p1 r)
 
 s900_sf_write_wav :: FilePath -> [U8] -> IO ()
@@ -220,8 +223,11 @@ s900_sf_write_wav dir d = do
   let hdr = s900_sf_hdr (take 60 d)
       (nm, nf, sr, _, _, _, _, _) = hdr
       dat = s900_sf_data_unpack nf (drop 60 d)
-      sf_hdr = Sf.Sf_Header nf Sf.Linear16 sr 1
-  Sf.wave_store_i16 (dir </> nm <.> "wav") sf_hdr [map fromIntegral dat]
+      sf_hdr = Sf.Header.Sf_Header nf Sf.Header.Linear16 sr 1
+  Sf.Wave.wave_store_i16
+    (dir System.FilePath.</> nm System.FilePath.<.> "wav")
+    sf_hdr
+    [map fromIntegral dat]
 
 s900_sf_export :: FilePath -> FilePath -> IO ()
 s900_sf_export dir fn = do

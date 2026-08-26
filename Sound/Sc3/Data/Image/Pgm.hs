@@ -1,10 +1,11 @@
-{- | Dimensions are (rows,columns), or (height,width).
+{- | Portable Grey Map.
+Dimensions are (rows,columns), or (height,width).
 Indices are (row,column), or (y,x) where y=0 is the upper row.
 -}
 module Sound.Sc3.Data.Image.Pgm where
 
-import Data.Maybe {- base -}
-import Data.Word {- base -}
+import qualified Data.Maybe {- base -}
+import qualified Data.Word {- base -}
 
 import qualified Data.Array.Unboxed as Array {- array -}
 import qualified Data.Map as Map {- containers -}
@@ -61,7 +62,7 @@ pgm5_save_0 :: FilePath -> Pgm -> IO ()
 pgm5_save_0 fn a = Pgm.arrayToFile fn (pgm_to_word16 a)
 
 -- | Simple cast.
-pgm_to_word16 :: Pgm -> Array.UArray Bitmap.Ix Word16
+pgm_to_word16 :: Pgm -> Array.UArray Bitmap.Ix Data.Word.Word16
 pgm_to_word16 = Array.amap fromIntegral . pgm_array
 
 -- | Scan array for maximum value.
@@ -155,7 +156,7 @@ type Greymap n = (Bitmap.Dimensions, Map.Map Bitmap.Ix n)
 
 -- | Lookup value, default is zero.
 greymap_ix :: Num n => Greymap n -> Bitmap.Ix -> n
-greymap_ix (_, m) i = fromMaybe 0 (Map.lookup i m)
+greymap_ix (_, m) i = Data.Maybe.fromMaybe 0 (Map.lookup i m)
 
 -- | Set value.
 greymap_set :: Greymap n -> Bitmap.Ix -> n -> Greymap n

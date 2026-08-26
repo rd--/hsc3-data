@@ -38,6 +38,6 @@ related work in
 
 ```
 $ make doctest
-Examples: 428  Tried: 428  Errors: 0  Failures: 0
+Examples: 440  Tried: 440  Errors: 0  Failures: 0
 $
 ```

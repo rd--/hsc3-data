@@ -1,8 +1,8 @@
 -- | Csound data set giving formant locations for vowels.
 module Sound.Sc3.Data.Speech.Cs where
 
-import Data.List {- base -}
-import Data.Maybe {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
 
 -- * Lookup functions
 
@@ -22,7 +22,7 @@ formant n v = formants v !! fromEnum n
 fdata :: Num n => Voice -> Vowel -> Fdata n
 fdata v i =
   let f (p, q, _, _, _) = p == v && q == i
-  in fromMaybe (error "fdata") (find f fdata_table)
+  in Data.Maybe.fromMaybe (error "fdata") (Data.List.find f fdata_table)
 
 {- | Formant triples of an 'Fdata'.
 
@@ -30,7 +30,7 @@ fdata v i =
 [(250,0,60),(1750,-30,90),(2600,-16,100),(3050,-22,120),(3340,-28,120)]
 -}
 formants :: Fdata n -> [(n, n, n)]
-formants (_, _, f, a, bw) = map t3_from_list (transpose [f, a, bw])
+formants (_, _, f, a, bw) = map t3_from_list (Data.List.transpose [f, a, bw])
 
 -- * Data types
 

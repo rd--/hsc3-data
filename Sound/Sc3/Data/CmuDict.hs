@@ -8,9 +8,9 @@
 -}
 module Sound.Sc3.Data.CmuDict where
 
-import Data.Char {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
+import qualified Data.Char {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
 
 import qualified Data.List.Split as Split {- split -}
 import qualified Data.Map as Map {- containers -}
@@ -190,7 +190,7 @@ arpabet_classification p =
   in maybe
       (error "arpabet_classification")
       fst
-      (find f arpabet_classification_table)
+      (Data.List.find f arpabet_classification_table)
 
 -- | Load CmuDict given parser function.
 cmudict_load_ty :: (String -> (String, a)) -> FilePath -> IO (Cmu_Dict_ty a)
@@ -225,7 +225,7 @@ Just [[(R,Nothing),(EY,Just Primary_stress)],[(N,Nothing),(ER,Just No_stress),(D
 Just [(R,Nothing),(EY,Just Primary_stress),(N,Nothing),(ER,Just No_stress),(D,Nothing)]
 -}
 d_lookup :: Cmu_Dict_ty a -> String -> Maybe a
-d_lookup d w = Map.lookup (map toUpper w) d
+d_lookup d w = Map.lookup (map Data.Char.toUpper w) d
 
 -- | Variant that retains query string if not in dictionary.
 d_lookup' :: Cmu_Dict_ty a -> String -> Either String a
@@ -310,10 +310,10 @@ phoneme_ipa :: Maybe Stress -> Phoneme -> String
 phoneme_ipa s =
   either
     id
-    ( fromMaybe (error (show ("phoneme_ipa: no stressed phoneme", s)))
-        . lookup (fromMaybe (error "phoneme_ipa: no stress") s)
+    ( Data.Maybe.fromMaybe (error (show ("phoneme_ipa: no stressed phoneme", s)))
+        . lookup (Data.Maybe.fromMaybe (error "phoneme_ipa: no stress") s)
     )
-    . fromMaybe (error "phoneme_ipa: no phoneme")
+    . Data.Maybe.fromMaybe (error "phoneme_ipa: no phoneme")
     . flip lookup arpabet_ipa_table
 
 {- | Consult 'arpabet_ipa_table'.

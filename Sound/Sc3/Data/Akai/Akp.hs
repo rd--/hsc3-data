@@ -4,11 +4,11 @@
 -}
 module Sound.Sc3.Data.Akai.Akp where
 
-import Control.Monad {- base -}
+import qualified Control.Monad {- base -}
 -- import Data.Int {- base -}
 
-import Data.Word {- base -}
-import System.IO {- base -}
+import qualified Data.Word {- base -}
+import qualified System.IO {- base -}
 
 import qualified Data.ByteString.Lazy as ByteString {- bytestring -}
 
@@ -29,23 +29,25 @@ akp_kgrp_chunks ch =
 {- | Read Akp file.
   The structure is a sequence of six header chunks followed by a sequence of kgrp chunks.
 -}
-akp_read_ch :: Handle -> IO ([Riff.Chunk], [[Riff.Chunk]])
+akp_read_ch :: System.IO.Handle -> IO ([Riff.Chunk], [[Riff.Chunk]])
 akp_read_ch h = do
   (ty, _) <- Riff.riff_read_chunk_hdr h
-  when (ty /= "RIFF") (error "riff_read: not RIFF")
+  Control.Monad.when (ty /= "RIFF") (error "riff_read: not RIFF")
   ty' <- Riff.read_word32_ascii h
-  when (ty' /= "APRG") (error "riff_read: not APRG")
+  Control.Monad.when (ty' /= "APRG") (error "riff_read: not APRG")
   ch <- Riff.riff_read_chunk_seq h
   return (take 6 ch, map akp_kgrp_chunks (drop 6 ch))
 
 -- | 'withFile' of 'akp_read_ch'
 akp_load_ch :: FilePath -> IO ([Riff.Chunk], [[Riff.Chunk]])
-akp_load_ch fn = withFile fn ReadMode akp_read_ch
+akp_load_ch fn = System.IO.withFile fn System.IO.ReadMode akp_read_ch
 
 -- * Prg
 
+type Akp_Byte = Data.Word.Word8
+
 -- | (Midi-Prg-Number,Keygroup-Count)
-type Akp_Prg = (Word8, Word8)
+type Akp_Prg = (Akp_Byte, Akp_Byte)
 
 akp_prg_parse :: ByteString.ByteString -> Akp_Prg
 akp_prg_parse dat = (ByteString.index dat 1, ByteString.index dat 2)
@@ -73,13 +75,13 @@ akp_prg_parse dat = (ByteString.index dat 1, ByteString.index dat 2)
 17	Bend Mode (0) 0 = NORMAL, 1 = HELD
 18	Aftertouch (0) -12 -> 12
 -}
-type Akp_Tune = ((Word8, Word8), [Word8], (Word8, Word8), Word8, Word8)
+type Akp_Tune = ((Akp_Byte, Akp_Byte), [Akp_Byte], (Akp_Byte, Akp_Byte), Akp_Byte, Akp_Byte)
 
--- | TUNE default values.
+-- | Tune default values.
 akp_tune_def :: Akp_Tune
 akp_tune_def = ((0, 0), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], (2, 2), 0, 0)
 
--- | TUNE parser.
+-- | Tune parser.
 akp_tune_parse :: ByteString.ByteString -> Akp_Tune
 akp_tune_parse dat =
   let ix = ByteString.index dat
@@ -88,20 +90,20 @@ akp_tune_parse dat =
 
 -- * Lfo
 
-akp_wave_tbl :: [(Word8, String)]
+akp_wave_tbl :: [(Akp_Byte, String)]
 akp_wave_tbl =
-  [ (0, "SINE")
-  , (1, "TRIANGLE")
-  , (2, "SQUARE")
-  , (3, "SQUARE+")
-  , (4, "SQUARE-")
-  , (5, "SAW BI")
-  , (6, "SAW UP")
-  , (7, "SAW DOWN")
-  , (8, "RANDOM")
+  [ (0, "Sine")
+  , (1, "Triangle")
+  , (2, "Square")
+  , (3, "Square+")
+  , (4, "Square-")
+  , (5, "Saw Bi")
+  , (6, "Saw Up")
+  , (7, "Saw Down")
+  , (8, "Random")
   ]
 
-{- | AKP LFO (14-BYTES)
+{- | Akp Lfo (14-BYTES)
 
  1	Waveform (1)
  2	Rate (43) 0 -> 100
@@ -114,7 +116,7 @@ akp_wave_tbl =
 10	Delay Mod (0) -100 -> 100
 11	Depth Mod (0) -100 -> 100
 -}
-type Akp_Lfo = (Word8, Word8, Word8, Word8, Word8, (Word8, Word8), (Word8, Word8, Word8))
+type Akp_Lfo = (Akp_Byte, Akp_Byte, Akp_Byte, Akp_Byte, Akp_Byte, (Akp_Byte, Akp_Byte), (Akp_Byte, Akp_Byte, Akp_Byte))
 
 akp_lfo_def :: Akp_Lfo
 akp_lfo_def = (1, 43, 0, 0, 0, (15, 0), (0, 0, 0))
@@ -126,7 +128,7 @@ akp_lfo_parse dat =
 
 -- * Kloc (16-BYTES)
 
-{- | AKP KLOC
+{- | Akp Kloc
 
  4	low note (21) 21 -> 127
  5	high note (127) 21 -> 127
@@ -140,9 +142,9 @@ akp_lfo_parse dat =
 13	Zone Xfade (0) 0 = OFF, 1 = ON
 14	Mute Group
 
-(LOW,HIGH,TUNE,FINE-TUNE)
+(Low,High,Tune,Fine-Tune)
 -}
-type Akp_Kloc = (Word8, Word8, Word8, Word8)
+type Akp_Kloc = (Akp_Byte, Akp_Byte, Akp_Byte, Akp_Byte)
 
 akp_kloc_parse :: ByteString.ByteString -> Akp_Kloc
 akp_kloc_parse dat =
@@ -151,14 +153,14 @@ akp_kloc_parse dat =
 
 -- * Env (18-BYTES)
 
-{- | AKP ENV
+{- | Akp Env
 
 1	Attack (0) 0 -> 100
 3	Decay (50) 0 -> 100
 4	Release (15) 0 -> 100
 6	Sustain (100) 0 -> 100
 -}
-type Akp_Env = (Word8, Word8, Word8, Word8)
+type Akp_Env = (Akp_Byte, Akp_Byte, Akp_Byte, Akp_Byte)
 
 akp_env_def :: Akp_Env
 akp_env_def = (0, 50, 15, 100)
@@ -170,16 +172,16 @@ akp_env_parse dat =
 
 -- * Zone (48-BYTES)
 
-akp_playback_tbl :: [(Word8, String)]
+akp_playback_tbl :: [(Akp_Byte, String)]
 akp_playback_tbl =
-  [ (0, "NO LOOPING")
-  , (1, "ONE SHOT")
-  , (2, "LOOP IN REL")
-  , (3, "LOOP UNTIL REL")
-  , (4, "AS SAMPLE")
+  [ (0, "No Looping")
+  , (1, "One Shot")
+  , (2, "Loop In Rel")
+  , (3, "Loop Until Rel")
+  , (4, "As Sample")
   ]
 
-{- | AKP ZONE
+{- | Akp Zone
 
 1	Number of chars in Sample Name
 2 - 21  Sample Name (pad with 00h) (if first character = 00h then no sample assigned)
@@ -196,9 +198,9 @@ akp_playback_tbl =
 44	Velocity->Start LSB (0) }
 45	Velocity->Start MSB (0) } -9999 -> 9999
 
-(NAME,..,..,FINE-TUNE,TUNE,..,PAN,PLAYBACK,..,LEVEL)
+(Name,..,..,Fine-Tune,Tune,..,Pan,Playback,..,Level)
 -}
-type Akp_Zone = (String, Word8, Word8, Word8, Word8, Word8)
+type Akp_Zone = (String, Akp_Byte, Akp_Byte, Akp_Byte, Akp_Byte, Akp_Byte)
 
 akp_zone_parse :: ByteString.ByteString -> Akp_Zone
 akp_zone_parse dat =
