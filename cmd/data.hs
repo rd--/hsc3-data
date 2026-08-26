@@ -1,12 +1,13 @@
-import Control.Monad {- base -}
-import Data.Function {- base -}
-import Data.List {- base -}
-import Data.Maybe {- base -}
-import Data.Word {- base -}
-import Numeric {- base -}
-import System.Environment {- base -}
+import qualified Control.Monad {- base -}
+import qualified Data.Function {- base -}
+import qualified Data.List {- base -}
+import qualified Data.Maybe {- base -}
+import qualified Data.Word {- base -}
+import qualified Numeric {- base -}
+import qualified System.Environment {- base -}
+import qualified Text.Printf {- base -}
+
 import System.FilePath {- filepath -}
-import Text.Printf {- base -}
 
 import qualified Data.Vector.Storable as Vector {- vector -}
 import qualified Data.Vector.Unboxed as Vector.Unboxed {- vector -}
@@ -50,15 +51,17 @@ import qualified Sound.Sc3.Data.Xml.Svl as Xml.Svl {- hsc3-data -}
 -- * Ats
 
 ats_header :: FilePath -> IO ()
-ats_header fn = Ats.ats_read fn >>= putStrLn . Ats.ats_header_pp . Ats.ats_header
+ats_header fn =
+  Ats.ats_read fn
+  >>= putStrLn . Ats.ats_header_pp . Ats.ats_header
 
 -- * Au
 
 {- | Au to Pbm
 
-> let fn = "/home/rohan/sw/hsc3-sf/au/mc-4-16.au"
+> let fn = "/home/rohan/sw/hsc3-sf/data/au/mc-4-16.au"
 > au_to_pbm fn (fn ++ ".pbm")
-> pbm_print_ascii (fn ++ ".pbm")
+> Pbm.pbm_print_ascii (fn ++ ".pbm")
 -}
 au_to_pbm :: FilePath -> FilePath -> IO ()
 au_to_pbm au_fn pbm_fn = do
@@ -66,12 +69,13 @@ au_to_pbm au_fn pbm_fn = do
   let nr = Sf.Au.channelCount hdr
       nc = Sf.Au.frameCount hdr
       dm = (nr, nc)
-      f ix = let n = vec Vector.! Bitmap.ix_to_linear_co dm ix in n > 0.5
+      f ix = let n = vec Vector.! Bitmap.ix_to_linear_co dm ix
+             in n > 0.5
   Pbm.pbm4_write pbm_fn (Pbm.bitindices_to_pbm (dm, filter f (Bitmap.bm_indices dm)))
 
 {- | Au to Pgm
 
-> let fn = "/home/rohan/sw/hsc3-sf/au/mc-4-16.au"
+> let fn = "/home/rohan/sw/hsc3-sf/data/au/mc-4-16.au"
 > au_to_pgm 8 fn (fn ++ ".pgm")
 -}
 au_to_pgm :: Int -> FilePath -> FilePath -> IO ()
@@ -108,7 +112,7 @@ wseq_to_pgm (w, h) sq =
 
 {- | Mnd to Png
 
-> let c_fn = "/home/rohan/sw/hmt/csv/mnd/1080-C01.csv"
+> let c_fn = "/home/rohan/sw/hmt/data/csv/mnd/1080-C01.csv"
 > let c_fn = "/home/rohan/uc/sp-id/csv/music/ngv/s-gyrostasis.plain.csv"
 > csv_mnd_to_pgm (1200,200) c_fn "/tmp/t.pgm"
 -}
@@ -147,7 +151,7 @@ csv_to_image_point_real_pbm csv_fn dm ix pbm_fn = do
 
 -- * Hex
 
-id_w8_seq :: [Word8] -> [Word8]
+id_w8_seq :: [Data.Word.Word8] -> [Data.Word.Word8]
 id_w8_seq = id
 
 -- * Image
@@ -219,7 +223,7 @@ kml_stat kml_fn = do
 kml_to_csv_concat :: FilePath -> FilePath -> IO ()
 kml_to_csv_concat kml_fn csv_fn = do
   c <- Kml.kml_load_coordinates kml_fn
-  let f (p, q, r) = intercalate "," (map show [p, q, r])
+  let f (p, q, r) = Data.List.intercalate "," (map show [p, q, r])
       s' = map f (concat c)
   writeFile csv_fn (unlines s')
 
@@ -227,9 +231,9 @@ kml_to_csv_concat kml_fn csv_fn = do
 kml_to_csv_split :: FilePath -> FilePath -> IO ()
 kml_to_csv_split kml_fn csv_fn = do
   c <- Kml.kml_load_coordinates kml_fn
-  let f (p, q, r) = intercalate "," (map show [p, q, r])
+  let f (p, q, r) = Data.List.intercalate "," (map show [p, q, r])
       gen_nm :: Int -> String
-      gen_nm n = printf "%s.%03d.csv" csv_fn n
+      gen_nm n = Text.Printf.printf "%s.%03d.csv" csv_fn n
       g (c', n) = writeFile (gen_nm n) (unlines (map f c'))
   mapM_ g (zip c [0 ..])
 
@@ -254,20 +258,20 @@ lpc_print_frame_csv :: Lpc_Reader -> Int -> FilePath -> Int -> IO ()
 lpc_print_frame_csv reader k fn n = do
   lpc <- reader fn
   let hdr = Lpc.lpcHeader lpc
-  when (n >= Lpc.lpcNFrames hdr) (error "lpc: n > nframes")
+  Control.Monad.when (n >= Lpc.lpcNFrames hdr) (error "lpc: n > nframes")
   let frm = Lpc.lpcFrames lpc !! n
-  when (length frm /= Lpc.lpcFrameSize hdr) (error "lpc: framesize?")
-  putStrLn (intercalate "," (map (float_pp k) frm))
+  Control.Monad.when (length frm /= Lpc.lpcFrameSize hdr) (error "lpc: framesize?")
+  putStrLn (Data.List.intercalate "," (map (float_pp k) frm))
 
 lpc_print_column_csv :: Lpc_Reader -> Int -> FilePath -> Int -> IO ()
 lpc_print_column_csv reader k fn n = do
   lpc <- reader fn
   let hdr = Lpc.lpcHeader lpc
       frm = Lpc.lpcFrames lpc
-  when (n >= Lpc.lpcFrameSize hdr) (error "lpc: n > frame_size")
-  let col = transpose frm !! n
-  when (length col /= Lpc.lpcNFrames hdr) (error "lpc: n_frames?")
-  putStrLn (intercalate "," (map (float_pp k) col))
+  Control.Monad.when (n >= Lpc.lpcFrameSize hdr) (error "lpc: n > frame_size")
+  let col = Data.List.transpose frm !! n
+  Control.Monad.when (length col /= Lpc.lpcNFrames hdr) (error "lpc: n_frames?")
+  putStrLn (Data.List.intercalate "," (map (float_pp k) col))
 
 typ_to_reader :: String -> Lpc_Reader
 typ_to_reader typ =
@@ -302,7 +306,7 @@ pbm_indices_csv pbm_fn csv_fn = do
 pbm_indices_json :: FilePath -> FilePath -> IO ()
 pbm_indices_json pbm_fn json_fn = do
   ix <- pbm_load_indices pbm_fn
-  let to_array l = "[" ++ intercalate "," l ++ "]"
+  let to_array l = "[" ++ Data.List.intercalate "," l ++ "]"
       f (r, c) = to_array [show r, show c]
   writeFile json_fn (to_array (map f ix))
 
@@ -337,7 +341,7 @@ pbm_to_csv_mnd opt pbm_fn csv_fn = do
         in if le
             then Bitmap.bitindices_leading_edges Bitmap.Dir_Right z
             else z
-      bi = sortBy (compare `on` snd) bi'
+      bi = Data.List.sortBy (compare `Data.Function.on` snd) bi'
       mnn_sq =
         let sq = zipWith (*) [mnn, mnn + mnn_incr ..] (Sc3.Common.Buffer.resamp1 nr mnn_mod)
         in if inv then reverse sq else sq
@@ -411,7 +415,7 @@ pdb_title =
 
 pdb_seqres :: Bool -> FilePath -> IO ()
 pdb_seqres iupac =
-  let mk = if iupac then map (fromMaybe '.' . Pdb.pdb_seqres_code_lookup) else unwords
+  let mk = if iupac then map (Data.Maybe.fromMaybe '.' . Pdb.pdb_seqres_code_lookup) else unwords
       pp (c, r) = c : ':' : ' ' : mk r
       sq = map pp . Pdb.seqres_group . Pdb.Parse.dat_seqres
   in pdb_txt (\x -> Pdb.header_id4 (Pdb.Parse.dat_header x) : sq x)
@@ -554,7 +558,7 @@ help =
 
 main :: IO ()
 main = do
-  a <- getArgs
+  a <- System.Environment.getArgs
   case a of
     ["ats", "header", fn] -> ats_header fn
     ["ats", "write-au", ats_fn, au_fn] -> Ats.ats_write_au ats_fn au_fn
@@ -618,7 +622,7 @@ record_pp =
   in concatMap f . show
 
 float_pp :: RealFloat a => Int -> a -> String
-float_pp k n = showFFloat (Just k) n ""
+float_pp k n = Numeric.showFFloat (Just k) n ""
 
 read_double :: String -> Double
 read_double = read

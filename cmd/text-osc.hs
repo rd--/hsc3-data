@@ -1,26 +1,34 @@
-import Control.Exception {- base -}
-import Control.Monad {- base -}
+import qualified Control.Exception {- base -}
+import qualified Control.Monad {- base -}
 
-import UI.HSCurses.Curses {- hscurses -}
+import qualified UI.HSCurses.Curses as Curses {- hscurses -}
 
 import qualified Music.Theory.Opt as Opt {- hmt-base -}
 
-import Sound.Osc.Fd {- hosc -}
-import qualified Sound.Osc.Transport.Fd.Udp as Fd.Udp {- hosc -}
+import qualified Sound.Osc.Fd as Osc {- hosc -}
+import qualified Sound.Osc.Transport.Fd.Udp as Osc.Fd.Udp {- hosc -}
 
-set_ln :: Window -> Int -> String -> IO ()
-set_ln w n s = move n 0 >> wClrToEol w >> wAddStr w s >> addLn >> refresh
+set_ln :: Curses.Window -> Int -> String -> IO ()
+set_ln w n s = do
+  Curses.move n 0
+  Curses.wClrToEol w
+  Curses.wAddStr w s
+  Curses.addLn
+  Curses.refresh
 
-set_str :: Window -> (Int, Int) -> String -> IO ()
-set_str w (x, y) s = move x y >> wAddStr w s >> refresh
+set_str :: Curses.Window -> (Int, Int) -> String -> IO ()
+set_str w (x, y) s = do
+  Curses.move x y
+  Curses.wAddStr w s
+  Curses.refresh
 
-proc_msg :: Window -> Message -> IO ()
+proc_msg :: Curses.Window -> Osc.Message -> IO ()
 proc_msg w m =
   case m of
-    Message "/set_ln" [Int32 n, AsciiString str] ->
-      set_ln w (fromIntegral n) (ascii_to_string str)
-    Message "/set_str" [Int32 x, Int32 y, AsciiString str] ->
-      set_str w (fromIntegral x, fromIntegral y) (ascii_to_string str)
+    Osc.Message "/set_ln" [Osc.Int32 n, Osc.AsciiString str] ->
+      set_ln w (fromIntegral n) (Osc.ascii_to_string str)
+    Osc.Message "/set_str" [Osc.Int32 x, Osc.Int32 y, Osc.AsciiString str] ->
+      set_str w (fromIntegral x, fromIntegral y) (Osc.ascii_to_string str)
     _ -> return ()
 
 help :: [String]
@@ -32,15 +40,15 @@ opt_def = [("port", "57350", "int", "Udp port number")]
 main :: IO ()
 main = do
   (o, _a) <- Opt.opt_get_arg True help opt_def
-  initCurses
-  w <- initScr
-  let f fd = forever (recvMessage fd >>= maybe (return ()) (proc_msg w))
-      t = Fd.Udp.udpServer "127.0.0.1" (Opt.opt_read o "port")
-  finally (withTransport t f) endWin
+  Curses.initCurses
+  w <- Curses.initScr
+  let f fd = Control.Monad.forever (Osc.recvMessage fd >>= maybe (return ()) (proc_msg w))
+      t = Osc.Fd.Udp.udpServer "127.0.0.1" (Opt.opt_read o "port")
+  Control.Exception.finally (Osc.withTransport t f) Curses.endWin
 
 {-
-fd <- openUDP "127.0.0.1" 57350
-sendMessage fd (Message "/set_ln" [int32 0,string ['a'..'z']])
-sendMessage fd (Message "/set_str" [int32 0,int32 2,string ['C'..'G']])
-close fd
+fd <- Osc.Fd.Udp.openUdp "127.0.0.1" 57350
+Osc.sendMessage fd (Osc.Message "/set_ln" [Osc.int32 0,Osc.string ['a'..'z']])
+Osc.sendMessage fd (Osc.Message "/set_str" [Osc.int32 0,Osc.int32 2,Osc.string ['C'..'G']])
+Osc.close fd
 -}

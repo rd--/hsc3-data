@@ -1,6 +1,7 @@
-import Control.Monad {- base -}
+import qualified Control.Monad {- base -}
+import qualified System.Environment {- base -}
+
 import qualified Data.Vector.Storable as V {- vector -}
-import System.Environment {- base -}
 
 import qualified Sound.File.HSndFile as Sf {- hsc3-sf-hsndfile -}
 
@@ -48,8 +49,8 @@ sf_condense out_nf in_fn out_fn = do
       hdr' = hdr {Sf.frameCount = out_nf}
       sz = fromIntegral (win_sz out_nf in_nf)
       x = map (maybe 0 (vec_summary sz vec)) (gen_win out_nf in_nf)
-  when (in_nf < out_nf) (error "in_nf < out_nf")
-  when (nc /= 1) (error "nc /= 1")
+  Control.Monad.when (in_nf < out_nf) (error "in_nf < out_nf")
+  Control.Monad.when (nc /= 1) (error "nc /= 1")
   Sf.write_vec out_fn hdr' (V.fromList x)
   return ()
 
@@ -58,7 +59,7 @@ help = putStrLn "sf-condense frame-count:int input-file output-file"
 
 main :: IO ()
 main = do
-  a <- getArgs
+  a <- System.Environment.getArgs
   case a of
     [nf, in_fn, out_fn] -> sf_condense (read nf) in_fn out_fn
     _ -> help

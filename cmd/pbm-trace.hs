@@ -1,11 +1,11 @@
-import Control.Monad {- base -}
-import Data.Function {- base -}
-import Data.List {- base -}
-import System.Environment {- base -}
-import System.FilePath {- base -}
-import Text.Printf {- base -}
+import qualified Control.Monad {- base -}
+import qualified Data.Function {- base -}
+import qualified Data.List {- base -}
+import qualified System.Environment {- base -}
+import qualified Text.Printf {- base -}
 
 import qualified Data.Map as Map {- containers -}
+import System.FilePath {- filepath -}
 
 import qualified Music.Theory.List as List {- hmt-base -}
 
@@ -102,11 +102,13 @@ pbm_trace (jn, lm, ly) pbm_fn out_dir = do
       (dm, _) = bm
       tr = bm_trace bm
       tr' = if jn then trace_join_all tr else tr
-      tr'' = reverse (sortBy (compare `on` length) (filter ((> lm) . length) tr'))
+      tr'' = reverse (Data.List.sortBy (compare `Data.Function.on` length) (filter ((> lm) . length) tr'))
       out_fn ext = out_dir </> nm <.> ext
-      wr (n, t) = Pbm.write_pbm_bitindices (out_fn (printf "trace.%03d.pbm" n)) (dm, t)
+      wr (n, t) = Pbm.write_pbm_bitindices
+                  (out_fn (Text.Printf.printf "trace.%03d.pbm" n))
+                  (dm, t)
   print out_dir
-  when ly (mapM_ wr (zip [0 :: Int ..] tr''))
+  Control.Monad.when ly (mapM_ wr (zip [0 :: Int ..] tr''))
   Pbm.write_pbm_bitindices (out_fn "trace.pbm") (dm, concat tr'')
   trace2_set_write_csv (out_fn "trace.csv") tr''
 
@@ -122,7 +124,7 @@ help =
 
 main :: IO ()
 main = do
-  a <- getArgs
+  a <- System.Environment.getArgs
   case a of
     [jn, lm, ly, fn, dir] -> pbm_trace (jn == "t", read lm, ly == "t") fn dir
     _ -> putStrLn help

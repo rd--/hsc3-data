@@ -1,9 +1,9 @@
-import Control.Monad {- base -}
-import Data.List {- base -}
-import System.IO {- base -}
-import Text.Printf {- base -}
+import qualified Control.Monad {- base -}
+import qualified Data.List {- base -}
+import qualified System.IO {- base -}
+import qualified Text.Printf {- base -}
 
-import Data.List.Split {- split -}
+import qualified Data.List.Split {- split -}
 
 import qualified Music.Theory.Array.Csv as Array.Csv {- hmt-base -}
 import qualified Music.Theory.Byte as Byte {- hmt-base -}
@@ -38,7 +38,7 @@ dx7_print_f sel ld_f op =
   let sel_f x = maybe x (\r -> filter (\(k, _) -> k `elem` r) x) sel
       wr_f fn x = case x of
         Just bnk -> putStr (unlines (map op (sel_f (zip [1 :: Int ..] bnk))))
-        Nothing -> hPutStrLn stderr ("ERROR: dx7_sysex_print: " ++ fn)
+        Nothing -> System.IO.hPutStrLn System.IO.stderr ("ERROR: dx7_sysex_print: " ++ fn)
   in mapM_ (\fn -> ld_f fn >>= wr_f fn)
 
 -- > let fn = "/home/rohan/sw/hsc3-data/data/yamaha/dx7/vrc/VRC-106-B.syx"
@@ -51,7 +51,7 @@ dx7_print leadingZeroes sel ld cmd fn =
       print_csv = Dx7.Pp.dx7_voice_to_csv . snd
       print_hex pr_h (_, v) =
         if pr_h
-          then intercalate "," (Dx7.Db.dx7_hash_vc_param_csv (Dx7.Db.dx7_hash_vc v))
+          then Data.List.intercalate "," (Dx7.Db.dx7_hash_vc_param_csv (Dx7.Db.dx7_hash_vc v))
           else Byte.byte_seq_hex_pp False v
       print_parameters = unlines . Dx7.Pp.dx7_parameter_seq_pp (leadingZeroes, True) . snd
       print_voice_data_list = unlines . Dx7.Pp.dx7_voice_data_list_pp leadingZeroes . snd
@@ -60,8 +60,8 @@ dx7_print leadingZeroes sel ld cmd fn =
         in if pr_h
             then
               let h = Dx7.Hash.dx7_voice_hash v
-              in printf "%s,%s" (Dx7.Hash.dx7_hash_pp h) (Array.Csv.csv_quote_if_req nm)
-            else printf "%2d %s" k nm
+              in Text.Printf.printf "%s,%s" (Dx7.Hash.dx7_hash_pp h) (Array.Csv.csv_quote_if_req nm)
+            else Text.Printf.printf "%2d %s" k nm
       print_f f = dx7_print_f sel ld f fn
   in case cmd of
       "concise" -> print_f print_concise
@@ -93,14 +93,14 @@ dx7_sysex_verify = mapM_ dx7_sysex_verify_1
 dx7_sysex_add :: FilePath -> FilePath -> IO ()
 dx7_sysex_add fn1 fn2 = do
   dat <- Dx7.dx7_read_u8 fn1
-  when (length dat /= 4096) (error "dx7_sysex_add: NOT 4096")
+  Control.Monad.when (length dat /= 4096) (error "dx7_sysex_add: NOT 4096")
   Dx7.dx7_write_fmt9_sysex fn2 (Dx7.dx7_fmt9_sysex_gen 0 dat)
 
 dx7_sysex_rewrite :: FilePath -> FilePath -> IO ()
 dx7_sysex_rewrite fn1 fn2 = do
   src <- Dx7.dx7_read_u8 fn1 -- ie. do not verify
   let dat = Dx7.dx7_fmt9_sysex_dat src
-  when (length dat /= 4096) (error "dx7_sysex_rewrite?")
+  Control.Monad.when (length dat /= 4096) (error "dx7_sysex_rewrite?")
   Dx7.dx7_write_fmt9_sysex fn2 (Dx7.dx7_fmt9_sysex_gen 0 dat)
 
 main :: IO ()
@@ -108,7 +108,9 @@ main = do
   let opt_def = [("leadingZeroes", "False", "bool", "Print leading zeroes")]
   (o, a) <- Opt.opt_get_arg True usage_str opt_def
   let lz = Opt.opt_read o "leadingZeroes"
-      sel_f x = if x == "all" then Nothing else Just (map read (splitOn "," x))
+      sel_f x = if x == "all"
+                then Nothing
+                else Just (map read (Data.List.Split.splitOn "," x))
   case a of
     "hex" : "print" : sel : cmd : fn -> dx7_hex_print lz (sel_f sel) cmd fn
     ["sysex", "add", fn1, fn2] -> dx7_sysex_add fn1 fn2

@@ -1,6 +1,6 @@
-import Control.Monad {- base -}
-import System.Environment {- base -}
-import Text.Printf {- base -}
+import qualified Control.Monad {- base -}
+import qualified System.Environment {- base -}
+import qualified Text.Printf {- base -}
 
 import qualified Music.Theory.Time as Time {- hmt-base -}
 
@@ -18,17 +18,21 @@ import qualified Sound.Sc3.Data.Roland.D50.Pp as D50.Pp {- hsc3-data -}
 -- * Common
 
 sleep_ms :: Int -> IO ()
-sleep_ms = Osc.pauseThread . Time.ms_to_sec
+sleep_ms =
+  (Osc.pauseThread :: (Double -> IO ()))
+  . Time.ms_to_sec
 
 -- > send_sysex_def [D50.d50_ack_gen 0]
 send_sysex_def :: [[U8]] -> IO ()
-send_sysex_def x = void (Pm.pm_with_default_output (\fd -> Pm.pm_sysex_write_seq 10 fd x))
+send_sysex_def x =
+  Control.Monad.void
+  (Pm.pm_with_default_output (\fd -> Pm.pm_sysex_write_seq 10 fd x))
 
 pm_run_proc :: Int -> Pm.Pm_Fd -> Pm.Proc_F -> IO ()
 pm_run_proc dt fd proc_f =
   let recur = do
         r <- Pm.pm_process_events proc_f fd
-        when (not r) (sleep_ms dt)
+        Control.Monad.when (not r) (sleep_ms dt)
         recur
   in recur
 
@@ -64,7 +68,7 @@ print_name bnk (k, p) =
   in if bnk
       then
         let (b, n) = D50.d50_ix_to_bank k
-        in printf "%d%d %s" b n nm
+        in Text.Printf.printf "%d%d %s" b n nm
       else nm
 
 dat_print :: Bool -> Maybe Int -> String -> [D50.D50_Patch] -> IO ()
@@ -132,7 +136,9 @@ transfer_send_bulk_sysex fn = do
 
 syx_vc_pp :: D50.Db.D50_Syx_Vc -> String
 syx_vc_pp (syx_nm, _, ix, p, _, hsh, _) =
-  printf "%-20s - %02d - %s - %08X" syx_nm ix (D50.Pp.d50_patch_summary p) hsh
+  Text.Printf.printf
+  "%-20s - %02d - %s - %08X"
+  syx_nm ix (D50.Pp.d50_patch_summary p) hsh
 
 -- > sysex_db_search_name False "/home/rohan/sw/hsc3-data/data/roland/d50" ("-","-","FAIRLIGHT")
 sysex_db_search_name :: Bool -> FilePath -> D50.D50_Patch_Name_Set -> IO ()
@@ -174,7 +180,7 @@ usage_wr = putStrLn (unlines usage)
 
 main :: IO ()
 main = do
-  a <- getArgs
+  a <- System.Environment.getArgs
   case a of
     "hex" : "print" : ix : ty : fn_seq -> hex_print (parse_d50_ix "all" ix) ty fn_seq
     ["hex", "send", ix, fn] -> hex_send (read ix) fn

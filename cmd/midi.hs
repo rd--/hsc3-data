@@ -1,4 +1,4 @@
-import System.Environment {- base -}
+import qualified System.Environment {- base -}
 
 import qualified Codec.Midi {- HCodecs -}
 
@@ -57,7 +57,7 @@ usage =
 
 main :: IO ()
 main = do
-  a <- getArgs
+  a <- System.Environment.getArgs
   case a of
     ["midi-header", midi_fn] -> midi_header midi_fn
     ["midi-to-csv-mnd", midi_fn, csv_fn] -> midi_to_csv_mnd midi_fn csv_fn
