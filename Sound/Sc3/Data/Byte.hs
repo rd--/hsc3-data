@@ -11,21 +11,21 @@ import qualified Sound.Midi.Common as Midi {- midi-osc -}
 
 import           Sound.Sc3.Data.Math.Types {- hsc3-data -}
 
--- | Bit and
+-- | Bit and (alias for Data.Bits..&.)
 bitAnd :: (Data.Bits.Bits b) => b -> b -> b
 bitAnd = (Data.Bits..&.)
 
--- | Bit or
+-- | Bit or (alias for Data.Bits..|.)
 bitOr :: (Data.Bits.Bits b) => b -> b -> b
 bitOr = (Data.Bits..|.)
 
--- | Bit shift left
+-- | Bit shift left (alias for Data.Bits.shiftL)
 bitShiftLeft :: (Data.Bits.Bits b) => b -> Int -> b
 bitShiftLeft = Data.Bits.shiftL
 
--- | Bit shift right
+-- | Bit shift right (alias for Data.Bits.shiftR)
 bitShiftRight :: (Data.Bits.Bits b) => b -> Int -> b
-bitShiftRight = bitShiftRight
+bitShiftRight = Data.Bits.shiftR
 
 -- | (Lsb,Msb)
 u12_pack_le :: (U4, U8) -> U12
@@ -39,7 +39,14 @@ u16_pack_le (p, q) =
   u8_to_u16 p
   `bitOr` bitShiftLeft (u8_to_u16 q) 8
 
--- | Pack 'U24' from three 'U8', Msb-Lsb.
+{- | Pack 'U24' from three 'U8', Msb-Lsb.
+
+>>> u24_pack_be (0x12, 0x34, 0x56)
+1193046
+
+>>> 0x123456
+1193046
+-}
 u24_pack_be :: (U8, U8, U8) -> U24
 u24_pack_be (p, q, r) =
   bitShiftLeft (u8_to_u32 p) 16
@@ -49,6 +56,14 @@ u24_pack_be (p, q, r) =
 u24_pack_le :: (U8, U8, U8) -> U24
 u24_pack_le (p, q, r) = u24_pack_be (r, q, p)
 
+{- | Unpack 'U24' to three 'U8', Msb-Lsb.
+
+>>> u24_unpack_be 0x123456
+(18,52,86)
+
+>>> (0x12, 0x34, 0x56)
+(18,52,86)
+-}
 u24_unpack_be :: U24 -> (U8, U8, U8)
 u24_unpack_be a =
   ( u32_to_u8 (bitShiftRight a 16 `bitAnd` 0xFF)
@@ -71,8 +86,11 @@ u32_pack_le (p, q, r, s) = u32_pack_be (s, r, q, p)
 
 {- | Pack 'U21' from three 'U7', Msb-Lsb.
 
->>> map u21_pack_be [(0x02,0x00,0x00),(0x02,0x0F,0x00)] == [0x8000,0x8780]
-True
+>>> map u21_pack_be [(0x02,0x00,0x00),(0x02,0x0F,0x00)]
+[32768,34688]
+
+>>> [0x8000,0x8780]
+[32768,34688]
 -}
 u21_pack_be :: (U8, U8, U8) -> U24
 u21_pack_be = Midi.bits_21_join_be

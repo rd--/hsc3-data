@@ -45,8 +45,11 @@ import qualified Sound.Sc3.Data.Math.Types as Math {- hsc3-data -}
 -- | An opcode is a (key,value) pair.
 type Sfz_Opcode = (String, String)
 
+-- | A <header> is a string.
+type Sfz_Header = String
+
 -- | A section is a <header> and a set of opcodes.
-type Sfz_Section = (String, [Sfz_Opcode])
+type Sfz_Section = (Sfz_Header, [Sfz_Opcode])
 
 -- | The <control> section defines a set of opcodes.
 type Sfz_Control = [Sfz_Opcode]
@@ -87,7 +90,7 @@ sfz_is_comment ln =
     _ -> False
 
 -- | Headers are in angle brackets, ie. <group>.
-sfz_is_header :: String -> Bool
+sfz_is_header :: Sfz_Header -> Bool
 sfz_is_header s = not (null s) && List.head_err s == '<' && last s == '>'
 
 {- | Sfz tokenizer, white space is allowed in the right hand sides of opcodes, ie. in file-names.
