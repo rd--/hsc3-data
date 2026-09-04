@@ -322,7 +322,7 @@ img_uniq_colours i =
 img_uniq_colours_gr :: Image -> [[(Image.Ix, Rgb24)]]
 img_uniq_colours_gr =
   Data.List.groupBy ((==) `Data.Function.on` (snd . fst))
-  . img_uniq_colours
+    . img_uniq_colours
 
 -- * Miscellaneous
 

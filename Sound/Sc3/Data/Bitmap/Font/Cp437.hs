@@ -33,12 +33,12 @@ cp437_glyph_to_bitindices :: Cp437_Glyph -> Bitmap.Bitindices
 cp437_glyph_to_bitindices =
   let col c x =
         Data.Maybe.mapMaybe
-        (\r -> if testBit x r then Just (r, c) else Nothing)
-        [0 .. 7]
+          (\r -> if testBit x r then Just (r, c) else Nothing)
+          [0 .. 7]
   in (,) (8, 8)
-     . concat
-     . zipWith col [0 .. 7]
-     . t8_list
+      . concat
+      . zipWith col [0 .. 7]
+      . t8_list
 
 {- | 'bitindices_show' of 'cp437_glyph_to_bitindices'.
 

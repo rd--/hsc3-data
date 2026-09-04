@@ -124,6 +124,9 @@ sfz_parse_pitch s =
 
 >>> sfz_parse_opcode "pitch_keycenter=C4"
 ("pitch_keycenter","C4")
+
+>>> sfz_parse_opcode "locc4=64"
+("locc4","64")
 -}
 sfz_parse_opcode :: String -> Sfz_Opcode
 sfz_parse_opcode s =
@@ -162,18 +165,25 @@ sfz_get_data gr =
       [("<control>", c), ("<global>", g)] -> (c, g, sfz_collate g rhs)
       _ -> error "sfz_get_data?"
 
+-- | Parse sections
+sfz_parse_sections :: String -> [Sfz_Section]
+sfz_parse_sections s =
+  let l = filter (not . sfz_is_comment) (lines s)
+  in sfz_tokens_group (concatMap sfz_tokenize l)
+
+-- | Parse data
+sfz_parse_data :: String -> Sfz_Data
+sfz_parse_data = sfz_get_data . sfz_parse_sections
+
 -- * Read/Io
 
 -- | Read a file, remove comments, parse into sections.
 sfz_load_sections :: FilePath -> IO [Sfz_Section]
-sfz_load_sections fn = do
-  s <- readFile fn
-  let l = filter (not . sfz_is_comment) (lines s)
-  return (sfz_tokens_group (concatMap sfz_tokenize l))
+sfz_load_sections = fmap sfz_parse_sections . readFile
 
 -- | 'sfz_get_data' of 'sfz_load_sections'
 sfz_load_data :: FilePath -> IO Sfz_Data
-sfz_load_data = fmap sfz_get_data . sfz_load_sections
+sfz_load_data = fmap sfz_parse_data . readFile
 
 -- * Lookup
 
@@ -196,62 +206,121 @@ sfz_region_lookup_f z f r = maybe z f . sfz_region_lookup r
 sfz_region_lookup_read :: Read t => t -> Sfz_Region -> String -> t
 sfz_region_lookup_read z = sfz_region_lookup_f z read
 
+{- | Lookup in region opcodes, then in group if not located.
+
+NOTE: Does not filter duplicates, region copies should override group and gobal copies.
+-}
+sfz_region_lookup_n_f :: (String -> t) -> Sfz_Region -> String -> [(Int, t)]
+sfz_region_lookup_n_f parse (gr, c) k =
+  let find = filter (\(x, _) -> k `Data.List.isPrefixOf` x)
+      get_n = read . drop (length k)
+      r = map (\(x, y) -> (get_n x, parse y)) (find c)
+      g = map (\(x, y) -> (get_n x, parse y)) (find gr)
+  in r ++ g
+
+sfz_region_lookup_n :: Sfz_Region -> String -> [(Int, String)]
+sfz_region_lookup_n = sfz_region_lookup_n_f id
+
 -- * Named
 
+-- | Volume, in decibels (-144.6 -- 6) <https://sfzformat.com/opcodes/volume/>
 sfz_region_volume :: Sfz_Region -> Double
 sfz_region_volume r = sfz_region_lookup_read 0 r "volume"
 
+-- | Panoramic position, percentage (-100 -- 100) <https://sfzformat.com/opcodes/pan/>
 sfz_region_pan :: Sfz_Region -> Double
 sfz_region_pan r = sfz_region_lookup_read 0 r "pan"
 
+-- | Sample <https://sfzformat.com/opcodes/sample/>
 sfz_region_sample :: Sfz_Region -> FilePath
 sfz_region_sample r = sfz_region_lookup_err r "sample"
 
+-- | Tuning, in cents (-100 -- 100) <https://sfzformat.com/opcodes/tune/>
 sfz_region_tune :: Sfz_Region -> Math.I8
 sfz_region_tune r = sfz_region_lookup_read 0 r "tune"
 
+-- | Low channel, one-indexed (1 -- 16) <https://sfzformat.com/opcodes/lochan/>
 sfz_region_lochan :: Sfz_Region -> Midi.Channel
 sfz_region_lochan r = sfz_region_lookup_read 1 r "lochan"
 
+-- | High channel, one-indexed (1 -- 16) <https://sfzformat.com/opcodes/hichan/>
 sfz_region_hichan :: Sfz_Region -> Midi.Channel
 sfz_region_hichan r = sfz_region_lookup_read 16 r "hichan"
 
+-- | Low and high channel
+sfz_region_chan :: Sfz_Region -> (Midi.Velocity, Midi.Velocity)
+sfz_region_chan r = (sfz_region_lochan r, sfz_region_hichan r)
+
+-- | Low velocity (1 -- 127) <https://sfzformat.com/opcodes/lovel/>
 sfz_region_lovel :: Sfz_Region -> Midi.Velocity
 sfz_region_lovel r = sfz_region_lookup_read 0 r "lovel"
 
+-- | High velocity (1 -- 127) <https://sfzformat.com/opcodes/hivel/>
 sfz_region_hivel :: Sfz_Region -> Midi.Velocity
 sfz_region_hivel r = sfz_region_lookup_read 127 r "hivel"
 
+-- | Low and high velocity
+sfz_region_vel :: Sfz_Region -> (Midi.Velocity, Midi.Velocity)
+sfz_region_vel r = (sfz_region_lovel r, sfz_region_hivel r)
+
+-- | Low random (0 -- 1) <https://sfzformat.com/opcodes/lorand/>
+sfz_region_lorand :: Sfz_Region -> Double
+sfz_region_lorand r = sfz_region_lookup_read 0 r "lorand"
+
+-- | High random (0 -- 1) <https://sfzformat.com/opcodes/hirand/>
+sfz_region_hirand :: Sfz_Region -> Double
+sfz_region_hirand r = sfz_region_lookup_read 1 r "hirand"
+
+-- | Low and high random
+sfz_region_rand :: Sfz_Region -> (Double, Double)
+sfz_region_rand r = (sfz_region_lorand r, sfz_region_hirand r)
+
+-- | Loop mode <https://sfzformat.com/opcodes/loop_mode/>
 sfz_region_loop_mode :: Sfz_Region -> Maybe String
 sfz_region_loop_mode r = sfz_region_lookup r "loop_mode"
 
+-- | Loop mode symbol table
 sfz_loop_mode_sym_tbl :: [(String, Char)]
-sfz_loop_mode_sym_tbl = [("no_loop", 'N'), ("one_shot", 'O'), ("loop_continuous", 'C'), ("loop_sustain", 'S')]
+sfz_loop_mode_sym_tbl =
+  [ ("no_loop", 'N')
+  , ("one_shot", 'O')
+  , ("loop_continuous", 'C')
+  , ("loop_sustain", 'S')
+  ]
 
+-- | Loop mode symbol table lookup
 sfz_loop_mode_sym :: String -> Char
 sfz_loop_mode_sym = flip List.lookup_err sfz_loop_mode_sym_tbl
 
+-- | Loop mode symbol
 sfz_region_loop_mode_sym :: Sfz_Region -> Maybe Char
 sfz_region_loop_mode_sym = fmap sfz_loop_mode_sym . sfz_region_loop_mode
 
+-- | Loop start <https://sfzformat.com/opcodes/loop_start/>
 sfz_region_loop_start :: Sfz_Region -> Math.U32
 sfz_region_loop_start r = sfz_region_lookup_read 0 r "loop_start"
 
+-- | Loop end <https://sfzformat.com/opcodes/loop_end/>
 sfz_region_loop_end :: Sfz_Region -> Math.U32
 sfz_region_loop_end r = sfz_region_lookup_read 0 r "loop_end"
 
+-- | Amplitude envelope attack, in seconds (0 -- 100) <https://sfzformat.com/opcodes/ampeg_attack/>
 sfz_region_ampeg_attack :: Sfz_Region -> Double
 sfz_region_ampeg_attack r = sfz_region_lookup_read 0 r "ampeg_attack"
 
+-- | Amplitude envelope decay, in seconds (0 -- 100) <https://sfzformat.com/opcodes/ampeg_decay/>
 sfz_region_ampeg_decay :: Sfz_Region -> Double
 sfz_region_ampeg_decay r = sfz_region_lookup_read 0 r "ampeg_decay"
 
+-- | Amplitude envelope sustain, percentage (0 -- 100) <https://sfzformat.com/opcodes/ampeg_sustain/>
 sfz_region_ampeg_sustain :: Sfz_Region -> Double
 sfz_region_ampeg_sustain r = sfz_region_lookup_read 100 r "ampeg_sustain"
 
+-- | Amplitude envelope release, in seconds (0.001 - 100) <https://sfzformat.com/opcodes/ampeg_release/>
 sfz_region_ampeg_release :: Sfz_Region -> Double
 sfz_region_ampeg_release r = sfz_region_lookup_read 0 r "ampeg_release"
 
+-- | Amplitude envelope attack, sustain, decay and release
 sfz_region_ampeg_adsr :: Sfz_Region -> (Double, Double, Double, Double)
 sfz_region_ampeg_adsr r =
   ( sfz_region_ampeg_attack r
@@ -259,6 +328,65 @@ sfz_region_ampeg_adsr r =
   , sfz_region_ampeg_sustain r
   , sfz_region_ampeg_release r
   )
+
+-- | Sequence length <https://sfzformat.com/opcodes/seq_length/>
+sfz_region_seq_length :: Sfz_Region -> Int
+sfz_region_seq_length r = sfz_region_lookup_read 1 r "seq_length"
+
+-- | Sequence position <https://sfzformat.com/opcodes/seq_position/>
+sfz_region_seq_position :: Sfz_Region -> Int
+sfz_region_seq_position r = sfz_region_lookup_read 1 r "seq_position"
+
+-- | Trigger (attack, release, first, legato) <https://sfzformat.com/opcodes/trigger/>
+sfz_region_trigger :: Sfz_Region -> String
+sfz_region_trigger r = sfz_region_lookup_f "attack" id r "trigger"
+
+-- | Low continuous-controller (0 -- 127) <https://sfzformat.com/opcodes/loccN/>
+sfz_region_locc :: Sfz_Region -> [(Math.I8, Math.I8)]
+sfz_region_locc r = sfz_region_lookup_n_f read r "locc"
+
+-- | High continuous-controller (0 -- 127) <https://sfzformat.com/opcodes/hiccN/>
+sfz_region_hicc :: Sfz_Region -> [(Math.I8, Math.I8)]
+sfz_region_hicc r = sfz_region_lookup_n_f read r "hicc"
+
+{- | Low and high continuous-controller
+
+>>> let o = sfz_parse_opcode "locc4=64"
+>>> sfz_region_cc ([],[o])
+Just (4,(64,127))
+-}
+sfz_region_cc :: Sfz_Region -> Maybe (Math.I8, (Math.I8, Math.I8))
+sfz_region_cc r =
+  case (sfz_region_locc r, sfz_region_hicc r) of
+    ([], []) -> Nothing
+    ([(k, i)], []) -> Just (k, (i, 127))
+    ([], [(k, j)]) -> Just (k, (0, j))
+    ([(k, i)], [(k', j)]) ->
+      if k == k'
+        then Just (k, (i, j))
+        else error "sfz_region_cc"
+    _ -> error "sfz_region_cc"
+
+-- | Amplifier velocity tracking (-100 - 100) <https://sfzformat.com/opcodes/amp_veltrack/>
+sfz_region_amp_veltrack :: Sfz_Region -> Double
+sfz_region_amp_veltrack r = sfz_region_lookup_read 100 r "amp_veltrack"
+
+{- | Amplitude velocity curve <https://sfzformat.com/opcodes/amp_velcurve_N/>
+
+>>> (_,_,[r]) = sfz_parse_data "<region> amp_velcurve_1=0.1 amp_velcurve_63=0.25"
+>>> sfz_region_amp_velcurve r
+[(1,0.1),(63,0.25)]
+-}
+sfz_region_amp_velcurve :: Sfz_Region -> [(Math.I8, Double)]
+sfz_region_amp_velcurve r = sfz_region_lookup_n_f read r "amp_velcurve_"
+
+-- | Amplifier low-frequency oscillator frequency, in hertz (0 - 20) <https://sfzformat.com/opcodes/amplfo_freq/>
+sfz_region_amplfo_freq :: Sfz_Region -> Double
+sfz_region_amplfo_freq r = sfz_region_lookup_read 0 r "amplfo_freq"
+
+-- | Amplifier low-frequency oscillator depth, in decibels (-10 - 10) <https://sfzformat.com/opcodes/amplfo_depth/>
+sfz_region_amplfo_depth :: Sfz_Region -> Double
+sfz_region_amplfo_depth r = sfz_region_lookup_read 0 r "amplfo_depth"
 
 -- * Composite
 

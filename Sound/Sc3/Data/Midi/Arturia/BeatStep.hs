@@ -5,11 +5,12 @@
 -}
 module Sound.Sc3.Data.Midi.Arturia.BeatStep where
 
-import Data.Char {- base -}
-import System.FilePath {- filepath -}
-import Text.Printf {- base -}
+import qualified Data.Char {- base -}
+import qualified Text.Printf {- base -}
 
-import Sound.Midi.Common {- midi-osc -}
+import qualified System.FilePath {- filepath -}
+
+import qualified Sound.Midi.Common {- midi-osc -}
 import Sound.Midi.Type {- midi-osc -}
 
 -- | Type-generalised 'fromEnum'.
@@ -83,7 +84,11 @@ True
 -}
 data Acceleration = Slow | Medium | Fast deriving (Eq, Enum, Show)
 
--- | Global encoder acceleration (0-2)
+{- | Global encoder acceleration (0-2)
+
+>>> global_encoder_acceleration_set Slow
+[240,0,32,107,127,66,2,0,65,4,0,247]
+-}
 global_encoder_acceleration_set :: Num n => Acceleration -> SysEx n
 global_encoder_acceleration_set = set_sysex 0x41 0x04 . enum_to_num
 
@@ -94,7 +99,11 @@ global_encoder_acceleration_set = set_sysex 0x41 0x04 . enum_to_num
 -}
 data Curve = Linear | Logarithmic | Exponential | Full deriving (Eq, Enum, Show)
 
--- | Set global pad velocity curve
+{- | Set global pad velocity curve
+
+>>> global_pad_velocity_curve_set Linear
+[240,0,32,107,127,66,2,0,65,3,0,247]
+-}
 global_pad_velocity_curve_set :: Num n => Curve -> SysEx n
 global_pad_velocity_curve_set = set_sysex 0x41 0x03 . enum_to_num
 
@@ -110,6 +119,7 @@ preset_recall mm = with_common_sysex_prefix [0x05, mm, 0xF7]
 
 -- * Enc = encoder, cc = Cc-mode
 
+-- | Encoder mode
 data Encoder_Mode = Absolute | Relative_X40 | Relative_X00 | Relative_X10 deriving (Eq, Enum, Show)
 
 encoder_mode_str :: Encoder_Mode -> String
@@ -193,7 +203,10 @@ data Switch_Mode = Toggle | Gate deriving (Eq, Enum, Show)
 switch_mode_str :: Switch_Mode -> String
 switch_mode_str x = case x of Toggle -> "cs"; Gate -> "rl"
 
--- | Set pad to midi-note mode (mn).
+{- | Set pad to midi-note mode (mn).
+
+Sends note-on (0x9), note-off (0x8) and polyphonic-key-pressure (0xA) messages.
+-}
 pad_mn_set :: Ctl_Id -> (Byte, Byte, Switch_Mode) -> [SysEx Byte]
 pad_mn_set j (ch, mnn, md) =
   let k = ctl_pad_ix0 + j
@@ -282,7 +295,7 @@ data Led_Status = Led_Off | Led_Red | Led_Blue | Led_Magenta deriving (Eq, Show)
 
 -- | Pp Led_Status
 led_status_str :: Led_Status -> String
-led_status_str = map toUpper . drop 4 . show
+led_status_str = map Data.Char.toUpper . drop 4 . show
 
 -- | Led_Status to control byte.
 led_status_to_u8 :: Led_Status -> Byte
@@ -301,8 +314,8 @@ led_pad_set :: Ctl_Id -> Led_Status -> SysEx Byte
 led_pad_set j = led_set (ctl_pad_ix0 + j)
 
 -- | The Cntrl-Seq light is ordinarily on, turn it off.
-led_cntrl_seq_off :: SysEx Byte
-led_cntrl_seq_off = led_set 0x5A Led_Off
+led_cntrl_seq :: Led_Status -> SysEx Byte
+led_cntrl_seq = led_set 0x5A
 
 -- * Dsc = description
 
@@ -430,16 +443,19 @@ sysex_lib_channel =
 sysex_lib_enc_ch :: SysEx_Lib
 sysex_lib_enc_ch =
   let mk_enc_cc_ch ch ix md =
-        ( printf "enc-cc-seq-c%02x-i%02x-%s" ch ix (encoder_mode_str md)
+        ( Text.Printf.printf "enc-cc-seq-c%02x-i%02x-%s" ch ix (encoder_mode_str md)
         , enc_cc_set_16 (ch, map (+ ix) [0x00 .. 0x0F], (0x00, 0x7F), md)
         )
-  in [ mk_enc_cc_ch ch ix md | ch <- [0 .. 1], ix <- [0x00, 0x10 .. 0x70], md <- [Absolute, Relative_X40]
+  in [ mk_enc_cc_ch ch ix md
+     | ch <- [0 .. 1]
+     , ix <- [0x00, 0x10 .. 0x70]
+     , md <- [Absolute, Relative_X40]
      ]
 
 sysex_lib_enc :: SysEx_Lib
 sysex_lib_enc =
   let mk_enc_cc ix md =
-        ( printf "enc-cc-seq-i%02x-%s" ix (encoder_mode_str md)
+        ( Text.Printf.printf "enc-cc-seq-i%02x-%s" ix (encoder_mode_str md)
         , enc_cc_set_16 (0x41, map (+ ix) [0x00 .. 0x0F], (0x00, 0x7F), md)
         )
   in [ mk_enc_cc ix md | ix <- [0x00, 0x10 .. 0x70], md <- [Absolute, Relative_X40]
@@ -452,7 +468,7 @@ sysex_lib_led =
      , ("led-all-blue", mk_led_all Led_Blue)
      , ("led-all-magenta", mk_led_all Led_Magenta)
      , ("led-all-red", mk_led_all Led_Red)
-     , ("led-cntrl-seq-off", [led_cntrl_seq_off])
+     , ("led-cntrl-seq-off", [led_cntrl_seq Led_Off])
      ]
 
 sysex_lib_led_pad :: SysEx_Lib
@@ -460,7 +476,7 @@ sysex_lib_led_pad =
   let mk_led_pad x =
         map
           ( \j ->
-              ( printf "led-pad-%02x-%s" j (led_status_str x)
+              ( Text.Printf.printf "led-pad-%02x-%s" j (led_status_str x)
               , [led_pad_set j x]
               )
           )
@@ -470,28 +486,35 @@ sysex_lib_led_pad =
 sysex_lib_pad_cc_ch :: SysEx_Lib
 sysex_lib_pad_cc_ch =
   let mk_pad_cc ch ix md =
-        ( printf "pad-cc-seq-c%02x-i%02x-%s" ch ix (pad_cc_mode_str md)
+        ( Text.Printf.printf "pad-cc-seq-c%02x-i%02x-%s" ch ix (pad_cc_mode_str md)
         , pad_cc_set_16 (md, ch, map (+ ix) [0x00 .. 0x0F], (0x00, 0x7F))
         )
-  in [ mk_pad_cc ch ix md | ch <- [0 .. 3], ix <- [0, 0x10 .. 0x70], md <- [Pad_Switch Toggle, Pad_Switch Gate, Pad_Pressure]
+  in [ mk_pad_cc ch ix md
+     | ch <- [0 .. 3]
+     , ix <- [0, 0x10 .. 0x70]
+     , md <- [Pad_Switch Toggle, Pad_Switch Gate, Pad_Pressure]
      ]
 
 sysex_lib_pad_cc :: SysEx_Lib
 sysex_lib_pad_cc =
   let mk_pad_cc ix md =
-        ( printf "pad-cc-seq-i%02x-%s" ix (pad_cc_mode_str md)
+        ( Text.Printf.printf "pad-cc-seq-i%02x-%s" ix (pad_cc_mode_str md)
         , pad_cc_set_16 (md, 0x41, map (+ ix) [0x00 .. 0x0F], (0x00, 0x7F))
         )
-  in [ mk_pad_cc ix md | ix <- [0, 0x10 .. 0x70], md <- [Pad_Switch Toggle, Pad_Switch Gate, Pad_Pressure]
+  in [ mk_pad_cc ix md
+     | ix <- [0, 0x10 .. 0x70]
+     , md <- [Pad_Switch Toggle, Pad_Switch Gate, Pad_Pressure]
      ]
 
 sysex_lib_pad_mn :: SysEx_Lib
 sysex_lib_pad_mn =
   let mk_pad_mn ix md =
-        ( printf "pad-mn-seq-i%02x-%s" ix (switch_mode_str md)
+        ( Text.Printf.printf "pad-mn-seq-i%02x-%s" ix (switch_mode_str md)
         , pad_mn_set_16 (0x41, map (+ ix) [0x00 .. 0x0F], md)
         )
-  in [ mk_pad_mn ix md | ix <- [0x30, 0x3C, 0x48], md <- [Toggle, Gate]
+  in [ mk_pad_mn ix md
+     | ix <- [0x30, 0x3C, 0x48]
+     , md <- [Toggle, Gate]
      ]
 
 {- | Library of named SysEx message sequences.
@@ -520,7 +543,10 @@ sysex_library =
 -}
 sysex_library_store :: FilePath -> IO ()
 sysex_library_store dir = do
-  let wr (nm, syx) = bytes_store (dir </> nm <.> "syx") (concat syx)
+  let wr (nm, syx) =
+        Sound.Midi.Common.bytes_store
+          (dir System.FilePath.</> nm System.FilePath.<.> "syx")
+          (concat syx)
   mapM_ wr sysex_library
 
 {-
@@ -528,15 +554,15 @@ sysex_library_store dir = do
 import qualified Sound.Midi.Pm as Pm
 
 k <- Pm.pm_output_by_name "Arturia BeatStep MIDI 1"
-run = Pm.pm_with_output_device k
-msg x = run (\fd -> Pm.pm_sysex_write_seq 5 fd x)
+let run = Pm.pm_with_output_device k
+let msg x = run (\fd -> Pm.pm_sysex_write_seq 5 fd x)
 
 msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Red)) led_ix_set)
 msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Blue)) led_ix_set)
 msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Magenta)) led_ix_set)
 msg (map (\k -> set_sysex 0x10 k (led_status_to_u8 Led_Off)) led_ix_set)
 
-msg [led_cntrl_seq_off]
+msg [led_cntrl_seq Led_Off] -- Led_Off Led_Red Led_Blue Led_Magenta
 
 msg [global_midi_channel_set 0x00]
 msg [global_encoder_acceleration_set Slow] -- Slow Medium Fast
@@ -551,6 +577,9 @@ msg (enc_cc_set 0x00 (0x00,0x00,(0x00,0x7f),Absolute))
 msg (pad_mn_set_16 (0x00,[0x3C .. ],Toggle))
 msg (pad_mn_set_16 (0x00,[0x3C .. ],Gate))
 msg (pad_mn_set_16_mpe ([0x3C ..],Gate))
+
+msg (pad_mn_set_16 (0x00,[35 .. ],Gate))
+
 
 msg (pad_cc_set_16 (Pad_Switch Toggle,0,[0 .. 16],(0x00,0x7F)))
 msg (pad_cc_set_16 (Pad_Switch Gate,0,[0 .. 16],(0x00,0x7F)))

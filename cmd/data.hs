@@ -53,7 +53,7 @@ import qualified Sound.Sc3.Data.Xml.Svl as Xml.Svl {- hsc3-data -}
 ats_header :: FilePath -> IO ()
 ats_header fn =
   Ats.ats_read fn
-  >>= putStrLn . Ats.ats_header_pp . Ats.ats_header
+    >>= putStrLn . Ats.ats_header_pp . Ats.ats_header
 
 -- * Au
 
@@ -69,8 +69,9 @@ au_to_pbm au_fn pbm_fn = do
   let nr = Sf.Au.channelCount hdr
       nc = Sf.Au.frameCount hdr
       dm = (nr, nc)
-      f ix = let n = vec Vector.! Bitmap.ix_to_linear_co dm ix
-             in n > 0.5
+      f ix =
+        let n = vec Vector.! Bitmap.ix_to_linear_co dm ix
+        in n > 0.5
   Pbm.pbm4_write pbm_fn (Pbm.bitindices_to_pbm (dm, filter f (Bitmap.bm_indices dm)))
 
 {- | Au to Pgm

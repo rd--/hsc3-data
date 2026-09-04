@@ -104,9 +104,10 @@ pbm_trace (jn, lm, ly) pbm_fn out_dir = do
       tr' = if jn then trace_join_all tr else tr
       tr'' = reverse (Data.List.sortBy (compare `Data.Function.on` length) (filter ((> lm) . length) tr'))
       out_fn ext = out_dir </> nm <.> ext
-      wr (n, t) = Pbm.write_pbm_bitindices
-                  (out_fn (Text.Printf.printf "trace.%03d.pbm" n))
-                  (dm, t)
+      wr (n, t) =
+        Pbm.write_pbm_bitindices
+          (out_fn (Text.Printf.printf "trace.%03d.pbm" n))
+          (dm, t)
   print out_dir
   Control.Monad.when ly (mapM_ wr (zip [0 :: Int ..] tr''))
   Pbm.write_pbm_bitindices (out_fn "trace.pbm") (dm, concat tr'')

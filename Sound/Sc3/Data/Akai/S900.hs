@@ -91,8 +91,8 @@ s900_disk_ent_parse d =
 s900_disk_ent :: [U8] -> [S900_DISK_ENT]
 s900_disk_ent =
   Data.Maybe.mapMaybe s900_disk_ent_parse
-  . Split.chunksOf 24
-  . take 1536
+    . Split.chunksOf 24
+    . take 1536
 
 {- | BLOCK-MAP.
 

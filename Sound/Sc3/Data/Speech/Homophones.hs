@@ -19,8 +19,8 @@ type Hmph = [[String]]
 hmph_uniq :: Hmph -> Hmph
 hmph_uniq =
   Data.List.nub
-  . Data.List.sortOn (map Data.Char.toLower . List.head_err)
-  . map (Data.List.sortBy str_cmp_ci)
+    . Data.List.sortOn (map Data.Char.toLower . List.head_err)
+    . map (Data.List.sortBy str_cmp_ci)
 
 -- | Parser, skips /k/ leading lines (header).
 hmph_parse :: Int -> String -> Hmph

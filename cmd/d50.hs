@@ -20,13 +20,13 @@ import qualified Sound.Sc3.Data.Roland.D50.Pp as D50.Pp {- hsc3-data -}
 sleep_ms :: Int -> IO ()
 sleep_ms =
   (Osc.pauseThread :: (Double -> IO ()))
-  . Time.ms_to_sec
+    . Time.ms_to_sec
 
 -- > send_sysex_def [D50.d50_ack_gen 0]
 send_sysex_def :: [[U8]] -> IO ()
 send_sysex_def x =
   Control.Monad.void
-  (Pm.pm_with_default_output (\fd -> Pm.pm_sysex_write_seq 10 fd x))
+    (Pm.pm_with_default_output (\fd -> Pm.pm_sysex_write_seq 10 fd x))
 
 pm_run_proc :: Int -> Pm.Pm_Fd -> Pm.Proc_F -> IO ()
 pm_run_proc dt fd proc_f =
@@ -137,8 +137,11 @@ transfer_send_bulk_sysex fn = do
 syx_vc_pp :: D50.Db.D50_Syx_Vc -> String
 syx_vc_pp (syx_nm, _, ix, p, _, hsh, _) =
   Text.Printf.printf
-  "%-20s - %02d - %s - %08X"
-  syx_nm ix (D50.Pp.d50_patch_summary p) hsh
+    "%-20s - %02d - %s - %08X"
+    syx_nm
+    ix
+    (D50.Pp.d50_patch_summary p)
+    hsh
 
 -- > sysex_db_search_name False "/home/rohan/sw/hsc3-data/data/roland/d50" ("-","-","FAIRLIGHT")
 sysex_db_search_name :: Bool -> FilePath -> D50.D50_Patch_Name_Set -> IO ()

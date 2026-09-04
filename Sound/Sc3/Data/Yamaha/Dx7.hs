@@ -144,8 +144,8 @@ dx7_voice_verify chk_rng d = length d == dx7_nvoice && (not chk_rng || null (dx7
 dx7_voice_set_verify :: Bool -> [Dx7_Voice] -> IO ()
 dx7_voice_set_verify chk_rng v =
   Control.Monad.unless
-  (all (dx7_voice_verify chk_rng) v)
-  (error "dx7_voice?")
+    (all (dx7_voice_verify chk_rng) v)
+    (error "dx7_voice?")
 
 -- | Voice operators, in sequence 6,5,4,3,2,1 (# = 6 x 21 = 126)
 dx7_voice_op_params :: Dx7_Voice -> [[U8]]
@@ -317,8 +317,8 @@ dx7_usr_signed n = if n <= 0 then show n else '+' : show n
 dx7_usr_range :: Bool -> (Int, Int) -> Dx7_Usr
 dx7_usr_range sgn (p, q) =
   Data.List.intercalate
-  ";"
-  (map (if sgn then dx7_usr_signed else show) [p .. q])
+    ";"
+    (map (if sgn then dx7_usr_signed else show) [p .. q])
 
 {- | (Dx7-Ix,Name,Steps,Usr_Diff,Usr_Str)
 
@@ -507,8 +507,8 @@ dx7_parameter_tbl =
 dx7_parameter_get :: U8 -> Dx7_Parameter
 dx7_parameter_get n =
   Data.Maybe.fromMaybe
-  (error "dx7_parameter_get")
-  (Data.List.find ((== n) . dx7_parameter_ix) dx7_parameter_tbl)
+    (error "dx7_parameter_get")
+    (Data.List.find ((== n) . dx7_parameter_ix) dx7_parameter_tbl)
 
 {- | Lookup parameter name given index.
 
@@ -746,8 +746,8 @@ dx7_fmt9_sysex_validate syx =
 dx7_fmt9_sysex_validate_err :: String -> Dx7_SysEx -> Dx7_SysEx
 dx7_fmt9_sysex_validate_err err =
   Data.Maybe.fromMaybe
-  (error ("dx7_fmt9_sysex_validate: " ++ err))
-  . dx7_fmt9_sysex_validate
+    (error ("dx7_fmt9_sysex_validate: " ++ err))
+    . dx7_fmt9_sysex_validate
 
 {- | Load FORMAT=9 sysex file as 4104-element U8 sequence and run verification.
      See 'dx7_fmt9_sysex_verify'.

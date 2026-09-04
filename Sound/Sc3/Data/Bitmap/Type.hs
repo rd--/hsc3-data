@@ -12,7 +12,6 @@ import qualified Data.Maybe {- base -}
 import qualified Data.Map as Map {- containers -}
 import qualified Safe {- safe -}
 
-
 import qualified Music.Theory.List as List {- hmt-base -}
 
 -- * Dimensions and Indices
@@ -210,7 +209,7 @@ bitseq_lsb n x = map (bitenc_test_lsb x) [0 .. n - 1]
 bitseq_elem :: (Num n, Enum n) => Bitseq -> [n]
 bitseq_elem =
   Data.Maybe.mapMaybe (\(ix, b) -> if b then Just ix else Nothing)
-  . zip [0 ..]
+    . zip [0 ..]
 
 -- | List of rows, each a 'Bitseq', the first is the uppermost.
 type Bitarray = (Dimensions, [Bitseq])
@@ -244,8 +243,8 @@ indices_by_row :: [Ix] -> [(Row, [Column])]
 indices_by_row =
   let f x = (ix_row (Safe.headErr x), map ix_column x)
   in map f
-     . List.group_on ix_row
-     . Data.List.sortOn ix_row
+      . List.group_on ix_row
+      . Data.List.sortOn ix_row
 
 bitindices_rows :: Bitindices -> [[Column]]
 bitindices_rows ((nr, _), ix) =
@@ -262,8 +261,8 @@ indices_by_column :: [Ix] -> [(Column, [Row])]
 indices_by_column =
   let f x = (ix_column (Safe.headErr x), map ix_row x)
   in map f
-     . List.group_on ix_column
-     . Data.List.sortOn ix_column
+      . List.group_on ix_column
+      . Data.List.sortOn ix_column
 
 bitindices_columns :: Bitindices -> [[Row]]
 bitindices_columns ((_, nc), ix) =

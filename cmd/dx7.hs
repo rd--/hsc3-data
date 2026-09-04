@@ -108,9 +108,10 @@ main = do
   let opt_def = [("leadingZeroes", "False", "bool", "Print leading zeroes")]
   (o, a) <- Opt.opt_get_arg True usage_str opt_def
   let lz = Opt.opt_read o "leadingZeroes"
-      sel_f x = if x == "all"
-                then Nothing
-                else Just (map read (Data.List.Split.splitOn "," x))
+      sel_f x =
+        if x == "all"
+          then Nothing
+          else Just (map read (Data.List.Split.splitOn "," x))
   case a of
     "hex" : "print" : sel : cmd : fn -> dx7_hex_print lz (sel_f sel) cmd fn
     ["sysex", "add", fn1, fn2] -> dx7_sysex_add fn1 fn2

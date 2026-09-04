@@ -230,8 +230,9 @@ parse_cif_table = do
 parse_cif_entry :: P Cif_Entry
 parse_cif_entry =
   Parsec.choice
-  [ fmap Left parse_cif_item
-  , fmap Right parse_cif_table]
+    [ fmap Left parse_cif_item
+    , fmap Right parse_cif_table
+    ]
 
 -- * Parser primitives
 
