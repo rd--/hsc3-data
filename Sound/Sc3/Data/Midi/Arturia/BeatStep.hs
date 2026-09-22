@@ -580,7 +580,6 @@ msg (pad_mn_set_16_mpe ([0x3C ..],Gate))
 
 msg (pad_mn_set_16 (0x00,[35 .. ],Gate))
 
-
 msg (pad_cc_set_16 (Pad_Switch Toggle,0,[0 .. 16],(0x00,0x7F)))
 msg (pad_cc_set_16 (Pad_Switch Gate,0,[0 .. 16],(0x00,0x7F)))
 

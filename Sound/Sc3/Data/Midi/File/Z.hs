@@ -1,120 +1,130 @@
 -- | Midi file Io, courtesy zmidi-core.
 module Sound.Sc3.Data.Midi.File.Z where
 
-import Control.Monad {- base -}
-import Data.Maybe {- base -}
-import Data.Ratio {- base -}
-import Data.Word {- base -}
+import qualified Control.Monad {- base -}
+import qualified Data.Maybe {- base -}
+import qualified Data.Ratio {- base -}
+import qualified Data.Word {- base -}
 
-import qualified Music.Theory.Duration.Rq as T {- hmt -}
-import qualified Music.Theory.Time.Seq as T {- hmt -}
+import qualified Music.Theory.Time.Seq as Seq {- hmt-base -}
 
-import qualified Sound.Midi.Common as M {- midi-osc -}
-import qualified Sound.Midi.Type as M {- midi-osc -}
+import qualified Music.Theory.Duration.Rq as Rq {- hmt -}
 
-import qualified ZMidi.Core as Z {- zmidi-core -}
+import qualified Sound.Midi.Common as Midi {- midi-osc -}
+import qualified Sound.Midi.Type as Midi {- midi-osc -}
 
--- | 'Z.canonical' of 'Z.readMidi'
-z_load_midi :: FilePath -> IO Z.MidiFile
+import qualified ZMidi.Core as ZMidi {- zmidi-core -}
+
+-- | Unsigned 8-bit integer
+type U8 = Data.Word.Word8
+
+-- | Unsigned 32-bit integer
+type U32 = Data.Word.Word32
+
+-- | Unsigned 64-bit integer
+type U64 = Data.Word.Word64
+
+-- | 'ZMidi.canonical' of 'ZMidi.readMidi'
+z_load_midi :: FilePath -> IO ZMidi.MidiFile
 z_load_midi fn = do
-  r <- Z.readMidi fn
-  return (either (\err -> error ("z_load_midi: read failed: " ++ show err)) Z.canonical r)
+  r <- ZMidi.readMidi fn
+  return (either (\err -> error ("z_load_midi: read failed: " ++ show err)) ZMidi.canonical r)
 
--- | 'Z.DeltaTime' to 'Word32'
-z_delta_time_to_word32 :: Z.DeltaTime -> Word32
+-- | 'ZMidi.DeltaTime' to 'U32'
+z_delta_time_to_word32 :: ZMidi.DeltaTime -> U32
 z_delta_time_to_word32 = fromIntegral
 
--- | 'Z.DeltaTime' to 'Word64'
-z_delta_time_to_word64 :: Z.DeltaTime -> Word64
+-- | 'ZMidi.DeltaTime' to 'U64'
+z_delta_time_to_word64 :: ZMidi.DeltaTime -> U64
 z_delta_time_to_word64 = fromIntegral
 
--- | 'Z.Word14' to 'Word16'
-z_word14_to_int :: Z.Word14 -> Int
+-- | 'ZMidi.Word14' to 'Word16'
+z_word14_to_int :: ZMidi.Word14 -> Int
 z_word14_to_int = fromIntegral . toInteger
 
--- | Calculate 'T.Rq' for /t/ given 'Z.MidiTimeDivision'.
-z_to_rq :: Integral t => Z.MidiTimeDivision -> t -> T.Rq
+-- | Calculate 'Seq.Rq' for /t/ given 'ZMidi.MidiTimeDivision'.
+z_to_rq :: Integral t => ZMidi.MidiTimeDivision -> t -> Rq.Rq
 z_to_rq t_div t =
   case t_div of
-    Z.TPB n -> fromIntegral t % fromIntegral n
+    ZMidi.TPB n -> fromIntegral t Data.Ratio.% fromIntegral n
     _ -> error "non-TPB division"
 
 -- | Type-specialised 'z_to_rq'.
-z_delta_time_to_rq :: Z.MidiTimeDivision -> Z.DeltaTime -> T.Rq
+z_delta_time_to_rq :: ZMidi.MidiTimeDivision -> ZMidi.DeltaTime -> Rq.Rq
 z_delta_time_to_rq = z_to_rq
 
 -- * Voice
 
-z_status_ch :: Word8 -> M.Channel
-z_status_ch = fromIntegral . M.status_ch
+z_status_ch :: U8 -> Midi.Channel
+z_status_ch = fromIntegral . Midi.status_ch
 
--- | Translate from 'Z.MidiVoiceEvent' to 'M.Channel_Voice_Message'.
-z_parse_midi_voice_event :: Z.MidiVoiceEvent -> M.Channel_Voice_Message Int
+-- | Translate from 'ZMidi.MidiVoiceEvent' to 'Midi.Channel_Voice_Message'.
+z_parse_midi_voice_event :: ZMidi.MidiVoiceEvent -> Midi.Channel_Voice_Message Int
 z_parse_midi_voice_event e =
   case e of
-    Z.NoteOff st d1 d2 -> M.Note_Off (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
-    Z.NoteOn st d1 d2 -> M.Note_On (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
-    Z.NoteAftertouch st d1 d2 -> M.Polyphonic_Key_Pressure (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
-    Z.Controller st d1 d2 -> M.Control_Change (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
-    Z.ProgramChange st d1 -> M.Program_Change (z_status_ch st) (fromIntegral d1)
-    Z.ChanAftertouch st d1 -> M.Channel_Aftertouch (z_status_ch st) (fromIntegral d1)
-    Z.PitchBend st d ->
-      let (d1, d2) = M.bits_14_sep_le (z_word14_to_int d)
-      in M.Pitch_Bend (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
+    ZMidi.NoteOff st d1 d2 -> Midi.Note_Off (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
+    ZMidi.NoteOn st d1 d2 -> Midi.Note_On (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
+    ZMidi.NoteAftertouch st d1 d2 -> Midi.Polyphonic_Key_Pressure (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
+    ZMidi.Controller st d1 d2 -> Midi.Control_Change (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
+    ZMidi.ProgramChange st d1 -> Midi.Program_Change (z_status_ch st) (fromIntegral d1)
+    ZMidi.ChanAftertouch st d1 -> Midi.Channel_Aftertouch (z_status_ch st) (fromIntegral d1)
+    ZMidi.PitchBend st d ->
+      let (d1, d2) = Midi.bits_14_sep_le (z_word14_to_int d)
+      in Midi.Pitch_Bend (z_status_ch st) (fromIntegral d1) (fromIntegral d2)
 
--- | Parse voice message at 'Z.MidiMessage' to 'M.Channel_Voice_Message'.
-z_parse_midi_message :: Z.MidiMessage -> Maybe (Z.DeltaTime, M.Channel_Voice_Message Int)
+-- | Parse voice message at 'ZMidi.MidiMessage' to 'Midi.Channel_Voice_Message'.
+z_parse_midi_message :: ZMidi.MidiMessage -> Maybe (ZMidi.DeltaTime, Midi.Channel_Voice_Message Int)
 z_parse_midi_message (t, e) =
   case e of
-    Z.VoiceEvent _ v -> Just (t, z_parse_midi_voice_event v)
+    ZMidi.VoiceEvent _ v -> Just (t, z_parse_midi_voice_event v)
     _ -> Nothing
 
--- | Parse voice messages at 'Z.MidiTrack'.
-z_parse_midi_track :: Z.MidiTrack -> T.Iseq Z.DeltaTime (M.Channel_Voice_Message Int)
-z_parse_midi_track = mapMaybe z_parse_midi_message . Z.getTrackMessages
+-- | Parse voice messages at 'ZMidi.MidiTrack'.
+z_parse_midi_track :: ZMidi.MidiTrack -> Seq.Iseq ZMidi.DeltaTime (Midi.Channel_Voice_Message Int)
+z_parse_midi_track = Data.Maybe.mapMaybe z_parse_midi_message . ZMidi.getTrackMessages
 
 -- | 'z_parse_midi_track' Voice messages per-track.
-z_parse_midi_file :: Z.MidiFile -> [T.Iseq Z.DeltaTime (M.Channel_Voice_Message Int)]
-z_parse_midi_file = map z_parse_midi_track . Z.mf_tracks
+z_parse_midi_file :: ZMidi.MidiFile -> [Seq.Iseq ZMidi.DeltaTime (Midi.Channel_Voice_Message Int)]
+z_parse_midi_file = map z_parse_midi_track . ZMidi.mf_tracks
 
--- | 'T.iseq_to_tseq' of 'z_parse_midi_file'
-z_parse_midi_file_abs :: Z.MidiFile -> [T.Tseq Word64 (M.Channel_Voice_Message Int)]
-z_parse_midi_file_abs = map (T.iseq_to_tseq 0 . T.seq_tmap z_delta_time_to_word64) . z_parse_midi_file
+-- | 'Seq.iseq_to_tseq' of 'z_parse_midi_file'
+z_parse_midi_file_abs :: ZMidi.MidiFile -> [Seq.Tseq U64 (Midi.Channel_Voice_Message Int)]
+z_parse_midi_file_abs = map (Seq.iseq_to_tseq 0 . Seq.seq_tmap z_delta_time_to_word64) . z_parse_midi_file
 
 -- * Meta
 
--- | Select 'Z.MidiMetaEvent'.
-z_meta_event :: Z.MidiEvent -> Maybe Z.MidiMetaEvent
+-- | Select 'ZMidi.MidiMetaEvent'.
+z_meta_event :: ZMidi.MidiEvent -> Maybe ZMidi.MidiMetaEvent
 z_meta_event e =
   case e of
-    Z.MetaEvent m -> Just m
+    ZMidi.MetaEvent m -> Just m
     _ -> Nothing
 
--- | Read 'Z.SetTempo'.
-z_meta_event_tempo :: Z.MidiMetaEvent -> Maybe Word32
+-- | Read 'ZMidi.SetTempo'.
+z_meta_event_tempo :: ZMidi.MidiMetaEvent -> Maybe U32
 z_meta_event_tempo m =
   case m of
-    Z.SetTempo k -> Just k
+    ZMidi.SetTempo k -> Just k
     _ -> Nothing
 
 -- | 'isJust' of 'meta_event_tempo'
-z_is_tempo_event :: Z.MidiMetaEvent -> Bool
-z_is_tempo_event = isJust . z_meta_event_tempo
+z_is_tempo_event :: ZMidi.MidiMetaEvent -> Bool
+z_is_tempo_event = Data.Maybe.isJust . z_meta_event_tempo
 
--- | Sequence of 'Z.SetTempo' events.
-z_midi_track_tempo :: Z.MidiTrack -> T.Tseq Word64 (Maybe Word32)
+-- | Sequence of 'ZMidi.SetTempo' events.
+z_midi_track_tempo :: ZMidi.MidiTrack -> Seq.Tseq U64 (Maybe U32)
 z_midi_track_tempo =
-  filter (isJust . snd)
-    . map (fmap (z_meta_event_tempo <=< z_meta_event))
+  filter (Data.Maybe.isJust . snd)
+    . map (fmap (z_meta_event_tempo Control.Monad.<=< z_meta_event))
     . z_midi_track_to_abs
 
--- | 'Z.MidiTrack' with delta time-stamps converted to absolute time.
-z_midi_track_to_abs :: Z.MidiTrack -> T.Tseq Word64 Z.MidiEvent
-z_midi_track_to_abs = T.iseq_to_tseq 0 . T.seq_tmap z_delta_time_to_word64 . Z.getTrackMessages
+-- | 'ZMidi.MidiTrack' with delta time-stamps converted to absolute time.
+z_midi_track_to_abs :: ZMidi.MidiTrack -> Seq.Tseq U64 ZMidi.MidiEvent
+z_midi_track_to_abs = Seq.iseq_to_tseq 0 . Seq.seq_tmap z_delta_time_to_word64 . ZMidi.getTrackMessages
 
--- | 'z_midi_track_tempo' of ' Z.mf_tracks'
-z_midi_file_tempo_map :: Z.MidiFile -> [T.Tseq Word64 (Maybe Word32)]
-z_midi_file_tempo_map = map z_midi_track_tempo . Z.mf_tracks
+-- | 'z_midi_track_tempo' of ' ZMidi.mf_tracks'
+z_midi_file_tempo_map :: ZMidi.MidiFile -> [Seq.Tseq U64 (Maybe U32)]
+z_midi_file_tempo_map = map z_midi_track_tempo . ZMidi.mf_tracks
 
 {-
 

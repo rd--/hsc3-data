@@ -17,9 +17,9 @@ import qualified Text.CSV.Lazy.String as Csv {- lazy-csv -}
 import qualified Music.Theory.Byte as Byte {- hmt-base -}
 import qualified Music.Theory.List as List {- hmt-base -}
 import qualified Music.Theory.Show as Show {- hmt-base -}
+import qualified Music.Theory.Time.Seq as Seq {- hmt-base -}
 
 import qualified Music.Theory.Array.Csv.Midi.Mnd as Midi.Mnd {- hmt -}
-import qualified Music.Theory.Time.Seq as Seq {- hmt -}
 
 import qualified Sound.Sc3 as Sc3 {- hsc3 -}
 import qualified Sound.Sc3.Common.Buffer as Sc3.Common.Buffer {- hsc3 -}
